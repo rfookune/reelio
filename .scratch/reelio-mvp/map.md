@@ -23,12 +23,13 @@ A locked, implementation-ready spec for the Reelio MVP: every open decision sett
 <!-- one line per closed ticket: [title](link): gist -->
 
 - [TMDB terms, attribution and caching limits](./issues/01-tmdb-terms.md): fine for a free beta under TMDB's non-commercial licence. Requires a TMDB logo and notice in the footer and an About page, a JustWatch text credit on every Availability block, refresh or purge within 6 months, hotlinked images only, no AI/ML on TMDB data, and no deep links to Streaming services (only TMDB's watch page). Any revenue needs a paid licence; SEO/"destination site" use is a grey area to confirm in writing.
+- [TMDB API coverage for MVP features](./issues/02-tmdb-api-coverage.md): TMDB v3 covers every P0 feature. Homepage from trending, popular, top_rated, upcoming and discover by genre; search via `/search/movie`; the detail page in one `/movie/{id}` call with credits, videos, release_dates and watch/providers appended. Director = crew with job Director; the trailer must be ranked by Reelio. Availability for all countries comes in one response (flatrate/rent/buy plus free/ads) with one TMDB watch-page link per country. Pages capped at 500; trending can't be scoped to a country; ratings are TMDB's own only, with `imdb_id` as the OMDb join key; about 40 req/s, no SLA.
 
 ## Not yet specified
 
 - **Homepage curation:** which genre collections appear, how the sections are put together and ordered, and whether to deduplicate across sections (the PRD only requires it within a section). Waits on API coverage.
 - **Cache lifetimes and metadata refresh:** concrete TTLs per data kind and how stored Movies are refreshed or purged within TMDB's 6-month cap. Waits on the OMDb terms and the storage decision.
-- **Rate limiting and security specifics:** limits for auth, search and outbound API calls, safe handling of third-party URLs, and open-redirect protection for links to Streaming services.
+- **Rate limiting and security specifics:** limits for auth, search and outbound API calls, safe handling of third-party URLs, open-redirect protection for outbound links, and security headers (a global `no-referrer` Referrer-Policy breaks YouTube trailer embeds; see the TMDB API coverage findings).
 - **Images and performance budget:** poster and backdrop size variants per breakpoint, lazy loading, how the LCP target is checked.
 - **Accessibility verification:** how WCAG 2.2 AA is checked (automated checks, manual review).
 - **Privacy, terms and retention:** content of the privacy and terms pages, the published retention policy, and third-party data-sharing disclosures.
