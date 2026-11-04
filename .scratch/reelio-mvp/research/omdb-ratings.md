@@ -62,7 +62,7 @@ This answer holds whatever Rating source is chosen. IMDb's own datasets and API 
   | Basic | $1 | "Basic API Access", "100,000 requests per day" |
   | Standard | $5 | "Access to the Poster API", "500,000 requests per day" |
   | Pro | $10 | "Private server with no limits", "Also get access to the Poster API" |
-  | Sponsor | $25 (25 slots) | "Get a credit/link on the homepage", "And everything else!" |
+  | Sponsor | $25 (limited; 25 remaining on 2026-11-04) | "Get a credit/link on the homepage", "And everything else!" |
 
 - **No tier mentions commercial use, a licence, an SLA or any change to the Terms of Use.** The Patreon page's own description says: "The 'Open' Movie Database is now private!? Currently, yes. … I plan on making the API 100% FREE once the traffic gets under control."
 - **SLA:** none. The Terms say: "WE DO NOT WARRANT THAT THE SITE OR SERVICES WILL BE AVAILABLE FOR USE", and liability is capped at "$50" (§14, §15). OMDb is a one-person project ("API by Brian Fritz").
