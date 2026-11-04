@@ -45,7 +45,7 @@ Reelio provides a centralized movie discovery and tracking experience with five 
 
 ### 1.4 Product Vision
 
-*Your next favorite movie is only a few clicks away.*
+_Your next favorite movie is only a few clicks away._
 
 Reelio should feel fast, visually appealing, intuitive, and enjoyable to use.
 
@@ -88,15 +88,15 @@ The first release will not include:
 
 Initial targets are hypotheses to validate during a small public beta.
 
-| Metric | Initial target |
-|---|---|
-| Search response time | Under 500 ms for cached API responses, excluding network latency |
-| Movie detail page load | LCP under 2.5 seconds at the 75th percentile on target mobile connections |
-| Watchlist action | One click for authenticated users |
-| Search-to-watchlist conversion | 20% of users who open a movie detail |
-| Weekly returning users | 30% of activated beta users |
-| Movie picker usage | 15% of weekly active users |
-| Core API availability | 99.5% monthly during beta |
+| Metric                         | Initial target                                                            |
+| ------------------------------ | ------------------------------------------------------------------------- |
+| Search response time           | Under 500 ms for cached API responses, excluding network latency          |
+| Movie detail page load         | LCP under 2.5 seconds at the 75th percentile on target mobile connections |
+| Watchlist action               | One click for authenticated users                                         |
+| Search-to-watchlist conversion | 20% of users who open a movie detail                                      |
+| Weekly returning users         | 30% of activated beta users                                               |
+| Movie picker usage             | 15% of weekly active users                                                |
+| Core API availability          | 99.5% monthly during beta                                                 |
 
 ---
 
@@ -107,6 +107,7 @@ Initial targets are hypotheses to validate during a small public beta.
 A user who regularly watches movies and wants a convenient place to discover and save interesting titles.
 
 **Needs:**
+
 - Quickly find movies worth watching.
 - Maintain a personal watchlist.
 - Know where movies are streaming.
@@ -117,6 +118,7 @@ A user who regularly watches movies and wants a convenient place to discover and
 A user who watches movies frequently and enjoys maintaining a personal viewing history.
 
 **Needs:**
+
 - Organize watched and unwatched movies.
 - Record personal ratings.
 - Filter movies by genre, release year, and rating.
@@ -127,6 +129,7 @@ A user who watches movies frequently and enjoys maintaining a personal viewing h
 A user who knows they want to watch something but doesn't know what.
 
 **Needs:**
+
 - Discover recommendations with minimal effort.
 - Filter by mood, genre, and runtime.
 - Randomly select a movie from a watchlist.
@@ -200,6 +203,7 @@ The homepage must display curated movie sections, including:
 Each movie card must display a poster, title, release year, and available primary rating.
 
 **Acceptance Criteria:**
+
 - Movies are displayed in responsive grids or horizontal carousels.
 - Each movie links to its detail page.
 - Loading, empty, and error states are implemented.
@@ -211,6 +215,7 @@ Each movie card must display a poster, title, release year, and available primar
 Users must be able to search movies by title.
 
 Requirements:
+
 - Debounced search input.
 - Partial-title matching supported by the data provider.
 - Paginated results.
@@ -262,6 +267,7 @@ The application must not download, rehost, or redistribute copyrighted trailers.
 Authenticated users can add movies to their personal watchlist.
 
 Acceptance criteria:
+
 - Adding an existing movie is idempotent.
 - The interface updates immediately.
 - The action is available on movie cards and detail pages.
@@ -275,6 +281,7 @@ Users can remove movies from their watchlist.
 **FR-008 — Watchlist Page (P0)**
 
 The watchlist page must support:
+
 - Poster grid and list layouts.
 - Sorting by date added, title, and release year.
 - Filtering by watched status.
@@ -284,6 +291,7 @@ The watchlist page must support:
 **FR-009 — Custom Lists (P2)**
 
 Users can create named collections such as:
+
 - Weekend Movies.
 - Sci-Fi Favorites.
 - Movies to Watch with Friends.
@@ -310,6 +318,7 @@ Users can rate movies using a 1–10 scale, supporting half-point increments.
 **FR-013 — Viewing Statistics (P2)**
 
 Display:
+
 - Total movies watched.
 - Movies watched by month/year.
 - Favorite genres.
@@ -323,6 +332,7 @@ Display:
 Users can randomly select a movie from their unwatched watchlist.
 
 Requirements:
+
 - Exclude watched movies by default.
 - Respect applied filters.
 - Provide a "Pick Again" action.
@@ -332,6 +342,7 @@ Requirements:
 **FR-015 — Advanced Movie Picker (P1)**
 
 Allow filtering by:
+
 - Genre.
 - Maximum runtime.
 - Release decade.
@@ -348,6 +359,7 @@ The MVP picker must use uniform random selection. Weighted recommendations are d
 Display streaming availability when supported by the selected data provider.
 
 Requirements:
+
 - Country-aware availability.
 - Subscription, rental, and purchase categories.
 - Provider names and logos.
@@ -373,6 +385,7 @@ If only a general provider or discovery link is available, the interface must no
 **FR-019 — Authentication (P0)**
 
 Support:
+
 - Email and password registration.
 - Login and logout.
 - Password reset.
@@ -383,6 +396,7 @@ Google sign-in is P1.
 **FR-020 — User Profile (P0)**
 
 Users can manage:
+
 - Display name.
 - Email address.
 - Password.
@@ -402,6 +416,7 @@ Display the movie data provider's rating and vote count with explicit source lab
 **FR-023 — Additional Rating Sources (P2)**
 
 Potential integrations:
+
 - IMDb.
 - Rotten Tomatoes.
 - Metacritic.
@@ -428,20 +443,21 @@ Reelio should use a modern, cinematic design with:
 
 ### 6.2 Suggested Visual Identity
 
-| Element | Recommendation |
-|---|---|
-| Primary background | Deep navy / charcoal |
-| Surface | Slightly lighter slate |
-| Accent | Electric blue |
-| Typography | Inter or Geist |
-| Corners | Moderately rounded |
-| Icons | Lucide |
-| Default theme | Dark |
-| Secondary theme | Light |
+| Element            | Recommendation         |
+| ------------------ | ---------------------- |
+| Primary background | Deep navy / charcoal   |
+| Surface            | Slightly lighter slate |
+| Accent             | Electric blue          |
+| Typography         | Inter or Geist         |
+| Corners            | Moderately rounded     |
+| Icons              | Lucide                 |
+| Default theme      | Dark                   |
+| Secondary theme    | Light                  |
 
 ### 6.3 Navigation
 
 **Desktop navigation:**
+
 - Discover
 - Search
 - Watchlist
@@ -451,6 +467,7 @@ Reelio should use a modern, cinematic design with:
 The Movie Picker is accessible through a prominent action on the Watchlist page.
 
 **Mobile navigation:**
+
 - Discover
 - Search
 - Watchlist
@@ -460,19 +477,19 @@ Watched movies can be accessed through the Watchlist page on mobile.
 
 ### 6.4 Required Screens
 
-| Screen | MVP |
-|---|---|
-| Discovery homepage | Yes |
-| Search results | Yes |
-| Movie details | Yes |
-| Watchlist | Yes |
-| Watched movies | Yes |
-| Random movie picker | Yes |
-| Login / registration | Yes |
-| Account settings | Yes |
-| Advanced filters | Later |
+| Screen               | MVP   |
+| -------------------- | ----- |
+| Discovery homepage   | Yes   |
+| Search results       | Yes   |
+| Movie details        | Yes   |
+| Watchlist            | Yes   |
+| Watched movies       | Yes   |
+| Random movie picker  | Yes   |
+| Login / registration | Yes   |
+| Account settings     | Yes   |
+| Advanced filters     | Later |
 | Statistics dashboard | Later |
-| Custom collections | Later |
+| Custom collections   | Later |
 
 ### 6.5 UX Requirements
 
@@ -492,23 +509,23 @@ Watched movies can be accessed through the Watchlist page on mobile.
 
 ### 7.1 Technology Stack
 
-| Layer | Technology |
-|---|---|
-| Backend | Laravel 12+ |
-| Language | PHP 8.3+ |
-| Frontend | Vue 3 |
-| Frontend language | TypeScript |
-| Application framework | Inertia.js |
-| Styling | Tailwind CSS v4 |
-| UI components | shadcn-vue |
-| Database | PostgreSQL |
-| Cache | Redis |
-| Queue | Laravel Queues |
-| Authentication | Laravel session authentication |
-| External movie data | TMDB |
-| Testing | Pest + Vitest |
-| Deployment | Laravel Forge / AWS |
-| Storage | S3-compatible object storage if needed |
+| Layer                 | Technology                             |
+| --------------------- | -------------------------------------- |
+| Backend               | Laravel 12+                            |
+| Language              | PHP 8.3+                               |
+| Frontend              | Vue 3                                  |
+| Frontend language     | TypeScript                             |
+| Application framework | Inertia.js                             |
+| Styling               | Tailwind CSS v4                        |
+| UI components         | shadcn-vue                             |
+| Database              | PostgreSQL                             |
+| Cache                 | Redis                                  |
+| Queue                 | Laravel Queues                         |
+| Authentication        | Laravel session authentication         |
+| External movie data   | TMDB                                   |
+| Testing               | Pest + Vitest                          |
+| Deployment            | Laravel Forge / AWS                    |
+| Storage               | S3-compatible object storage if needed |
 
 ### 7.2 Architecture Overview
 
@@ -582,39 +599,39 @@ Laravel Sanctum is not necessary solely for the Inertia frontend. Introduce toke
 
 **users**
 
-| Field | Type |
-|---|---|
-| id | UUID or BIGINT |
-| name | VARCHAR |
-| email | VARCHAR, unique |
-| password | VARCHAR |
+| Field             | Type                |
+| ----------------- | ------------------- |
+| id                | UUID or BIGINT      |
+| name              | VARCHAR             |
+| email             | VARCHAR, unique     |
+| password          | VARCHAR             |
 | email_verified_at | TIMESTAMP, nullable |
-| preferred_country | CHAR(2) |
-| created_at | TIMESTAMP |
-| updated_at | TIMESTAMP |
+| preferred_country | CHAR(2)             |
+| created_at        | TIMESTAMP           |
+| updated_at        | TIMESTAMP           |
 
 ### 8.2 Movies
 
 **movies**
 
-| Field | Type |
-|---|---|
-| id | BIGINT |
-| provider | VARCHAR |
-| provider_movie_id | VARCHAR |
-| title | VARCHAR |
-| original_title | VARCHAR, nullable |
-| overview | TEXT, nullable |
-| release_date | DATE, nullable |
-| runtime | INTEGER, nullable |
-| poster_path | VARCHAR, nullable |
-| backdrop_path | VARCHAR, nullable |
-| original_language | VARCHAR, nullable |
-| vote_average | DECIMAL, nullable |
-| vote_count | INTEGER |
+| Field              | Type                |
+| ------------------ | ------------------- |
+| id                 | BIGINT              |
+| provider           | VARCHAR             |
+| provider_movie_id  | VARCHAR             |
+| title              | VARCHAR             |
+| original_title     | VARCHAR, nullable   |
+| overview           | TEXT, nullable      |
+| release_date       | DATE, nullable      |
+| runtime            | INTEGER, nullable   |
+| poster_path        | VARCHAR, nullable   |
+| backdrop_path      | VARCHAR, nullable   |
+| original_language  | VARCHAR, nullable   |
+| vote_average       | DECIMAL, nullable   |
+| vote_count         | INTEGER             |
 | metadata_synced_at | TIMESTAMP, nullable |
-| created_at | TIMESTAMP |
-| updated_at | TIMESTAMP |
+| created_at         | TIMESTAMP           |
+| updated_at         | TIMESTAMP           |
 
 Unique index: `(provider, provider_movie_id)`.
 
@@ -624,17 +641,17 @@ The local movie record represents a cached reference to external metadata, not a
 
 **user_movies**
 
-| Field | Type |
-|---|---|
-| id | BIGINT |
-| user_id | Foreign key |
-| movie_id | Foreign key |
-| is_watchlisted | BOOLEAN |
-| watchlisted_at | TIMESTAMP, nullable |
-| watched_at | TIMESTAMP, nullable |
+| Field           | Type                   |
+| --------------- | ---------------------- |
+| id              | BIGINT                 |
+| user_id         | Foreign key            |
+| movie_id        | Foreign key            |
+| is_watchlisted  | BOOLEAN                |
+| watchlisted_at  | TIMESTAMP, nullable    |
+| watched_at      | TIMESTAMP, nullable    |
 | personal_rating | DECIMAL(3,1), nullable |
-| created_at | TIMESTAMP |
-| updated_at | TIMESTAMP |
+| created_at      | TIMESTAMP              |
+| updated_at      | TIMESTAMP              |
 
 Unique index: `(user_id, movie_id)`.
 
@@ -646,13 +663,13 @@ A watched movie may remain watchlisted if the user explicitly chooses to keep it
 
 **user_streaming_services** — P1
 
-| Field | Type |
-|---|---|
-| id | BIGINT |
-| user_id | Foreign key |
-| provider | VARCHAR |
-| provider_service_id | VARCHAR |
-| created_at | TIMESTAMP |
+| Field               | Type        |
+| ------------------- | ----------- |
+| id                  | BIGINT      |
+| user_id             | Foreign key |
+| provider            | VARCHAR     |
+| provider_service_id | VARCHAR     |
+| created_at          | TIMESTAMP   |
 
 Unique index: `(user_id, provider, provider_service_id)`.
 
@@ -674,27 +691,27 @@ For the MVP, use Laravel web routes with Inertia pages and JSON endpoints for in
 
 ### 9.1 Public Routes
 
-| Method | Route | Purpose |
-|---|---|---|
-| GET | `/` | Discovery homepage |
-| GET | `/search` | Movie search |
-| GET | `/movies/{movie}` | Movie details |
-| GET | `/discover` | Discovery catalog |
-| GET | `/api/movies/search` | Search JSON |
-| GET | `/api/movies/{movie}/providers` | Streaming availability |
+| Method | Route                           | Purpose                |
+| ------ | ------------------------------- | ---------------------- |
+| GET    | `/`                             | Discovery homepage     |
+| GET    | `/search`                       | Movie search           |
+| GET    | `/movies/{movie}`               | Movie details          |
+| GET    | `/discover`                     | Discovery catalog      |
+| GET    | `/api/movies/search`            | Search JSON            |
+| GET    | `/api/movies/{movie}/providers` | Streaming availability |
 
 ### 9.2 Authenticated Routes
 
-| Method | Route | Purpose |
-|---|---|---|
-| GET | `/watchlist` | User watchlist |
-| POST | `/watchlist/{movie}` | Add movie |
-| DELETE | `/watchlist/{movie}` | Remove movie |
-| GET | `/watched` | Viewing history |
-| PUT | `/movies/{movie}/viewing` | Update watched status/rating |
-| DELETE | `/movies/{movie}/viewing` | Clear viewing record |
-| POST | `/watchlist/pick` | Random movie selection |
-| GET | `/settings` | Account settings |
+| Method | Route                     | Purpose                      |
+| ------ | ------------------------- | ---------------------------- |
+| GET    | `/watchlist`              | User watchlist               |
+| POST   | `/watchlist/{movie}`      | Add movie                    |
+| DELETE | `/watchlist/{movie}`      | Remove movie                 |
+| GET    | `/watched`                | Viewing history              |
+| PUT    | `/movies/{movie}/viewing` | Update watched status/rating |
+| DELETE | `/movies/{movie}/viewing` | Clear viewing record         |
+| POST   | `/watchlist/pick`         | Random movie selection       |
+| GET    | `/settings`               | Account settings             |
 
 All state-changing routes require authentication, authorization, and CSRF protection.
 
@@ -796,6 +813,7 @@ All state-changing routes require authentication, authorization, and CSRF protec
 ### 11.5 SEO
 
 Public discovery and movie pages should support:
+
 - Descriptive page titles.
 - Meta descriptions.
 - Open Graph images.
@@ -811,21 +829,22 @@ Private watchlist and account pages must not be indexed.
 
 ### 12.1 Product Events
 
-| Event | Description |
-|---|---|
-| `movie_searched` | Search submitted |
-| `movie_viewed` | Movie details opened |
-| `movie_watchlisted` | Movie added to watchlist |
-| `movie_unwatchlisted` | Movie removed |
-| `movie_marked_watched` | Movie marked as watched |
-| `movie_rated` | Personal rating submitted |
-| `movie_picker_used` | Picker invoked |
-| `streaming_provider_clicked` | Provider link selected |
-| `account_registered` | New account created |
+| Event                        | Description               |
+| ---------------------------- | ------------------------- |
+| `movie_searched`             | Search submitted          |
+| `movie_viewed`               | Movie details opened      |
+| `movie_watchlisted`          | Movie added to watchlist  |
+| `movie_unwatchlisted`        | Movie removed             |
+| `movie_marked_watched`       | Movie marked as watched   |
+| `movie_rated`                | Personal rating submitted |
+| `movie_picker_used`          | Picker invoked            |
+| `streaming_provider_clicked` | Provider link selected    |
+| `account_registered`         | New account created       |
 
 ### 12.2 Operational Monitoring
 
 Monitor:
+
 - External API response times and failures.
 - Cache hit rates.
 - Search latency.
@@ -845,6 +864,7 @@ Analytics must avoid collecting raw sensitive account information or unnecessary
 **Estimated effort: 6–10 hours**
 
 Deliverables:
+
 - Laravel + Vue + Inertia project.
 - Tailwind and component library setup.
 - Database configuration.
@@ -857,6 +877,7 @@ Deliverables:
 **Estimated effort: 10–16 hours**
 
 Deliverables:
+
 - Homepage discovery sections.
 - Search.
 - Movie detail pages.
@@ -870,6 +891,7 @@ Deliverables:
 **Estimated effort: 8–14 hours**
 
 Deliverables:
+
 - Add/remove watchlist actions.
 - Watchlist page.
 - Mark as watched.
@@ -882,6 +904,7 @@ Deliverables:
 **Estimated effort: 6–10 hours**
 
 Deliverables:
+
 - Random movie picker.
 - Streaming provider display.
 - Country selection.
@@ -893,6 +916,7 @@ Deliverables:
 **Estimated effort: 8–14 hours**
 
 Deliverables:
+
 - Mobile responsiveness.
 - Accessibility review.
 - Performance optimization.
@@ -913,6 +937,7 @@ This is a planning estimate for an experienced developer, excluding major unexpe
 ### 14.1 Backend Testing
 
 Use Pest for:
+
 - Movie provider adapters.
 - Watchlist CRUD operations.
 - Viewing status updates.
@@ -927,6 +952,7 @@ External provider responses should be mocked in automated tests.
 ### 14.2 Frontend Testing
 
 Use Vitest for:
+
 - Movie card components.
 - Search interactions.
 - Watchlist controls.
@@ -996,16 +1022,16 @@ The MVP is ready for public beta when:
 
 ## 16. Risks and Dependencies
 
-| Risk | Impact | Mitigation |
-|---|---|---|
-| Movie data provider changes | High | Provider abstraction and API monitoring |
-| Movie metadata licensing | High | Review usage terms before launch |
-| Streaming availability inaccuracies | Medium | Attribution, country context, freshness messaging |
-| IMDb/Rotten Tomatoes access restrictions | Medium | Defer additional ratings until authorized |
-| Similar competing applications | Medium | Focus on simple UX and movie selection |
-| Scope creep | High | Strict P0/P1/P2 separation |
-| Brand-name conflicts | High | Trademark and domain clearance before public launch |
-| External API outages | Medium | Caching and graceful degradation |
+| Risk                                     | Impact | Mitigation                                          |
+| ---------------------------------------- | ------ | --------------------------------------------------- |
+| Movie data provider changes              | High   | Provider abstraction and API monitoring             |
+| Movie metadata licensing                 | High   | Review usage terms before launch                    |
+| Streaming availability inaccuracies      | Medium | Attribution, country context, freshness messaging   |
+| IMDb/Rotten Tomatoes access restrictions | Medium | Defer additional ratings until authorized           |
+| Similar competing applications           | Medium | Focus on simple UX and movie selection              |
+| Scope creep                              | High   | Strict P0/P1/P2 separation                          |
+| Brand-name conflicts                     | High   | Trademark and domain clearance before public launch |
+| External API outages                     | Medium | Caching and graceful degradation                    |
 
 ---
 

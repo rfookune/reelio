@@ -8,7 +8,7 @@ Map: [Reelio MVP](../map.md)
 
 Does the live TMDB API behave the way the docs suggest on the six points the [TMDB API coverage](./02-tmdb-api-coverage.md) research couldn't confirm without a key?
 
-1. **Partial-word search.** Does `query=inter` return *Interstellar*? This decides whether debounced as-you-type search (FR-002) is meaningful.
+1. **Partial-word search.** Does `query=inter` return _Interstellar_? This decides whether debounced as-you-type search (FR-002) is meaningful.
 2. **Appended watch providers.** What are the exact `append_to_response` token and response key for `watch/providers`?
 3. **Trailer language.** Is `include_video_language` honoured when videos are appended?
 4. **Trending pages.** Does `/trending/movie/{window}` accept a `page` parameter?

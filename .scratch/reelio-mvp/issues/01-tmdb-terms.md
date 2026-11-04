@@ -26,10 +26,10 @@ Sources: [TMDB API Terms](https://www.themoviedb.org/api-terms-of-use) (2023-10-
 - **Images:** hotlink `image.tmdb.org` at the sizes TMDB publishes. Rehosting is not expressly banned, but copies fall under the 6-month cap. Resizing or making composite images (such as generated OG cards) risks the "no derivatives" clause.
 - **Combining with OMDb:** the terms say nothing on this. Showing each External rating labelled with its Rating source appears to be allowed. Don't build a blended score from TMDB data.
 - **Other constraints:**
-  - No AI/ML use of TMDB Content.
-  - No reselling of TMDB data, including through a public API.
-  - Respect the roughly 40 req/s limit and any 429 response; fetch on demand rather than bulk-crawling.
-  - Don't imply TMDB endorses Reelio.
-  - There is no SLA, and the terms can change at any time.
+    - No AI/ML use of TMDB Content.
+    - No reselling of TMDB data, including through a public API.
+    - Respect the roughly 40 req/s limit and any 429 response; fetch on demand rather than bulk-crawling.
+    - Don't imply TMDB endorses Reelio.
+    - There is no SLA, and the terms can change at any time.
 
 Full findings: branch research/tmdb-terms, file .scratch/reelio-mvp/research/tmdb-terms.md (https://github.com/rfookune/reelio/blob/research/tmdb-terms/.scratch/reelio-mvp/research/tmdb-terms.md)
