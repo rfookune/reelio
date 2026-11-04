@@ -36,3 +36,13 @@ Sources: OMDb's own [Terms of Use](https://www.omdbapi.com/legal.htm) (made the 
 - **Not established:** Fandom's own terms (fetch blocked), measured OMDb coverage (no API key), and prices.
 
 Full findings: branch research/omdb-ratings, file .scratch/reelio-mvp/research/omdb-ratings.md (https://github.com/rfookune/reelio/blob/research/omdb-ratings/.scratch/reelio-mvp/research/omdb-ratings.md)
+
+## Decision
+
+Made by the human on 2026-11-04, after this research:
+
+- Reelio is **permanently non-commercial**: no ads, affiliate links, paid tier, or sponsorships.
+- **IMDb rating: in the MVP**, sourced from IMDb's official non-commercial datasets (`title.ratings.tsv.gz`), joined on TMDB's `imdb_id`, and shown with IMDb's required credit. Written confirmation from IMDb's licensing team that a free public site may display it is a **launch blocker** (see [Confirm IMDb permission for the non-commercial ratings dataset](./18-imdb-permission.md)). Fallbacks if IMDb refuses: the paid IMDb API on AWS Data Exchange, or the TMDB rating only.
+- **Rotten Tomatoes: a spec follow-up.** OMDb and Wikidata are not authorized by Fandango; the authorized route is Fandango's business proposal form.
+- **Metacritic: out of scope.**
+- **OMDb: not used.** Being non-commercial satisfies OMDb's CC BY-NC licence, but OMDb cannot license scores it doesn't own, and its IMDb figures don't come from IMDb.

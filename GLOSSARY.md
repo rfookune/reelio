@@ -11,7 +11,7 @@ The external service Reelio takes movie metadata, artwork, and Availability from
 _Avoid_: Provider, movie provider, data provider
 
 **Rating source**:
-An organization whose score for a Movie Reelio displays, always shown with its name (e.g. TMDB, IMDb, Rotten Tomatoes, Metacritic).
+An organization whose score for a Movie Reelio displays, always shown with its name (e.g. TMDB, IMDb).
 _Avoid_: Provider, review site
 
 **External rating**:
