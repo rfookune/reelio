@@ -12,3 +12,7 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 - [ ] The register-and-log-in journey runs at a desktop and a mobile viewport with `assertNoJavascriptErrors` (so CSP violations fail) and ends with `assertNoAccessibilityIssues()` at level 1
 - [ ] Browser tests bind the in-memory source fakes once they exist; no browser test reaches TMDB or IMDb
 - [ ] Auth forms use correct `autocomplete` values and never block paste
+
+## Comments
+
+- From 01: `phpunit.xml` forces Inertia SSR off (`INERTIA_SSR_ENABLED=false`) so feature tests don't depend on a running Vite dev server. Browser tests inherit that, so decide whether the journeys need SSR on (for example, to check CSP nonces in server-rendered HTML) and enable it for them explicitly. Browser test files must also extend `Tests\TestCase` to keep the stray-request guard and the per-test cache flush.

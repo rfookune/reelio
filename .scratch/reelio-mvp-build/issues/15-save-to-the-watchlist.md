@@ -4,7 +4,7 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 
 **What to build:** A signed-in user can add a Movie to their Watchlist from the Movie page in one tap, by catalog id, with instant feedback and rollback on failure. This sets up the action plumbing every list surface reuses. See the spec's "The user–movie lifecycle" and "Watchlist interactions" sections.
 
-**Blocked by:** [05: Analytics event recording](./05-analytics-event-recording.md), [06: Open a Movie from its TMDB id](./06-open-a-movie-from-its-tmdb-id.md)
+**Blocked by:** [04: Browser test harness and the sign-in journey](./04-browser-tests-and-sign-in-journey.md), [05: Analytics event recording](./05-analytics-event-recording.md), [06: Open a Movie from its TMDB id](./06-open-a-movie-from-its-tmdb-id.md)
 
 **Status:** ready-for-agent
 
@@ -15,4 +15,4 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 - [ ] A sonner toast ("Added to your Watchlist" / "Removed from your Watchlist"), ~6 s, pausing on hover or focus, announced politely; on failure the state rolls back with "Couldn't save that. Try again."
 - [ ] Guests are sent to sign in (the pending-action flow comes later)
 - [ ] `movie_watchlisted` / `movie_unwatchlisted` with `movie_id` and `source`
-- [ ] Vitest covers the optimistic toggle and rollback; feature tests cover authorization, idempotency, row creation, the limits and events
+- [ ] Browser tests cover the optimistic toggle and rollback; feature tests cover authorization, idempotency, row creation, the limits and events

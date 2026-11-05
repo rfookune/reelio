@@ -17,4 +17,4 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 - [ ] Links go to the canonical URL or the entry route with the `search` referrer
 - [ ] Search is limited to 60/min per user or IP; the page is client-rendered and `noindex`
 - [ ] `movie_searched` with `query_length` and `result_count` on each page-1 response; the query text is never stored
-- [ ] Vitest covers debounce and cancellation; feature tests cover validation, paging, states and the event
+- [ ] Browser tests cover debounce and cancellation; feature tests cover validation, paging, states and the event
