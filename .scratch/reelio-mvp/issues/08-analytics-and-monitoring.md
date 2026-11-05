@@ -52,3 +52,5 @@ How will Reelio measure its §2.3 success metrics and catch failures, without co
 
 - Both Nightwatch and Sentry are third-party data sharing and go on the privacy page ([Privacy, terms and retention](./../map.md) fog).
 - The Nightwatch finding that it is backend-only is inferred from its docs, not stated; confirm at build time. Sentry's cookie and consent position is unconfirmed in its docs; with replay and IP capture off, no banner is expected.
+
+- From [Deployment and operations](./19-deployment-and-operations.md) (resolved): events are queued on a Cloud managed queue (at-least-once delivery), so each event carries a client-generated UUID with a unique index to dedupe redeliveries. The alert on any failed job depends on Nightwatch seeing jobs on the `cloud` driver; verify at first deploy, with Cloud's Queues dashboard as the fallback.

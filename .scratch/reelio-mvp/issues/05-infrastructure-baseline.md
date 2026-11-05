@@ -36,3 +36,8 @@ Decide with the beta's scale, cost, and the "Laravel way" in mind.
 - The IMDb import is long-running: give it a generous timeout and a `retry_after` longer than that timeout, or it runs twice.
 - Redis holds only disposable cache. Anything that must persist, or be purged under TMDB's 6-month cap, lives in Postgres tables.
 - Backups, health check, log hygiene and the deployment pipeline are now specified by [Deployment and operations](./19-deployment-and-operations.md).
+
+## Comments
+
+
+- From [Deployment and operations](./19-deployment-and-operations.md) (resolved): two corrections. The cache is Laravel Valkey (Redis by Upstash is deprecated), and production queues are Cloud managed queues, not the database driver (queued jobs don't wake a scale-to-zero environment; local development keeps `database`). Production also scales to zero for now.

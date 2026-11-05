@@ -79,3 +79,5 @@ Use the `codebase-design` skill.
 
 - The cache-lifetimes patch must set the TTL per kind, the purge period for unviewed rows, and the cadence of the import, and must say how long a `stale` entry may be served.
 - The rate-limiting patch inherits the circuit breaker and the entry-route limit from [Movie identity, URLs and local storage](./09-movie-identity-and-storage.md); it should treat them as one outbound-protection story.
+
+- From [Deployment and operations](./19-deployment-and-operations.md) (resolved): the IMDb import runs on a Flex managed queue, where jobs are killed at 90 seconds. The staging table and swap keep a killed run harmless; measure the real duration at build and move the `imports` queue to Pro if it doesn't fit.
