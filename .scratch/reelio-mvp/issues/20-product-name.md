@@ -1,7 +1,7 @@
 # Product name
 
 Type: grilling
-Status: claimed
+Status: resolved
 Map: [Reelio MVP](../map.md)
 
 ## Question
@@ -58,3 +58,12 @@ This blocks launch, not the spec: the spec keeps "Reelio" as the working name, a
     | Dimly | Pass | No app or mark found. "Dimly" also reads as "vaguely" or "dim-witted". |
     | Lowlight | Pass | No app found. "Lowlight" is the opposite of "highlight", which reads negatively. |
     | Dimmer | Pass | No app found. It's a generic lighting term, so it's weak as a mark. |
+
+## Answer
+
+**The product is called Houselight** (chosen by the owner, 2026-11-04). The name refers to the theatre house lights dimming as the film begins, the moment you've picked tonight's film. Across three screening rounds it fits the "dimming the lights" theme the owner asked for and had the cleanest result: no app or near mark found in the field.
+
+- **Not yet cleared on the official registers.** The screen used web search and aggregators. The remaining checks are a separate task, [Clear Houselight on the official registers](./21-houselight-register-clearance.md). If any of them fails, the next pick is Lightsdown (with care over the LIGHTS OUT marks) or a fresh round on the same theme.
+- **Rejected:** Reelio (an existing TMDB watchlist app), SceneIt (the "Scene It?" movie trivia brand and its marks), plus every Fail or Risky entry in the screening tables above.
+- **Domains don't matter** for the prototype: it runs on a `laravel.cloud` address.
+- **The rename is an implementation ticket**, a find-and-replace once clearance passes: `config('app.name')`, the wordmark component, page titles and metadata, mail sender name, the TMDB, IMDb and JustWatch credit copy, and the docs (`GLOSSARY.md`, the spec). The wordmark must stay more prominent than the TMDB logo.

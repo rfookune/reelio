@@ -37,3 +37,5 @@ A refusal is a **launch** blocker, not a spec blocker. The fallbacks are the pai
     > Rhyan
 
 - What closes this task: IMDb's written reply, pasted or summarised here with its date. A refusal is a launch blocker, not a spec blocker. The fallbacks are the TMDB rating only, or the paid IMDb API on AWS Data Exchange ([OMDb ratings: coverage, terms and limits](./03-omdb-ratings.md)).
+
+- From [Product name](./20-product-name.md) (resolved): the product is now called **Houselight** (pending [register clearance](./21-houselight-register-clearance.md)). If the email hasn't gone yet, write 'working name "Houselight"' in place of 'working name "Reelio"'.

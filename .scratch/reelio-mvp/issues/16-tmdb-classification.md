@@ -35,3 +35,5 @@ This is HITL: the human emails TMDB (sales@themoviedb.org, or applies for the AP
     > Rhyan
 
 - What closes this task: TMDB's written reply, pasted or summarised here with its date. If question 1 is answered "non-commercial, indexing fine", the indexing flag from [Public pages](./14-public-pages-seo.md) may be turned on at launch. Any other answer keeps it off and comes back to the map.
+
+- From [Product name](./20-product-name.md) (resolved): the product is now called **Houselight** (pending [register clearance](./21-houselight-register-clearance.md)). If the email hasn't gone yet, write 'working name "Houselight"' in place of 'working name "Reelio"'.
