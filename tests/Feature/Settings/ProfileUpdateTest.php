@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\RecordAnalyticsEvent;
 use App\Models\User;
 
 test('profile page is displayed', function () {
@@ -52,6 +53,14 @@ test('email verification status is unchanged when the email address is unchanged
 
 test('user can delete their account', function () {
     $user = User::factory()->create();
+    RecordAnalyticsEvent::dispatchSync(
+        uuid: '2ab37180-1884-4328-8b4a-981d723fc247',
+        userId: $user->id,
+        name: 'account_registered',
+        properties: [],
+        occurredAt: '2026-11-05 12:00:00',
+    );
+    $this->assertDatabaseCount('events', 1);
 
     $response = $this
         ->actingAs($user)
@@ -65,6 +74,7 @@ test('user can delete their account', function () {
 
     $this->assertGuest();
     expect($user->fresh())->toBeNull();
+    $this->assertDatabaseCount('events', 0);
 });
 
 test('correct password must be provided to delete account', function () {
