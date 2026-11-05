@@ -44,3 +44,5 @@ Settle the glossary terms (e.g. Watchlist, Watched, the per-user record itself) 
 - The Watched date is the most recent time the user saw the Movie; a single value. P1 manual dates edit the same value; a rewatch log is a follow-up.
 - Analytics records one event per user action; marking as watched does not also record a Watchlist removal.
 - Glossary terms settled: Watchlist, Watched, Watched date.
+
+- From [Watchlist and Watched pages](./25-watchlist-and-watched-pages.md) (resolved): the "Watched" marker on rewatch Movies is a quiet "Last watched {date}" line on the Watchlist card, matching the detail page. The Watched page's default sort is Recently watched, as decided here.

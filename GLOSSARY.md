@@ -10,6 +10,10 @@ Reelio helps people discover movies, save the ones they want to see, decide what
 A film Reelio shows, identified by Reelio's own id and linked to its Catalog source entry; a Movie exists in Reelio once someone has opened or saved it.
 _Avoid_: Title, film, provider movie
 
+**Removed Movie**:
+A Movie the Catalog source no longer has; Reelio keeps users' Watchlist and Watched facts about it but can show none of its details.
+_Avoid_: Shell, dropped movie, deleted movie
+
 **Catalog source**:
 The external service Reelio takes movie metadata, artwork, and Availability from (TMDB today).
 _Avoid_: Provider, movie provider, data provider
@@ -41,6 +45,10 @@ _Avoid_: Watch provider, streaming option
 **Watchlist**:
 The Movies a user wants to watch, or watch again.
 _Avoid_: Queue, saved movies, list, library
+
+**Date added**:
+When a Movie was last put on a user's Watchlist; re-adding it after a removal sets a new one.
+_Avoid_: Saved date, watchlisted at
 
 **Watched**:
 A user's record of having seen a Movie; set by marking the Movie as watched, independently of the Watchlist.

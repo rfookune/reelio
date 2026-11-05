@@ -16,3 +16,4 @@ What image sizes, loading strategy and performance budget does the app use?
 ## Comments
 
 - From [Movie detail page](./24-movie-detail-page.md) (resolved): the Movie page's LCP element is the hero backdrop at `w1280` with `fetchpriority="high"`; a blurred glow reuses the same URL, so it costs no second download. Without a backdrop, a blurred poster fills the hero. The poster sits beside the title from `sm`. The trailer's cover image is that same backdrop, so nothing loads from YouTube until play. Cast photos are `w185` (12, lazy) and service logos `w92`. Set the `srcset` sizes here.
+- From [Watchlist and Watched pages](./25-watchlist-and-watched-pages.md) (resolved): Watchlist and Watched load 48 poster cards per page (2–6 columns), with more appended by "Show more". Set the card poster size and `srcset`/`sizes` for that grid, and lazy-load the cards below the first rows.

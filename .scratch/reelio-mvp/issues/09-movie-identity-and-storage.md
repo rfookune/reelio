@@ -61,3 +61,5 @@ How is a Movie identified, addressed, and stored in Reelio?
 - [Source boundary](./10-source-boundary.md) inherits the IMDb table as a Rating source that needs no Movie row to be read.
 
 - From [Search experience](./23-search-experience.md) (resolved): rows are also created on first save. The Watchlist and Watched endpoints are addressed by catalog id and find or create the row through `Catalog`, so "only opening a Movie creates a row" no longer holds. A row created by a save has never been viewed, so the purge clock needs a start: stamp `last_viewed_at` (or a created timestamp the purge reads) when the row is created. Undo by catalog id re-creates a purged row, so Undo no longer depends on the purge period.
+
+- From [Watchlist and Watched pages](./25-watchlist-and-watched-pages.md) (resolved): a dropped Movie is now the glossary's **Removed Movie** ("shell" is retired in new writing). On the lists, Removed Movies sit in their own "No longer available" group, identified as "Removed movie" plus the user's own date; no title is kept. The lists use cursor pagination, which needs non-null sort keys, so the paginated query excludes Removed Movies.
