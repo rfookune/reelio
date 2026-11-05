@@ -82,4 +82,4 @@ Use the `codebase-design` skill.
 
 - From [Deployment and operations](./19-deployment-and-operations.md) (resolved): the IMDb import runs on a Flex managed queue, where jobs are killed at 90 seconds. The staging table and swap keep a killed run harmless; measure the real duration at build and move the `imports` queue to Pro if it doesn't fit.
 
-- From [Movie detail page](./24-movie-detail-page.md) (resolved): the TMDB adapter's trailer ranking changes to: official YouTube Trailer-type videos in the requested languages, the latest published on or before the primary release date, else the earliest; Teasers only when there is no Trailer. It supersedes the tiebreak in [TMDB API coverage for MVP features](./02-tmdb-api-coverage.md).
+- From [Movie detail page](./24-movie-detail-page.md) (resolved): the TMDB adapter's trailer ranking keeps the chain from [TMDB API coverage for MVP features](./02-tmdb-api-coverage.md) (Trailer before Teaser, then official, then language), considers YouTube videos only (the player embeds YouTube only), and replaces the last tiebreak: the latest published on or before the primary release date, else the earliest.
