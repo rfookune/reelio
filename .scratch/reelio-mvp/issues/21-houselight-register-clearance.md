@@ -1,7 +1,7 @@
 # Clear Houselight on the official registers
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 20
 Map: [Reelio MVP](../map.md)
 

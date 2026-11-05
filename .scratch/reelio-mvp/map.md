@@ -44,14 +44,9 @@ A locked, implementation-ready spec for the Reelio MVP: every open decision sett
 
 ## Not yet specified
 
-- **Homepage curation:** which genre collections appear, how the sections are put together and ordered, which Movie the Discover hero features (and how often it changes), and whether to deduplicate across sections (the PRD only requires it within a section). Waits on API coverage. The Upcoming row has a date problem ([Verify TMDB behaviours with a live key](./issues/17-tmdb-live-checks.md)).
-- **Cache lifetimes and metadata refresh:** concrete TTLs per data kind and how stored Movies are refreshed or purged within TMDB's 6-month cap, and the cadence of the daily IMDb ratings import (a Flex job is killed at 90 seconds, see [Deployment and operations](./issues/19-deployment-and-operations.md)), plus how long a `stale` cache entry may be served ([Catalog and Rating source boundary](./issues/10-source-boundary.md)). Storage is decided ([Movie identity, URLs and local storage](./issues/09-movie-identity-and-storage.md)): it must also set the purge period for unviewed Movie rows, the Availability refresh interval, and the refresh cadence for rows with user facts.
-- **Rate limiting and security specifics:** limits for auth, search, the picker endpoint, the Watchlist and Watched action endpoints and outbound API calls (the Catalog circuit breaker and the entry-route limit are already decided), safe handling of third-party URLs, open-redirect protection for outbound links, and security headers (a global `no-referrer` Referrer-Policy breaks YouTube trailer embeds; see the TMDB API coverage findings).
-- **Images and performance budget:** poster and backdrop size variants per breakpoint, lazy loading, how the LCP target is checked. The Discover hero backdrop is the likely LCP element.
-- **Watchlist page:** FR-008 asks for grid and list layouts, sorting and a watched-status filter; the grid card and the "Pick for me" header button ([Movie picker](./issues/12-movie-picker.md)) are decided, the rest (whether a list layout earns its place, sort and filter controls, pagination) is not.
-- **Accessibility verification:** how WCAG 2.2 AA is checked (automated checks, manual review). The browser journeys from [Test strategy and tooling](./issues/07-test-strategy.md) are a ready place for automated checks.
-- **Privacy, terms and retention:** content of the privacy and terms pages, the published retention policy, the edge-derived country disclosure ([Country and Availability presentation](./issues/11-country-and-availability.md)), and third-party data-sharing disclosures (Nightwatch and Sentry from [Analytics and error monitoring](./issues/08-analytics-and-monitoring.md), plus TMDB).
-- **Spec assembly:** turning the resolved decisions into the final spec and handing off to `/to-tickets`.
+<!-- Graduated 2026-11-04 into tickets: Homepage curation, Search experience, Movie detail page, Watchlist and Watched pages, Cache lifetimes and refresh schedule, Images and performance budget, Rate limiting and security headers, Accessibility verification, Privacy, terms and retention, Spec assembly. -->
+
+- Nothing left in the fog. Anything newly surfaced lands here.
 
 ## Out of scope
 
