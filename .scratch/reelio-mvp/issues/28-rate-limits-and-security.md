@@ -34,18 +34,18 @@ The framing facts:
 
 **Application rate limits**
 
-| What | Limit | Key |
-| --- | --- | --- |
-| Registration | 10 per hour | IP |
-| Forgot-password | 5 per minute (the broker's 60 s per-email throttle stays) | IP |
-| Reset-password | 5 per minute | IP |
-| Confirm-password and account deletion | 5 per minute | user |
-| Profile update | 6 per minute | user |
-| Search | 60 per minute (live search sends several requests per typed query) | user or IP |
+| What                                                                               | Limit                                                                                  | Key        |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ---------- |
+| Registration                                                                       | 10 per hour                                                                            | IP         |
+| Forgot-password                                                                    | 5 per minute (the broker's 60 s per-email throttle stays)                              | IP         |
+| Reset-password                                                                     | 5 per minute                                                                           | IP         |
+| Confirm-password and account deletion                                              | 5 per minute                                                                           | user       |
+| Profile update                                                                     | 6 per minute                                                                           | user       |
+| Search                                                                             | 60 per minute (live search sends several requests per typed query)                     | user or IP |
 | Movie creation: the entry route and the catalog-id Watchlist and Watched endpoints | 20 per minute, counting only requests that need a TMDB check because no row exists yet | user or IP |
-| Watchlist and Watched `PUT`/`DELETE`, and Undo | 60 per minute, shared (guests storing a pending action included) | user or IP |
-| Picker | 30 per minute | user |
-| CSP report endpoint | 10 per minute | IP |
+| Watchlist and Watched `PUT`/`DELETE`, and Undo                                     | 60 per minute, shared (guests storing a pending action included)                       | user or IP |
+| Picker                                                                             | 30 per minute                                                                          | user       |
+| CSP report endpoint                                                                | 10 per minute                                                                          | IP         |
 
 - Fortify's existing login, 2FA, passkey and verification limits are unchanged.
 - **No account enumeration on forgot-password:** it says "If that email has an account, we've sent a link" whether or not the account exists. Registration still reports a taken email; there's no good way to hide it, and its limit makes probing slow.
