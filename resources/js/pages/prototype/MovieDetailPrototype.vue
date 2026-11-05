@@ -2,8 +2,9 @@
 /**
  * PROTOTYPE, throwaway. Ticket: "Movie detail page" (Reelio MVP map). Never merge.
  *
- * Iteration 2: variant A won the layout round (with C's cast grid). ?variant=A1…A5 now cycles
- * five Where to watch designs inside A (← / → keys). B and C stay in the branch history only.
+ * Iteration 2: variant A won the layout round (with C's cast grid); five Where to watch designs.
+ * Iteration 3: the hero fades into the page; ?variant=A4|A2 are the two Where to watch finalists
+ * (← / → keys). B, C and A1/A3/A5 stay in the branch history only.
  * Orthogonal toggles, so states are judged apart from layout:
  *   ?state=ok|loading|stale|unavailable|sparse|shell   (shell = dropped Movie, the 410 page)
  *   ?facts=none|watchlist|watched|both                  (the four lifecycle states)
@@ -27,11 +28,8 @@ import VariantHero from '@/components/prototype/movie/VariantHero.vue';
 import { Toaster } from '@/components/ui/sonner';
 
 const variants: { key: string; name: string; watch: WatchDesign }[] = [
-    { key: 'A1', name: 'Rail: logo tiles', watch: 'rail-logos' },
-    { key: 'A2', name: 'Rail: tabs per offer type', watch: 'rail-tabs' },
-    { key: 'A3', name: 'Band: columns under the hero', watch: 'band' },
-    { key: 'A4', name: 'Hero summary + full list', watch: 'hero-summary' },
-    { key: 'A5', name: 'One row per service', watch: 'services' },
+    { key: 'A4', name: 'Hero summary, full list last', watch: 'summary-last' },
+    { key: 'A2', name: 'Details, then tabs', watch: 'details-then-tabs' },
 ];
 
 const page = usePage();

@@ -4,36 +4,36 @@
  *
  * Continues Discover's language: a full-bleed backdrop hero with the poster, title block,
  * ratings and actions over it. Below, a two-column body: story, trailer and cast on the
- * left; a sticky rail with the facts on the right.
+ * left; a right column with Details.
  * LCP element: the hero backdrop (w1280). No backdrop → a blurred poster stands in.
  *
- * Iteration 2: cast is variant C's photo grid; `watch` picks one of five Where to watch
- * designs and where it sits. On mobile, a rail block moves to straight after the story.
+ * Iteration 2: cast is variant C's photo grid.
+ * Iteration 3: the hero dissolves into the page. The backdrop fades out over a reserved
+ * band below the title block (so white hero text never sits on the faded part), and a
+ * blurred glow of the same backdrop bleeds behind the top of the body, as on Discover.
+ * Two Where to watch finalists (`watch`):
+ * - summary-last:      hero summary strip; the full block is the last item, under Cast.
+ * - details-then-tabs: tabs block in the right column under Details on desktop;
+ *                      straight after the story on mobile.
  */
 import { useMediaQuery } from '@vueuse/core';
 import { computed } from 'vue';
-import CastList from './CastList.vue';
-import type { AvailabilityLook } from './AvailabilityBlock.vue';
+import SkeletonBlock from '../shell/SkeletonBlock.vue';
 import AvailabilityBlock from './AvailabilityBlock.vue';
 import AvailabilitySummary from './AvailabilitySummary.vue';
+import CastList from './CastList.vue';
 import DetailActions from './DetailActions.vue';
 import DetailFacts from './DetailFacts.vue';
 import DetailRatings from './DetailRatings.vue';
 import DetailShell from './DetailShell.vue';
 import TrailerPlayer from './TrailerPlayer.vue';
 import UnavailablePanel from './UnavailablePanel.vue';
-import SkeletonBlock from '../shell/SkeletonBlock.vue';
 import { useDetailState } from './useDetailState';
 
-export type WatchDesign =
-    | 'rail-logos'
-    | 'rail-tabs'
-    | 'band'
-    | 'hero-summary'
-    | 'services';
+export type WatchDesign = 'summary-last' | 'details-then-tabs';
 
 const props = withDefaults(defineProps<{ watch?: WatchDesign }>(), {
-    watch: 'rail-logos',
+    watch: 'summary-last',
 });
 
 defineEmits<{ changeCountry: [code: string] }>();
@@ -42,67 +42,68 @@ const { settings, view } = useDetailState();
 
 const isDesktop = useMediaQuery('(min-width: 1024px)');
 
-const looks: Record<WatchDesign, AvailabilityLook> = {
-    'rail-logos': 'logos',
-    'rail-tabs': 'tabs',
-    band: 'columns',
-    'hero-summary': 'list',
-    services: 'services',
-};
-
-const look = computed(() => looks[props.watch]);
-const isRailDesign = computed(
-    () => props.watch === 'rail-logos' || props.watch === 'rail-tabs',
+const isLoading = computed(() => settings.state === 'loading');
+const heroImage = computed(
+    () => view.value.backdropUrl ?? view.value.posterUrl,
 );
-const inRail = computed(() => isRailDesign.value && isDesktop.value);
-const afterStory = computed(
-    () =>
-        props.watch === 'hero-summary' ||
-        props.watch === 'services' ||
-        (isRailDesign.value && !isDesktop.value),
+
+const tabsInRail = computed(
+    () => props.watch === 'details-then-tabs' && isDesktop.value,
+);
+const tabsAfterStory = computed(
+    () => props.watch === 'details-then-tabs' && !isDesktop.value,
 );
 </script>
 
 <template>
     <DetailShell overlay>
-        <!-- Hero -->
-        <section
-            class="relative isolate overflow-hidden"
-            aria-labelledby="movie-title"
+        <!-- Glow: the backdrop's light bleeding down behind the body (as on Discover). -->
+        <div
+            v-if="heroImage && !isLoading"
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-x-0 top-0 h-[64rem] overflow-hidden"
         >
-            <SkeletonBlock
-                v-if="settings.state === 'loading'"
-                class="absolute inset-0 -z-10"
+            <img
+                :src="heroImage"
+                alt=""
+                class="size-full scale-110 object-cover opacity-40 blur-3xl"
             />
-            <template v-else>
-                <img
-                    v-if="view.backdropUrl"
-                    :src="view.backdropUrl"
-                    alt=""
-                    fetchpriority="high"
-                    class="absolute inset-0 -z-10 size-full object-cover"
-                />
-                <img
-                    v-else-if="view.posterUrl"
-                    :src="view.posterUrl"
-                    alt=""
-                    class="absolute inset-0 -z-10 size-full scale-125 object-cover opacity-60 blur-2xl"
-                />
-            </template>
             <div
-                class="absolute inset-0 -z-10 bg-gradient-to-t from-(--rp-bg) via-black/60 to-black/40"
+                class="absolute inset-0 bg-gradient-to-b from-transparent via-(--rp-bg)/70 to-(--rp-bg)"
             />
+        </div>
+
+        <!-- Hero -->
+        <section class="relative isolate" aria-labelledby="movie-title">
+            <div class="hero-fade absolute inset-0 -z-10 overflow-hidden">
+                <SkeletonBlock v-if="isLoading" class="size-full" />
+                <template v-else>
+                    <img
+                        v-if="view.backdropUrl"
+                        :src="view.backdropUrl"
+                        alt=""
+                        fetchpriority="high"
+                        class="size-full object-cover"
+                    />
+                    <img
+                        v-else-if="view.posterUrl"
+                        :src="view.posterUrl"
+                        alt=""
+                        class="size-full scale-125 object-cover opacity-60 blur-2xl"
+                    />
+                </template>
+                <div
+                    class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/45 to-black/35"
+                />
+            </div>
 
             <div
-                class="mx-auto flex max-w-7xl flex-col gap-6 px-4 pt-24 pb-10 text-white sm:flex-row sm:items-end md:px-8 md:pt-40 lg:pt-56"
+                class="hero-content mx-auto flex max-w-7xl flex-col gap-6 px-4 pt-24 text-white sm:flex-row sm:items-end md:px-8 md:pt-40 lg:pt-56"
             >
                 <div
                     class="hidden w-40 shrink-0 overflow-hidden rounded-lg shadow-2xl ring-1 ring-white/20 sm:block lg:w-52"
                 >
-                    <SkeletonBlock
-                        v-if="settings.state === 'loading'"
-                        class="aspect-[2/3]"
-                    />
+                    <SkeletonBlock v-if="isLoading" class="aspect-[2/3]" />
                     <img
                         v-else-if="view.posterUrl"
                         :src="view.posterUrl"
@@ -111,10 +112,7 @@ const afterStory = computed(
                     />
                 </div>
 
-                <div
-                    v-if="settings.state === 'loading'"
-                    class="flex-1 space-y-4"
-                >
+                <div v-if="isLoading" class="flex-1 space-y-4">
                     <SkeletonBlock class="h-12 w-2/3 rounded-lg" />
                     <SkeletonBlock class="h-5 w-1/2 rounded" />
                     <SkeletonBlock class="h-11 w-72 rounded-lg" />
@@ -151,31 +149,19 @@ const afterStory = computed(
                     <DetailRatings look="inline" on-image class="mt-4" />
                     <DetailActions layout="hero" class="mt-6" />
                     <AvailabilitySummary
-                        v-if="watch === 'hero-summary'"
+                        v-if="watch === 'summary-last'"
                         class="mt-5"
                     />
                 </div>
             </div>
         </section>
 
-        <!-- Where to watch as a full-width band -->
+        <!-- Body: pulled up into the lower, mostly transparent part of the fade. -->
         <div
-            v-if="watch === 'band' && settings.state !== 'loading'"
-            class="mx-auto max-w-7xl px-4 pt-2 pb-8 md:px-8"
-        >
-            <AvailabilityBlock
-                look="columns"
-                wide
-                @change-country="$emit('changeCountry', $event)"
-            />
-        </div>
-
-        <!-- Body -->
-        <div
-            class="mx-auto grid max-w-7xl gap-10 px-4 pt-4 md:px-8 lg:grid-cols-[minmax(0,1fr)_22rem]"
+            class="relative mx-auto -mt-10 grid max-w-7xl gap-10 px-4 md:-mt-14 md:px-8 lg:grid-cols-[minmax(0,1fr)_22rem]"
         >
             <div class="min-w-0 space-y-10">
-                <section v-if="settings.state === 'loading'" class="space-y-3">
+                <section v-if="isLoading" class="space-y-3">
                     <SkeletonBlock class="h-5 w-1/3 rounded" />
                     <SkeletonBlock class="h-4 w-full rounded" />
                     <SkeletonBlock class="h-4 w-5/6 rounded" />
@@ -196,8 +182,8 @@ const afterStory = computed(
                     </section>
 
                     <AvailabilityBlock
-                        v-if="afterStory"
-                        :look="look"
+                        v-if="tabsAfterStory"
+                        look="tabs"
                         @change-country="$emit('changeCountry', $event)"
                     />
 
@@ -237,30 +223,63 @@ const afterStory = computed(
                             :limit="12"
                         />
                     </section>
+
+                    <AvailabilityBlock
+                        v-if="watch === 'summary-last'"
+                        look="list"
+                        @change-country="$emit('changeCountry', $event)"
+                    />
                 </template>
             </div>
 
-            <aside class="space-y-6 lg:sticky lg:top-6 lg:self-start">
-                <SkeletonBlock
-                    v-if="settings.state === 'loading'"
-                    class="h-80 rounded-2xl"
-                />
-                <AvailabilityBlock
-                    v-else-if="inRail"
-                    :look="look"
-                    @change-country="$emit('changeCountry', $event)"
-                />
-                <section
-                    v-if="settings.state !== 'loading'"
-                    aria-labelledby="details"
-                    class="rounded-2xl bg-(--rp-surface) p-5 ring-1 ring-(--rp-line)"
-                >
-                    <h2 id="details" class="mb-4 text-lg font-semibold">
-                        Details
-                    </h2>
-                    <DetailFacts />
-                </section>
+            <!-- Not sticky: Details + Where to watch is taller than a laptop screen,
+                 and a sticky column taller than the viewport hides its own bottom. -->
+            <aside class="space-y-6 lg:self-start">
+                <SkeletonBlock v-if="isLoading" class="h-80 rounded-2xl" />
+                <template v-else>
+                    <section
+                        aria-labelledby="details"
+                        class="rounded-2xl bg-(--rp-surface) p-5 ring-1 ring-(--rp-line)"
+                    >
+                        <h2 id="details" class="mb-4 text-lg font-semibold">
+                            Details
+                        </h2>
+                        <DetailFacts />
+                    </section>
+                    <AvailabilityBlock
+                        v-if="tabsInRail"
+                        look="tabs"
+                        @change-country="$emit('changeCountry', $event)"
+                    />
+                </template>
             </aside>
         </div>
     </DetailShell>
 </template>
+
+<style scoped>
+/* PROTOTYPE, throwaway. The backdrop fades out over a band reserved below the hero text. */
+.hero-content {
+    padding-bottom: var(--fade);
+}
+
+.hero-fade,
+.hero-content {
+    --fade: 7rem;
+}
+
+.hero-fade {
+    mask-image: linear-gradient(
+        to bottom,
+        #000 calc(100% - var(--fade)),
+        transparent
+    );
+}
+
+@media (min-width: 768px) {
+    .hero-fade,
+    .hero-content {
+        --fade: 10rem;
+    }
+}
+</style>
