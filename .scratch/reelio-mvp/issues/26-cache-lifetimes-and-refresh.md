@@ -17,6 +17,7 @@ What are the concrete lifetimes and schedules for TMDB- and IMDb-derived data?
 ## Answer
 
 The framing constraints:
+
 - **TMDB's terms:** nothing TMDB-derived may be kept more than 6 months, in Postgres or in the cache ([TMDB terms, attribution and caching limits](./01-tmdb-terms.md)), and Reelio should fetch on demand rather than crawl, at about 40 requests per second.
 - **Laravel Cloud:** the scheduler is daily or hourly only and only dispatches jobs, and Flex queue jobs are killed at 90 s ([Deployment and operations](./19-deployment-and-operations.md)).
 
@@ -32,12 +33,12 @@ The framing constraints:
 
 **When a Movie is refreshed**
 
-| Trigger | Rule |
-| --- | --- |
-| A detail page view | If `synced_at` is more than **24 h** old, refresh **during the request** with the interactive profile (3 s, one retry), then render. On failure, render the stored data as `stale`. |
-| On at least one Watchlist | The planner refreshes it every **3 days**, because the Movie picker shows its stored Stream/Free Availability. |
-| Watched only (on no Watchlist) | Every **30 days**. |
-| No user facts | Never by schedule; purged instead (below). |
+| Trigger                        | Rule                                                                                                                                                                                |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A detail page view             | If `synced_at` is more than **24 h** old, refresh **during the request** with the interactive profile (3 s, one retry), then render. On failure, render the stored data as `stale`. |
+| On at least one Watchlist      | The planner refreshes it every **3 days**, because the Movie picker shows its stored Stream/Free Availability.                                                                      |
+| Watched only (on no Watchlist) | Every **30 days**.                                                                                                                                                                  |
+| No user facts                  | Never by schedule; purged instead (below).                                                                                                                                          |
 
 - Rejected for views: stale-while-revalidate (render the stored data, queue a refresh). It's faster on the first view each day, but shows possibly weeks-old Availability and turns web traffic into queued jobs.
 - Only Movies users hold are refreshed in bulk, which keeps this within TMDB's "fetch on demand" guidance. At beta scale that's about a thousand calls a day.
@@ -60,11 +61,11 @@ The framing constraints:
 
 **Cache lifetimes**
 
-| Data | Lifetime | Served as `stale` on failure |
-| --- | --- | --- |
-| Discover payload | Rebuilt **once a day** by a scheduled job; built on the spot by the first request if missing (a flush or first deploy) | Each section keeps its previous version for up to **7 days**, then is hidden ([Homepage curation](./22-homepage-curation.md)) |
-| Search (per query and page) | **1 hour** | up to **24 hours**, then the "We can't search right now" error |
-| Detail-only data (per Movie) | **30 days** hard, rewritten on every refresh | until that hard expiry; if missing, the detail page fetches it during the request |
+| Data                         | Lifetime                                                                                                               | Served as `stale` on failure                                                                                                  |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Discover payload             | Rebuilt **once a day** by a scheduled job; built on the spot by the first request if missing (a flush or first deploy) | Each section keeps its previous version for up to **7 days**, then is hidden ([Homepage curation](./22-homepage-curation.md)) |
+| Search (per query and page)  | **1 hour**                                                                                                             | up to **24 hours**, then the "We can't search right now" error                                                                |
+| Detail-only data (per Movie) | **30 days** hard, rewritten on every refresh                                                                           | until that hard expiry; if missing, the detail page fetches it during the request                                             |
 
 - The Discover payload holds the hero, the five sections, the three rotated genre collections and Coming soon's `release_dates` lookups, fetched concurrently. Visitors only read it. The daily hero and genre rotation stay stable all day because they live in one payload. Search's "Trending this week" empty state reads it too.
 - No cache entry lives more than 30 days, which is well inside the 6-month cap.

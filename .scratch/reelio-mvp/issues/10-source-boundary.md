@@ -53,20 +53,20 @@ Use the `codebase-design` skill.
 
 **Timeouts, retries and failure states.**
 
-| Profile | Timeout | Attempts | Used for |
-| --- | --- | --- | --- |
-| Interactive | 3 s | one retry | anything a visitor waits on |
-| Background | 10 s | three, jittered backoff | refresh and cleanup jobs |
+| Profile     | Timeout | Attempts                | Used for                    |
+| ----------- | ------- | ----------------------- | --------------------------- |
+| Interactive | 3 s     | one retry               | anything a visitor waits on |
+| Background  | 10 s    | three, jittered backoff | refresh and cleanup jobs    |
 
 - **Retried:** connection errors, 5xx and 429 only (a 429 honours `Retry-After`, capped at 2 s). A 404 is an answer: it means a dropped Movie ([Movie identity, URLs and local storage](./09-movie-identity-and-storage.md)). A 401 is a configuration error and alerts immediately.
 - **Circuit breaker:** after five consecutive interactive failures, calls fail immediately for 30 s, so an outage does not tie up every web worker for seconds per request.
 - **Explicit states:** `Catalog` returns a result that is `fresh`, `stale` or `unavailable`, never an exception. When the source fails and an expired cache entry exists it is served as `stale`, within TMDB's 6-month cap.
 - **Pages:**
-  - Each homepage section fails on its own, with an error card and a retry.
-  - Search shows an inline error and keeps the query.
-  - A detail page for a Movie with a row renders from the row, with "temporarily unavailable" panels for whatever came from the source.
-  - The entry route with no row and the source down shows a 503 page.
-  - The Watchlist and Watched pages read only Postgres, so a TMDB outage never affects them.
+    - Each homepage section fails on its own, with an error card and a retry.
+    - Search shows an inline error and keeps the query.
+    - A detail page for a Movie with a row renders from the row, with "temporarily unavailable" panels for whatever came from the source.
+    - The entry route with no row and the source down shows a 503 page.
+    - The Watchlist and Watched pages read only Postgres, so a TMDB outage never affects them.
 
 **Cache keys.** All `Catalog` keys are built in one place: `catalog:v1:{kind}:{params-hash}:{language}:{region}`.
 

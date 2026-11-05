@@ -28,15 +28,15 @@ How will Reelio measure its §2.3 success metrics and catch failures, without co
 
 **MVP event list** (one event per user action, per [The user–movie lifecycle](./04-user-movie-lifecycle.md); `movie_rated` dropped until personal ratings exist; `streaming_provider_clicked` replaced because TMDB forbids deep links to Streaming services).
 
-| Event | Properties |
-| --- | --- |
-| `movie_searched` | `query_length`, `result_count` (the query text is not stored) |
-| `movie_viewed` | `movie_id`, `referrer` (`discover`, `search`, `watchlist`, `watched`, `picker`, `direct`); signed-in users only |
-| `movie_watchlisted`, `movie_unwatchlisted` | `movie_id`, `source` |
-| `movie_marked_watched`, `movie_unmarked_watched` | `movie_id`, `source`, `was_on_watchlist` |
-| `movie_picker_used` | `pool_size` |
-| `availability_link_clicked` | `movie_id`, `country` |
-| `account_registered` | none |
+| Event                                            | Properties                                                                                                      |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `movie_searched`                                 | `query_length`, `result_count` (the query text is not stored)                                                   |
+| `movie_viewed`                                   | `movie_id`, `referrer` (`discover`, `search`, `watchlist`, `watched`, `picker`, `direct`); signed-in users only |
+| `movie_watchlisted`, `movie_unwatchlisted`       | `movie_id`, `source`                                                                                            |
+| `movie_marked_watched`, `movie_unmarked_watched` | `movie_id`, `source`, `was_on_watchlist`                                                                        |
+| `movie_picker_used`                              | `pool_size`                                                                                                     |
+| `availability_link_clicked`                      | `movie_id`, `country`                                                                                           |
+| `account_registered`                             | none                                                                                                            |
 
 **Error monitoring and operations.**
 

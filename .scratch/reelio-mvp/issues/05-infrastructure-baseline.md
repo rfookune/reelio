@@ -39,5 +39,4 @@ Decide with the beta's scale, cost, and the "Laravel way" in mind.
 
 ## Comments
 
-
 - From [Deployment and operations](./19-deployment-and-operations.md) (resolved): two corrections. The cache is Laravel Valkey (Redis by Upstash is deprecated), and production queues are Cloud managed queues, not the database driver (queued jobs don't wake a scale-to-zero environment; local development keeps `database`). Production also scales to zero for now.

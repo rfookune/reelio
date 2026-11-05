@@ -8,7 +8,7 @@ Map: [Reelio MVP](../map.md)
 
 How does search behave (FR-002)?
 
-- As-you-type suggestions vs a results page: TMDB prefix-matches the last word but ranks short queries badly (`inter` misses *Interstellar*), see [Verify TMDB behaviours with a live key](./17-tmdb-live-checks.md).
+- As-you-type suggestions vs a results page: TMDB prefix-matches the last word but ranks short queries badly (`inter` misses _Interstellar_), see [Verify TMDB behaviours with a live key](./17-tmdb-live-checks.md).
 - Minimum query length, debounce, and what Enter does.
 - Results layout, pagination (TMDB caps pages at 500), and the empty and error states, including when the Catalog is `stale` or `unavailable` ([Catalog and Rating source boundary](./10-source-boundary.md)).
 - Whether the query lives in the URL (shareable, back-button safe). Search results are `noindex` ([Public pages](./14-public-pages-seo.md)), and the search text is never stored ([Analytics and error monitoring](./08-analytics-and-monitoring.md)).
@@ -18,7 +18,7 @@ How does search behave (FR-002)?
 **One page with live results.**
 
 - Search is its own page, `/search`, reached from the Search item in the desktop pill nav and the mobile bottom nav.
-- The page has one input, and results appear below it as the user types. There is no suggestion dropdown in the top bar: short prefixes rank badly (`inter` misses *Interstellar*), so a top-5 dropdown would often hide the right Movie, while a full results list lets people scan or keep typing.
+- The page has one input, and results appear below it as the user types. There is no suggestion dropdown in the top bar: short prefixes rank badly (`inter` misses _Interstellar_), so a top-5 dropdown would often hide the right Movie, while a full results list lets people scan or keep typing.
 - The input is autofocused when the page opens with no query.
 - Guests can search. The page is `noindex` and not server-rendered ([Public pages](./14-public-pages-seo.md)).
 
@@ -55,16 +55,16 @@ How does search behave (FR-002)?
 
 **States.**
 
-| State | What shows |
-| --- | --- |
-| No query (or under 2 characters) | "Trending this week" from Discover's cached Trending section (no extra TMDB call), in the same card grid. |
-| No results | "No movies match "{query}"", a tip ("Check the spelling, or try fewer or different words"), then the same Trending grid. |
-| First search loading | A grid of shimmer cards. |
-| Query changed while results are showing | The current results stay, slightly dimmed, until the new ones arrive. There is no flash to skeletons on each keystroke. |
-| Show more loading | A spinner in the button, and shimmer cards appended for the incoming page. |
-| Results settled | A polite live region announces "{n} results for {query}". |
-| `stale` | Shown normally, with no notice (as on Discover). |
-| `unavailable` | An inline error, "We can't search right now", with Retry. The query stays in the input and the URL. If the Trending suggestions also fail, they are hidden. |
+| State                                   | What shows                                                                                                                                                  |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No query (or under 2 characters)        | "Trending this week" from Discover's cached Trending section (no extra TMDB call), in the same card grid.                                                   |
+| No results                              | "No movies match "{query}"", a tip ("Check the spelling, or try fewer or different words"), then the same Trending grid.                                    |
+| First search loading                    | A grid of shimmer cards.                                                                                                                                    |
+| Query changed while results are showing | The current results stay, slightly dimmed, until the new ones arrive. There is no flash to skeletons on each keystroke.                                     |
+| Show more loading                       | A spinner in the button, and shimmer cards appended for the incoming page.                                                                                  |
+| Results settled                         | A polite live region announces "{n} results for {query}".                                                                                                   |
+| `stale`                                 | Shown normally, with no notice (as on Discover).                                                                                                            |
+| `unavailable`                           | An inline error, "We can't search right now", with Retry. The query stays in the input and the URL. If the Trending suggestions also fail, they are hidden. |
 
 **Opening a result.**
 
