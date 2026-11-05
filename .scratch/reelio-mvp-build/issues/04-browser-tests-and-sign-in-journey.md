@@ -6,7 +6,7 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 
 **Blocked by:** [01: Postgres and Redis test foundation](./01-postgres-redis-test-foundation.md), [02: App shell and visual language](./02-app-shell-and-visual-language.md), [03: Security headers and CSP](./03-security-headers-and-csp.md)
 
-**Status:** ready-for-human
+**Status:** resolved
 
 - [X] `pestphp/pest-plugin-browser` (approved) with its Playwright browser download works locally and runs as a second, required CI job
 - [x] The register-and-log-in journey runs at a desktop and a mobile viewport with `assertNoJavascriptErrors` (so CSP violations fail) and ends with `assertNoAccessibilityIssues()` at level 1
@@ -20,5 +20,6 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 - The browser harness uses built assets, disables Playwright's CSP bypass, and collects `securitypolicyviolation` events as JavaScript errors before the first navigation. SSR stays off for these client-side journeys; nonce/header coverage lives in `tests/Feature/SecurityHeadersTest.php`.
 - The journey covers registration, logout and login at 1440×900 and 390×844, with real clipboard paste, autocomplete checks and level 1 accessibility assertions. Password-reset email paste is also covered.
 - Catalog and Rating source interfaces/fakes do not exist yet. Browser tests inherit `Tests\TestCase`, including `Http::preventStrayRequests()` and the Redis cache flush; bind the source fakes when those interfaces land in later tickets.
-- The separate `browser` CI job installs Chromium with Playwright and runs `composer test:browser` against Postgres and Redis. The first checkbox remains open pending confirmation that GitHub requires the `browser` check on `main`. This session could not inspect GitHub: `gh` is unavailable and computer-use access is not permitted.
+- The separate `browser` CI job installs Chromium with Playwright and runs `composer test:browser` against Postgres and Redis.
 - On 2026-11-05, the owner confirmed that the browser CI job passes.
+- Resolved at the owner's request with all acceptance criteria checked.
