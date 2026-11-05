@@ -8,4 +8,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
 });
 
+if (app()->isLocal()) {
+    // PROTOTYPE, throwaway: Reelio visual language and app shell variants.
+    Route::inertia('prototype/shell', 'prototype/ShellPrototype')->name('prototype.shell');
+}
+
 require __DIR__.'/settings.php';
