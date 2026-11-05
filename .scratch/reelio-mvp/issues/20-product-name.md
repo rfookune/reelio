@@ -47,3 +47,14 @@ This blocks launch, not the spec: the spec keeps "Reelio" as the working name, a
     | Picktures | Pass, with a caveat | No app or mark found. "Piktures" is an Android photo-gallery app, close in spelling but a different field. It ties directly to the picker ("pick" + "pictures"). |
     | Lobbycard | Pass | No app or mark found; only physical lobby-card collecting and a lobby.cards gallery. Lobby cards were the cards cinemas used to advertise a film, which ties to discovery. |
     | Reelio | **Fail** (round 0) | See [Reelio brand clearance](./15-brand-clearance.md): an existing iOS "Reelio: Movie & TV Watchlist" app built on TMDB. |
+
+- Screening, round 3 (2026-11-04), on the owner's theme "dimming the lights". Same sources.
+
+    | Candidate | Result | Findings |
+    | --- | --- | --- |
+    | Dusklight | **Fail** | "Duusk: Movie Watchlist" (iOS) and "Dusk for Plex" are in the same field. "Dusklight: Golden Hour" is a photography app. |
+    | Halflight | Risky | Maxon's HalfLight is a video-effects library (Class 9 software, adjacent to film). |
+    | Lightsdown | Pass, with a caveat | No app found, and no exact LIGHTS DOWN mark found. Live LIGHTS OUT marks exist in Class 9 (Twentieth Century Fox, registered 2014; Whitserve, 2025) and Class 41: close in sound and meaning. |
+    | Dimly | Pass | No app or mark found. "Dimly" also reads as "vaguely" or "dim-witted". |
+    | Lowlight | Pass | No app found. "Lowlight" is the opposite of "highlight", which reads negatively. |
+    | Dimmer | Pass | No app found. It's a generic lighting term, so it's weak as a mark. |
