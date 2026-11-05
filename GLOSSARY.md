@@ -27,3 +27,17 @@ _Avoid_: Provider, streaming provider, platform
 **Availability**:
 A Streaming service offering a Movie in a specific country, as a subscription stream, a rental, or a purchase.
 _Avoid_: Watch provider, streaming option
+
+### A user's Movies
+
+**Watchlist**:
+The Movies a user wants to watch, or watch again.
+_Avoid_: Queue, saved movies, list, library
+
+**Watched**:
+A user's record of having seen a Movie; set by marking the Movie as watched, independently of the Watchlist.
+_Avoid_: Viewing history, history, seen, viewing record
+
+**Watched date**:
+The most recent time a user saw a Movie; one per Movie.
+_Avoid_: Viewing date, watched at

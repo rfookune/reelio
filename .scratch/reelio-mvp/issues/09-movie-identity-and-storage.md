@@ -13,3 +13,7 @@ How is a Movie identified, addressed, and stored in Reelio?
 - When a local Movie record is created (on first view, on first save or watch, or never) and what it holds vs what lives only in cache.
 - Where External ratings (TMDB's own, and IMDb's from the daily non-commercial dataset import) and Availability are kept (cache vs table), within the limits the research tickets found. Note that the IMDb dataset covers every title, not just Movies Reelio has seen.
 - Fields the picker and watchlist sorting will need locally (genres, runtime, release date).
+
+## Comments
+
+- From [The user–movie lifecycle](./04-user-movie-lifecycle.md) (resolved): User facts (Watchlist, Watched) must outlive catalog data: a Movie dropped or merged by the Catalog source, or purged from cache, must not delete them. See [The user–movie lifecycle](./04-user-movie-lifecycle.md).
