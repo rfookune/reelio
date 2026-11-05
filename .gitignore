@@ -11,6 +11,8 @@
 /resources/js/routes
 /resources/js/wayfinder
 /vendor
+/tests/Browser/Screenshots
+/tests/Browser/Traces
 .DS_Store
 .env
 .env.backup

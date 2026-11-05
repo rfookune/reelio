@@ -1,6 +1,11 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Vite;
+use Pest\Browser\Api\AwaitableWebpage;
+use Pest\Browser\Playwright\InitScript;
+use Pest\Browser\Playwright\Playwright;
+use Pest\Browser\Support\ComputeUrl;
 use Tests\TestCase;
 
 /*
@@ -16,7 +21,11 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
-    ->in('Feature');
+    ->in('Feature', 'Browser');
+
+pest()->beforeEach(function () {
+    Vite::useHotFile(storage_path('framework/testing/browser.hot'));
+})->in('Browser');
 
 /*
 |--------------------------------------------------------------------------
@@ -44,7 +53,39 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Use built assets and enforce the real CSP from the first document onward.
+ *
+ * Pest 5.2 bypasses CSP by default and does not collect policy violations.
+ * Its context API lets us install the error collector before navigation.
+ */
+function visitWithCsp(string $url, int $width = 1440, int $height = 900): AwaitableWebpage
 {
-    // ..
+    $context = Playwright::browser(Playwright::defaultBrowserType())->launch()->newContext([
+        'bypassCSP' => false,
+        'viewport' => ['width' => $width, 'height' => $height],
+        'locale' => 'en-US',
+        'timezoneId' => 'UTC',
+        'colorScheme' => 'light',
+        'permissions' => ['clipboard-read', 'clipboard-write'],
+    ]);
+
+    $context->addInitScript(InitScript::get().<<<'JS'
+
+        document.addEventListener('securitypolicyviolation', (event) => {
+            window.__pestBrowser.jsErrors.push({
+                message: `CSP violation: ${event.effectiveDirective} blocked ${event.blockedURI}`,
+            });
+        });
+        JS);
+
+    $url = ComputeUrl::from($url);
+
+    return new AwaitableWebpage($context->newPage()->goto($url), $url);
+}
+
+function pasteInto(AwaitableWebpage $page, string $selector, string $value): void
+{
+    $page->script('() => navigator.clipboard.writeText('.json_encode($value, JSON_THROW_ON_ERROR).')');
+    $page->keys($selector, 'ControlOrMeta+V')->assertValue($selector, $value);
 }
