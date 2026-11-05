@@ -29,6 +29,7 @@ A locked, implementation-ready spec for the Reelio MVP: every open decision sett
 - [The user–movie lifecycle](./issues/04-user-movie-lifecycle.md): Watchlist and Watched are independent private facts (four states). Marking as watched sets the Watched date to now and takes the Movie off the Watchlist (rewatch moves the date); remove and clear touch only their own fact; Undo restores the exact earlier state; account deletion hard-deletes it all. Terms: Watchlist, Watched, Watched date.
 - [Infrastructure baseline](./issues/05-infrastructure-baseline.md): Laravel Cloud; Postgres everywhere (tests included); Redis cache; database queue and sessions; Cloud-managed workers and scheduler, no Horizon; hosted mail API; local plus production with preview environments, no staging; Herd locally; no object storage.
 - [Visual language and app shell](./issues/06-visual-language-and-shell.md): charcoal dark-first palette with an electric-blue accent and a user theme toggle (defaulting to Dark, starter-kit Appearance settings kept), Inter, and shimmer skeletons. A top-bar shell with a pill nav and a mobile bottom nav (no sidebar). Discover has a backdrop hero over list rows; Watchlist and Watched use a poster card with a floating bookmark toggle. The starter kit's sidebar, breadcrumbs, dashboard and welcome page go.
+- [Test strategy and tooling](./issues/07-test-strategy.md): Pest feature tests on Postgres carry the bulk; Vitest (`vp test`) only for client-side logic; Pest's browser plugin for five core journeys at desktop and mobile sizes. Sources are faked with in-memory fakes of Reelio's own interfaces, the TMDB adapter with recorded HTTP fixtures, the IMDb import with a tiny TSV; stray HTTP is blocked. A manual-only `live` group catches drift. CI: `ci:check` plus `vp test` and a browser job, both required on `main`; no coverage threshold.
 
 ## Not yet specified
 
@@ -37,7 +38,7 @@ A locked, implementation-ready spec for the Reelio MVP: every open decision sett
 - **Rate limiting and security specifics:** limits for auth, search and outbound API calls, safe handling of third-party URLs, open-redirect protection for outbound links, and security headers (a global `no-referrer` Referrer-Policy breaks YouTube trailer embeds; see the TMDB API coverage findings).
 - **Images and performance budget:** poster and backdrop size variants per breakpoint, lazy loading, how the LCP target is checked. The Discover hero backdrop is the likely LCP element.
 - **Watchlist page:** FR-008 asks for grid and list layouts, sorting and a watched-status filter; the grid card is decided, the rest (whether a list layout earns its place, sort and filter controls, pagination) is not.
-- **Accessibility verification:** how WCAG 2.2 AA is checked (automated checks, manual review).
+- **Accessibility verification:** how WCAG 2.2 AA is checked (automated checks, manual review). The browser journeys from [Test strategy and tooling](./issues/07-test-strategy.md) are a ready place for automated checks.
 - **Privacy, terms and retention:** content of the privacy and terms pages, the published retention policy, and third-party data-sharing disclosures.
 - **Spec assembly:** turning the resolved decisions into the final spec and handing off to `/to-tickets`.
 

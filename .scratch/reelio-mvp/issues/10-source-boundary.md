@@ -17,3 +17,7 @@ What is the shape of the module(s) that isolate Reelio from TMDB (the Catalog so
 - How the boundary is faked in tests.
 
 Use the `codebase-design` skill.
+
+## Comments
+
+- From [Test strategy and tooling](./07-test-strategy.md) (resolved): this ticket must deliver an in-memory fake of each source interface alongside it, configurable to return given Movies or to fail; feature and browser tests use the fakes and never see TMDB's JSON. The TMDB adapter itself is tested with `Http::fake()` and recorded fixtures; the IMDb import with a tiny gzipped TSV fixture.

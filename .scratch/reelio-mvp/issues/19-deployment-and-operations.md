@@ -16,3 +16,7 @@ Given the [infrastructure baseline](./05-infrastructure-baseline.md) (Laravel Cl
 - Secrets handling for the TMDB key, mail provider and monitoring.
 
 Error monitoring tooling is decided in [Analytics and error monitoring](./08-analytics-and-monitoring.md); this ticket covers the rest of operations.
+
+## Comments
+
+- From [Test strategy and tooling](./07-test-strategy.md) (resolved): the merge gate is settled: `composer ci:check` (now with `vp test`, Postgres and Redis) plus a browser-test job, both required on `main`. This ticket decides how that gate relates to deploys, and whether the manual `live` test group ever runs on a schedule.

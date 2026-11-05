@@ -16,3 +16,7 @@ Does the live TMDB API behave the way the docs suggest on the six points the [TM
 6. **Free and ads categories.** How often do `free` and `ads` appear for US titles?
 
 This is HITL then AFK. The human registers for a TMDB API key and adds the read access token to `.env` as `TMDB_READ_ACCESS_TOKEN`; the TMDB application should describe Reelio honestly (see [Confirm TMDB's classification of Reelio](./16-tmdb-classification.md)). The agent then runs the checks **without printing the token**, and records the observed responses here. The results inform [Catalog and Rating source boundary](./10-source-boundary.md), [Country and Availability presentation](./11-country-and-availability.md), and the homepage-curation fog.
+
+## Comments
+
+- From [Test strategy and tooling](./07-test-strategy.md) (resolved): while the key is live, save the raw responses (token-free) as candidate fixtures for the TMDB adapter's `Http::fake()` tests.
