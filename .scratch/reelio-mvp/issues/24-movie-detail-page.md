@@ -60,7 +60,7 @@ The prototype is throwaway and never merged: branch `prototype/movie-detail-page
 **External ratings**
 
 - Inline in the hero: the source name in the source's colour, the score, and a compact vote count ("IMDb 8.7 2.4M · TMDB 8.5 41.8K").
-- Whenever the IMDb rating shows, the credit "IMDb rating: information courtesy of IMDb. Used with permission." sits under it.
+- Whenever the IMDb rating shows, IMDb's credit sits under it, worded exactly as IMDb confirms in [Confirm IMDb permission for the non-commercial ratings dataset](./18-imdb-permission.md). The wording requested is "Information courtesy of IMDb (https://www.imdb.com). Used with permission."; the prototype's shorter text is a placeholder.
 - An absent rating is simply omitted; with none at all, the line reads "Not yet rated".
 - With IMDb removed (`imdb=off`), nothing else on the page moves.
 
@@ -75,10 +75,10 @@ The prototype is throwaway and never merged: branch `prototype/movie-detail-page
 - **"Watch on YouTube" link:** always present, in a new tab with `rel="noopener noreferrer"`. TMDB doesn't say which videos allow embedding, so a blocked embed can't be detected in advance; the link is the fallback.
 - **No trailer:** the section is hidden.
 - **Which trailer:**
-    - Among official YouTube Trailer-type videos in the requested languages, take the latest one published on or before the primary release date. If all were published after it, take the earliest.
-    - Teasers are used only when there is no Trailer.
-    - This replaces the "earliest `published_at`" tiebreak in [TMDB API coverage for MVP features](./02-tmdb-api-coverage.md).
-    - Why: for *Interstellar* the old rule picks "Teaser Trailer" (2013-12-14); the new one picks "Trailer 4" (2014-10-01), the final theatrical trailer, and skips later re-release trailers such as the 2024 IMAX one.
+    - Keep the ranking chain in [TMDB API coverage for MVP features](./02-tmdb-api-coverage.md): Trailer before Teaser, then official, then language match.
+    - Only YouTube videos are considered: the player embeds YouTube only, and the CSP allows only `youtube-nocookie.com`. Vimeo videos are skipped.
+    - Only the last tiebreak changes. "Earliest `published_at`" becomes: the latest published on or before the primary release date; if all were published after it, the earliest.
+    - Why: for *Interstellar* the old tiebreak picks "Teaser Trailer" (2013-12-14); the new one picks "Trailer 4" (2014-10-01), the final theatrical trailer, and skips later re-release trailers such as the 2024 IMAX one.
 
 **Where to watch (the tabs design)**
 
@@ -114,7 +114,7 @@ Guests see the same controls, and using one starts the pending-action sign-in fl
 
 - **Loading.**
     - The page arrives in one response, with no deferred props, so the server-rendered HTML carries the cast and the Director for the `Movie` JSON-LD.
-    - Shimmer skeletons shaped like the hero, body and right column cover any client-side wait.
+    - A normal Inertia visit keeps the previous page on screen with the progress bar, so no skeleton shows. Shimmer skeletons shaped like the hero, body and right column appear only if instant visits are adopted for opening a Movie.
 - **`stale`:** the page renders normally, and Where to watch shows the "may be out of date" notice.
 - **Source unavailable, row present:**
     - Everything stored on the row renders.
