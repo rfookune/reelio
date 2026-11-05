@@ -3,12 +3,16 @@
 namespace App\Catalog;
 
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class TmdbCatalogSource implements CatalogSource
 {
+    private const MAX_RETRY_AFTER_MILLISECONDS = 2000;
+
     /** TMDB release type for a theatrical release. */
     private const RELEASE_TYPE_THEATRICAL = 3;
 
@@ -17,12 +21,15 @@ class TmdbCatalogSource implements CatalogSource
 
     public function movie(int $tmdbId, CatalogContext $context): ?MovieDetails
     {
+        $profile = $context->profile;
+
         try {
             $response = Http::baseUrl(config('catalog.tmdb.base_url'))
                 ->withToken(config('catalog.tmdb.token'))
                 ->acceptJson()
-                ->connectTimeout(3)
-                ->timeout(3)
+                ->connectTimeout($profile->timeoutSeconds())
+                ->timeout($profile->timeoutSeconds())
+                ->retry($profile->attempts(), fn (int $attempt, Throwable $exception): int => $this->retryDelayMilliseconds($profile, $attempt, $exception), $this->isRetryable(...), throw: false)
                 ->get("movie/{$tmdbId}", [
                     'language' => $context->language,
                     'include_adult' => 'false',
@@ -35,6 +42,10 @@ class TmdbCatalogSource implements CatalogSource
 
         if ($response->notFound()) {
             return null;
+        }
+
+        if ($response->unauthorized()) {
+            throw new SourceMisconfigured('The Catalog source rejected our credentials.');
         }
 
         if (! $response->successful()) {
@@ -89,6 +100,33 @@ class TmdbCatalogSource implements CatalogSource
             certification: $usRelease['certification'] ?? null,
             usReleaseDate: $usRelease['date'] ?? null,
         );
+    }
+
+    /** Only connection errors, server errors and 429 are retried; a 404 is an answer and a 401 a configuration error. */
+    private function isRetryable(Throwable $exception): bool
+    {
+        if ($exception instanceof ConnectionException) {
+            return true;
+        }
+
+        return $exception instanceof RequestException
+            && ($exception->response->serverError() || $exception->response->status() === 429);
+    }
+
+    private function retryDelayMilliseconds(CatalogProfile $profile, int $attempt, Throwable $exception): int
+    {
+        if ($exception instanceof RequestException && $exception->response->status() === 429) {
+            $retryAfter = $exception->response->header('Retry-After');
+
+            if (ctype_digit($retryAfter) && (int) $retryAfter > 0) {
+                return min(self::MAX_RETRY_AFTER_MILLISECONDS, (int) $retryAfter * 1000);
+            }
+        }
+
+        return match ($profile) {
+            CatalogProfile::Interactive => 100,
+            CatalogProfile::Background => (250 * 2 ** ($attempt - 1)) + random_int(0, 250),
+        };
     }
 
     /**

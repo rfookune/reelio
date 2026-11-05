@@ -76,3 +76,16 @@ it('renders a sparse movie with a blurred poster hero and no optional sections',
         ->assertMissing('#cast-heading')
         ->assertNoJavaScriptErrors();
 });
+
+it('shows temporarily unavailable panels when the source is down', function () {
+    $movie = Movie::factory()->create(['title' => 'Stored Title']);
+    app()->instance(CatalogSource::class, new FakeCatalogSource(failing: true));
+
+    $page = visitWithCsp(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id], absolute: false));
+
+    $page->assertSee('Stored Title')
+        ->assertSee('Cast is temporarily unavailable.')
+        ->assertSee('Temporarily unavailable')
+        ->assertMissing('[data-slot="movie-hero"] .border-control')
+        ->assertNoJavaScriptErrors();
+});

@@ -28,6 +28,7 @@ const props = defineProps<{
         cast: CastMember[];
         certification: string | null;
         usReleaseDate: string | null;
+        detailsUnavailable: boolean;
     };
 }>();
 
@@ -128,6 +129,7 @@ onBeforeUnmount(() => {
             <MovieCast
                 :image-base-url="imageBaseUrl"
                 :cast="movie.cast"
+                :unavailable="movie.detailsUnavailable"
                 class="lg:col-start-1 lg:mb-10"
             />
 
@@ -148,6 +150,7 @@ onBeforeUnmount(() => {
                     :title="movie.title"
                     :original-title="movie.originalTitle"
                     :original-language="movie.originalLanguage"
+                    :unavailable="movie.detailsUnavailable"
                 />
             </div>
         </div>

@@ -1,10 +1,13 @@
 <?php
 
 use App\Catalog\CatalogContext;
+use App\Catalog\CatalogProfile;
+use App\Catalog\SourceMisconfigured;
 use App\Catalog\SourceUnavailable;
 use App\Catalog\TmdbCatalogSource;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
 
 test('the catalog source translates recorded movie metadata with one authenticated detail call', function () {
     config(['catalog.tmdb.token' => 'test-read-token']);
@@ -129,4 +132,76 @@ test('the US certification survives when no theatrical or premiere release exist
     $movie = app(TmdbCatalogSource::class)->movie(8, new CatalogContext);
 
     expect($movie->certification)->toBe('PG')->and($movie->usReleaseDate)->toBeNull();
+});
+
+test('interactive calls retry once on a server error and then succeed', function () {
+    Sleep::fake();
+    Http::fakeSequence('https://api.themoviedb.org/3/movie/157336?*')
+        ->push([], 500)
+        ->push(['id' => 157336, 'title' => 'Interstellar']);
+
+    $movie = app(TmdbCatalogSource::class)->movie(157336, new CatalogContext);
+
+    expect($movie->title)->toBe('Interstellar');
+    Http::assertSentCount(2);
+});
+
+test('interactive calls give up after one retry', function (callable $fake) {
+    Sleep::fake();
+    $fake();
+
+    expect(fn () => app(TmdbCatalogSource::class)->movie(157336, new CatalogContext))->toThrow(SourceUnavailable::class);
+    Http::assertSentCount(2);
+})->with([
+    'server errors' => [fn () => Http::fake(['*' => Http::response([], 503)])],
+    'rate limited' => [fn () => Http::fake(['*' => Http::response([], 429)])],
+    'connection errors' => [fn () => Http::fake(['*' => Http::failedConnection()])],
+]);
+
+test('a 429 honours Retry-After but waits at most two seconds', function (string $retryAfter, int $expectedMicroseconds) {
+    Sleep::fake();
+    Http::fakeSequence('https://api.themoviedb.org/3/movie/157336?*')
+        ->push([], 429, ['Retry-After' => $retryAfter])
+        ->push(['id' => 157336]);
+
+    app(TmdbCatalogSource::class)->movie(157336, new CatalogContext);
+
+    Sleep::assertSleptTimes(1);
+    Sleep::assertSlept(fn ($duration) => $duration->totalMicroseconds == $expectedMicroseconds);
+})->with([
+    'short' => ['1', 1_000_000],
+    'capped' => ['30', 2_000_000],
+    'missing falls back to the default delay' => ['', 100_000],
+    'zero falls back to the default delay' => ['0', 100_000],
+    'an HTTP date falls back to the default delay' => ['Wed, 21 Oct 2026 07:28:00 GMT', 100_000],
+]);
+
+test('background calls make three attempts', function () {
+    Sleep::fake();
+    Http::fake(['*' => Http::response([], 500)]);
+
+    expect(fn () => app(TmdbCatalogSource::class)->movie(157336, new CatalogContext(profile: CatalogProfile::Background)))->toThrow(SourceUnavailable::class);
+
+    Http::assertSentCount(3);
+    Sleep::assertSleptTimes(2);
+});
+
+test('a 404 is an answer and is not retried', function () {
+    Sleep::fake();
+    Http::fake(['*' => Http::response(['status_code' => 34], 404)]);
+
+    expect(app(TmdbCatalogSource::class)->movie(999, new CatalogContext))->toBeNull();
+
+    Http::assertSentCount(1);
+    Sleep::assertNeverSlept();
+});
+
+test('a 401 is raised immediately as a configuration error and is not retried', function () {
+    Sleep::fake();
+    Http::fake(['*' => Http::response([], 401)]);
+
+    expect(fn () => app(TmdbCatalogSource::class)->movie(157336, new CatalogContext))->toThrow(SourceMisconfigured::class);
+
+    Http::assertSentCount(1);
+    Sleep::assertNeverSlept();
 });

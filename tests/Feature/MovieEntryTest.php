@@ -1,10 +1,13 @@
 <?php
 
+use App\Catalog\CatalogContext;
 use App\Catalog\CatalogSource;
 use App\Catalog\FakeCatalogSource;
 use App\Catalog\MovieDetails;
+use App\Catalog\SourceMisconfigured;
 use App\Models\Movie;
 use App\Models\User;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('opening a confirmed catalog id creates a movie and redirects to its local page', function () {
@@ -97,4 +100,37 @@ test('oversized catalog ids return 404 without contacting the source', function 
     $this->get('/movies/tmdb/999999999999999999999999999')->assertNotFound();
 
     $this->assertDatabaseCount('movies', 0);
+});
+
+test('a source outage on the entry route renders the 503 page with Retry-After and noindex', function () {
+    $this->app->instance(CatalogSource::class, new FakeCatalogSource(failing: true));
+
+    $this->get('/movies/tmdb/157336')
+        ->assertServiceUnavailable()
+        ->assertHeader('Retry-After', '30')
+        ->assertHeader('X-Robots-Tag', 'noindex')
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Error')
+            ->where('status', 503)
+            ->where('title', 'Details temporarily unavailable'));
+});
+
+test('a rejected TMDB token is reported to the owner and still shows the 503 page', function () {
+    $this->app->instance(CatalogSource::class, new class implements CatalogSource
+    {
+        public function movie(int $tmdbId, CatalogContext $context): ?MovieDetails
+        {
+            throw new SourceMisconfigured('rejected');
+        }
+    });
+    $reported = [];
+    $this->app->make(ExceptionHandler::class)->reportable(function (SourceMisconfigured $e) use (&$reported) {
+        $reported[] = $e;
+
+        return false;
+    });
+
+    $this->get('/movies/tmdb/157336')->assertServiceUnavailable();
+
+    expect($reported)->toHaveCount(1);
 });

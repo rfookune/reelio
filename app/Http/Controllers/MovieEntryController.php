@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Catalog\Catalog;
 use App\Catalog\CreationLimited;
-use App\Catalog\SourceUnavailable;
+use App\Catalog\DetailsUnavailable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -17,12 +17,13 @@ class MovieEntryController extends Controller
 
         try {
             $actor = $request->user() !== null ? 'user:'.$request->user()->id : 'ip:'.$request->ip();
-            $movie = $catalog->findOrCreate($catalogId, $actor);
+            $result = $catalog->findOrCreate($catalogId, $actor);
         } catch (CreationLimited $exception) {
             abort(429, $exception->getMessage(), ['Retry-After' => $exception->retryAfter, 'X-Robots-Tag' => 'noindex']);
-        } catch (SourceUnavailable) {
-            abort(503, 'Movie details are temporarily unavailable.', ['Retry-After' => 30, 'X-Robots-Tag' => 'noindex']);
         }
+
+        throw_if($result->isUnavailable(), DetailsUnavailable::class);
+        $movie = $result->value;
         abort_if($movie === null, 404);
 
         $referrer = $request->query('referrer');

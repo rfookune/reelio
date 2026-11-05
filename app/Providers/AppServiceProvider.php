@@ -2,10 +2,13 @@
 
 namespace App\Providers;
 
+use App\Catalog\CacheKey;
 use App\Catalog\CatalogSource;
+use App\Catalog\GuardedCatalogSource;
 use App\Catalog\TmdbCatalogSource;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +23,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(CatalogSource::class, TmdbCatalogSource::class);
+        $this->app->bind(CatalogSource::class, fn (Application $app): CatalogSource => new GuardedCatalogSource($app->make(TmdbCatalogSource::class), $app->make(CacheKey::class)));
     }
 
     /**

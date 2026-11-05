@@ -12,13 +12,24 @@ export type CastMember = {
 defineProps<{
     imageBaseUrl: string;
     cast: CastMember[];
+    unavailable?: boolean;
 }>();
 </script>
 
 <template>
-    <section v-if="cast.length > 0" aria-labelledby="cast-heading">
+    <section
+        v-if="unavailable || cast.length > 0"
+        aria-labelledby="cast-heading"
+    >
         <h2 id="cast-heading" class="mb-4 text-xl font-semibold">Cast</h2>
-        <ul class="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
+        <p
+            v-if="unavailable"
+            data-slot="cast-unavailable"
+            class="rounded-xl border border-line bg-surface p-5 text-sm text-muted"
+        >
+            Cast is temporarily unavailable.
+        </p>
+        <ul v-else class="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
             <li v-for="member in cast" :key="member.id" class="min-w-0">
                 <div
                     class="aspect-[2/3] overflow-hidden rounded-lg bg-raised text-muted"

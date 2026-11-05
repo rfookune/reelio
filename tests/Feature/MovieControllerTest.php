@@ -123,3 +123,54 @@ test('a sparse movie still renders when the source has nothing', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where('movie.originalTitle', 'Autre')->where('movie.cast', [])->where('movie.certification', null));
 });
+
+test('an entry older than a day is served as stale when the source fails, and the page renders normally', function () {
+    $movie = Movie::factory()->create(['tmdb_id' => 9]);
+    $source = new FakeCatalogSource([new MovieDetails(tmdbId: 9, directors: ['A'], certification: 'R')]);
+    $this->app->instance(CatalogSource::class, $source);
+    $url = route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]);
+    $this->get($url)->assertOk();
+
+    $this->travel(2)->days();
+    $source->failing = true;
+
+    $this->get($url)->assertOk()->assertInertia(fn (Assert $page) => $page
+        ->where('movie.detailsUnavailable', false)
+        ->where('movie.directors', ['A'])
+        ->where('movie.certification', 'R'));
+});
+
+test('a stale entry is refreshed in the request once the source answers again', function () {
+    $movie = Movie::factory()->create(['tmdb_id' => 9]);
+    $source = new FakeCatalogSource([new MovieDetails(tmdbId: 9, directors: ['Old'])]);
+    $this->app->instance(CatalogSource::class, $source);
+    $url = route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]);
+    $this->get($url)->assertOk();
+
+    $this->travel(2)->days();
+    $source->movies = [new MovieDetails(tmdbId: 9, directors: ['New'])];
+
+    $this->get($url)->assertInertia(fn (Assert $page) => $page->where('movie.directors', ['New']));
+});
+
+test('with a row but no cached details and the source down, stored fields render and details are flagged unavailable', function () {
+    $movie = Movie::factory()->create(['title' => 'Stored Title', 'slug' => 'stored-title']);
+    $this->app->instance(CatalogSource::class, new FakeCatalogSource(failing: true));
+
+    $this->get(route('movies.show', ['slug' => 'stored-title', 'id' => $movie->id]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('movie.title', 'Stored Title')
+            ->where('movie.detailsUnavailable', true)
+            ->where('movie.cast', [])
+            ->where('movie.directors', [])
+            ->where('movie.certification', null));
+});
+
+test('a 404 from the source is an answer, not an outage', function () {
+    $movie = Movie::factory()->create();
+
+    $this->get(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('movie.detailsUnavailable', false));
+});

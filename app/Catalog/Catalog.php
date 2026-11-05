@@ -11,22 +11,34 @@ use Illuminate\Support\Str;
 
 class Catalog
 {
+    private const DETAILS_FRESH_SECONDS = 86400;
+
+    private const DETAILS_HARD_LIFETIME_DAYS = 30;
+
     public function __construct(private CatalogSource $source, private CacheKey $keys) {}
 
-    public function findOrCreate(int $tmdbId, string $actor): ?Movie
+    /** @return CatalogResult<Movie> */
+    public function findOrCreate(int $tmdbId, string $actor): CatalogResult
     {
         $existing = Movie::query()->where('tmdb_id', $tmdbId)->first();
 
         if ($existing !== null) {
-            return $existing;
+            return CatalogResult::fresh($existing);
         }
 
         $context = new CatalogContext(config('catalog.language'));
         $this->limitCreation($actor, $context);
-        $details = $this->source->movie($tmdbId, $context);
+
+        try {
+            $details = $this->source->movie($tmdbId, $context);
+        } catch (SourceUnavailable $exception) {
+            $this->reportIfMisconfigured($exception, $context);
+
+            return CatalogResult::unavailable();
+        }
 
         if ($details === null) {
-            return null;
+            return CatalogResult::fresh(null);
         }
 
         $movie = DB::transaction(function () use ($details): Movie {
@@ -58,9 +70,9 @@ class Catalog
             return $movie;
         });
 
-        Cache::put($this->keys->build('movie', ['tmdb_id' => $tmdbId], $context), $details->toArray(), now()->addDays(30));
+        $this->storeDetails($this->detailsKey($tmdbId, $context), $details);
 
-        return $movie;
+        return CatalogResult::fresh($movie);
     }
 
     public function find(int $id): Movie
@@ -69,36 +81,71 @@ class Catalog
     }
 
     /**
-     * The Movie's cached Catalog source details, fetched in the request when the 30-day cache entry is missing.
-     * Returns null when the source has nothing or is unavailable, so the page renders from stored fields.
+     * The Movie's Catalog source details. A cached entry younger than a day is fresh; an older one is refreshed
+     * in the request, and served as stale if the source fails. With no entry and no source, the result is unavailable.
+     *
+     * @return CatalogResult<MovieDetails>
      */
-    public function details(Movie $movie): ?MovieDetails
+    public function details(Movie $movie): CatalogResult
     {
         $context = new CatalogContext(config('catalog.language'));
-        $key = $this->keys->build('movie', ['tmdb_id' => $movie->tmdb_id], $context);
-        $cached = Cache::get($key);
-        $cachedDetails = is_array($cached) ? MovieDetails::fromArray($cached) : null;
+        $key = $this->detailsKey($movie->tmdb_id, $context);
+        $entry = $this->cachedDetails($key);
 
-        if ($cachedDetails !== null) {
-            return $cachedDetails;
+        if ($entry !== null && $entry['storedAt'] > now()->subSeconds(self::DETAILS_FRESH_SECONDS)->getTimestamp()) {
+            return CatalogResult::fresh($entry['details']);
         }
 
         try {
             $details = $this->source->movie($movie->tmdb_id, $context);
-        } catch (SourceUnavailable) {
-            return null;
+        } catch (SourceUnavailable $exception) {
+            $this->reportIfMisconfigured($exception, $context);
+
+            return $entry !== null ? CatalogResult::stale($entry['details']) : CatalogResult::unavailable();
         }
 
         if ($details !== null) {
-            Cache::put($key, $details->toArray(), now()->addDays(30));
+            $this->storeDetails($key, $details);
         }
 
-        return $details;
+        return CatalogResult::fresh($details);
     }
 
     public function recordView(Movie $movie): void
     {
         $movie->update(['last_viewed_at' => now()]);
+    }
+
+    private function detailsKey(int $tmdbId, CatalogContext $context): string
+    {
+        return $this->keys->build('movie', ['tmdb_id' => $tmdbId], $context);
+    }
+
+    private function storeDetails(string $key, MovieDetails $details): void
+    {
+        Cache::put($key, ['storedAt' => now()->getTimestamp(), 'details' => $details->toArray()], now()->addDays(self::DETAILS_HARD_LIFETIME_DAYS));
+    }
+
+    /** @return array{storedAt: int, details: MovieDetails}|null */
+    private function cachedDetails(string $key): ?array
+    {
+        $cached = Cache::get($key);
+
+        if (! is_array($cached) || ! is_int($cached['storedAt'] ?? null) || ! is_array($cached['details'] ?? null)) {
+            return null;
+        }
+
+        $details = MovieDetails::fromArray($cached['details']);
+
+        return $details === null ? null : ['storedAt' => $cached['storedAt'], 'details' => $details];
+    }
+
+    /** Reports a rejected token to the owner, at most once every five minutes. */
+    private function reportIfMisconfigured(SourceUnavailable $exception, CatalogContext $context): void
+    {
+        if ($exception instanceof SourceMisconfigured && Cache::add($this->keys->build('misconfigured-reported', [], $context), true, 300)) {
+            report($exception);
+        }
     }
 
     private function limitCreation(string $actor, CatalogContext $context): void

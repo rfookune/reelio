@@ -13,6 +13,7 @@ const props = defineProps<{
     title: string | null;
     originalTitle: string | null;
     originalLanguage: string | null;
+    unavailable?: boolean;
 }>();
 
 const rows = computed(() => {
@@ -22,18 +23,20 @@ const rows = computed(() => {
         props.originalTitle !== '' &&
         props.originalTitle !== props.title;
 
+    const fallbackText = props.unavailable ? 'Temporarily unavailable' : '';
+
     return [
         {
             label: props.directors.length > 1 ? 'Directors' : 'Director',
-            value: props.directors.join(', '),
+            value: props.directors.join(', ') || fallbackText,
         },
-        { label: 'Writers', value: props.writers.join(', ') },
+        { label: 'Writers', value: props.writers.join(', ') || fallbackText },
         {
             label: props.usReleaseDate ? 'Released (US)' : 'Released',
             value: formatDate(released) ?? '',
         },
         { label: 'Runtime', value: formatRuntime(props.runtime) ?? '' },
-        { label: 'Rated', value: props.certification ?? '' },
+        { label: 'Rated', value: props.certification ?? fallbackText },
         { label: 'Genres', value: props.genres.join(', ') },
         {
             label: 'Original title',

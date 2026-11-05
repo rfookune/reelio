@@ -6,13 +6,13 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 
 **Blocked by:** [07: Movie page layout and details](./07-movie-page-layout-and-details.md)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Interactive (3 s, one retry) and background (10 s, three attempts with jittered backoff) profiles; only connection errors, 5xx and 429 retry, with 429 honouring `Retry-After` capped at 2 s
-- [ ] A 404 is returned as an answer (for later Removed Movie handling); a 401 raises an immediate owner-visible error
-- [ ] A circuit breaker fails interactive calls immediately for 30 s after five consecutive failures
-- [ ] All live TMDB calls share a 15 requests/s throttle in the cache store; over it, `Catalog` returns `stale` or `unavailable` without waiting
-- [ ] On a source failure an expired cache entry is served as `stale`
-- [ ] Movie page with a row but the source unavailable: stored fields render; Cast shows a "temporarily unavailable" panel; Director, Writers and Rated read "Temporarily unavailable"; the certification badge is hidden
-- [ ] The entry route with no row and the source down shows a 503 page
-- [ ] Adapter tests (fixtures) cover retries, timeouts, 429, 404, 401 and the breaker; feature tests drive every state through the failing fake
+- [x] Interactive (3 s, one retry) and background (10 s, three attempts with jittered backoff) profiles; only connection errors, 5xx and 429 retry, with 429 honouring `Retry-After` capped at 2 s
+- [x] A 404 is returned as an answer (for later Removed Movie handling); a 401 raises an immediate owner-visible error
+- [x] A circuit breaker fails interactive calls immediately for 30 s after five consecutive failures
+- [x] All live TMDB calls share a 15 requests/s throttle in the cache store; over it, `Catalog` returns `stale` or `unavailable` without waiting
+- [x] On a source failure an expired cache entry is served as `stale`
+- [x] Movie page with a row but the source unavailable: stored fields render; Cast shows a "temporarily unavailable" panel; Director, Writers and Rated read "Temporarily unavailable"; the certification badge is hidden
+- [x] The entry route with no row and the source down shows a 503 page
+- [x] Adapter tests (fixtures) cover retries, timeouts, 429, 404, 401 and the breaker; feature tests drive every state through the failing fake
