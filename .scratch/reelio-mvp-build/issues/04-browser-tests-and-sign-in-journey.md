@@ -8,7 +8,7 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 
 **Status:** resolved
 
-- [X] `pestphp/pest-plugin-browser` (approved) with its Playwright browser download works locally and runs as a second, required CI job
+- [x] `pestphp/pest-plugin-browser` (approved) with its Playwright browser download works locally and runs as a second, required CI job
 - [x] The register-and-log-in journey runs at a desktop and a mobile viewport with `assertNoJavascriptErrors` (so CSP violations fail) and ends with `assertNoAccessibilityIssues()` at level 1
 - [x] Browser tests bind the in-memory source fakes once they exist; no browser test reaches TMDB or IMDb
 - [x] Auth forms use correct `autocomplete` values and never block paste
