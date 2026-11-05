@@ -1,5 +1,7 @@
 <?php
 
+use App\Catalog\CatalogSource;
+use App\Catalog\FakeCatalogSource;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Vite;
 use Pest\Browser\Api\AwaitableWebpage;
@@ -25,6 +27,7 @@ pest()->extend(TestCase::class)
 
 pest()->beforeEach(function () {
     Vite::useHotFile(storage_path('framework/testing/browser.hot'));
+    app()->instance(CatalogSource::class, new FakeCatalogSource);
 })->in('Browser');
 
 /*

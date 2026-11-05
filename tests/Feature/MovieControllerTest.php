@@ -1,0 +1,79 @@
+<?php
+
+use App\Catalog\CatalogSource;
+use App\Catalog\FakeCatalogSource;
+use App\Catalog\MovieDetails;
+use App\Jobs\RecordAnalyticsEvent;
+use App\Models\Movie;
+use App\Models\User;
+use Illuminate\Support\Facades\Queue;
+use Inertia\Testing\AssertableInertia as Assert;
+
+test('signed-in movie views record only an allowed referrer', function (mixed $referrer, string $expected) {
+    $user = User::factory()->create();
+    $movie = Movie::factory()->create();
+    Queue::fake([RecordAnalyticsEvent::class]);
+    $url = route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id, 'referrer' => $referrer]);
+
+    $this->actingAs($user)->get($url)->assertOk();
+
+    Queue::assertPushed(RecordAnalyticsEvent::class, fn (RecordAnalyticsEvent $job) => $job->userId === $user->id
+        && $job->name === 'movie_viewed'
+        && $job->properties === ['movie_id' => $movie->id, 'referrer' => $expected]);
+    Queue::assertPushed(RecordAnalyticsEvent::class, 1);
+})->with([
+    'discover' => ['discover', 'discover'],
+    'search' => ['search', 'search'],
+    'watchlist' => ['watchlist', 'watchlist'],
+    'watched' => ['watched', 'watched'],
+    'picker' => ['picker', 'picker'],
+    'direct' => ['direct', 'direct'],
+    'missing' => [null, 'direct'],
+    'unknown' => ['private search text', 'direct'],
+    'array' => [['search'], 'direct'],
+]);
+
+test('the entry redirect preserves the referrer and records only the final page view', function () {
+    $user = User::factory()->create();
+    Queue::fake([RecordAnalyticsEvent::class]);
+    $this->app->instance(CatalogSource::class, new FakeCatalogSource([new MovieDetails(tmdbId: 157336, title: 'Interstellar')]));
+
+    $this->actingAs($user)->followingRedirects()->get('/movies/tmdb/157336?referrer=search')->assertOk();
+
+    Queue::assertPushed(RecordAnalyticsEvent::class, fn (RecordAnalyticsEvent $job) => $job->name === 'movie_viewed'
+        && $job->properties['referrer'] === 'search');
+    Queue::assertPushed(RecordAnalyticsEvent::class, 1);
+});
+
+test('stale slugs permanently redirect without recording an extra view', function () {
+    $user = User::factory()->create();
+    $movie = Movie::factory()->create(['slug' => 'the-correct-title']);
+    Queue::fake([RecordAnalyticsEvent::class]);
+
+    $this->actingAs($user)->get('/movies/an-old-title-'.$movie->id.'?referrer=picker')
+        ->assertStatus(301)
+        ->assertRedirect(route('movies.show', ['slug' => 'the-correct-title', 'id' => $movie->id, 'referrer' => 'picker']));
+
+    Queue::assertNothingPushed();
+});
+
+test('guest views update the last viewed time without recording analytics', function () {
+    $movie = Movie::factory()->create(['last_viewed_at' => '2026-11-01 00:00:00']);
+    $this->travelTo('2026-11-05 12:00:00');
+    Queue::fake([RecordAnalyticsEvent::class]);
+
+    $this->get(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('canonicalUrl', route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id])));
+
+    $this->assertDatabaseHas('movies', ['id' => $movie->id, 'last_viewed_at' => '2026-11-05 12:00:00']);
+    Queue::assertNothingPushed();
+});
+
+test('a missing local movie returns 404', function () {
+    $this->get('/movies/missing-999999')->assertNotFound();
+});
+
+test('oversized local ids return 404', function () {
+    $this->get('/movies/missing-999999999999999999999999999')->assertNotFound();
+});

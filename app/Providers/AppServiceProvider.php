@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Catalog\CatalogSource;
+use App\Catalog\TmdbCatalogSource;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -18,7 +20,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(CatalogSource::class, TmdbCatalogSource::class);
     }
 
     /**
