@@ -25,18 +25,19 @@ Settle the glossary terms (e.g. Watchlist, Watched, the per-user record itself) 
 
 **Actions.**
 
-| Action | Effect |
-|---|---|
-| Add to Watchlist | Adds it with today's date added. Already on the Watchlist: no change, original date kept. |
-| Remove from Watchlist | Removes only the Watchlist membership. Re-adding later gets a new date added. |
-| Mark as watched (not yet Watched) | Sets Watched and the Watched date to now; takes it off the Watchlist if it was on. |
-| Mark as watched (Watched and on the Watchlist: a rewatch) | Takes it off the Watchlist and moves the Watched date to now. |
-| Mark as watched (Watched, not on the Watchlist) | No change. |
-| Clear Watched | Removes only Watched and its date. Does not touch the Watchlist. |
-| Undo (immediately after an action) | Restores the exact earlier state, including the previous Watched date. |
-| Delete account | Hard-deletes all of this data with the user; no anonymised copy. |
+| Action                                                    | Effect                                                                                    |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Add to Watchlist                                          | Adds it with today's date added. Already on the Watchlist: no change, original date kept. |
+| Remove from Watchlist                                     | Removes only the Watchlist membership. Re-adding later gets a new date added.             |
+| Mark as watched (not yet Watched)                         | Sets Watched and the Watched date to now; takes it off the Watchlist if it was on.        |
+| Mark as watched (Watched and on the Watchlist: a rewatch) | Takes it off the Watchlist and moves the Watched date to now.                             |
+| Mark as watched (Watched, not on the Watchlist)           | No change.                                                                                |
+| Clear Watched                                             | Removes only Watched and its date. Does not touch the Watchlist.                          |
+| Undo (immediately after an action)                        | Restores the exact earlier state, including the previous Watched date.                    |
+| Delete account                                            | Hard-deletes all of this data with the user; no anonymised copy.                          |
 
 **Consequences.**
+
 - The Watchlist always means "want to watch (again)". The PRD's "watched Movie stays on the watchlist, hidden" (§8.3) is rejected.
 - Watchlist page: exactly the Watchlist, with a "Watched" marker on rewatch Movies. FR-008's "filter by watched status" is dropped. Watched page: every Watched Movie, newest Watched date first.
 - Movie picker candidates are exactly the Watchlist, before filters.
