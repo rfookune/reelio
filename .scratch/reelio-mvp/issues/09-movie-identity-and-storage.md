@@ -59,3 +59,5 @@ How is a Movie identified, addressed, and stored in Reelio?
 - Crawler traffic now creates rows, so the entry route's rate limit and the unviewed-row purge are hard requirements, not tuning.
 - [Public pages and SEO](./14-public-pages-seo.md) inherits local-id URLs with canonical redirects; its sitemap can list only existing rows.
 - [Source boundary](./10-source-boundary.md) inherits the IMDb table as a Rating source that needs no Movie row to be read.
+
+- From [Search experience](./23-search-experience.md) (resolved): rows are also created on first save. The Watchlist and Watched endpoints are addressed by catalog id and find or create the row through `Catalog`, so "only opening a Movie creates a row" no longer holds. A row created by a save has never been viewed, so the purge clock needs a start: stamp `last_viewed_at` (or a created timestamp the purge reads) when the row is created. Undo by catalog id re-creates a purged row, so Undo no longer depends on the purge period.

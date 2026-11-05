@@ -7,7 +7,7 @@ Reelio helps people discover movies, save the ones they want to see, decide what
 ### Movie data
 
 **Movie**:
-A film Reelio shows, identified by Reelio's own id and linked to its Catalog source entry; a Movie exists in Reelio once someone has opened it.
+A film Reelio shows, identified by Reelio's own id and linked to its Catalog source entry; a Movie exists in Reelio once someone has opened or saved it.
 _Avoid_: Title, film, provider movie
 
 **Catalog source**:

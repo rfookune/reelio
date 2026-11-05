@@ -80,3 +80,5 @@ Facts below come from Laravel Cloud's docs as of 2026-11-04; the Cloud-behaviour
 - The scheduler wakes the app for its daily jobs without holding it awake.
 - The App cluster is a new Flex size, with a sleep timeout set.
 - Nightwatch sees jobs on the `cloud` queue driver; if not, Cloud's Queues dashboard is the failed-job alert source.
+
+- From [Search experience](./23-search-experience.md) (resolved): the search query lives in `?q=`, so request-path logging must redact `q`. Check at build whether Laravel Cloud's edge access logs hold full query strings.

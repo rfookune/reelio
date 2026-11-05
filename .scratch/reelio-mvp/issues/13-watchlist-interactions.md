@@ -54,3 +54,5 @@ A rewatch is Add to Watchlist, then Mark as watched.
 - Guests see the same controls. Using one stores a pending action `{movie_id, action}` in the session (single-use, 30-minute expiry, only the latest kept), sets the intended URL to the current page, and sends the guest to login.
 - After login *or* registration, the pending action is applied idempotently, the user lands back on that page, and the normal toast shows.
 - The pending action never travels in a URL, so no GET request ever changes data.
+
+- From [Search experience](./23-search-experience.md) (resolved): the Watchlist and Watched endpoints are addressed by catalog id (`PUT`/`DELETE /movies/tmdb/{tmdbId}/watchlist` and `/watched`), finding or creating the Movie row through `Catalog` as the entry route does, so a Movie with no row can be saved from any list. `userMovies` is keyed by catalog id; Undo snapshots and the guest pending action carry the catalog id. Search joins the surfaces table with the Watchlist toggle only.

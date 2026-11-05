@@ -54,3 +54,5 @@ How will Reelio measure its §2.3 success metrics and catch failures, without co
 - The Nightwatch finding that it is backend-only is inferred from its docs, not stated; confirm at build time. Sentry's cookie and consent position is unconfirmed in its docs; with replay and IP capture off, no banner is expected.
 
 - From [Deployment and operations](./19-deployment-and-operations.md) (resolved): events are queued on a Cloud managed queue (at-least-once delivery), so each event carries a client-generated UUID with a unique index to dedupe redeliveries. The alert on any failed job depends on Nightwatch seeing jobs on the `cloud` driver; verify at first deploy, with Cloud's Queues dashboard as the fallback.
+
+- From [Search experience](./23-search-experience.md) (resolved): `movie_searched` is recorded on each page-1 search response, so live search records several events per query. `metrics:report` counts distinct users searching per day and reports no zero-result rate. The `q` query parameter is redacted from Nightwatch request URLs and from Sentry URLs and breadcrumbs.

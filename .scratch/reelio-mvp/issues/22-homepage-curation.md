@@ -33,3 +33,5 @@ What exactly does Discover show, and in what order?
 - **Quality:** every query passes `include_adult=false`. Movies with no poster are left out of Discover sections; the FR-001 placeholder is still used elsewhere.
 - **Same for everyone:** assembled on the server once per refresh (the lifetime is set by [Cache lifetimes and refresh schedule](./26-cache-lifetimes-and-refresh.md)). No personalisation and no country dependence; only bookmark states (`userMovies`, [Watchlist interactions](./13-watchlist-interactions.md)) differ per user.
 - **Failure states:** a section whose source fails with no stale copy is hidden quietly. If every section fails, the page shows "We can't reach our movie data right now" with Retry, and Search stays reachable. A stale section shows normally, with no per-row notice.
+
+- From [Search experience](./23-search-experience.md) (resolved): Discover's bookmark toggles use the catalog-id Watchlist endpoints, which create the Movie row on first save, and `userMovies` is keyed by catalog id.
