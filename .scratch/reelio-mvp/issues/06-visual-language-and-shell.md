@@ -1,7 +1,7 @@
 # Visual language and app shell
 
 Type: prototype
-Status: open
+Status: claimed
 Map: [Reelio MVP](../map.md)
 
 ## Question
