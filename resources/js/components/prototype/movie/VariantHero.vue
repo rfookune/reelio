@@ -15,9 +15,12 @@
  * - summary-last:      hero summary strip; the full block is the last item, under Cast.
  * - details-then-tabs: tabs block in the right column under Details on desktop;
  *                      straight after the story on mobile.
+ * Iteration 4: the right column sticks while the left scrolls. If it is taller than the
+ * viewport, it scrolls with the page until its bottom is in view and sticks there, so
+ * nothing in it is ever out of reach (a negative `top` computed from its height).
  */
-import { useMediaQuery } from '@vueuse/core';
-import { computed } from 'vue';
+import { useElementSize, useMediaQuery, useWindowSize } from '@vueuse/core';
+import { computed, ref } from 'vue';
 import SkeletonBlock from '../shell/SkeletonBlock.vue';
 import AvailabilityBlock from './AvailabilityBlock.vue';
 import AvailabilitySummary from './AvailabilitySummary.vue';
@@ -52,6 +55,20 @@ const tabsInRail = computed(
 );
 const tabsAfterStory = computed(
     () => props.watch === 'details-then-tabs' && !isDesktop.value,
+);
+
+/** Gap kept between the sticky column and the viewport edge, in px (1.5rem). */
+const STICKY_GAP = 24;
+
+const rail = ref<HTMLElement | null>(null);
+const { height: railHeight } = useElementSize(rail, undefined, {
+    box: 'border-box',
+});
+const { height: viewportHeight } = useWindowSize();
+
+const railTop = computed(
+    () =>
+        `${Math.min(STICKY_GAP, viewportHeight.value - railHeight.value - STICKY_GAP)}px`,
 );
 </script>
 
@@ -232,9 +249,12 @@ const tabsAfterStory = computed(
                 </template>
             </div>
 
-            <!-- Not sticky: Details + Where to watch is taller than a laptop screen,
-                 and a sticky column taller than the viewport hides its own bottom. -->
-            <aside class="space-y-6 lg:self-start">
+            <!-- Sticky right column; see iteration 4 in the header comment. -->
+            <aside
+                ref="rail"
+                class="space-y-6 lg:sticky lg:self-start"
+                :style="{ top: railTop }"
+            >
                 <SkeletonBlock v-if="isLoading" class="h-80 rounded-2xl" />
                 <template v-else>
                     <section
