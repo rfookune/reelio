@@ -97,3 +97,5 @@ Poster and title share one link target, so the card is one tab stop plus the tog
 - Update the inline `html` background colours in `app.blade.php` to the charcoal values, or each theme flashes on load.
 - The hero backdrop is the likely LCP element on Discover. Size and preload it under the images and performance budget (still in the fog).
 - The prototype's skeleton, focus ring (2px accent, 2px offset) and reduced-motion handling are the reference for the real components.
+
+- From [Images and performance budget](./27-images-and-performance.md) (resolved): Inter 400 and 600 are preloaded through the Vite font helper's `preload` option, and `fontaine` (a new dev dependency, approved) generates metric-adjusted fallbacks. Every image box has a fixed aspect ratio filled with the raised colour, and failed images fall back to the missing-poster tile. The root layout preconnects to `image.tmdb.org`.

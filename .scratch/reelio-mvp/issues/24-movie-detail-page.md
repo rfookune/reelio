@@ -18,7 +18,7 @@ What does the Movie page look like and contain?
 
 Chosen over four prototype rounds. The layout is variant A, "Backdrop hero + side rail", with variant C's cast grid. Where to watch uses design A2, "Details, then tabs".
 
-The prototype is throwaway and never merged: branch `prototype/movie-detail-page`, route `/prototype/movie` (local only). Open it with `?variant=A2`; the `state`, `facts`, `auth`, `trailer`, `country`, `imdb` and `theme` toggles switch the states below. Its data is the live TMDB *Interstellar* fixture.
+The prototype is throwaway and never merged: branch `prototype/movie-detail-page`, route `/prototype/movie` (local only). Open it with `?variant=A2`; the `state`, `facts`, `auth`, `trailer`, `country`, `imdb` and `theme` toggles switch the states below. Its data is the live TMDB _Interstellar_ fixture.
 
 **Layout (desktop, from 1024px)**
 
@@ -78,7 +78,7 @@ The prototype is throwaway and never merged: branch `prototype/movie-detail-page
     - Keep the ranking chain in [TMDB API coverage for MVP features](./02-tmdb-api-coverage.md): Trailer before Teaser, then official, then language match.
     - Only YouTube videos are considered: the player embeds YouTube only, and the CSP allows only `youtube-nocookie.com`. Vimeo videos are skipped.
     - Only the last tiebreak changes. "Earliest `published_at`" becomes: the latest published on or before the primary release date; if all were published after it, the earliest.
-    - Why: for *Interstellar* the old tiebreak picks "Teaser Trailer" (2013-12-14); the new one picks "Trailer 4" (2014-10-01), the final theatrical trailer, and skips later re-release trailers such as the 2024 IMAX one.
+    - Why: for _Interstellar_ the old tiebreak picks "Teaser Trailer" (2013-12-14); the new one picks "Trailer 4" (2014-10-01), the final theatrical trailer, and skips later re-release trailers such as the 2024 IMAX one.
 
 **Where to watch (the tabs design)**
 
@@ -101,11 +101,11 @@ The prototype is throwaway and never merged: branch `prototype/movie-detail-page
 
 **Actions (in the hero)** These extend the detail-page row in [Watchlist interactions](./13-watchlist-interactions.md).
 
-| User's state | Shown |
-| --- | --- |
-| Neither | "Add to Watchlist" (accent) and "Mark as watched" |
-| On the Watchlist | "On your Watchlist" (pressed) and "Mark as watched" |
-| Watched, not on the Watchlist | the Watchlist toggle and a "Watched {date}" chip with a Clear (×) button |
+| User's state                                    | Shown                                                                                                                                                                   |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Neither                                         | "Add to Watchlist" (accent) and "Mark as watched"                                                                                                                       |
+| On the Watchlist                                | "On your Watchlist" (pressed) and "Mark as watched"                                                                                                                     |
+| Watched, not on the Watchlist                   | the Watchlist toggle and a "Watched {date}" chip with a Clear (×) button                                                                                                |
 | Watched and on the Watchlist (a rewatch queued) | "On your Watchlist" and "Mark as watched", which moves the Watched date to today and takes the Movie off the Watchlist, plus a quiet "Last watched {date} · Clear" line |
 
 Guests see the same controls, and using one starts the pending-action sign-in flow. Every action shows the toast with Undo.
@@ -149,3 +149,5 @@ Guests see the same controls, and using one starts the pending-action sign-in fl
 - **Build gotchas from the prototype:**
     - Move Where to watch for mobile with CSS (grid placement or `order`), not a JavaScript media query. Under SSR a JS query renders the desktop placement and causes a hydration mismatch.
     - The sticky column's measured `top` is client-only; its server-rendered default is 1.5rem.
+
+- From [Images and performance budget](./27-images-and-performance.md) (resolved): the hero backdrop is a `<picture>`, `w780` below 768px and `w1280` from 768px, and the glow uses the same breakpoints. The hero poster isn't downloaded below `sm`. Movie links are never prefetched and instant visits aren't used, so the conditional Movie page skeletons aren't built.

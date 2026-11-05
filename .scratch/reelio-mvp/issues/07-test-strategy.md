@@ -48,3 +48,5 @@ How will the MVP be tested, and with which tools?
 - `phpunit.xml` still sets in-memory SQLite and the array cache; switch it to Postgres and Redis to match [Infrastructure baseline](./05-infrastructure-baseline.md).
 - New dev dependencies approved by this decision, added when the build starts: `@testing-library/vue` and `pestphp/pest-plugin-browser` (plus its Playwright browser download, locally and in CI).
 - Starter-kit tests for removed surfaces (dashboard, welcome page) go with them, per [Visual language and app shell](./06-visual-language-and-shell.md).
+
+- From [Images and performance budget](./27-images-and-performance.md) (resolved): the browser tests gain structural image checks (aspect boxes or dimensions, a single high-priority image on the hero pages, lazy images below the fold). CI gains a JavaScript budget check: at most 150 KB gzipped of initial JavaScript for Discover and a Movie page, read from Vite's build output with no new dependency.
