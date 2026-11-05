@@ -53,4 +53,4 @@ The draft spec is at [spec.md](../spec.md), assembled on 2026-11-04 from every r
     - dependency approvals;
     - a glossary term for cap-cleared Movies.
 
-Next: the owner reviews the spec, settles that list, and sets `Status: ready-for-agent`. Then `/to-tickets`.
+Next: [Spec review](./32-spec-review.md), a grilling ticket in which the owner settles that list and approves the dependencies. The spec then becomes `ready-for-agent`, ready for `/to-tickets`.
