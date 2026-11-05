@@ -7,166 +7,150 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+  Reelio's charcoal palette. The utility names follow the spec's tokens:
+  `muted` is a text colour and `accent` is the blue used for links, text and
+  the focus ring. `foreground` is the spec's `text` token. `control` is only
+  for borders that identify a control; `line` is for dividers.
+
+  The remaining names (card, popover, primary, secondary, border, input, ring)
+  are aliases kept so the vendored `ui/*` components resolve to the palette.
+*/
 @theme inline {
+    /* The family is set here and in the Vite `fonts` entry: `@theme inline`
+       compiles it into `.font-sans`, so overriding `--font-sans` at runtime
+       does nothing. "Inter fallback" is fontaine's metric-adjusted face. */
     --font-sans:
-        Instrument Sans, ui-sans-serif, system-ui, sans-serif,
+        'Inter', 'Inter fallback', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 
-    --radius-lg: var(--radius);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-sm: calc(var(--radius) - 4px);
-
     --color-background: var(--background);
+    --color-surface: var(--surface);
+    --color-raised: var(--raised);
+    --color-line: var(--line);
+    --color-control: var(--control);
     --color-foreground: var(--foreground);
-
-    --color-card: var(--card);
-    --color-card-foreground: var(--card-foreground);
-
-    --color-popover: var(--popover);
-    --color-popover-foreground: var(--popover-foreground);
-
-    --color-primary: var(--primary);
-    --color-primary-foreground: var(--primary-foreground);
-
-    --color-secondary: var(--secondary);
-    --color-secondary-foreground: var(--secondary-foreground);
-
     --color-muted: var(--muted);
-    --color-muted-foreground: var(--muted-foreground);
-
     --color-accent: var(--accent);
-    --color-accent-foreground: var(--accent-foreground);
-
+    --color-accent-fill: var(--accent-fill);
+    --color-accent-fill-foreground: var(--accent-fill-foreground);
+    --color-imdb: var(--imdb);
+    --color-tmdb: var(--tmdb);
     --color-destructive: var(--destructive);
     --color-destructive-foreground: var(--destructive-foreground);
 
-    --color-border: var(--border);
-    --color-input: var(--input);
-    --color-ring: var(--ring);
-
-    --color-chart-1: var(--chart-1);
-    --color-chart-2: var(--chart-2);
-    --color-chart-3: var(--chart-3);
-    --color-chart-4: var(--chart-4);
-    --color-chart-5: var(--chart-5);
-
-    --color-sidebar: var(--sidebar-background);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-ring: var(--sidebar-ring);
-}
-
-/*
-  The default border color has changed to `currentColor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
-@layer base {
-    *,
-    ::after,
-    ::before,
-    ::backdrop,
-    ::file-selector-button {
-        border-color: var(--color-gray-200, currentColor);
-    }
-}
-
-@layer utilities {
-    body,
-    html {
-        --font-sans:
-            'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-            'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-            'Noto Color Emoji';
-    }
+    --color-card: var(--surface);
+    --color-card-foreground: var(--foreground);
+    --color-popover: var(--surface);
+    --color-popover-foreground: var(--foreground);
+    --color-primary: var(--accent-fill);
+    --color-primary-foreground: var(--accent-fill-foreground);
+    --color-secondary: var(--raised);
+    --color-secondary-foreground: var(--foreground);
+    --color-border: var(--line);
+    --color-input: var(--control);
+    --color-ring: var(--accent);
 }
 
 :root {
-    --background: hsl(0 0% 100%);
-    --foreground: hsl(0 0% 3.9%);
-    --card: hsl(0 0% 100%);
-    --card-foreground: hsl(0 0% 3.9%);
-    --popover: hsl(0 0% 100%);
-    --popover-foreground: hsl(0 0% 3.9%);
-    --primary: hsl(0 0% 9%);
-    --primary-foreground: hsl(0 0% 98%);
-    --secondary: hsl(0 0% 92.1%);
-    --secondary-foreground: hsl(0 0% 9%);
-    --muted: hsl(0 0% 96.1%);
-    --muted-foreground: hsl(0 0% 45.1%);
-    --accent: hsl(0 0% 96.1%);
-    --accent-foreground: hsl(0 0% 9%);
-    --destructive: hsl(0 84.2% 60.2%);
-    --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(0 0% 92.8%);
-    --input: hsl(0 0% 89.8%);
-    --ring: hsl(0 0% 3.9%);
-    --chart-1: hsl(12 76% 61%);
-    --chart-2: hsl(173 58% 39%);
-    --chart-3: hsl(197 37% 24%);
-    --chart-4: hsl(43 74% 66%);
-    --chart-5: hsl(27 87% 67%);
-    --radius: 0.5rem;
-    --sidebar-background: hsl(0 0% 98%);
-    --sidebar-foreground: hsl(240 5.3% 26.1%);
-    --sidebar-primary: hsl(0 0% 10%);
-    --sidebar-primary-foreground: hsl(0 0% 98%);
-    --sidebar-accent: hsl(0 0% 94%);
-    --sidebar-accent-foreground: hsl(0 0% 30%);
-    --sidebar-border: hsl(0 0% 91%);
-    --sidebar-ring: hsl(217.2 91.2% 59.8%);
-    --sidebar: hsl(0 0% 98%);
+    color-scheme: light;
+
+    --background: #f4f4f5;
+    --surface: #ffffff;
+    --raised: #e8e8eb;
+    --line: #d9d9de;
+    --control: #7d808a;
+    --foreground: #111216;
+    --muted: #565964;
+    --accent: #1f5bdb;
+    --accent-fill: #2860ee;
+    --accent-fill-foreground: #ffffff;
+    --imdb: #7a5c00;
+    --tmdb: #00708f;
+    --destructive: #c81e1e;
+    --destructive-foreground: #ffffff;
+    --shimmer-highlight: rgb(17 18 22 / 6%);
 }
 
 .dark {
-    --background: hsl(0 0% 3.9%);
-    --foreground: hsl(0 0% 98%);
-    --card: hsl(0 0% 3.9%);
-    --card-foreground: hsl(0 0% 98%);
-    --popover: hsl(0 0% 3.9%);
-    --popover-foreground: hsl(0 0% 98%);
-    --primary: hsl(0 0% 98%);
-    --primary-foreground: hsl(0 0% 9%);
-    --secondary: hsl(0 0% 14.9%);
-    --secondary-foreground: hsl(0 0% 98%);
-    --muted: hsl(0 0% 16.08%);
-    --muted-foreground: hsl(0 0% 63.9%);
-    --accent: hsl(0 0% 14.9%);
-    --accent-foreground: hsl(0 0% 98%);
-    --destructive: hsl(0 84% 60%);
-    --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(0 0% 14.9%);
-    --input: hsl(0 0% 14.9%);
-    --ring: hsl(0 0% 83.1%);
-    --chart-1: hsl(220 70% 50%);
-    --chart-2: hsl(160 60% 45%);
-    --chart-3: hsl(30 80% 55%);
-    --chart-4: hsl(280 65% 60%);
-    --chart-5: hsl(340 75% 55%);
-    --sidebar-background: hsl(0 0% 7%);
-    --sidebar-foreground: hsl(0 0% 95.9%);
-    --sidebar-primary: hsl(360, 100%, 100%);
-    --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(0 0% 15.9%);
-    --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-    --sidebar-border: hsl(0 0% 15.9%);
-    --sidebar-ring: hsl(217.2 91.2% 59.8%);
-    --sidebar: hsl(240 5.9% 10%);
+    color-scheme: dark;
+
+    --background: #101215;
+    --surface: #181b20;
+    --raised: #20242b;
+    --line: #2c3139;
+    --control: #6b7280;
+    --foreground: #eceef2;
+    --muted: #9aa1ad;
+    --accent: #4d8dff;
+    --accent-fill: #2860ee;
+    --accent-fill-foreground: #ffffff;
+    --imdb: #f5c518;
+    --tmdb: #5fd4f5;
+    --destructive: #f87171;
+    --destructive-foreground: #101215;
+    --shimmer-highlight: rgb(236 238 242 / 9%);
 }
 
 @layer base {
     * {
-        @apply border-border outline-ring/50;
+        @apply border-border;
     }
+
+    /* Keeps focused elements clear of the sticky top bar and mobile bottom nav. */
+    html {
+        scroll-padding-top: 4rem;
+        scroll-padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+
+        @variant md {
+            scroll-padding-bottom: 0;
+        }
+    }
+
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+/*
+  The focus ring is unlayered so it wins over the `outline-none` utilities in
+  the vendored components. Headings and the main landmark only take focus
+  programmatically, as a reading position, so they show no ring.
+*/
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+h1[tabindex='-1']:focus,
+#main-content:focus {
+    outline: none;
+}
+
+/* A soft highlight sweeping across a placeholder block; still under reduced motion. */
+@utility shimmer {
+    background-color: var(--raised);
+    background-image: linear-gradient(
+        100deg,
+        transparent 30%,
+        var(--shimmer-highlight) 50%,
+        transparent 70%
+    );
+    background-size: 220% 100%;
+    animation: shimmer 1.5s linear infinite;
+
+    @media (prefers-reduced-motion: reduce) {
+        animation: none;
+    }
+}
+
+@keyframes shimmer {
+    from {
+        background-position: 120% 0;
+    }
+
+    to {
+        background-position: -120% 0;
     }
 }

@@ -7,6 +7,7 @@ import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
+import { home } from '@/routes';
 
 type Props = {
     routes?: {
@@ -30,7 +31,7 @@ const { verify, isLoading, error, isSupported } = usePasskeyVerify({
           }
         : {}),
     onSuccess: (response) => {
-        router.visit(response.redirect ?? '/dashboard');
+        router.visit(response.redirect ?? home());
     },
 });
 </script>
@@ -64,7 +65,7 @@ const { verify, isLoading, error, isSupported } = usePasskeyVerify({
                 <Separator class="w-full" />
             </div>
             <div class="relative flex justify-center text-xs uppercase">
-                <span class="bg-background px-2 text-muted-foreground">
+                <span class="bg-background px-2 text-muted">
                     {{ props.separator ?? 'Or continue with email' }}
                 </span>
             </div>

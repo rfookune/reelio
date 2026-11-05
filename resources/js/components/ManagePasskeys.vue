@@ -49,12 +49,12 @@ const handleRegisterSuccess = () => {
 
             <div v-else class="p-8 text-center">
                 <div
-                    class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted"
+                    class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-raised"
                 >
-                    <KeyRound class="h-7 w-7 text-muted-foreground" />
+                    <KeyRound class="h-7 w-7 text-muted" />
                 </div>
                 <p class="font-medium">No passkeys yet</p>
-                <p class="mt-1 text-sm text-muted-foreground">
+                <p class="mt-1 text-sm text-muted">
                     Add a passkey to sign in without a password
                 </p>
             </div>

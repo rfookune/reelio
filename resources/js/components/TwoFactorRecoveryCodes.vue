@@ -3,6 +3,7 @@ import { Form } from '@inertiajs/vue3';
 import { Eye, EyeOff, LockKeyhole, RefreshCw } from '@lucide/vue';
 import { nextTick, onMounted, ref, useTemplateRef } from 'vue';
 import AlertError from '@/components/AlertError.vue';
+import ShimmerSkeleton from '@/components/ShimmerSkeleton.vue';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -93,14 +94,14 @@ onMounted(async () => {
                 <div v-else class="mt-3 space-y-3">
                     <div
                         ref="recoveryCodeSectionRef"
-                        class="grid gap-1 rounded-lg bg-muted p-4 font-mono text-sm"
+                        class="grid gap-1 rounded-lg bg-raised p-4 font-mono text-sm"
                     >
                         <div v-if="!recoveryCodesList.length" class="space-y-2">
-                            <div
+                            <ShimmerSkeleton
                                 v-for="n in 8"
                                 :key="n"
-                                class="h-4 animate-pulse rounded bg-muted-foreground/20"
-                            ></div>
+                                class="h-4 rounded"
+                            />
                         </div>
                         <div
                             v-else
@@ -110,7 +111,7 @@ onMounted(async () => {
                             {{ code }}
                         </div>
                     </div>
-                    <p class="text-xs text-muted-foreground select-none">
+                    <p class="text-xs text-muted select-none">
                         Each recovery code can be used once to access your
                         account and will be removed after use. If you need more,
                         click

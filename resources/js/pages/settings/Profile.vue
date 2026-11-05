@@ -9,22 +9,13 @@ import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
-
-defineOptions({
-    layout: {
-        breadcrumbs: [
-            {
-                title: 'Profile settings',
-                href: edit(),
-            },
-        ],
-    },
-});
+import type { User } from '@/types';
 
 const page = usePage();
-const user = computed(() => page.props.auth.user);
+
+// Settings pages sit behind the `auth` middleware, so a user is always present.
+const user = computed(() => page.props.auth.user as User);
 </script>
 
 <template>
@@ -74,7 +65,7 @@ const user = computed(() => page.props.auth.user);
             </div>
 
             <div v-if="page.props.mustVerifyEmail && !user.email_verified_at">
-                <p class="-mt-4 text-sm text-muted-foreground">
+                <p class="-mt-4 text-sm text-muted">
                     Your email address is unverified.
                     <Link
                         :href="send()"
