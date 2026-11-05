@@ -63,3 +63,9 @@ How is a Movie identified, addressed, and stored in Reelio?
 - From [Search experience](./23-search-experience.md) (resolved): rows are also created on first save. The Watchlist and Watched endpoints are addressed by catalog id and find or create the row through `Catalog`, so "only opening a Movie creates a row" no longer holds. A row created by a save has never been viewed, so the purge clock needs a start: stamp `last_viewed_at` (or a created timestamp the purge reads) when the row is created. Undo by catalog id re-creates a purged row, so Undo no longer depends on the purge period.
 
 - From [Watchlist and Watched pages](./25-watchlist-and-watched-pages.md) (resolved): a dropped Movie is now the glossary's **Removed Movie** ("shell" is retired in new writing). On the lists, Removed Movies sit in their own "No longer available" group, identified as "Removed movie" plus the user's own date; no title is kept. The lists use cursor pagination, which needs non-null sort keys, so the paginated query excludes Removed Movies.
+
+- From [Cache lifetimes and refresh schedule](./26-cache-lifetimes-and-refresh.md) (resolved): `metadata_synced_at` is renamed `synced_at`. One `movie()` call refreshes the row, genres, Availability, Streaming services and detail cache together.
+    - Unviewed Movies with no user facts are purged after 30 days, behind `catalog.purge_unviewed.enabled` (on by default) and `after_days`.
+    - `last_viewed_at` is set at creation and on every view.
+    - A cap guard clears the TMDB fields of any row that is 170 days without a sync. It is not marked removed, and the next refresh restores it.
+    - `catalog:purge` is the licence-loss command.

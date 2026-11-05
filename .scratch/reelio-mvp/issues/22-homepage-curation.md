@@ -35,3 +35,5 @@ What exactly does Discover show, and in what order?
 - **Failure states:** a section whose source fails with no stale copy is hidden quietly. If every section fails, the page shows "We can't reach our movie data right now" with Retry, and Search stays reachable. A stale section shows normally, with no per-row notice.
 
 - From [Search experience](./23-search-experience.md) (resolved): Discover's bookmark toggles use the catalog-id Watchlist endpoints, which create the Movie row on first save, and `userMovies` is keyed by catalog id.
+
+- From [Cache lifetimes and refresh schedule](./26-cache-lifetimes-and-refresh.md) (resolved): the Discover payload is rebuilt once a day by a job dispatched at 05:00 UTC, so the daily hero and genre rotation change at that time. Visitors only read the payload, and the first request builds it if it's missing. A failed section keeps its previous version as `stale` for up to 7 days, then is hidden.

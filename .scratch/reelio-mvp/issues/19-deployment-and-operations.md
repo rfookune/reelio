@@ -82,3 +82,8 @@ Facts below come from Laravel Cloud's docs as of 2026-11-04; the Cloud-behaviour
 - Nightwatch sees jobs on the `cloud` queue driver; if not, Cloud's Queues dashboard is the failed-job alert source.
 
 - From [Search experience](./23-search-experience.md) (resolved): the search query lives in `?q=`, so request-path logging must redact `q`. Check at build whether Laravel Cloud's edge access logs hold full query strings.
+
+- From [Cache lifetimes and refresh schedule](./26-cache-lifetimes-and-refresh.md) (resolved): every scheduled task dispatches from one daily slot at 05:00 UTC, with weekly tasks on Mondays and no hourly tasks.
+    - Movie refreshes are one unique job per Movie on `default`, dispatched by a self-continuing planner.
+    - Background TMDB calls share a 20 requests/s throttle in Valkey.
+    - New owner alerts: a Movie with user facts more than 14 days overdue for refresh; the IMDb table more than 3 days old.

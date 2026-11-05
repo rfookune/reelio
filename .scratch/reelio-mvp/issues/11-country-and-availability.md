@@ -36,3 +36,5 @@ How does Reelio choose a country and present Availability?
 - **Attribution and caveat:** every block, empty state included, carries "Streaming data from JustWatch" and "Availability changes often and may be incomplete. Not listed doesn't mean unavailable."
 - **Freshness:** a quiet "Updated 3 days ago" from the Movie's Availability refresh time; a "may be out of date" notice when the data is `stale`. The refresh interval is set by the cache-lifetimes patch.
 - **Trending:** stays global and is labelled just "Trending". The country affects only Availability, never Discover rows.
+
+- From [Cache lifetimes and refresh schedule](./26-cache-lifetimes-and-refresh.md) (resolved): the freshness line reads the Movie's `synced_at` ("Updated today / yesterday / N days ago"). The "may be out of date" notice shows when Availability is more than 7 days old. Availability is refreshed on a detail view when more than 24 h old, every 3 days for Watchlist Movies, and every 30 days for Watched-only Movies. The Movie picker's Availability block carries the same line.

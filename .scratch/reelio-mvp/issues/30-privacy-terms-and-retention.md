@@ -17,3 +17,4 @@ What do the Privacy and Terms pages say, and what is the published retention pol
 ## Comments
 
 - From [Movie detail page](./24-movie-detail-page.md) (resolved): trailers are click-to-play from `youtube-nocookie.com`. Nothing loads from YouTube until the visitor presses play, and YouTube may set cookies after that (the Movie page says so under the player). The Privacy page should say the same and list YouTube as a third party.
+- From [Cache lifetimes and refresh schedule](./26-cache-lifetimes-and-refresh.md) (resolved): cached Catalog data holds no personal data. TMDB-derived data is never kept more than 6 months: Movies held by users are refreshed every 3 to 30 days, the cache lives at most 30 days, and Movies nobody holds are purged after 30 days unviewed. User facts are never deleted by any of this.

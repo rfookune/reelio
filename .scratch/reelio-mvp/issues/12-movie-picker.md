@@ -50,3 +50,4 @@ How does the P0 random movie picker behave?
 - One candidate: it's shown, Pick again is disabled, and visible text says "This is the only match".
 
 - From [Watchlist and Watched pages](./25-watchlist-and-watched-pages.md) (resolved): "Pick for me" is hidden when the picker has **no candidates**, not only when the Watchlist is empty, because a Watchlist holding only Removed Movies has none.
+- From [Cache lifetimes and refresh schedule](./26-cache-lifetimes-and-refresh.md) (resolved): Watchlist Movies are refreshed every 3 days, so the picker's stored Stream/Free Availability is at most about 3 days old. The picker shows the same "Updated N days ago" line and 7-day "may be out of date" notice as the detail page.

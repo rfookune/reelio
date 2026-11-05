@@ -83,3 +83,10 @@ Use the `codebase-design` skill.
 - From [Deployment and operations](./19-deployment-and-operations.md) (resolved): the IMDb import runs on a Flex managed queue, where jobs are killed at 90 seconds. The staging table and swap keep a killed run harmless; measure the real duration at build and move the `imports` queue to Pro if it doesn't fit.
 
 - From [Movie detail page](./24-movie-detail-page.md) (resolved): the TMDB adapter's trailer ranking keeps the chain from [TMDB API coverage for MVP features](./02-tmdb-api-coverage.md) (Trailer before Teaser, then official, then language), considers YouTube videos only (the player embeds YouTube only), and replaces the last tiebreak: the latest published on or before the primary release date, else the earliest.
+
+- From [Cache lifetimes and refresh schedule](./26-cache-lifetimes-and-refresh.md) (resolved): how long `stale` may be served is now set:
+    - **Discover:** the payload is rebuilt daily; stale sections are kept for up to 7 days.
+    - **Search:** fresh for 1 h, stale for up to 24 h.
+    - **Detail cache:** a 30-day hard lifetime.
+    - **Movie refresh:** a detail view refreshes during the request (interactive profile) when the data is more than 24 h old. Planner jobs (background profile, one per Movie) share a 20 requests/s throttle in Valkey.
+    - **IMDb import:** daily, skipped when the file is unchanged, with an alert when the table is more than 3 days old.

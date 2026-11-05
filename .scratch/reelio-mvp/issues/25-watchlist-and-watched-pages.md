@@ -103,3 +103,5 @@ When the last card is removed, the empty state appears and focus moves to its he
 - A list layout.
 - A rating sort.
 - A genre filter on the lists.
+
+- From [Cache lifetimes and refresh schedule](./26-cache-lifetimes-and-refresh.md) (resolved): a Movie whose TMDB fields were cleared by the 170-day cap guard (not marked removed) also sits in the "No longer available" group. Its card reads "Details temporarily unavailable" in place of "Removed movie", and it returns to the grid after its next successful refresh.
