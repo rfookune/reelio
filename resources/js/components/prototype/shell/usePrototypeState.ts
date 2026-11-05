@@ -5,7 +5,7 @@
 import { reactive } from 'vue';
 import { toast } from 'vue-sonner';
 import type { MockMovie } from './mockMovies';
-import { initialWatchlistIds } from './mockMovies';
+import { initialWatched, initialWatchlistIds } from './mockMovies';
 
 export type Screen =
     | 'discover'
@@ -18,6 +18,8 @@ export type SkeletonStyle = 'off' | 'pulse' | 'shimmer';
 
 const state = reactive({
     watchlist: new Set<number>(initialWatchlistIds),
+    /** Movie id → Watched date (ISO). */
+    watched: new Map<number, string>(initialWatched),
     screen: 'discover' as Screen,
 });
 

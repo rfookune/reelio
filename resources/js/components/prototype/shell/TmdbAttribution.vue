@@ -7,10 +7,10 @@
 
 <template>
     <footer
-        class="mt-16 border-t border-(--rp-line) px-4 pt-8 pb-28 text-sm text-(--rp-muted) md:px-8 md:pb-10"
+        class="mt-16 border-t border-(--rp-line) pt-8 pb-28 text-sm text-(--rp-muted) md:pb-10"
     >
         <div
-            class="mx-auto flex max-w-7xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+            class="mx-auto flex max-w-7xl flex-col gap-4 px-4 sm:flex-row sm:items-center sm:justify-between md:px-8"
         >
             <div class="flex items-center gap-4">
                 <img

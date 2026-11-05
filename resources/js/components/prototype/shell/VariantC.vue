@@ -5,11 +5,16 @@
  * The top bar floats over a full-bleed backdrop of the top trending movie; its
  * light spills down into the page. Sections below are list rows (ranked only
  * for Trending, which is an ordered list), not poster grids.
+ *
+ * Iteration 2: Watchlist and Watched use Card A in a poster grid (Watched adds
+ * the Watched date), and the top bar carries a light/dark theme toggle.
  */
-import { Bookmark, BookmarkCheck, Play } from '@lucide/vue';
-import { computed } from 'vue';
+import { Bookmark, BookmarkCheck, Moon, Play, Sun } from '@lucide/vue';
+import type { Ref } from 'vue';
+import { computed, inject } from 'vue';
 import ExternalRating from './ExternalRating.vue';
 import MobileBottomNav from './MobileBottomNav.vue';
+import MovieCardA from './MovieCardA.vue';
 import MovieCardC from './MovieCardC.vue';
 import type { MockMovie } from './mockMovies';
 import { allMovies, backdropUrl, featured, sections } from './mockMovies';
@@ -30,9 +35,19 @@ const heroImage = computed(() => backdropUrl(featured));
 const listSections = sections.filter((section) => section.key !== 'trending');
 const trending = sections.find((section) => section.key === 'trending')!;
 
-function savedMovies(): MockMovie[] {
+const screenMovies = computed<MockMovie[]>(() => {
+    if (state.screen === 'watched') {
+        return [...state.watched.entries()]
+            .sort(([, a], [, b]) => b.localeCompare(a))
+            .map(([id]) => allMovies.find((movie) => movie.id === id)!)
+            .filter(Boolean);
+    }
+
     return allMovies.filter((movie) => state.watchlist.has(movie.id));
-}
+});
+
+const theme = inject<Ref<string>>('rpTheme');
+const toggleTheme = inject<() => void>('rpToggleTheme');
 </script>
 
 <template>
@@ -55,7 +70,7 @@ function savedMovies(): MockMovie[] {
 
         <header class="relative z-30">
             <div
-                class="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 md:px-8"
+                class="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 md:px-8"
             >
                 <button type="button" @click="go('discover')">
                     <Wordmark />
@@ -84,7 +99,20 @@ function savedMovies(): MockMovie[] {
                 </nav>
                 <button
                     type="button"
-                    class="ml-auto hidden size-9 items-center justify-center rounded-full bg-(--rp-raised) text-sm font-semibold ring-1 ring-(--rp-line) md:ml-0 md:flex"
+                    class="ml-auto flex size-9 items-center justify-center rounded-full text-(--rp-muted) hover:bg-(--rp-raised) hover:text-(--rp-text) md:ml-0"
+                    :aria-label="
+                        theme === 'dark'
+                            ? 'Switch to light theme'
+                            : 'Switch to dark theme'
+                    "
+                    @click="toggleTheme?.()"
+                >
+                    <Sun v-if="theme === 'dark'" class="size-4.5" />
+                    <Moon v-else class="size-4.5" />
+                </button>
+                <button
+                    type="button"
+                    class="hidden size-9 items-center justify-center rounded-full bg-(--rp-raised) text-sm font-semibold ring-1 ring-(--rp-line) md:flex"
                     aria-label="Profile"
                     @click="go('profile')"
                 >
@@ -275,41 +303,66 @@ function savedMovies(): MockMovie[] {
                 </section>
             </template>
 
-            <template v-else-if="state.screen === 'watchlist'">
+            <template
+                v-else-if="
+                    state.screen === 'search' || state.screen === 'profile'
+                "
+            >
+                <ScreenStub />
+            </template>
+
+            <!-- Watchlist and Watched: Card A in a poster grid. -->
+            <template v-else>
                 <div
                     class="mt-8 flex flex-wrap items-center justify-between gap-4"
                 >
                     <h1 class="text-3xl font-semibold tracking-tight">
-                        Your Watchlist
+                        {{
+                            state.screen === 'watchlist'
+                                ? 'Your Watchlist'
+                                : 'Watched'
+                        }}
                     </h1>
                     <WatchlistTabs />
                 </div>
                 <p
-                    v-if="savedMovies().length === 0"
+                    v-if="screenMovies.length === 0"
                     class="mt-16 text-center text-(--rp-muted)"
                 >
-                    Your Watchlist is empty. Save movies from Discover and
-                    they’ll show up here.
+                    {{
+                        state.screen === 'watchlist'
+                            ? 'Your Watchlist is empty. Save movies from Discover and they’ll show up here.'
+                            : 'Nothing here yet. Movies you mark as watched show up here with the date.'
+                    }}
                 </p>
-                <ul v-else class="mt-6 grid gap-x-8 gap-y-1 md:grid-cols-2">
-                    <li v-for="movie in savedMovies()" :key="movie.id">
-                        <MovieCardC
-                            :movie="movie"
-                            :on-watchlist="isOnWatchlist(movie)"
-                            @toggle="toggleWatchlist(movie)"
-                        />
-                    </li>
-                </ul>
-            </template>
-
-            <template v-else>
-                <div
-                    v-if="state.screen === 'watched'"
-                    class="mt-8 flex justify-center"
+                <ul
+                    v-else
+                    class="mt-6 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"
                 >
-                    <WatchlistTabs />
-                </div>
-                <ScreenStub />
+                    <template v-if="loading">
+                        <li v-for="n in 6" :key="n">
+                            <SkeletonBlock
+                                class="aspect-[2/3] w-full rounded-lg"
+                            />
+                            <SkeletonBlock class="mt-3 h-3.5 w-4/5 rounded" />
+                            <SkeletonBlock class="mt-2 h-3 w-1/2 rounded" />
+                        </li>
+                    </template>
+                    <template v-else>
+                        <li v-for="movie in screenMovies" :key="movie.id">
+                            <MovieCardA
+                                :movie="movie"
+                                :on-watchlist="isOnWatchlist(movie)"
+                                :watched-on="
+                                    state.screen === 'watched'
+                                        ? state.watched.get(movie.id)
+                                        : undefined
+                                "
+                                @toggle="toggleWatchlist(movie)"
+                            />
+                        </li>
+                    </template>
+                </ul>
             </template>
         </main>
 

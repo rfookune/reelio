@@ -5,29 +5,39 @@
  * Three structurally different shells + movie cards, switchable via ?variant=A|B|C,
  * with orthogonal toggles so the cosmetic choices can be judged apart from layout:
  *   ?theme=dark|light  ?palette=navy|charcoal  ?font=inter|geist
- *   ?loading=off|pulse|shimmer
+ *   ?loading=off|shimmer|pulse  ?screen=discover|watchlist|watched (initial screen)
  * All data is mock (see components/prototype/shell/mockMovies.ts); nothing persists.
  */
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { computed, onBeforeUnmount, provide, watchEffect } from 'vue';
+import {
+    computed,
+    onBeforeUnmount,
+    onMounted,
+    provide,
+    watchEffect,
+} from 'vue';
 import PrototypeSwitcher from '@/components/prototype/PrototypeSwitcher.vue';
-import type { SkeletonStyle } from '@/components/prototype/shell/usePrototypeState';
+import type {
+    Screen,
+    SkeletonStyle,
+} from '@/components/prototype/shell/usePrototypeState';
+import { usePrototypeState } from '@/components/prototype/shell/usePrototypeState';
 import VariantA from '@/components/prototype/shell/VariantA.vue';
 import VariantB from '@/components/prototype/shell/VariantB.vue';
 import VariantC from '@/components/prototype/shell/VariantC.vue';
 import { Toaster } from '@/components/ui/sonner';
 
 const variants = [
+    { key: 'C', name: 'Backdrop hero + list rows, A cards on lists' },
     { key: 'A', name: 'Top bar + poster shelves' },
     { key: 'B', name: 'Starter-kit sidebar + grid' },
-    { key: 'C', name: 'Backdrop hero + list rows' },
 ];
 
 const toggles = {
     theme: ['dark', 'light'],
-    palette: ['navy', 'charcoal'],
+    palette: ['charcoal', 'navy'],
     font: ['inter', 'geist'],
-    loading: ['off', 'pulse', 'shimmer'],
+    loading: ['off', 'shimmer', 'pulse'],
 } as const;
 
 type ToggleKey = keyof typeof toggles;
@@ -54,6 +64,12 @@ const settings = computed(() => ({
     font: read('font', toggles.font),
     loading: read('loading', toggles.loading) as SkeletonStyle,
 }));
+
+provide(
+    'rpTheme',
+    computed(() => settings.value.theme),
+);
+provide('rpToggleTheme', () => cycle('theme'));
 
 provide(
     'rpSkeletonStyle',
@@ -87,6 +103,14 @@ watchEffect(() => {
     root.dataset.rpPalette = settings.value.palette;
     root.dataset.rpFont = settings.value.font;
     root.classList.toggle('dark', settings.value.theme === 'dark');
+});
+
+onMounted(() => {
+    const screen = query.value.get('screen');
+
+    if (screen) {
+        usePrototypeState().go(screen as Screen);
+    }
 });
 
 onBeforeUnmount(() => {

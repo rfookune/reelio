@@ -397,4 +397,13 @@ export const initialWatchlistIds: number[] = [
     m.spiritedAway.id,
 ];
 
+/** Movies pre-marked as Watched, with their Watched date (most recent first). */
+export const initialWatched: [number, string][] = [
+    [m.inception.id, '2026-10-31'],
+    [m.amelie.id, '2026-10-19'],
+    [m.godfather.id, '2026-09-02'],
+    [m.madMax.id, '2026-08-14'],
+    [m.interstellar.id, '2026-06-27'],
+];
+
 export const allMovies: MockMovie[] = Object.values(movies);

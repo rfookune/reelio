@@ -9,7 +9,20 @@ import ExternalRating from './ExternalRating.vue';
 import type { MockMovie } from './mockMovies';
 import PosterImage from './PosterImage.vue';
 
-defineProps<{ movie: MockMovie; onWatchlist: boolean }>();
+const props = defineProps<{
+    movie: MockMovie;
+    onWatchlist: boolean;
+    /** ISO Watched date; shown on the Watched screen only. */
+    watchedOn?: string;
+}>();
+
+const watchedLabel = props.watchedOn
+    ? new Date(`${props.watchedOn}T12:00:00`).toLocaleDateString('en-US', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+      })
+    : null;
 defineEmits<{ toggle: [] }>();
 </script>
 
@@ -63,5 +76,8 @@ defineEmits<{ toggle: [] }>();
             />
             <span v-else class="text-xs text-(--rp-muted)">Not yet rated</span>
         </div>
+        <p v-if="watchedLabel" class="mt-1 text-xs text-(--rp-muted)">
+            Watched {{ watchedLabel }}
+        </p>
     </article>
 </template>
