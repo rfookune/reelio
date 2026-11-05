@@ -1,10 +1,10 @@
 # Reelio MVP spec
 
-Status: needs-triage
+Status: ready-for-agent
 Map: [Reelio MVP](./map.md)
 Source: [PRD v1.0](./prd.md), as amended by every decision on the map
 
-**Status of this draft:** assembled from the resolved tickets by [Spec assembly](./issues/31-spec-assembly.md). The owner reviews it in [Spec review](./issues/32-spec-review.md), settles the "Owner to confirm" list in Further Notes, and then sets `Status: ready-for-agent` for `/to-tickets`.
+**Status:** assembled from the resolved tickets by [Spec assembly](./issues/31-spec-assembly.md), then reviewed and locked by the owner in [Spec review](./issues/32-spec-review.md). It is ready for `/to-tickets`.
 
 **Name:** "Reelio" is the working name throughout. The product will be called **Houselight** once [Clear Houselight on the official registers](./issues/21-houselight-register-clearance.md) passes; the rename is its own implementation ticket (see Further Notes).
 
@@ -220,7 +220,7 @@ From [Movie identity, URLs and local storage](./issues/09-movie-identity-and-sto
     - Metadata: `title`, `original_title`, `overview`, `tagline`, `release_date`, `runtime`, `poster_path`, `backdrop_path`, `original_language`, `vote_average`, `vote_count`, `imdb_id`.
     - Bookkeeping: `synced_at`, `last_viewed_at`, and a marker that the Movie is a Removed Movie.
     - Every TMDB-derived column is nullable, because a Removed Movie and a cap-cleared Movie (below) keep the row with those fields cleared.
-    - `tagline` isn't named in the storage ticket. It's added so the tagline survives an outage, like the overview. It could live in the detail cache instead; this is a build-time choice.
+    - `tagline` is nullable, so it survives an outage like the overview ([Spec review](./issues/32-spec-review.md)).
 - **`genres`** (TMDB genre id and name) and a **`genre_movie`** pivot, used by the picker. The genre list is refreshed weekly.
 - **`streaming_services`:** TMDB's id for the service, name, logo path and fetch timestamp. Services that no Availability row references are deleted by the daily cleanup.
 - **`availabilities`:** one row per Movie, Streaming service, country and offer type (`stream`, `free`, `rent`, `buy`), plus TMDB's `display_priority` for ordering.
@@ -241,7 +241,7 @@ From [Movie identity, URLs and local storage](./issues/09-movie-identity-and-sto
     - `user_id`, foreign key with cascade delete;
     - the event name, a JSON properties object, and a timestamp.
 
-    Rows older than 13 months are rolled into aggregate counts and deleted (the roll-up table's shape is open; see Further Notes).
+    Rows older than 13 months are rolled into an aggregate table and deleted. The aggregate table has one row per day and event name with a count, no `user_id` and no properties. The one exception is `movie_picker_used`, which also keeps the total of its `pool_size`, so the average stays computable. `metrics:report` reads both tables ([Spec review](./issues/32-spec-review.md)).
 
 - **`sessions`:** the `ip_address` and `user_agent` columns are dropped. `user_id` gets a foreign key with cascade delete.
 - **Cache only (Valkey):**
@@ -343,6 +343,9 @@ From [Cache lifetimes and refresh schedule](./issues/26-cache-lifetimes-and-refr
     - The owner is alerted when any Movie with user facts is more than 14 days past its due refresh.
     - At **170 days** without a successful sync, any Movie's TMDB-derived fields are cleared, whether or not the purge is on. It is _not_ marked removed.
     - It appears in the "No longer available" group as "Details temporarily unavailable", and the next successful refresh restores it.
+    - Like a Removed Movie, it's excluded from picker candidates, the sitemap and the paginated list query.
+    - Its Movie page tries the normal in-request refresh. If that fails, the page is a **503** with `Retry-After` and `noindex`, showing "Details temporarily unavailable" with no stored fields. A signed-in user with facts gets the same Remove and Clear actions as on the 410 page. It never returns the 410 ([Spec review](./issues/32-spec-review.md)).
+    - "Cap-cleared" is an operational state, not a domain term, so the glossary doesn't define it.
 - **Licence loss:** `catalog:purge`, run by hand, applies the same clearing to every row. Users' facts survive.
 - **Freshness:** every Availability block shows "Updated today / yesterday / N days ago" from `synced_at`, plus a "may be out of date" notice when that is more than 7 days old.
 
@@ -381,28 +384,29 @@ Every scheduled task runs from one daily slot at **05:00 UTC** and only dispatch
 | `queue:prune-failed --hours=168`                                        | daily                   | [30](./issues/30-privacy-terms-and-retention.md) |
 | Genre list refresh                                                      | weekly, Monday          | [26](./issues/26-cache-lifetimes-and-refresh.md) |
 
-`queue:prune-failed` applies wherever Laravel's failed-job table is in use. On Cloud managed queues, failed jobs live in Cloud's dashboard; check the retention there at build.
+`queue:prune-failed` covers local development and anything on Laravel's failed-job table. On Cloud managed queues, failed jobs live in Cloud's Queues dashboard, where the Laravel commands don't work. A build check finds how long Cloud keeps them, and the Privacy page publishes that figure. If Cloud keeps them indefinitely, the owner deletes failed jobs from the dashboard weekly to hold the 7-day promise ([Spec review](./issues/32-spec-review.md)).
 
 ### Routes
 
-| Method       | Path                                             | Access                             | Notes                                                                                       |
-| ------------ | ------------------------------------------------ | ---------------------------------- | ------------------------------------------------------------------------------------------- |
-| GET          | `/`                                              | public, SSR                        | Discover                                                                                    |
-| GET          | `/search?q=&page=`                               | public, client-rendered, `noindex` | Search                                                                                      |
-| GET          | `/movies/tmdb/{tmdbId}`                          | public, `noindex`, rate-limited    | entry route: find or create, then 301                                                       |
-| GET          | `/movies/{slug}-{id}`                            | public, SSR                        | Movie page; 301 on a wrong slug; 410 for a Removed Movie                                    |
-| PUT / DELETE | `/movies/tmdb/{tmdbId}/watchlist`                | `auth` (guests: pending action)    | idempotent set / clear                                                                      |
-| PUT / DELETE | `/movies/tmdb/{tmdbId}/watched`                  | `auth` (guests: pending action)    | idempotent mark / clear                                                                     |
-| —            | Undo endpoint                                    | `auth`                             | path not decided                                                                            |
-| —            | Movie picker endpoint                            | `auth`                             | path not decided; called with `useHttp`                                                     |
-| GET          | `/watchlist?sort=`, `/watched?sort=`             | `auth`, client-rendered, `noindex` |                                                                                             |
-| GET          | `/about`, `/privacy`, `/terms`, `/accessibility` | public, SSR                        | `/accessibility` is from [29](./issues/29-accessibility-verification.md); see Further Notes |
-| —            | Country selection                                | public                             | path not decided; writes the guest cookie or `preferred_country`                            |
-| POST         | `/csp-report`                                    | public, no CSRF, always 204        |                                                                                             |
-| GET          | `/up`                                            | public                             | liveness: the app only                                                                      |
-| GET          | `/health`                                        | public                             | readiness: one cheap DB query and one cache read; 200 or 503 with no detail                 |
-| GET          | `/robots.txt`, sitemap index                     | public                             | follows the indexing flag                                                                   |
-| —            | Fortify auth routes and the settings pages       | as the starter kit                 | client-rendered, `noindex`                                                                  |
+| Method       | Path                                             | Access                                   | Notes                                                                                                                                    |
+| ------------ | ------------------------------------------------ | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| GET          | `/`                                              | public, SSR                              | Discover                                                                                                                                 |
+| GET          | `/search?q=&page=`                               | public, client-rendered, `noindex`       | Search                                                                                                                                   |
+| GET          | `/movies/tmdb/{tmdbId}`                          | public, `noindex`, rate-limited          | entry route: find or create, then 301                                                                                                    |
+| GET          | `/movies/{slug}-{id}`                            | public, SSR                              | Movie page; 301 on a wrong slug; 410 for a Removed Movie                                                                                 |
+| PUT / DELETE | `/movies/tmdb/{tmdbId}/watchlist`                | `auth` (guests: pending action)          | idempotent set / clear                                                                                                                   |
+| PUT / DELETE | `/movies/tmdb/{tmdbId}/watched`                  | `auth` (guests: pending action)          | idempotent mark / clear                                                                                                                  |
+| —            | Undo endpoint                                    | `auth`                                   | path set at build                                                                                                                        |
+| —            | Movie picker endpoint                            | `auth`                                   | path set at build; called with `useHttp`                                                                                                 |
+| GET          | `/watchlist?sort=`, `/watched?sort=`             | `auth`, client-rendered, `noindex`       |                                                                                                                                          |
+| GET          | `/about`, `/privacy`, `/terms`, `/accessibility` | public, SSR                              |                                                                                                                                          |
+| GET          | TMDB watch-page redirect                         | public, `noindex`, link `rel="nofollow"` | path set at build; records `availability_link_clicked` (signed-in only), then 302s to a URL built from `tmdb_id` and a supported country |
+| —            | Country selection                                | public                                   | path set at build; writes the guest cookie or `preferred_country`                                                                        |
+| POST         | `/csp-report`                                    | public, no CSRF, always 204              |                                                                                                                                          |
+| GET          | `/up`                                            | public                                   | liveness: the app only                                                                                                                   |
+| GET          | `/health`                                        | public                                   | readiness: one cheap DB query and one cache read; 200 or 503 with no detail                                                              |
+| GET          | `/robots.txt`, sitemap index                     | public                                   | follows the indexing flag                                                                                                                |
+| —            | Fortify auth routes and the settings pages       | as the starter kit                       | client-rendered, `noindex`                                                                                                               |
 
 The Watchlist and Watched actions need `auth`, not `verified`. Verification still guards account settings and email-dependent features. Every state-changing route has CSRF protection, validation and authorization to the user's own data.
 
@@ -574,6 +578,7 @@ From [Movie detail page](./issues/24-movie-detail-page.md). The throwaway protot
         - No title.
         - A signed-in user with facts sees "It's still in your lists" with Remove and Clear (toast and Undo).
         - Links to Discover, plus Your Watchlist when signed in.
+    - **Cap-cleared Movie, refresh failed:** a 503 with `Retry-After` and `noindex`: "Details temporarily unavailable", no stored fields, and Remove and Clear for a signed-in user with facts (see the cap guard).
 - **On view:** `last_viewed_at` is updated. `movie_viewed` is recorded for signed-in users with the referrer (`discover`, `search`, `watchlist`, `watched`, `picker`, `direct`).
 
 ### Watchlist and Watched pages
@@ -630,7 +635,7 @@ From [Watchlist and Watched pages](./issues/25-watchlist-and-watched-pages.md):
 
 From [Movie picker](./issues/12-movie-picker.md), as amended by [Watchlist interactions](./issues/13-watchlist-interactions.md) and [Watchlist and Watched pages](./issues/25-watchlist-and-watched-pages.md):
 
-- **Candidates:** the user's Watchlist, rewatches included, minus Movies without details (Removed Movies, and by derivation cap-cleared ones). There's no "exclude watched" toggle.
+- **Candidates:** the user's Watchlist, rewatches included, minus Movies without details (Removed Movies and cap-cleared Movies). There's no "exclude watched" toggle.
 - **Genre filter:** an optional multi-select, any-match, listing only genres present among the candidates. It belongs to the dialog and resets on open. Nothing is stored.
 - **Selection:**
     - Server-side uniform random over the candidates (Postgres `random()`), through one authenticated endpoint called with `useHttp`.
@@ -672,7 +677,7 @@ From [Country and Availability presentation](./issues/11-country-and-availabilit
     - entries are logo-and-name rows in TMDB's `display_priority` order, not clickable. Channel variants aren't merged;
     - the caveat: "Availability changes often and may be incomplete. Not listed doesn't mean unavailable.";
     - "Streaming data from JustWatch · Updated N days ago", plus "may be out of date" past 7 days. The JustWatch credit is text only: no JustWatch logo without JustWatch's permission ([01](./issues/01-tmdb-terms.md));
-    - "See all watch options on TMDB", built from `tmdb_id` and the country, opening in a new tab. It is the only link, and nothing implies a deep link;
+    - "See all watch options on TMDB", opening in a new tab. It goes through Reelio's TMDB watch-page redirect route, which records `availability_link_clicked` and 302s to the URL built from `tmdb_id` and the selected country. It is the only link, and nothing implies a deep link ([Spec review](./issues/32-spec-review.md));
     - empty state: "We don't have streaming information for this movie in {country}.", with the caveat, credit and link still shown.
 - **Trending stays global.** The country affects only Availability.
 - **The Privacy page** says the country is inferred from the connection at the edge and not stored.
@@ -751,8 +756,8 @@ From [Public pages: SSR, SEO metadata and sitemap scope](./issues/14-public-page
 - **Indexing flag:** one config flag, default **off**.
     - **Off:** `robots.txt` is `Disallow: /`, every page is `noindex`, and there's no sitemap.
     - **On:** it's switched on only after a favourable written answer in [Confirm TMDB's classification of Reelio](./issues/16-tmdb-classification.md).
-- **Indexable when the flag is on:** Discover, Movie pages, About, Privacy, Terms (and Accessibility; see Further Notes).
-    - Everything else gets `X-Robots-Tag: noindex` from middleware: Search, auth, Watchlist, Watched, settings, the picker endpoint, the entry route's 301, and 410 pages.
+- **Indexable when the flag is on:** Discover, Movie pages, About, Privacy, Terms and Accessibility ([Spec review](./issues/32-spec-review.md)).
+    - Everything else gets `X-Robots-Tag: noindex` from middleware: Search, auth, Watchlist, Watched, settings, the picker endpoint, the entry route's 301, the TMDB watch-page redirect, 410 pages and the cap-cleared 503.
     - Private pages are not disallowed in `robots.txt`, because crawlers must fetch them to see the `noindex`.
 - **One `<Head>` helper** handles:
     - titles: "{Title} ({year}) · Reelio", other pages "{Page} · Reelio";
@@ -846,7 +851,7 @@ From [Rate limiting and security headers](./issues/28-rate-limits-and-security.m
     - It strips query strings from `document-uri`, `referrer` and `blocked-uri`, keeps only the directive, those fields and the source location, and logs a warning (no IP).
 
 - **Outbound URLs** are built from checked ids, never passed through from TMDB:
-    - the TMDB watch page from `tmdb_id` and the country;
+    - the TMDB watch page from `tmdb_id` and a supported country, inside the redirect route, so it can't become an open redirect;
     - YouTube URLs from a key matching `^[A-Za-z0-9_-]{11}$` (otherwise the trailer is dropped);
     - image paths matching `^/[A-Za-z0-9_-]+\.(jpg|png|svg)$` under the fixed base.
 
@@ -856,7 +861,7 @@ From [Rate limiting and security headers](./issues/28-rate-limits-and-security.m
 - **Input and cookies:**
     - `q` ≤ 100 characters, `page` 1–500, `sort` from the fixed list;
     - the country cookie must name a supported country;
-    - the `appearance` cookie must be `light`, `dark` or `system` (the fallback is in Further Notes); `HandleAppearance` currently echoes it unchecked into the inline script;
+    - the `appearance` cookie must be `light`, `dark` or `system`. Any other value is treated as no cookie, so the default (`dark`) applies ([Spec review](./issues/32-spec-review.md)). `HandleAppearance` currently echoes it unchecked into the inline script;
     - the session cookie is `Secure`, `HttpOnly` and `SameSite=Lax` in production.
 - **Audits:** `composer audit` and `npm audit --audit-level=high` run as a required CI job. Dependabot security alerts and updates are on.
 
@@ -878,7 +883,7 @@ From [Analytics and error monitoring](./issues/08-analytics-and-monitoring.md), 
     | `movie_marked_watched`, `movie_unmarked_watched` | `movie_id`, `source`, `was_on_watchlist`                       |
     | `user_movie_action_undone`                       | `movie_id`, `action`                                           |
     | `movie_picker_used`                              | `pool_size`                                                    |
-    | `availability_link_clicked`                      | `movie_id`, `country`                                          |
+    | `availability_link_clicked`                      | `movie_id`, `country` (recorded by the redirect route)         |
     | `account_registered`                             | none                                                           |
 
 - **`metrics:report`:** an Artisan command over documented SQL, run by hand, with each metric (e.g. "weekly returning") defined in one place. Searches are counted as distinct users searching per day; there's no zero-result rate.
@@ -924,7 +929,7 @@ From [Privacy, terms and retention](./issues/30-privacy-terms-and-retention.md):
     | Password-reset tokens                                            | 60 min                                                           |
     | Pending guest action, Undo snapshot                              | in the session (30 min; latest only)                             |
     | Analytics events                                                 | 13 months, then anonymous counts; deleted with the account       |
-    | Failed jobs                                                      | 7 days                                                           |
+    | Failed jobs                                                      | 7 days (on Cloud, per the build check; see Scheduler)            |
     | App logs, Cloud access logs, CSP reports, `account_deleted` line | 7 days                                                           |
     | Rate-limit counters                                              | ≤ 1 h                                                            |
     | Nightwatch                                                       | 14 days                                                          |
@@ -1016,12 +1021,10 @@ From [Visual language and app shell](./issues/06-visual-language-and-shell.md), 
 - **Approved:**
     - `@testing-library/vue` and `pestphp/pest-plugin-browser` (plus Playwright's browser download, locally and in CI) ([07](./issues/07-test-strategy.md));
     - `fontaine` as a dev dependency ([27](./issues/27-images-and-performance.md)).
-- **Needs the owner's approval** before the build adds it:
-    - `aws/aws-sdk-php`, for Cloud managed queues ([19](./issues/19-deployment-and-operations.md)).
-- **Implied by decisions but never explicitly approved** (confirm with the owner):
-    - `resend/resend-php`: Laravel's Resend mail driver requires it;
-    - Nightwatch's agent package (`laravel/nightwatch`; confirm the name and whether Cloud installs it);
-    - Sentry's browser SDK (`@sentry/vue`).
+    - `aws/aws-sdk-php`, which Cloud's managed queues require (with Laravel 13.19 or newer; v13.40 is installed) ([19](./issues/19-deployment-and-operations.md), [Spec review](./issues/32-spec-review.md));
+    - `resend/resend-php`, which Laravel's Resend mail driver requires ([Spec review](./issues/32-spec-review.md));
+    - `laravel/nightwatch`, the Nightwatch agent ([Spec review](./issues/32-spec-review.md));
+    - `@sentry/vue`, the frontend error SDK ([Spec review](./issues/32-spec-review.md)).
 - **Rejected:** `spatie/laravel-csp`, Lighthouse CI, ESLint and template-lint plugins, Horizon, OMDb.
 
 ## Testing Decisions
@@ -1078,6 +1081,7 @@ Cloud preview environments are for manual checks only. Cloud's edge settings are
 - **Discover:** "See all" pages for its sections.
 - **Data:** change-driven refresh from TMDB's `/movie/changes` feed.
 - **Measurement:** real-user Web Vitals collection, and a privacy-friendly pageview tool.
+- **Platform:** a PWA (an installable manifest, maybe a service worker). The MVP is a responsive web app only ([Spec review](./issues/32-spec-review.md)).
 - **Legal:** appointing an EU and a UK representative if the beta grows, and a professional legal review if usage grows.
 - **Operations:** an always-on replica and an uptime monitor, which bring back the 99.5% target.
 
@@ -1119,6 +1123,7 @@ The contact address, the Resend sender domain, and the HSTS `includeSubDomains`/
 - Confirm Sentry's and Resend's retention before publishing them ([30](./issues/30-privacy-terms-and-retention.md)).
 - Check whether Cloud's edge access logs hold full query strings, and say so on the Privacy page if they do ([23](./issues/23-search-experience.md), [30](./issues/30-privacy-terms-and-retention.md)).
 - Confirm the Cloud region code in the dashboard ([30](./issues/30-privacy-terms-and-retention.md)).
+- Find how long Cloud's Queues dashboard keeps failed jobs. Publish that figure, or set up the weekly manual deletion ([Spec review](./issues/32-spec-review.md)).
 
 ### First-deploy checklist (one-time smoke test)
 
@@ -1163,18 +1168,17 @@ The contact address, the Resend sender domain, and the HSTS `includeSubDomains`/
 - Up to 7 days of deleted accounts in backups and logs.
 - TMDB's "destination site" and SEO language is unresolved until TMDB answers.
 
-### Owner to confirm
+### Settled in review
 
-These gaps weren't settled by any ticket. Each comes with the reading this spec assumes.
+The owner settled every gap the draft left open in [Spec review](./issues/32-spec-review.md). The answers now sit in the sections above:
 
-1. **Invalid `appearance` cookie fallback.** [28](./issues/28-rate-limits-and-security.md) says fall back to `system`, but [06](./issues/06-visual-language-and-shell.md) made `dark` the default. _Assumed:_ treat an invalid value as absent, so the default applies (`dark`).
-2. **`/accessibility` page.** It postdates the SSR and indexable list in [14](./issues/14-public-pages-seo.md). _Assumed:_ SSR and indexable, like Privacy and Terms.
-3. **Cap-cleared Movies** (cleared by the 170-day guard but not removed). [26](./issues/26-cache-lifetimes-and-refresh.md) only sets their list treatment. _Derived:_ they're excluded from picker candidates, the sitemap and the keyset query, as Removed Movies are. Their Movie page tries the normal in-request refresh. If that fails, the page renders the "source unavailable" state with no stored fields; a cap-cleared Movie never gets the 410.
-4. **Analytics roll-up storage.** [08](./issues/08-analytics-and-monitoring.md) says events older than 13 months become aggregate counts, but the aggregate table was never designed. _Assumed:_ daily counts per event name, with no `user_id`.
-5. **How `availability_link_clicked` is recorded.** The TMDB watch-page link opens in a new tab, and no mechanism was chosen. The options are a same-origin redirect endpoint (built only from `tmdb_id` and a supported country, so it can't be an open redirect) or a background POST on click. _Recommended:_ the redirect endpoint, which keeps the event server-side and works without JavaScript.
-6. **`queue:prune-failed` vs Cloud managed queues.** [30](./issues/30-privacy-terms-and-retention.md) schedules it daily, while [19](./issues/19-deployment-and-operations.md) says failed jobs live in Cloud's Queues dashboard. _Assumed:_ keep the command for local and database-backed queues, and publish the Cloud dashboard's failed-job retention instead if it differs from 7 days.
-7. **Undecided paths:** the Undo endpoint, the picker endpoint and country selection. These are build-time naming, not decisions.
-8. **`tagline`:** shown on the Movie page but missing from [09](./issues/09-movie-identity-and-storage.md)'s column list. _Assumed:_ a `movies` column.
-9. **PWA.** The PRD calls the platform a "Responsive web application / Progressive Web App", but no ticket designed a manifest or service worker. _Assumed:_ responsive web only; a PWA is a follow-up.
-10. **Dependencies:** approve `aws/aws-sdk-php`, `resend/resend-php`, Nightwatch's package and `@sentry/vue` (see Dependencies).
-11. **Glossary gap:** there's no domain term for a cap-cleared Movie ("Details temporarily unavailable"). It's worth a `domain-modeling` pass if it's kept distinct from Removed Movie.
+- the `appearance` fallback;
+- the Accessibility page;
+- cap-cleared Movies (with no glossary term);
+- the analytics roll-up;
+- the TMDB watch-page redirect;
+- failed-job retention on Cloud;
+- endpoint paths set at build;
+- `tagline`;
+- no PWA;
+- dependency approvals.
