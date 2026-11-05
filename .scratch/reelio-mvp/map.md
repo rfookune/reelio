@@ -43,6 +43,7 @@ A locked, implementation-ready spec for the Reelio MVP: every open decision sett
 - [Product name](./issues/20-product-name.md): **Houselight** (house lights dimming as the film begins), chosen after three screening rounds. Reelio and SceneIt were rejected over existing movie products. Pending [Clear Houselight on the official registers](./issues/21-houselight-register-clearance.md); the rename is a find-and-replace implementation ticket.
 - [Homepage curation](./issues/22-homepage-curation.md): a daily hero (Trending's top Movie with a backdrop), then Trending this week, Popular, Coming soon (US dates from `release_dates`, the next 60 days), Top rated, and three daily-rotated genre collections, 10 each. Deduplicated across sections in page order, no adult titles or poster-less Movies, the same for every visitor. Failed sections are hidden, with a full-page error only when everything fails.
 - [Search experience](./issues/23-search-experience.md): a `/search` page with live results (2 characters, 300 ms debounce, no dropdown) and `?q=`/`?page=` in the URL, with `q` redacted from logs and monitoring. Results use the Watchlist/Watched poster card (IMDb when a row has it, else TMDB) in TMDB's order, with a "Show more results" button. Cached Trending as the empty-state suggestions. **Watchlist and Watched endpoints are now addressed by catalog id** and create the row on first save, with `userMovies` keyed by catalog id on every surface.
+- [Movie detail page](./issues/24-movie-detail-page.md): a backdrop hero (poster, title, both External ratings, actions) that fades into the page. Overview, trailer and cast on the left; a sticky right column with Details, then Where to watch as Stream/Free/Rent/Buy tabs (after the overview on mobile). Click-to-play `youtube-nocookie` trailer with a TMDB-backdrop cover and an always-present Watch on YouTube link, ranked to the last official Trailer before release. A queued rewatch shows "Last watched"; a dropped Movie is a title-less 410 that lets the user clear their facts; channel variants aren't merged.
 
 ## Not yet specified
 
@@ -52,7 +53,7 @@ A locked, implementation-ready spec for the Reelio MVP: every open decision sett
 
 ## Out of scope
 
-- Designing P1/P2 features (advanced filters, streaming-service preferences, personal ratings, viewing dates, custom lists, stats, export, Google sign-in, related movies, Rotten Tomatoes ratings via Fandango's licensing route). The spec lists them as follow-ups only.
+- Designing P1/P2 features (advanced filters, streaming-service preferences, personal ratings, viewing dates, custom lists, stats, export, Google sign-in, related movies, Rotten Tomatoes ratings via Fandango's licensing route, merging Streaming service channel variants such as Paramount+ Premium and Paramount+ Amazon Channel, per [Movie detail page](./issues/24-movie-detail-page.md)). The spec lists them as follow-ups only.
 - Building the MVP. That happens from the spec's tickets after this map is done.
 - Metacritic ratings: dropped by the human; no free authorized source exists (see [OMDb ratings: coverage, terms and limits](./issues/03-omdb-ratings.md)).
 - OMDb as a Rating source: not an authorized source for IMDb or Rotten Tomatoes scores ([same ticket](./issues/03-omdb-ratings.md)).

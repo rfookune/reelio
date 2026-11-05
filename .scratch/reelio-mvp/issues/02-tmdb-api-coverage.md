@@ -48,3 +48,5 @@ Which TMDB v3 endpoints and fields cover each P0 feature, and which limits will 
 - **Ratings:** TMDB has only `vote_average` and `vote_count`. No IMDb, Rotten Tomatoes or Metacritic scores, so OMDb is still needed, joined on `imdb_id`.
 
 Full findings: branch research/tmdb-api-coverage, file .scratch/reelio-mvp/research/tmdb-api-coverage.md (https://github.com/rfookune/reelio/blob/research/tmdb-api-coverage/.scratch/reelio-mvp/research/tmdb-api-coverage.md)
+
+- From [Movie detail page](./24-movie-detail-page.md) (resolved): the trailer ranking changes. Among official YouTube Trailer-type videos in the requested languages, take the latest published on or before the primary release date, else the earliest; Teasers only when there is no Trailer. This replaces the "earliest \`published_at\`" tiebreak above, which picks *Interstellar*'s 2013 "Teaser Trailer" over its final "Trailer 4".

@@ -56,3 +56,5 @@ A rewatch is Add to Watchlist, then Mark as watched.
 - The pending action never travels in a URL, so no GET request ever changes data.
 
 - From [Search experience](./23-search-experience.md) (resolved): the Watchlist and Watched endpoints are addressed by catalog id (`PUT`/`DELETE /movies/tmdb/{tmdbId}/watchlist` and `/watched`), finding or creating the Movie row through `Catalog` as the entry route does, so a Movie with no row can be saved from any list. `userMovies` is keyed by catalog id; Undo snapshots and the guest pending action carry the catalog id. Search joins the surfaces table with the Watchlist toggle only.
+
+- From [Movie detail page](./24-movie-detail-page.md) (resolved): the detail page also covers a Movie that is Watched *and* on the Watchlist (a rewatch queued): "On your Watchlist", "Mark as watched" (moves the date, takes it off the Watchlist), and a quiet "Last watched {date} · Clear" line. The 410 page for a dropped Movie offers a signed-in user Remove and Clear for whatever facts they still hold, with the normal toast and Undo.
