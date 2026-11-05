@@ -1,7 +1,7 @@
 # Spec assembly
 
 Type: task
-Status: open
+Status: resolved
 Blocked by: 22, 23, 24, 25, 26, 27, 28, 29, 30
 Map: [Reelio MVP](../map.md)
 
@@ -22,3 +22,35 @@ AFK: the agent writes it from the closed tickets, lists the P1/P2 follow-ups, th
     - the Privacy and Terms outlines, the registration-page line, `clearHistory` and `encryptHistory`, and the breach runbook;
     - build checks for Sentry's and Resend's retention;
     - the accepted risk of having no EU or UK representative.
+
+## Answer
+
+The draft spec is at [spec.md](../spec.md), assembled on 2026-11-04 from every resolved ticket. It's in the `/to-spec` template, with `Status: needs-triage` until the owner reviews it.
+
+- **Final state only:** each section states the answer as later tickets amended it. For example: Cloud managed queues and Valkey, `synced_at`, catalog-id action endpoints, Removed Movie, and the YouTube-only trailer tiebreak. Every section links its source ticket.
+- **Contents:**
+    - 90 user stories, including the owner and operator;
+    - module, data, route and per-surface decisions;
+    - three test seams (HTTP, the source fakes, and `Http::fake()` for the TMDB adapter);
+    - the follow-up and out-of-scope lists.
+- **Further Notes carry:**
+    - the three launch blockers and what each one gates;
+    - the rename ticket;
+    - build checks and a first-deploy checklist (from 11, 14, 19, 23, 28 and 30);
+    - runbooks (restore drill, breach, manual accessibility, PageSpeed);
+    - accepted risks.
+- **Dependencies:** approved: `@testing-library/vue`, `pestphp/pest-plugin-browser` and `fontaine`. Still needing approval: `aws/aws-sdk-php`, and three that decisions imply but nobody approved: `resend/resend-php` (Laravel's Resend driver requires it), Nightwatch's package and `@sentry/vue`.
+- **Owner to confirm:** eleven gaps no ticket settled, each with the reading the spec assumes:
+    - the invalid `appearance` fallback;
+    - whether `/accessibility` is server-rendered and indexable;
+    - how cap-cleared Movies are treated;
+    - the shape of the analytics roll-up;
+    - how `availability_link_clicked` is recorded;
+    - `queue:prune-failed` vs Cloud queues;
+    - the undecided endpoint paths;
+    - `tagline`;
+    - PWA;
+    - dependency approvals;
+    - a glossary term for cap-cleared Movies.
+
+Next: the owner reviews the spec, settles that list, and sets `Status: ready-for-agent`. Then `/to-tickets`.
