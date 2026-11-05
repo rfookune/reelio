@@ -1,7 +1,7 @@
 # Movie detail page
 
 Type: prototype
-Status: open
+Status: claimed
 Map: [Reelio MVP](../map.md)
 
 ## Question
