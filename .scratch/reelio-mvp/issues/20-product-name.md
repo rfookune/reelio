@@ -35,3 +35,15 @@ This blocks launch, not the spec: the spec keeps "Reelio" as the working name, a
     | Lanterna | Pass, with a caveat | US LANTERNA Reg. 5929132 covers lamps only. LANTERN marks exist in Classes 9 and 42 (Brave New Software's VPN, among others), which are close but in a different field. No movie app found. |
     | Gloaming | Pass | No mark found in Classes 9 or 41, no app found. It exists only as screen titles (*In the Gloaming*, 1997; *The Gloaming*, 2020 series). |
     | Houselight | Pass | No software or entertainment mark found. A HOUSELIGHTS LLC owns one registered mark with unknown goods, to check. No app found. |
+
+- Screening, round 2 (2026-11-04). The owner's favourites are Houselight, Reelio and SceneIt, and the name must relate to what the app is for: discover, save, pick tonight's film, find where to stream it. Same sources as round 1.
+
+    | Candidate | Result | Findings |
+    | --- | --- | --- |
+    | SceneIt | **Fail** | "Scene It?" is Screenlife's movie trivia game brand, published by Mattel, then Paramount and Imagination Games (2022 to present), with trademarks covering computer and online game programs (Screenlife, LLC; serials 78049250, 78342828, 78581556). It's the same field (movies), and the name is well known. |
+    | FlickPick | **Fail** | Several existing movie-picker apps: "FlickPick - AI Movie Recs" (iOS), a FlickPick random picker (Android), FlickPicker. |
+    | Watchwise | **Fail** | A WatchWise film-archive app on the App Store, plus a "Watch Wise" movie content guide. |
+    | Ticketstub | Risky | No exact app, but the "stub" movie-tracker space is crowded (PocketStubs, Ticket Booth). |
+    | Picktures | Pass, with a caveat | No app or mark found. "Piktures" is an Android photo-gallery app, close in spelling but a different field. It ties directly to the picker ("pick" + "pictures"). |
+    | Lobbycard | Pass | No app or mark found; only physical lobby-card collecting and a lobby.cards gallery. Lobby cards were the cards cinemas used to advertise a film, which ties to discovery. |
+    | Reelio | **Fail** (round 0) | See [Reelio brand clearance](./15-brand-clearance.md): an existing iOS "Reelio: Movie & TV Watchlist" app built on TMDB. |
