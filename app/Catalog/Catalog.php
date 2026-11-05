@@ -30,7 +30,7 @@ class Catalog
         }
 
         $movie = DB::transaction(function () use ($details): Movie {
-            $movie = Movie::query()->createOrFirst(['tmdb_id' => $details->tmdbId], [
+            $movie = Movie::query()->firstOrCreate(['tmdb_id' => $details->tmdbId], [
                 'slug' => Str::slug($details->title ?? '') ?: 'movie',
                 'title' => $details->title,
                 'original_title' => $details->originalTitle,
