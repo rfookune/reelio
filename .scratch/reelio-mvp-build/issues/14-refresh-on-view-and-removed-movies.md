@@ -1,0 +1,15 @@
+# 14: Refresh on view, and Removed Movies
+
+Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
+
+**What to build:** A Movie page view refreshes data more than a day old before rendering, and a Movie TMDB has dropped becomes a Removed Movie whose page is a title-less 410. See the spec's "Refresh, cache lifetimes, purge and the cap guard" and "Movie identity and URLs" sections.
+
+**Blocked by:** [08: Catalog resilience and failure states](./08-catalog-resilience-and-failure-states.md), [12: Where to watch on the Movie page](./12-where-to-watch-on-the-movie-page.md)
+
+**Status:** ready-for-agent
+
+- [ ] One `movie()` refresh updates the row, genres, Availability, referenced Streaming services (upserted) and the detail cache, and sets `synced_at`
+- [ ] A view with `synced_at` over 24 h old refreshes in the request (interactive profile); on failure the page renders stored data as `stale` (Where to watch shows "may be out of date")
+- [ ] A 404 on refresh keeps the row, clears every TMDB-derived field, its genre links and Availability, and marks it removed; user facts are untouched
+- [ ] A Removed Movie's page is a 410 for everyone with `noindex`, no title, and the copy "This movie is no longer available. Our data source, TMDB, has removed this movie, so we can't show its details any more.", linking to Discover (list actions arrive with the lists)
+- [ ] Feature tests drive refresh, stale fallback and removal through the fake adapter
