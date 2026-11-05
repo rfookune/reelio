@@ -22,6 +22,10 @@ _Avoid_: Provider, review site
 A score for a Movie published by a Rating source, displayed with that source's attribution.
 _Avoid_: Score, critic rating, primary rating
 
+**Discover**:
+The public homepage of curated Movie sections, the same for every visitor.
+_Avoid_: Home feed, browse, explore
+
 ### Streaming
 
 **Streaming service**:
