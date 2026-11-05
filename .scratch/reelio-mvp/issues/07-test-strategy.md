@@ -12,3 +12,7 @@ How will the MVP be tested, and with which tools?
 - Browser end-to-end coverage of the core journeys: Pest 5's browser testing vs another runner, and which journeys qualify.
 - How the Catalog and Rating sources are faked in tests (HTTP fakes vs an in-memory fake implementation vs recorded fixtures).
 - What must be green in CI before merging.
+
+## Comments
+
+- From [Infrastructure baseline](./05-infrastructure-baseline.md) (resolved): the test suite runs on Postgres (not in-memory SQLite) with Redis cache locally; Cloud preview environments exist for pre-merge checks.

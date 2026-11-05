@@ -27,6 +27,7 @@ A locked, implementation-ready spec for the Reelio MVP: every open decision sett
 - [TMDB API coverage for MVP features](./issues/02-tmdb-api-coverage.md): TMDB v3 covers every P0 feature. Homepage from trending, popular, top_rated, upcoming and discover by genre; search via `/search/movie`; the detail page in one `/movie/{id}` call with credits, videos, release_dates and watch/providers appended. Director = crew with job Director; the trailer must be ranked by Reelio. Availability for all countries comes in one response (flatrate/rent/buy plus free/ads) with one TMDB watch-page link per country. Pages capped at 500; trending can't be scoped to a country; ratings are TMDB's own only, with `imdb_id` as the OMDb join key; about 40 req/s, no SLA.
 - [OMDb ratings: coverage, terms and limits](./issues/03-omdb-ratings.md): TMDB has no IMDb, Rotten Tomatoes or Metacritic ratings (`imdb_id` is the join key). OMDb fails the PRD's authorization test: its terms allow personal use only, it relays the scores without a licence, and new releases are often `N/A`. The licensed routes are IMDb via AWS Data Exchange and Rotten Tomatoes/Metacritic via Fandango or Fabric Origin, all priced by quote. **Decided:** Reelio is permanently non-commercial; the IMDb rating comes from IMDb's official non-commercial datasets (written confirmation from IMDb is a launch blocker); Rotten Tomatoes is a spec follow-up; Metacritic is out of scope; OMDb is not used.
 - [The user–movie lifecycle](./issues/04-user-movie-lifecycle.md): Watchlist and Watched are independent private facts (four states). Marking as watched sets the Watched date to now and takes the Movie off the Watchlist (rewatch moves the date); remove and clear touch only their own fact; Undo restores the exact earlier state; account deletion hard-deletes it all. Terms: Watchlist, Watched, Watched date.
+- [Infrastructure baseline](./issues/05-infrastructure-baseline.md): Laravel Cloud; Postgres everywhere (tests included); Redis cache; database queue and sessions; Cloud-managed workers and scheduler, no Horizon; hosted mail API; local plus production with preview environments, no staging; Herd locally; no object storage.
 
 ## Not yet specified
 
@@ -36,7 +37,6 @@ A locked, implementation-ready spec for the Reelio MVP: every open decision sett
 - **Images and performance budget:** poster and backdrop size variants per breakpoint, lazy loading, how the LCP target is checked.
 - **Accessibility verification:** how WCAG 2.2 AA is checked (automated checks, manual review).
 - **Privacy, terms and retention:** content of the privacy and terms pages, the published retention policy, and third-party data-sharing disclosures.
-- **Deployment and operations:** pipeline, environments, backups, health check, log hygiene. Waits on the infrastructure baseline.
 - **Spec assembly:** turning the resolved decisions into the final spec and handing off to `/to-tickets`.
 
 ## Out of scope
