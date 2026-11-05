@@ -13,7 +13,7 @@ it('builds responsive poster URLs and falls back when an image fails', function 
     $page->assertSee('Interstellar')
         ->assertAttribute('[data-slot="tmdb-image"] img', 'src', '/test-images/w342/yQvGrMoipbRoddT0ZR8tPoR7NfX.jpg')
         ->assertAttribute('[data-slot="tmdb-image"] img', 'srcset', '/test-images/w342/yQvGrMoipbRoddT0ZR8tPoR7NfX.jpg 342w, /test-images/w500/yQvGrMoipbRoddT0ZR8tPoR7NfX.jpg 500w')
-        ->assertAttribute('[data-slot="tmdb-image"] img', 'sizes', '192px')
+        ->assertAttribute('[data-slot="tmdb-image"] img', 'sizes', '(min-width: 768px) 208px, 160px')
         ->assertNoJavaScriptErrors();
 
     $page->script('document.querySelector(\'[data-slot="tmdb-image"] img\').dispatchEvent(new Event("error"))');

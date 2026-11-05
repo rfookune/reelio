@@ -58,7 +58,7 @@ class Catalog
             return $movie;
         });
 
-        Cache::put($this->keys->build('movie', ['tmdb_id' => $tmdbId], $context), $details, now()->addDays(30));
+        Cache::put($this->keys->build('movie', ['tmdb_id' => $tmdbId], $context), $details->toArray(), now()->addDays(30));
 
         return $movie;
     }
@@ -66,6 +66,34 @@ class Catalog
     public function find(int $id): Movie
     {
         return Movie::query()->findOrFail($id);
+    }
+
+    /**
+     * The Movie's cached Catalog source details, fetched in the request when the 30-day cache entry is missing.
+     * Returns null when the source has nothing or is unavailable, so the page renders from stored fields.
+     */
+    public function details(Movie $movie): ?MovieDetails
+    {
+        $context = new CatalogContext(config('catalog.language'));
+        $key = $this->keys->build('movie', ['tmdb_id' => $movie->tmdb_id], $context);
+        $cached = Cache::get($key);
+        $cachedDetails = is_array($cached) ? MovieDetails::fromArray($cached) : null;
+
+        if ($cachedDetails !== null) {
+            return $cachedDetails;
+        }
+
+        try {
+            $details = $this->source->movie($movie->tmdb_id, $context);
+        } catch (SourceUnavailable) {
+            return null;
+        }
+
+        if ($details !== null) {
+            Cache::put($key, $details->toArray(), now()->addDays(30));
+        }
+
+        return $details;
     }
 
     public function recordView(Movie $movie): void

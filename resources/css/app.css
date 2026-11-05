@@ -110,6 +110,8 @@
 
     body {
         @apply bg-background text-foreground;
+        /* Full-bleed sections use 100vw, which includes the scrollbar. */
+        overflow-x: clip;
     }
 }
 

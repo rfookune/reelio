@@ -77,3 +77,49 @@ test('a missing local movie returns 404', function () {
 test('oversized local ids return 404', function () {
     $this->get('/movies/missing-999999999999999999999999999')->assertNotFound();
 });
+
+test('the movie page arrives in one response with its details, cast and credits', function () {
+    $movie = Movie::factory()->create(['tmdb_id' => 157336, 'title' => 'Interstellar', 'slug' => 'interstellar', 'tagline' => 'Go further.', 'backdrop_path' => '/b.jpg', 'original_title' => 'Interstellar']);
+    $cast = array_map(fn (int $i) => ['id' => $i, 'name' => "Actor {$i}", 'character' => "Role {$i}", 'profilePath' => null], range(1, 12));
+    $this->app->instance(CatalogSource::class, new FakeCatalogSource([new MovieDetails(
+        tmdbId: 157336,
+        directors: ['Christopher Nolan'],
+        writers: ['Jonathan Nolan'],
+        cast: $cast,
+        certification: 'PG-13',
+        usReleaseDate: '2014-11-07',
+    )]));
+
+    $this->get(route('movies.show', ['slug' => 'interstellar', 'id' => $movie->id]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('movie.tagline', 'Go further.')
+            ->where('movie.backdropPath', '/b.jpg')
+            ->where('movie.originalTitle', 'Interstellar')
+            ->where('movie.directors', ['Christopher Nolan'])
+            ->where('movie.writers', ['Jonathan Nolan'])
+            ->where('movie.certification', 'PG-13')
+            ->where('movie.usReleaseDate', '2014-11-07')
+            ->has('movie.cast', 12)
+            ->has('movie.genres', 0)
+            ->missing('deferredProps'));
+});
+
+test('movie details are fetched in the request when missing and then served from the cache', function () {
+    $movie = Movie::factory()->create(['tmdb_id' => 7]);
+    $source = new FakeCatalogSource([new MovieDetails(tmdbId: 7, directors: ['A'])]);
+    $this->app->instance(CatalogSource::class, $source);
+    $url = route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]);
+
+    $this->get($url)->assertInertia(fn (Assert $page) => $page->where('movie.directors', ['A']));
+    $source->movies = [];
+    $this->get($url)->assertInertia(fn (Assert $page) => $page->where('movie.directors', ['A']));
+});
+
+test('a sparse movie still renders when the source has nothing', function () {
+    $movie = Movie::factory()->create(['tagline' => null, 'backdrop_path' => null, 'poster_path' => null, 'original_title' => 'Autre']);
+
+    $this->get(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('movie.originalTitle', 'Autre')->where('movie.cast', [])->where('movie.certification', null));
+});

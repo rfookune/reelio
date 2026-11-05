@@ -73,3 +73,60 @@ test('sparse movie details keep absent metadata nullable', function () {
     expect($movie->releaseDate)->toBeNull();
     expect($movie->genres)->toBe([]);
 });
+
+test('the catalog source reads credits and US release details from the recorded fixture', function () {
+    Http::fake(['https://api.themoviedb.org/3/movie/157336?*' => Http::response(json_decode(file_get_contents(base_path('tests/Fixtures/tmdb/movie_157336.json')), true, flags: JSON_THROW_ON_ERROR))]);
+
+    $movie = app(TmdbCatalogSource::class)->movie(157336, new CatalogContext('en-US'));
+
+    expect($movie->tagline)->toBe('Mankind was born on Earth. It was never meant to die here.')
+        ->and($movie->directors)->toBe(['Christopher Nolan'])
+        ->and($movie->writers)->toBe(['Jonathan Nolan', 'Christopher Nolan'])
+        ->and($movie->certification)->toBe('PG-13')
+        ->and($movie->usReleaseDate)->toBe('2014-11-07')
+        ->and($movie->cast)->toHaveCount(12)
+        ->and($movie->cast[0])->toBe(['id' => 10297, 'name' => 'Matthew McConaughey', 'character' => 'Cooper', 'profilePath' => '/lCySuYjhXix3FzQdS4oceDDrXKI.jpg']);
+});
+
+test('the US release date falls back to the earliest premiere and tolerates missing credits', function () {
+    Http::fake(['https://api.themoviedb.org/3/movie/5?*' => Http::response([
+        'id' => 5,
+        'release_dates' => ['results' => [
+            ['iso_3166_1' => 'FR', 'release_dates' => [['certification' => 'U', 'release_date' => '2000-01-01T00:00:00.000Z', 'type' => 3]]],
+            ['iso_3166_1' => 'US', 'release_dates' => [
+                ['certification' => '', 'release_date' => '2001-05-02T00:00:00.000Z', 'type' => 2],
+                ['certification' => 'R', 'release_date' => '2001-03-01T00:00:00.000Z', 'type' => 2],
+                ['certification' => '', 'release_date' => '2001-01-01T00:00:00.000Z', 'type' => 1],
+            ]],
+        ]],
+    ])]);
+
+    $movie = app(TmdbCatalogSource::class)->movie(5, new CatalogContext);
+
+    expect($movie->usReleaseDate)->toBe('2001-03-01')
+        ->and($movie->certification)->toBe('R')
+        ->and($movie->directors)->toBe([])
+        ->and($movie->cast)->toBe([]);
+});
+
+test('a US release without a certification key does not break the adapter', function () {
+    Http::fake(['https://api.themoviedb.org/3/movie/6?*' => Http::response([
+        'id' => 6,
+        'release_dates' => ['results' => [['iso_3166_1' => 'US', 'release_dates' => [['release_date' => '2001-03-01T00:00:00.000Z', 'type' => 3]]]]],
+    ])]);
+
+    $movie = app(TmdbCatalogSource::class)->movie(6, new CatalogContext);
+
+    expect($movie->usReleaseDate)->toBe('2001-03-01')->and($movie->certification)->toBeNull();
+});
+
+test('the US certification survives when no theatrical or premiere release exists', function () {
+    Http::fake(['https://api.themoviedb.org/3/movie/8?*' => Http::response([
+        'id' => 8,
+        'release_dates' => ['results' => [['iso_3166_1' => 'US', 'release_dates' => [['certification' => 'PG', 'release_date' => '2001-03-01T00:00:00.000Z', 'type' => 4]]]]],
+    ])]);
+
+    $movie = app(TmdbCatalogSource::class)->movie(8, new CatalogContext);
+
+    expect($movie->certification)->toBe('PG')->and($movie->usReleaseDate)->toBeNull();
+});

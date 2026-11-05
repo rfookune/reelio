@@ -23,6 +23,7 @@ class MovieController extends Controller
         }
 
         $catalog->recordView($movie);
+        $details = $catalog->details($movie);
         $referrer = in_array($referrer, ['discover', 'search', 'watchlist', 'watched', 'picker', 'direct'], true) ? $referrer : 'direct';
         $recordEvent->handle($request->user(), 'movie_viewed', ['movie_id' => $movie->id, 'referrer' => $referrer]);
 
@@ -32,9 +33,21 @@ class MovieController extends Controller
             'movie' => [
                 'id' => $movie->id,
                 'title' => $movie->title,
+                'originalTitle' => $movie->original_title,
+                'originalLanguage' => $movie->original_language,
                 'year' => $movie->release_date?->year,
+                'releaseDate' => $movie->release_date?->toDateString(),
+                'runtime' => $movie->runtime,
+                'tagline' => $movie->tagline,
                 'overview' => $movie->overview,
                 'posterPath' => $movie->poster_path,
+                'backdropPath' => $movie->backdrop_path,
+                'genres' => $movie->genres()->orderBy('name')->pluck('name')->all(),
+                'directors' => $details->directors ?? [],
+                'writers' => $details->writers ?? [],
+                'cast' => $details->cast ?? [],
+                'certification' => $details?->certification,
+                'usReleaseDate' => $details?->usReleaseDate,
             ],
         ]);
     }

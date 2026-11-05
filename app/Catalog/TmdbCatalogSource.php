@@ -53,10 +53,14 @@ class TmdbCatalogSource implements CatalogSource
                 'genres' => ['sometimes', 'array'],
                 'genres.*.id' => ['required', 'integer', 'min:1'],
                 'genres.*.name' => ['required', 'string', 'max:255'],
+                'credits' => ['sometimes', 'nullable', 'array'],
+                'release_dates' => ['sometimes', 'nullable', 'array'],
             ])->validate();
         } catch (ValidationException $exception) {
             throw new SourceUnavailable('The Catalog source returned invalid movie details.', previous: $exception);
         }
+
+        $usRelease = $this->usRelease($data);
 
         return new MovieDetails(
             tmdbId: (int) $data['id'],
@@ -73,6 +77,84 @@ class TmdbCatalogSource implements CatalogSource
             voteCount: isset($data['vote_count']) ? (int) $data['vote_count'] : null,
             imdbId: $data['imdb_id'] ?? null,
             genres: array_values(array_map(fn (array $genre): array => ['id' => (int) $genre['id'], 'name' => $genre['name']], $data['genres'] ?? [])),
+            directors: $this->crewNames($data['credits'] ?? [], ['Director']),
+            writers: $this->crewNames($data['credits'] ?? [], ['Writer', 'Screenplay']),
+            cast: $this->cast($data['credits'] ?? []),
+            certification: $usRelease['certification'] ?? null,
+            usReleaseDate: $usRelease['date'] ?? null,
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $credits
+     * @param  list<string>  $jobs
+     * @return list<string>
+     */
+    private function crewNames(array $credits, array $jobs): array
+    {
+        $names = [];
+
+        foreach ((array) ($credits['crew'] ?? []) as $member) {
+            if (is_array($member) && in_array($member['job'] ?? null, $jobs, true) && is_string($member['name'] ?? null)) {
+                $names[] = $member['name'];
+            }
+        }
+
+        return array_values(array_unique($names));
+    }
+
+    /**
+     * @param  array<string, mixed>  $credits
+     * @return list<array{id: int, name: string, character: ?string, profilePath: ?string}>
+     */
+    private function cast(array $credits): array
+    {
+        $members = array_filter((array) ($credits['cast'] ?? []), fn (mixed $member): bool => is_array($member) && is_int($member['id'] ?? null) && is_string($member['name'] ?? null));
+        usort($members, fn (array $a, array $b): int => ($a['order'] ?? PHP_INT_MAX) <=> ($b['order'] ?? PHP_INT_MAX));
+
+        return array_values(array_map(fn (array $member): array => [
+            'id' => $member['id'],
+            'name' => $member['name'],
+            'character' => ($member['character'] ?? '') !== '' ? $member['character'] : null,
+            'profilePath' => $member['profile_path'] ?? null,
+        ], array_slice($members, 0, 12)));
+    }
+
+    /**
+     * The US premiere (type 3, else the earliest type 2) and the certification that goes with it.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array{date: ?string, certification: ?string}|null
+     */
+    private function usRelease(array $data): ?array
+    {
+        $releases = [];
+
+        foreach ((array) ($data['release_dates']['results'] ?? []) as $country) {
+            if (is_array($country) && ($country['iso_3166_1'] ?? null) === 'US') {
+                $releases = array_values(array_filter((array) ($country['release_dates'] ?? []), is_array(...)));
+            }
+        }
+
+        $certification = collect($releases)->pluck('certification')->first(fn (mixed $value): bool => is_string($value) && $value !== '');
+        $date = null;
+
+        foreach ([3, 2] as $type) {
+            $matching = array_filter($releases, fn (array $release): bool => ($release['type'] ?? null) === $type && is_string($release['release_date'] ?? null));
+            usort($matching, fn (array $a, array $b): int => strcmp($a['release_date'], $b['release_date']));
+
+            if ($matching !== []) {
+                $date = substr($matching[0]['release_date'], 0, 10);
+                $certification = ($matching[0]['certification'] ?? '') ?: $certification;
+
+                break;
+            }
+        }
+
+        if ($date === null && $certification === null) {
+            return null;
+        }
+
+        return ['date' => $date, 'certification' => $certification];
     }
 }

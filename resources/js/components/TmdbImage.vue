@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import MissingPoster from '@/components/MissingPoster.vue';
+import { isSafeTmdbPath, tmdbImageUrl } from '@/lib/tmdb';
 
 type ImageWidth = 92 | 154 | 185 | 342 | 500 | 780 | 1280;
 
@@ -16,14 +17,9 @@ const props = withDefaults(
 );
 
 const failed = ref(false);
-const validPath = computed(
-    () =>
-        props.path !== null &&
-        /^\/[A-Za-z0-9_-]+\.(jpg|png|svg)$/.test(props.path) &&
-        !props.path.includes('\n'),
-);
+const validPath = computed(() => isSafeTmdbPath(props.path));
 const imageUrl = (width: ImageWidth) =>
-    `${props.baseUrl.replace(/\/$/, '')}/w${width}${props.path}`;
+    tmdbImageUrl(props.baseUrl, width, props.path ?? '');
 const srcset = computed(() =>
     props.widths.map((width) => `${imageUrl(width)} ${width}w`).join(', '),
 );
