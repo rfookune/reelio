@@ -6,6 +6,10 @@ Reelio helps people discover movies, save the ones they want to see, decide what
 
 ### Movie data
 
+**Movie**:
+A film Reelio shows, identified by Reelio's own id and linked to its Catalog source entry; a Movie exists in Reelio once someone has opened it.
+_Avoid_: Title, film, provider movie
+
 **Catalog source**:
 The external service Reelio takes movie metadata, artwork, and Availability from (TMDB today).
 _Avoid_: Provider, movie provider, data provider

@@ -21,3 +21,5 @@ Use the `codebase-design` skill.
 ## Comments
 
 - From [Test strategy and tooling](./07-test-strategy.md) (resolved): this ticket must deliver an in-memory fake of each source interface alongside it, configurable to return given Movies or to fail; feature and browser tests use the fakes and never see TMDB's JSON. The TMDB adapter itself is tested with `Http::fake()` and recorded fixtures; the IMDb import with a tiny gzipped TSV fixture.
+
+- From [Movie identity, URLs and local storage](./09-movie-identity-and-storage.md) (resolved): Movies are stored in Postgres (a row on first view); IMDb ratings sit in their own dataset table keyed by IMDb id and are read through `imdb_id`, so a Rating source must be readable without a Movie row. Availability is stored in `availabilities` for supported countries only.
