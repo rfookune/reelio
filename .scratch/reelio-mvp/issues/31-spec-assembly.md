@@ -14,3 +14,4 @@ AFK: the agent writes it from the closed tickets, lists the P1/P2 follow-ups, th
 ## Comments
 
 - From [Rate limiting and security headers](./28-rate-limits-and-security.md) (resolved): bring its deploy checklist into the spec next to the deploy checks from [Deployment and operations](./19-deployment-and-operations.md): the client IP is real and unspoofable, assets don't count toward the edge limit, the HSTS and edge rate-limit settings, and Sentry's IP setting. It adds no dependencies; `spatie/laravel-csp` was rejected in favour of Reelio's own middleware.
+- From [Accessibility verification](./29-accessibility-verification.md) (resolved): the spec carries the manual accessibility checklist (with a dated log of runs), the new accessibility sweep browser test, and a new `control` colour token that amends the palette in [Visual language and app shell](./06-visual-language-and-shell.md) (dark `#6B7280`, light `#7D808A`, used only for control borders).
