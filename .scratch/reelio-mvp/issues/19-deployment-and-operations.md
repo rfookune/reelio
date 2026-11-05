@@ -20,3 +20,5 @@ Error monitoring tooling is decided in [Analytics and error monitoring](./08-ana
 ## Comments
 
 - From [Test strategy and tooling](./07-test-strategy.md) (resolved): the merge gate is settled: `composer ci:check` (now with `vp test`, Postgres and Redis) plus a browser-test job, both required on `main`. This ticket decides how that gate relates to deploys, and whether the manual `live` test group ever runs on a schedule.
+
+- From [Country and Availability presentation](./11-country-and-availability.md) (resolved): verify on a deployed environment that Laravel Cloud forwards the edge country header (`CF-IPCountry` or equivalent); if not, country detection falls back to US until a source is chosen.

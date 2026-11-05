@@ -29,7 +29,7 @@ A platform where a Movie can be watched, such as Netflix or Apple TV.
 _Avoid_: Provider, streaming provider, platform
 
 **Availability**:
-A Streaming service offering a Movie in a specific country, as a subscription stream, a rental, or a purchase.
+A Streaming service offering a Movie in a specific country, as a subscription stream, a free offer, a rental, or a purchase.
 _Avoid_: Watch provider, streaming option
 
 ### A user's Movies
