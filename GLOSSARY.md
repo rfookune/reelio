@@ -45,3 +45,7 @@ _Avoid_: Viewing history, history, seen, viewing record
 **Watched date**:
 The most recent time a user saw a Movie; one per Movie.
 _Avoid_: Viewing date, watched at
+
+**Movie picker**:
+Chooses one Movie at random from a user's Watchlist, optionally narrowed by genre.
+_Avoid_: Randomizer, roulette, shuffle
