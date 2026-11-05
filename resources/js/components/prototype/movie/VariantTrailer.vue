@@ -195,7 +195,7 @@ onBeforeUnmount(() => observer?.disconnect());
 
                 <div id="watch" class="scroll-mt-14 pt-10">
                     <AvailabilityBlock
-                        density="full"
+                        look="list"
                         @change-country="$emit('changeCountry', $event)"
                     />
                 </div>

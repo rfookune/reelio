@@ -2,8 +2,9 @@
 /**
  * PROTOTYPE, throwaway. Ticket: "Movie detail page" (Reelio MVP map). Never merge.
  *
- * Three structurally different Movie pages inside the chosen shell, switchable via
- * ?variant=A|B|C (← / → keys), with orthogonal toggles so states are judged apart from layout:
+ * Iteration 2: variant A won the layout round (with C's cast grid). ?variant=A1…A5 now cycles
+ * five Where to watch designs inside A (← / → keys). B and C stay in the branch history only.
+ * Orthogonal toggles, so states are judged apart from layout:
  *   ?state=ok|loading|stale|unavailable|sparse|shell   (shell = dropped Movie, the 410 page)
  *   ?facts=none|watchlist|watched|both                  (the four lifecycle states)
  *   ?auth=user|guest  ?trailer=facade|embed|disabled  ?country=US|CA|unsupported
@@ -21,15 +22,16 @@ import {
     toggles,
     useDetailState,
 } from '@/components/prototype/movie/useDetailState';
+import type { WatchDesign } from '@/components/prototype/movie/VariantHero.vue';
 import VariantHero from '@/components/prototype/movie/VariantHero.vue';
-import VariantPoster from '@/components/prototype/movie/VariantPoster.vue';
-import VariantTrailer from '@/components/prototype/movie/VariantTrailer.vue';
 import { Toaster } from '@/components/ui/sonner';
 
-const variants = [
-    { key: 'A', name: 'Backdrop hero + side rail' },
-    { key: 'B', name: 'Poster column, no hero' },
-    { key: 'C', name: 'Trailer first, one column' },
+const variants: { key: string; name: string; watch: WatchDesign }[] = [
+    { key: 'A1', name: 'Rail: logo tiles', watch: 'rail-logos' },
+    { key: 'A2', name: 'Rail: tabs per offer type', watch: 'rail-tabs' },
+    { key: 'A3', name: 'Band: columns under the hero', watch: 'band' },
+    { key: 'A4', name: 'Hero summary + full list', watch: 'hero-summary' },
+    { key: 'A5', name: 'One row per service', watch: 'services' },
 ];
 
 const page = usePage();
@@ -121,12 +123,12 @@ onBeforeUnmount(() => {
     </Head>
 
     <ShellGone v-if="settings.state === 'shell'" />
-    <VariantHero v-else-if="variant === 'A'" @change-country="changeCountry" />
-    <VariantPoster
-        v-else-if="variant === 'B'"
+    <VariantHero
+        v-else
+        :key="variant"
+        :watch="variants.find((v) => v.key === variant)!.watch"
         @change-country="changeCountry"
     />
-    <VariantTrailer v-else @change-country="changeCountry" />
 
     <Toaster
         :theme="settings.theme === 'dark' ? 'dark' : 'light'"

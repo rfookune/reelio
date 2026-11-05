@@ -143,7 +143,7 @@ const { settings, view } = useDetailState();
 
                     <div class="mt-10">
                         <AvailabilityBlock
-                            density="full"
+                            look="list"
                             @change-country="$emit('changeCountry', $event)"
                         />
                     </div>

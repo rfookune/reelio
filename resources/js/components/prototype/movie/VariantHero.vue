@@ -4,11 +4,18 @@
  *
  * Continues Discover's language: a full-bleed backdrop hero with the poster, title block,
  * ratings and actions over it. Below, a two-column body: story, trailer and cast on the
- * left; a sticky rail with Where to watch and the facts on the right.
+ * left; a sticky rail with the facts on the right.
  * LCP element: the hero backdrop (w1280). No backdrop → a blurred poster stands in.
+ *
+ * Iteration 2: cast is variant C's photo grid; `watch` picks one of five Where to watch
+ * designs and where it sits. On mobile, a rail block moves to straight after the story.
  */
+import { useMediaQuery } from '@vueuse/core';
+import { computed } from 'vue';
 import CastList from './CastList.vue';
+import type { AvailabilityLook } from './AvailabilityBlock.vue';
 import AvailabilityBlock from './AvailabilityBlock.vue';
+import AvailabilitySummary from './AvailabilitySummary.vue';
 import DetailActions from './DetailActions.vue';
 import DetailFacts from './DetailFacts.vue';
 import DetailRatings from './DetailRatings.vue';
@@ -18,9 +25,42 @@ import UnavailablePanel from './UnavailablePanel.vue';
 import SkeletonBlock from '../shell/SkeletonBlock.vue';
 import { useDetailState } from './useDetailState';
 
+export type WatchDesign =
+    | 'rail-logos'
+    | 'rail-tabs'
+    | 'band'
+    | 'hero-summary'
+    | 'services';
+
+const props = withDefaults(defineProps<{ watch?: WatchDesign }>(), {
+    watch: 'rail-logos',
+});
+
 defineEmits<{ changeCountry: [code: string] }>();
 
 const { settings, view } = useDetailState();
+
+const isDesktop = useMediaQuery('(min-width: 1024px)');
+
+const looks: Record<WatchDesign, AvailabilityLook> = {
+    'rail-logos': 'logos',
+    'rail-tabs': 'tabs',
+    band: 'columns',
+    'hero-summary': 'list',
+    services: 'services',
+};
+
+const look = computed(() => looks[props.watch]);
+const isRailDesign = computed(
+    () => props.watch === 'rail-logos' || props.watch === 'rail-tabs',
+);
+const inRail = computed(() => isRailDesign.value && isDesktop.value);
+const afterStory = computed(
+    () =>
+        props.watch === 'hero-summary' ||
+        props.watch === 'services' ||
+        (isRailDesign.value && !isDesktop.value),
+);
 </script>
 
 <template>
@@ -110,9 +150,25 @@ const { settings, view } = useDetailState();
                     </p>
                     <DetailRatings look="inline" on-image class="mt-4" />
                     <DetailActions layout="hero" class="mt-6" />
+                    <AvailabilitySummary
+                        v-if="watch === 'hero-summary'"
+                        class="mt-5"
+                    />
                 </div>
             </div>
         </section>
+
+        <!-- Where to watch as a full-width band -->
+        <div
+            v-if="watch === 'band' && settings.state !== 'loading'"
+            class="mx-auto max-w-7xl px-4 pt-2 pb-8 md:px-8"
+        >
+            <AvailabilityBlock
+                look="columns"
+                wide
+                @change-country="$emit('changeCountry', $event)"
+            />
+        </div>
 
         <!-- Body -->
         <div
@@ -138,6 +194,12 @@ const { settings, view } = useDetailState();
                             {{ view.overview }}
                         </p>
                     </section>
+
+                    <AvailabilityBlock
+                        v-if="afterStory"
+                        :look="look"
+                        @change-country="$emit('changeCountry', $event)"
+                    />
 
                     <section
                         v-if="view.trailer !== null"
@@ -168,7 +230,12 @@ const { settings, view } = useDetailState();
                             v-if="view.cast === undefined"
                             what="Cast and crew are"
                         />
-                        <CastList v-else :cast="view.cast" layout="scroller" />
+                        <CastList
+                            v-else
+                            :cast="view.cast"
+                            layout="grid"
+                            :limit="12"
+                        />
                     </section>
                 </template>
             </div>
@@ -179,8 +246,8 @@ const { settings, view } = useDetailState();
                     class="h-80 rounded-2xl"
                 />
                 <AvailabilityBlock
-                    v-else
-                    density="logos"
+                    v-else-if="inRail"
+                    :look="look"
                     @change-country="$emit('changeCountry', $event)"
                 />
                 <section
