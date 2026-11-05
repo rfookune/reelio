@@ -9,6 +9,12 @@ use Illuminate\Validation\ValidationException;
 
 class TmdbCatalogSource implements CatalogSource
 {
+    /** TMDB release type for a theatrical release. */
+    private const RELEASE_TYPE_THEATRICAL = 3;
+
+    /** TMDB release type for a limited theatrical release. */
+    private const RELEASE_TYPE_THEATRICAL_LIMITED = 2;
+
     public function movie(int $tmdbId, CatalogContext $context): ?MovieDetails
     {
         try {
@@ -112,12 +118,12 @@ class TmdbCatalogSource implements CatalogSource
         $members = array_filter((array) ($credits['cast'] ?? []), fn (mixed $member): bool => is_array($member) && is_int($member['id'] ?? null) && is_string($member['name'] ?? null));
         usort($members, fn (array $a, array $b): int => ($a['order'] ?? PHP_INT_MAX) <=> ($b['order'] ?? PHP_INT_MAX));
 
-        return array_values(array_map(fn (array $member): array => [
+        return array_map(fn (array $member): array => [
             'id' => $member['id'],
             'name' => $member['name'],
             'character' => ($member['character'] ?? '') !== '' ? $member['character'] : null,
             'profilePath' => $member['profile_path'] ?? null,
-        ], array_slice($members, 0, 12)));
+        ], array_slice($members, 0, 12));
     }
 
     /**
@@ -139,7 +145,7 @@ class TmdbCatalogSource implements CatalogSource
         $certification = collect($releases)->pluck('certification')->first(fn (mixed $value): bool => is_string($value) && $value !== '');
         $date = null;
 
-        foreach ([3, 2] as $type) {
+        foreach ([self::RELEASE_TYPE_THEATRICAL, self::RELEASE_TYPE_THEATRICAL_LIMITED] as $type) {
             $matching = array_filter($releases, fn (array $release): bool => ($release['type'] ?? null) === $type && is_string($release['release_date'] ?? null));
             usort($matching, fn (array $a, array $b): int => strcmp($a['release_date'], $b['release_date']));
 
