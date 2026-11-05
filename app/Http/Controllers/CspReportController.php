@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class CspReportController extends Controller
 {
@@ -65,6 +66,6 @@ class CspReportController extends Controller
      */
     private function withoutQuery(string $url): string
     {
-        return preg_split('/[?#]/', $url, 2)[0];
+        return Str::before(Str::before($url, '?'), '#');
     }
 }
