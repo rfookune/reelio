@@ -129,7 +129,7 @@ onBeforeUnmount(() => {
             v-for="key in Object.keys(toggles) as ToggleKey[]"
             :key="key"
             type="button"
-            class="rounded-full bg-black/10 px-2.5 py-1 hover:bg-black/20"
+            class="rounded-full bg-black/10 px-2 py-1 whitespace-nowrap hover:bg-black/20"
             @click="cycle(key)"
         >
             {{ key }}: <strong>{{ settings[key] }}</strong>
@@ -230,12 +230,14 @@ html[data-rp-theme='light'][data-rp-palette='charcoal'] {
 html[data-rp-font='inter'],
 html[data-rp-font='inter'] body {
     --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     font-feature-settings: 'cv11', 'ss03';
 }
 
 html[data-rp-font='geist'],
 html[data-rp-font='geist'] body {
     --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+    font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
 }
 
 html[data-rp] :focus-visible {

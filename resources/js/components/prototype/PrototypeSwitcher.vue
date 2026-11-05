@@ -54,28 +54,32 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
 <template>
     <div
         v-if="isDev"
-        class="fixed bottom-20 left-1/2 z-[100] flex max-w-[calc(100vw-1rem)] -translate-x-1/2 flex-wrap items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-black bg-yellow-300 p-1 font-mono text-xs text-black shadow-xl md:bottom-4 md:rounded-full"
+        class="fixed bottom-20 left-1/2 z-[100] flex w-max max-w-[calc(100vw-1rem)] -translate-x-1/2 flex-col items-center gap-1 rounded-2xl border-2 border-dashed border-black bg-yellow-300 p-1.5 text-[11px] text-black shadow-xl md:bottom-4 md:flex-row md:rounded-full"
         style="font-family: ui-monospace, monospace"
     >
-        <button
-            type="button"
-            class="rounded-full p-1.5 hover:bg-black/10"
-            aria-label="Previous variant"
-            @click="step(-1)"
-        >
-            <ChevronLeft class="size-4" />
-        </button>
-        <span class="min-w-40 px-1 text-center font-semibold">
-            {{ variants[index].key }} ({{ variants[index].name }})
-        </span>
-        <button
-            type="button"
-            class="rounded-full p-1.5 hover:bg-black/10"
-            aria-label="Next variant"
-            @click="step(1)"
-        >
-            <ChevronRight class="size-4" />
-        </button>
-        <slot />
+        <div class="flex items-center">
+            <button
+                type="button"
+                class="rounded-full p-1.5 hover:bg-black/10"
+                aria-label="Previous variant"
+                @click="step(-1)"
+            >
+                <ChevronLeft class="size-4" />
+            </button>
+            <span class="px-1 text-center font-semibold whitespace-nowrap">
+                {{ variants[index].key }} ({{ variants[index].name }})
+            </span>
+            <button
+                type="button"
+                class="rounded-full p-1.5 hover:bg-black/10"
+                aria-label="Next variant"
+                @click="step(1)"
+            >
+                <ChevronRight class="size-4" />
+            </button>
+        </div>
+        <div class="flex flex-wrap justify-center gap-1">
+            <slot />
+        </div>
     </div>
 </template>
