@@ -68,15 +68,16 @@ expect()->extend('toBeOne', function () {
  * Its context API lets us install the error collector before navigation.
  *
  * @param  array<string, string>  $headers  Extra headers sent with every request, such as the edge's country header.
+ * @param  string  $timezone  The browser's time zone.
  */
-function visitWithCsp(string $url, int $width = 1440, int $height = 900, array $headers = []): AwaitableWebpage
+function visitWithCsp(string $url, int $width = 1440, int $height = 900, array $headers = [], string $timezone = 'UTC'): AwaitableWebpage
 {
     $context = Playwright::browser(Playwright::defaultBrowserType())->launch()->newContext([
         'bypassCSP' => false,
         'extraHTTPHeaders' => array_map(fn (string $name, string $value): array => ['name' => $name, 'value' => $value], array_keys($headers), $headers),
         'viewport' => ['width' => $width, 'height' => $height],
         'locale' => 'en-US',
-        'timezoneId' => 'UTC',
+        'timezoneId' => $timezone,
         'colorScheme' => 'light',
         'permissions' => ['clipboard-read', 'clipboard-write'],
     ]);
@@ -93,6 +94,12 @@ function visitWithCsp(string $url, int $width = 1440, int $height = 900, array $
     $url = ComputeUrl::from($url);
 
     return new AwaitableWebpage($context->newPage()->goto($url), $url);
+}
+
+/** Waits for Sonner's toast transitions to finish, so accessibility checks see settled colours. */
+function settleToasts(AwaitableWebpage $page): void
+{
+    $page->script('() => Promise.all(document.getAnimations().map((animation) => animation.finished))');
 }
 
 function pasteInto(AwaitableWebpage $page, string $selector, string $value): void

@@ -105,6 +105,7 @@ const meta = computed(() =>
                     </template>
                     <span
                         v-if="certification"
+                        data-slot="certification"
                         class="rounded border border-control px-1.5 text-xs font-medium text-foreground"
                     >
                         {{ certification }}
@@ -119,13 +120,7 @@ const meta = computed(() =>
                     </template>
                 </p>
                 <ExternalRatings :ratings="ratings" />
-                <div
-                    v-if="$slots.actions"
-                    data-slot="movie-actions"
-                    class="mt-3 flex flex-wrap items-center gap-3"
-                >
-                    <slot name="actions" />
-                </div>
+                <slot name="actions" />
             </div>
         </div>
     </header>

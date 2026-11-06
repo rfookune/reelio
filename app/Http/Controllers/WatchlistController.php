@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Actions\AddToWatchlist;
 use App\Actions\RemoveFromWatchlist;
-use App\Http\Exceptions\MovieRemoved;
 use App\Http\MovieByCatalogId;
 use App\Http\Requests\UserMovieActionRequest;
 use Illuminate\Http\RedirectResponse;
@@ -18,10 +17,7 @@ class WatchlistController extends Controller
     /** A Removed Movie can only be taken off the Watchlist, never put on it. */
     public function update(UserMovieActionRequest $request, string $tmdbId, MovieByCatalogId $movies, AddToWatchlist $addToWatchlist): RedirectResponse
     {
-        $movie = $movies->findOrCreate($request, $tmdbId);
-        throw_if($movie->isRemoved(), MovieRemoved::class);
-
-        $addToWatchlist->handle($request->user(), $movie, $request->source());
+        $addToWatchlist->handle($request->user(), $movies->findOrCreateUnremoved($request, $tmdbId), $request->source());
 
         return back();
     }

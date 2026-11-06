@@ -5,9 +5,9 @@ import type { ExternalRating } from '@/components/ExternalRatings.vue';
 import MovieCast from '@/components/movie/MovieCast.vue';
 import type { CastMember } from '@/components/movie/MovieCast.vue';
 import MovieDetailsCard from '@/components/movie/MovieDetailsCard.vue';
+import MovieActions from '@/components/movie/MovieActions.vue';
 import MovieHero from '@/components/movie/MovieHero.vue';
 import TrailerPlayer from '@/components/movie/TrailerPlayer.vue';
-import WatchlistButton from '@/components/movie/WatchlistButton.vue';
 import WhereToWatch from '@/components/movie/WhereToWatch.vue';
 import type { WhereToWatchBlock } from '@/components/movie/WhereToWatch.vue';
 import type { Trailer } from '@/components/movie/TrailerPlayer.vue';
@@ -112,10 +112,9 @@ onBeforeUnmount(() => {
             :ratings="movie.ratings"
         >
             <template #actions>
-                <WatchlistButton
+                <MovieActions
                     :tmdb-id="movie.tmdbId"
                     :facts="userMovies[movie.tmdbId]"
-                    source="movie"
                 />
             </template>
         </MovieHero>

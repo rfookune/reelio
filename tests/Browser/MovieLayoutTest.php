@@ -90,7 +90,7 @@ it('shows temporarily unavailable panels when the source is down', function () {
     $page->assertSee('Stored Title')
         ->assertSee('Cast is temporarily unavailable.')
         ->assertSee('Temporarily unavailable')
-        ->assertMissing('[data-slot="movie-hero"] .border-control')
+        ->assertMissing('[data-slot="movie-hero"] [data-slot="certification"]')
         ->assertNoJavaScriptErrors();
 });
 

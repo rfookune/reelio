@@ -45,8 +45,7 @@ it('adds a Movie to the Watchlist from its page and takes it off again', functio
     expect($page->script('document.activeElement.dataset.slot'))->toBe('watchlist-toggle')
         ->and($page->script('window.partialData'))->toBe(['userMovies', 'userMovies']);
 
-    /* Sonner fades a toast in, so axe checks it once its transitions have finished. */
-    $page->script('() => Promise.all(document.getAnimations().map((animation) => animation.finished))');
+    settleToasts($page);
     $page->assertNoAccessibilityIssues();
 });
 

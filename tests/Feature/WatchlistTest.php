@@ -145,7 +145,7 @@ test('oversized catalog ids are a 404 without contacting the source', function (
 test('a Removed Movie cannot be added to the Watchlist', function () {
     $movie = Movie::factory()->removed()->create();
 
-    $this->actingAs(User::factory()->create())->put("/movies/tmdb/{$movie->tmdb_id}/watchlist", ['source' => 'watchlist'])->assertStatus(410);
+    $this->actingAs(User::factory()->create())->put("/movies/tmdb/{$movie->tmdb_id}/watchlist", ['source' => 'watchlist'])->assertGone();
 
     $this->assertDatabaseCount('user_movies', 0);
 });
@@ -258,11 +258,11 @@ test('the Movie page carries the viewer\'s facts keyed by catalog id, and reload
 
     $this->actingAs($facts->user)->get($movie->canonicalUrl())->assertInertia(fn (Assert $page) => $page
         ->where('movie.tmdbId', $movie->tmdb_id)
-        ->where("userMovies.{$movie->tmdb_id}", ['watchlisted' => true, 'watched' => false])
+        ->where("userMovies.{$movie->tmdb_id}", ['watchlisted' => true, 'watched' => false, 'watchedDate' => null])
         ->reloadOnly('userMovies', fn (Assert $reload) => $reload
             ->missing('movie')
             ->missing('whereToWatch')
-            ->where("userMovies.{$movie->tmdb_id}", ['watchlisted' => true, 'watched' => false])));
+            ->where("userMovies.{$movie->tmdb_id}", ['watchlisted' => true, 'watched' => false, 'watchedDate' => null])));
 });
 
 test('the Movie page shows no facts to viewers who hold none', function (bool $signedIn) {
@@ -274,7 +274,7 @@ test('the Movie page shows no facts to viewers who hold none', function (bool $s
     }
 
     $this->get($movie->canonicalUrl())->assertInertia(fn (Assert $page) => $page
-        ->where("userMovies.{$movie->tmdb_id}", ['watchlisted' => false, 'watched' => false]));
+        ->where("userMovies.{$movie->tmdb_id}", ['watchlisted' => false, 'watched' => false, 'watchedDate' => null]));
 })->with(['a guest' => false, 'another user' => true]);
 
 test('reloading only the facts after an action does not refresh the Movie', function () {

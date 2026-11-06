@@ -3,6 +3,7 @@
 namespace App\Http;
 
 use App\Http\Exceptions\DetailsUnavailable;
+use App\Http\Exceptions\MovieRemoved;
 use App\Models\Movie;
 use App\Services\Catalog\Catalog;
 use App\Services\Catalog\Exceptions\CreationLimited;
@@ -32,6 +33,18 @@ class MovieByCatalogId
         abort_if($result->value === null, 404);
 
         return $result->value;
+    }
+
+    /**
+     * The Movie a user action is setting a fact on, found or created as `findOrCreate()` does. A Removed Movie is a
+     * 410: facts about it can only be cleared, never set.
+     */
+    public function findOrCreateUnremoved(Request $request, string $tmdbId): Movie
+    {
+        $movie = $this->findOrCreate($request, $tmdbId);
+        throw_if($movie->isRemoved(), MovieRemoved::class);
+
+        return $movie;
     }
 
     /** The stored Movie, if any, without asking the Catalog source or creating a row. */

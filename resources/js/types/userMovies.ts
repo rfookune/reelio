@@ -2,6 +2,8 @@
 export type UserMovieFacts = {
     watchlisted: boolean;
     watched: boolean;
+    /** The Watched date, as a UTC timestamp. */
+    watchedDate: string | null;
 };
 
 /** The `userMovies` page prop: facts for each Movie on the page, keyed by catalog id. */
