@@ -2,9 +2,9 @@
 
 use App\Catalog\CatalogContext;
 use App\Catalog\CatalogProfile;
-use App\Catalog\SourceMisconfigured;
-use App\Catalog\SourceUnavailable;
-use App\Catalog\TmdbCatalogSource;
+use App\Catalog\Source\SourceMisconfigured;
+use App\Catalog\Source\SourceUnavailable;
+use App\Catalog\Source\TmdbCatalogSource;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Sleep;

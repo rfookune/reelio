@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Catalog;
+namespace App\Catalog\Source;
+
+use App\Catalog\CatalogContext;
 
 interface CatalogSource
 {

@@ -1,6 +1,6 @@
 <?php
 
-use App\Catalog\DetailsUnavailable;
+use App\Http\Exceptions\DetailsUnavailable;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SecurityHeaders;

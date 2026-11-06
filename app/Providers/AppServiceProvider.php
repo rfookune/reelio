@@ -3,9 +3,9 @@
 namespace App\Providers;
 
 use App\Catalog\CacheKey;
-use App\Catalog\CatalogSource;
-use App\Catalog\GuardedCatalogSource;
-use App\Catalog\TmdbCatalogSource;
+use App\Catalog\Source\CatalogSource;
+use App\Catalog\Source\GuardedCatalogSource;
+use App\Catalog\Source\TmdbCatalogSource;
 use App\Ratings\Ratings;
 use App\Ratings\RatingSourceName;
 use App\Ratings\StoredRatingSource;

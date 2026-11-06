@@ -2,6 +2,10 @@
 
 namespace App\Catalog;
 
+use App\Catalog\Source\CatalogSource;
+use App\Catalog\Source\MovieDetails;
+use App\Catalog\Source\SourceMisconfigured;
+use App\Catalog\Source\SourceUnavailable;
 use App\Models\Genre;
 use App\Models\Movie;
 use App\Ratings\RatingSourceName;
@@ -13,10 +17,6 @@ use Illuminate\Support\Str;
 
 class Catalog
 {
-    private const DETAILS_FRESH_SECONDS = 86400;
-
-    private const DETAILS_HARD_LIFETIME_DAYS = 30;
-
     public function __construct(
         private CatalogSource $source,
         private CacheKey $keys,
@@ -99,7 +99,7 @@ class Catalog
         $key = $this->detailsKey($movie->tmdb_id, $context);
         $entry = $this->cachedDetails($key);
 
-        if ($entry !== null && $entry['storedAt'] > now()->subSeconds(self::DETAILS_FRESH_SECONDS)->getTimestamp()) {
+        if ($entry !== null && $entry['storedAt'] > now()->subSeconds(config('catalog.details.fresh_seconds'))->getTimestamp()) {
             return CatalogResult::fresh($entry['details']);
         }
 
@@ -131,7 +131,7 @@ class Catalog
 
     private function storeDetails(string $key, MovieDetails $details): void
     {
-        Cache::put($key, ['storedAt' => now()->getTimestamp(), 'details' => $details->toArray()], now()->addDays(self::DETAILS_HARD_LIFETIME_DAYS));
+        Cache::put($key, ['storedAt' => now()->getTimestamp(), 'details' => $details->toArray()], now()->addDays(config('catalog.details.hard_lifetime_days')));
     }
 
     /** @return array{storedAt: int, details: MovieDetails}|null */
@@ -161,11 +161,11 @@ class Catalog
         $parameters = ['actor' => $actor];
         $key = $this->keys->build('creation', $parameters, $context);
         $acquired = Cache::lock($this->keys->build('creation-lock', $parameters, $context), 5)->get(function () use ($key): bool {
-            if (RateLimiter::tooManyAttempts($key, 20)) {
+            if (RateLimiter::tooManyAttempts($key, config('catalog.creation_limit.attempts'))) {
                 throw new CreationLimited(max(1, RateLimiter::availableIn($key)));
             }
 
-            RateLimiter::hit($key, 60);
+            RateLimiter::hit($key, config('catalog.creation_limit.decay_seconds'));
 
             return true;
         });

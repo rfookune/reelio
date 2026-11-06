@@ -3,11 +3,11 @@
 use App\Catalog\CacheKey;
 use App\Catalog\CatalogContext;
 use App\Catalog\CatalogProfile;
-use App\Catalog\CatalogSource;
-use App\Catalog\GuardedCatalogSource;
-use App\Catalog\MovieDetails;
-use App\Catalog\SourceMisconfigured;
-use App\Catalog\SourceUnavailable;
+use App\Catalog\Source\CatalogSource;
+use App\Catalog\Source\GuardedCatalogSource;
+use App\Catalog\Source\MovieDetails;
+use App\Catalog\Source\SourceMisconfigured;
+use App\Catalog\Source\SourceUnavailable;
 
 /**
  * An inner source that counts calls and fails while told to.

@@ -1,10 +1,10 @@
 <?php
 
 use App\Catalog\AvailabilityWriter;
-use App\Catalog\CatalogSource;
-use App\Catalog\FakeCatalogSource;
-use App\Catalog\MovieDetails;
 use App\Catalog\OfferType;
+use App\Catalog\Source\CatalogSource;
+use App\Catalog\Source\FakeCatalogSource;
+use App\Catalog\Source\MovieDetails;
 use App\Jobs\RecordAnalyticsEvent;
 use App\Models\Availability;
 use App\Models\Movie;

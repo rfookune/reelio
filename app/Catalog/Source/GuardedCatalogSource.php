@@ -1,6 +1,10 @@
 <?php
 
-namespace App\Catalog;
+namespace App\Catalog\Source;
+
+use App\Catalog\CatalogContext;
+use App\Catalog\CatalogProfile;
+use App\Catalog\CacheKey;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
@@ -11,14 +15,6 @@ use Illuminate\Support\Facades\RateLimiter;
  */
 class GuardedCatalogSource implements CatalogSource
 {
-    private const FAILURE_THRESHOLD = 5;
-
-    private const BREAKER_OPEN_SECONDS = 30;
-
-    private const FAILURE_MEMORY_SECONDS = 86400;
-
-    private const LIVE_REQUESTS_PER_SECOND = 15;
-
     public function __construct(private CatalogSource $inner, private CacheKey $keys) {}
 
     public function movie(int $tmdbId, CatalogContext $context): ?MovieDetails
@@ -34,7 +30,7 @@ class GuardedCatalogSource implements CatalogSource
             throw new SourceUnavailable('The Catalog source is paused after repeated failures.');
         }
 
-        $admitted = RateLimiter::attempt($this->keys->build('live-throttle', [], $context), self::LIVE_REQUESTS_PER_SECOND, fn (): bool => true, 1);
+        $admitted = RateLimiter::attempt($this->keys->build('live-throttle', [], $context), config('catalog.guard.live_requests_per_second'), fn (): bool => true, 1);
 
         if (! $admitted) {
             throw new SourceUnavailable('The Catalog source request rate is at its ceiling.');
@@ -45,10 +41,10 @@ class GuardedCatalogSource implements CatalogSource
         } catch (SourceMisconfigured $exception) {
             throw $exception;
         } catch (SourceUnavailable $exception) {
-            Cache::add($failuresKey, 0, self::FAILURE_MEMORY_SECONDS);
+            Cache::add($failuresKey, 0, config('catalog.guard.failure_memory_seconds'));
 
-            if (Cache::increment($failuresKey) >= self::FAILURE_THRESHOLD) {
-                Cache::put($openKey, true, self::BREAKER_OPEN_SECONDS);
+            if (Cache::increment($failuresKey) >= config('catalog.guard.failure_threshold')) {
+                Cache::put($openKey, true, config('catalog.guard.breaker_open_seconds'));
             }
 
             throw $exception;

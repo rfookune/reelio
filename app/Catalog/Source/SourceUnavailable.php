@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Catalog;
+namespace App\Catalog\Source;
 
 use RuntimeException;
 

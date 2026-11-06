@@ -1,8 +1,8 @@
 <?php
 
-use App\Catalog\CatalogSource;
-use App\Catalog\FakeCatalogSource;
-use App\Catalog\MovieDetails;
+use App\Catalog\Source\CatalogSource;
+use App\Catalog\Source\FakeCatalogSource;
+use App\Catalog\Source\MovieDetails;
 use App\Models\Movie;
 use App\Ratings\ExternalRating;
 use App\Ratings\FakeRatingSource;

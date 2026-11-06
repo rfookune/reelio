@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Catalog;
+namespace App\Http\Exceptions;
 
 use Symfony\Component\HttpKernel\Exception\HttpException;
 

@@ -17,4 +17,21 @@ return [
         'base_url' => 'https://api.themoviedb.org/3/',
         'token' => env('TMDB_READ_TOKEN', ''),
     ],
+
+    'details' => [
+        'fresh_seconds' => 86400,
+        'hard_lifetime_days' => 30,
+    ],
+
+    'creation_limit' => [
+        'attempts' => 20,
+        'decay_seconds' => 60,
+    ],
+
+    'guard' => [
+        'failure_threshold' => 5,
+        'breaker_open_seconds' => 30,
+        'failure_memory_seconds' => 86400,
+        'live_requests_per_second' => 15,
+    ],
 ];

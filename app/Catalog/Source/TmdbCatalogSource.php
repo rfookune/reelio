@@ -1,6 +1,10 @@
 <?php
 
-namespace App\Catalog;
+namespace App\Catalog\Source;
+
+use App\Catalog\CatalogContext;
+use App\Catalog\CatalogProfile;
+use App\Catalog\OfferType;
 
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
