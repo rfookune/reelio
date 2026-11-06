@@ -16,10 +16,6 @@ class RatingStore
 {
     private const IMPORT_TABLE = 'rating_import';
 
-    private const INSERT_BATCH_SIZE = 2000;
-
-    private const MINIMUM_SHARE_OF_LIVE_ROWS = 0.9;
-
     /**
      * Records one score, or removes the source's row for the title when the score isn't showable. A switched-off
      * source records nothing, so its rows are left as they were.
@@ -65,7 +61,7 @@ class RatingStore
                 $counts = $this->load($rows);
                 $live = DB::table('ratings')->where('source', $source->value)->count();
 
-                if ($counts['imported'] === 0 || $counts['imported'] < $live * self::MINIMUM_SHARE_OF_LIVE_ROWS) {
+                if ($counts['imported'] === 0 || $counts['imported'] < $live * config('ratings.sync.minimum_share_of_live_rows')) {
                     throw new RatingReplacementRefused("The {$source->label()} dataset has {$counts['imported']} valid rows against {$live} live rows.");
                 }
 
@@ -114,7 +110,7 @@ class RatingStore
 
             $batch[] = ['source_id' => $row->sourceId, 'value' => $row->value, 'vote_count' => $row->voteCount];
 
-            if (count($batch) === self::INSERT_BATCH_SIZE) {
+            if (count($batch) === config('ratings.sync.insert_batch_size')) {
                 $imported += DB::table(self::IMPORT_TABLE)->insertOrIgnore($batch);
                 $batch = [];
             }

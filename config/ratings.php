@@ -14,4 +14,10 @@ return [
             'enabled' => (bool) env('RATINGS_TMDB_ENABLED', true),
         ],
     ],
+
+    'sync' => [
+        'download_timeout_seconds' => 120,
+        'insert_batch_size' => 2000,
+        'minimum_share_of_live_rows' => 0.9,
+    ],
 ];

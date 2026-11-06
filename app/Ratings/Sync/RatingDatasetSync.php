@@ -19,8 +19,6 @@ use Illuminate\Support\Facades\Log;
  */
 class RatingDatasetSync
 {
-    private const DOWNLOAD_TIMEOUT_SECONDS = 120;
-
     public function __construct(private RatingStore $store) {}
 
     public function sync(RatingDataset $dataset): RatingSyncResult
@@ -85,7 +83,7 @@ class RatingDatasetSync
 
         try {
             $response = Http::withHeaders($headers)
-                ->timeout(self::DOWNLOAD_TIMEOUT_SECONDS)
+                ->timeout(config('ratings.sync.download_timeout_seconds'))
                 ->sink($path)
                 ->get($dataset->url());
         } catch (ConnectionException $exception) {
