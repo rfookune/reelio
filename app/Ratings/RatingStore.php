@@ -3,6 +3,7 @@
 namespace App\Ratings;
 
 use App\Ratings\Enums\RatingSourceName;
+use App\Ratings\Exceptions\RatingReplacementRefused;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;

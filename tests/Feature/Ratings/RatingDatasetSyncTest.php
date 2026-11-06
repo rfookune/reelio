@@ -3,9 +3,9 @@
 use App\Jobs\CheckRatingDatasetFreshness;
 use App\Jobs\SyncRatingDataset;
 use App\Ratings\Enums\RatingSourceName;
-use App\Ratings\Enums\RatingSyncOutcome;
 use App\Ratings\RatingStore;
-use App\Ratings\Sync\ImdbRatingDataset;
+use App\Ratings\Sync\Datasets\ImdbRatingDataset;
+use App\Ratings\Sync\Enums\RatingSyncOutcome;
 use App\Ratings\Sync\RatingDatasetSync;
 use App\Ratings\Sync\RatingSyncFailed;
 use App\Ratings\Sync\RatingSyncResult;

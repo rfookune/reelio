@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Ratings\Sync;
+namespace App\Ratings\Sync\Datasets;
 
 use App\Ratings\Enums\RatingSourceName;
 

@@ -2,7 +2,7 @@
 
 namespace App\Ratings\Sync;
 
-use App\Ratings\Enums\RatingSyncOutcome;
+use App\Ratings\Sync\Enums\RatingSyncOutcome;
 
 readonly class RatingSyncResult
 {

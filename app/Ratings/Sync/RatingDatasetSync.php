@@ -3,9 +3,10 @@
 namespace App\Ratings\Sync;
 
 use App\Ratings\Enums\RatingSourceName;
-use App\Ratings\Enums\RatingSyncOutcome;
-use App\Ratings\RatingReplacementRefused;
+use App\Ratings\Exceptions\RatingReplacementRefused;
 use App\Ratings\RatingStore;
+use App\Ratings\Sync\Datasets\RatingDataset;
+use App\Ratings\Sync\Enums\RatingSyncOutcome;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;

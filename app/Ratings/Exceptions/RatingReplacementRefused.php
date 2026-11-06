@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Ratings;
+namespace App\Ratings\Exceptions;
 
 use RuntimeException;
 

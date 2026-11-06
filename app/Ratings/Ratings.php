@@ -3,6 +3,7 @@
 namespace App\Ratings;
 
 use App\Models\Movie;
+use App\Ratings\Sources\RatingSource;
 use Illuminate\Support\Collection;
 
 /**

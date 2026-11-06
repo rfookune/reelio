@@ -2,7 +2,7 @@
 
 use App\Jobs\CheckRatingDatasetFreshness;
 use App\Jobs\SyncRatingDataset;
-use App\Ratings\Sync\RatingDatasets;
+use App\Ratings\Sync\Datasets\RatingDatasets;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;

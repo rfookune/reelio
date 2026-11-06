@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Ratings\RatingStore;
-use App\Ratings\Sync\RatingDatasets;
+use App\Ratings\Sync\Datasets\RatingDatasets;
 use App\Ratings\Sync\RatingDatasetSync;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;

@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Ratings;
+namespace App\Ratings\Sources;
+
+use App\Ratings\ExternalRating;
 
 use App\Models\Movie;
 use Illuminate\Support\Collection;
