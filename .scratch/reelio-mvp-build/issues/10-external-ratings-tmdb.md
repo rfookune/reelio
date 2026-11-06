@@ -13,3 +13,7 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 - [x] A thin `Ratings` module returns ratings in the fixed order IMDb, then TMDB, in one batch for many Movies (no per-card lookups)
 - [x] The Movie page hero shows each rating as the source name in its colour, the score and a compact vote count ("TMDB 8.5 41.8K"), or "Not yet rated"
 - [x] A shared rating display for cards (IMDb, else TMDB, else "Not yet rated") is ready for the list surfaces
+
+## Deviation (2026-11-06)
+
+Per [ADR 0001](../../../docs/adr/0001-one-ratings-table-for-every-rating-source.md), TMDB's score no longer lives on the Movie row. The "TMDB adapter reads `vote_average`/`vote_count` from the row" criterion is superseded: a generic stored adapter reads TMDB's score from the `ratings` table by `tmdb_id`, the Catalog records it when it creates a Movie, and the `vote_average`/`vote_count` columns move off `movies` (backfilled into `ratings`). Zero votes still count as absent, now by never storing the row.

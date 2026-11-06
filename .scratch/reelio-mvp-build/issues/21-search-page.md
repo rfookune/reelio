@@ -18,3 +18,7 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 - [ ] Search is limited to 60/min per user or IP; the page is client-rendered and `noindex`
 - [ ] `movie_searched` with `query_length` and `result_count` on each page-1 response; the query text is never stored
 - [ ] Browser tests cover debounce and cancellation; feature tests cover validation, paging, states and the event
+
+## Note from ADR 0001 (2026-11-06)
+
+Per [ADR 0001](../../../docs/adr/0001-one-ratings-table-for-every-rating-source.md), TMDB scores are read from the `ratings` table through the `Ratings` module. When search results are fetched, record each result's TMDB score in `ratings` by `tmdb_id` (no Movie row needed), so the card rating comes from the same batch `Ratings` call as every other surface.

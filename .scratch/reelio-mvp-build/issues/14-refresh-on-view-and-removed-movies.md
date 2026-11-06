@@ -13,3 +13,7 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 - [ ] A 404 on refresh keeps the row, clears every TMDB-derived field, its genre links and Availability, and marks it removed; user facts are untouched
 - [ ] A Removed Movie's page is a 410 for everyone with `noindex`, no title, and the copy "This movie is no longer available. Our data source, TMDB, has removed this movie, so we can't show its details any more.", linking to Discover (list actions arrive with the lists)
 - [ ] Feature tests drive refresh, stale fallback and removal through the fake adapter
+
+## Note from ADR 0001 (2026-11-06)
+
+Per [ADR 0001](../../../docs/adr/0001-one-ratings-table-for-every-rating-source.md), TMDB's score lives in the `ratings` table, not on the Movie row. The refresh operation records the Movie's TMDB rating (or deletes it when the score is missing or has zero votes), and making a Movie a Removed Movie deletes its TMDB rating along with the other TMDB-derived fields.

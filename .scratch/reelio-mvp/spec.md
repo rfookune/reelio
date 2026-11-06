@@ -168,7 +168,7 @@ From [Infrastructure baseline](./issues/05-infrastructure-baseline.md), as amend
 - **Cache:** Laravel Valkey in production (Redis-compatible driver), with Redis from Herd locally and in tests. The cache holds only disposable data; anything that must persist, or be purged under TMDB's cap, lives in Postgres.
 - **Queues:** in production, Cloud managed queues (`QUEUE_CONNECTION=cloud`):
     - `default`: Flex, 256 MiB, scales to zero, at most 3 workers. Carries analytics events, mail, Movie refresh, purge and cleanup, and the event roll-up.
-    - `imports`: Flex, 512 MiB, scales to zero, 1 worker. Carries the IMDb import and the sitemap build.
+    - `imports`: Flex, 512 MiB, scales to zero, 1 worker. Carries the Rating dataset syncs (IMDb) and the sitemap build.
 
     Local development uses the `database` driver, and tests fake the queue. Failed jobs are managed in Cloud's Queues dashboard (no Horizon, `queue:failed` or `queue:retry`).
 
@@ -203,10 +203,13 @@ From [Infrastructure baseline](./issues/05-infrastructure-baseline.md), as amend
     Controllers never touch the adapter or the cache.
 
 - **Rating source interface:** one batch method, `ratingsFor(Collection $movies)`, returning an `ExternalRating` per Movie id. An `ExternalRating` holds the source (an enum), the value on a 0–10 scale, the vote count and an as-of timestamp. A missing rating is **absent** from the result: never `"N/A"`, `0` or a placeholder. There is never a blended or combined score: each External rating stands alone with its source ([01](./issues/01-tmdb-terms.md)).
-    - **TMDB adapter:** reads `vote_average` and `vote_count` from the Movie row. Zero votes counts as absent.
-    - **IMDb adapter:** joins the IMDb ratings table through `imdb_id`. No `imdb_id`, or no entry, means absent. A missing `imdb_id` never falls back to a title search ([03](./issues/03-omdb-ratings.md)). It needs no Movie row beyond the `imdb_id`.
+    - **Stored adapter:** one generic adapter per source reads the `ratings` table (below) through the identifier that source uses for a Movie: `imdb_id` for IMDb, `tmdb_id` for TMDB. No identifier, or no row, means absent. A missing `imdb_id` never falls back to a title search ([03](./issues/03-omdb-ratings.md)). It needs no Movie row beyond the identifier ([ADR 0001](../../docs/adr/0001-one-ratings-table-for-every-rating-source.md)).
     - **Fake:** returns given ratings per Movie, or none.
-- **A thin `Ratings` module** collects the adapters and returns External ratings in a fixed display order: IMDb, then TMDB. The IMDb display must be removable without breaking any page, because IMDb can withdraw permission.
+- **A thin `Ratings` module** collects the adapters and returns External ratings in a fixed display order: IMDb, then TMDB. Each source can be switched off in config, which hides it everywhere and stops its sync; the IMDb display must be removable without breaking any page, because IMDb can withdraw permission.
+- **Writing ratings:** the `Ratings` module owns the `ratings` table.
+    - **Full-dataset sources** (IMDb today) are synced by one generic daily job per source. The source supplies only a dataset feed: its URL and a parser that turns the file into rows. Everything else is shared: the conditional download, the temporary table, validation, the swap and the freshness alert (see "Rating dataset sync").
+    - **Incremental sources** record single rows. TMDB's score is recorded whenever the Catalog fetches a title: creation, refresh, and the Search and Discover payloads, whether or not a Movie row exists. A zero-vote or missing score deletes the row instead.
+    - Adding a Rating source is a feed (or an incremental writer), an enum case, and its label and colour, with no migration ([ADR 0001](../../docs/adr/0001-one-ratings-table-for-every-rating-source.md)).
 - **User–movie actions** (set Watchlist, clear Watchlist, mark watched, clear Watched, Undo) are Actions over `user_movies`. They implement the lifecycle below and record one analytics event each.
 - **The Movie picker** is a query over the user's candidates plus a criteria object (genres today, the P1 filters later).
 
@@ -217,7 +220,7 @@ From [Movie identity, URLs and local storage](./issues/09-movie-identity-and-sto
 - **`users`:** gains a nullable `preferred_country` (one of the supported countries).
 - **`movies`:** every TMDB-derived field falls under one `synced_at`.
     - Identity: local `id`, a unique `tmdb_id` (a plain column, not the PRD's generic `(provider, provider_movie_id)` pair), and a slug derived from the title and regenerated on refresh.
-    - Metadata: `title`, `original_title`, `overview`, `tagline`, `release_date`, `runtime`, `poster_path`, `backdrop_path`, `original_language`, `vote_average`, `vote_count`, `imdb_id`.
+    - Metadata: `title`, `original_title`, `overview`, `tagline`, `release_date`, `runtime`, `poster_path`, `backdrop_path`, `original_language`, `imdb_id`. TMDB's score isn't on the row; it lives in `ratings` ([ADR 0001](../../docs/adr/0001-one-ratings-table-for-every-rating-source.md)).
     - Bookkeeping: `synced_at`, `last_viewed_at`, and a marker that the Movie is a Removed Movie.
     - Every TMDB-derived column is nullable, because a Removed Movie and a cap-cleared Movie (below) keep the row with those fields cleared.
     - `tagline` is nullable, so it survives an outage like the overview ([Spec review](./issues/32-spec-review.md)).
@@ -227,7 +230,10 @@ From [Movie identity, URLs and local storage](./issues/09-movie-identity-and-sto
     - Only supported countries are stored.
     - A Movie's rows are replaced wholesale on each refresh.
     - TMDB's `free` and `ads` both map to `free`.
-- **IMDb ratings table:** the whole `title.ratings.tsv` dataset, keyed by IMDb id, with its rating, vote count and `imported_at`. It's loaded through a staging table and swapped (below). It isn't TMDB data, so the 6-month cap doesn't apply.
+- **`ratings`:** every score from every Rating source, one row per `(source, source_id)`: the source (`imdb`, `tmdb`, later `internal`), the identifier that source uses for the title, the value on a 0–10 scale, the vote count and `as_of` ([ADR 0001](../../docs/adr/0001-one-ratings-table-for-every-rating-source.md)).
+    - IMDb rows are the whole `title.ratings.tsv` dataset, replaced daily (see "Rating dataset sync"). They aren't TMDB data, so the 6-month cap doesn't apply.
+    - TMDB rows are TMDB data. They fall under the 6-month cap by their own `as_of`, independently of Movie rows.
+    - There's no foreign key to `movies`: a row exists for any title its source scored, whether or not Reelio has a Movie for it.
 - **`user_movies`:**
     - `user_id`, foreign key with cascade delete;
     - `movie_id`, foreign key with restrict, so a Movie is never deleted while anyone holds a fact about it;
@@ -311,9 +317,10 @@ From [Cache lifetimes and refresh schedule](./issues/26-cache-lifetimes-and-refr
     - the row and its genres;
     - Availability for the supported countries;
     - the Streaming services it references (upserted);
-    - the detail cache.
+    - the detail cache;
+    - its TMDB `ratings` row.
 
-    It sets `synced_at`. A 404 makes it a Removed Movie.
+    It sets `synced_at`. A 404 makes it a Removed Movie, which also deletes its TMDB rating.
 
 - **When a Movie is refreshed:**
 
@@ -335,7 +342,8 @@ From [Cache lifetimes and refresh schedule](./issues/26-cache-lifetimes-and-refr
 
     No cache entry lives more than 30 days.
 
-- **Purge of unviewed Movies:** the daily cleanup deletes any Movie with no user facts and `last_viewed_at` more than 30 days old, along with its genre links, Availability and detail cache.
+- **Purge of unviewed Movies:** the daily cleanup deletes any Movie with no user facts and `last_viewed_at` more than 30 days old, along with its genre links, Availability, detail cache and TMDB rating.
+- **TMDB rating rows** with an `as_of` more than 170 days old are deleted by the same daily cleanup, whether or not a Movie row exists, because Search and Discover record scores for titles Reelio has no Movie for.
     - It's controlled by `catalog.purge_unviewed.enabled` (env `CATALOG_PURGE_UNVIEWED`, on by default everywhere) and `catalog.purge_unviewed.after_days` (default 30).
     - `last_viewed_at` is set at creation and on every Movie page view.
     - Undo by catalog id re-creates a purged row.
@@ -346,23 +354,25 @@ From [Cache lifetimes and refresh schedule](./issues/26-cache-lifetimes-and-refr
     - Like a Removed Movie, it's excluded from picker candidates, the sitemap and the paginated list query.
     - Its Movie page tries the normal in-request refresh. If that fails, the page is a **503** with `Retry-After` and `noindex`, showing "Details temporarily unavailable" with no stored fields. A signed-in user with facts gets the same Remove and Clear actions as on the 410 page. It never returns the 410 ([Spec review](./issues/32-spec-review.md)).
     - "Cap-cleared" is an operational state, not a domain term, so the glossary doesn't define it.
-- **Licence loss:** `catalog:purge`, run by hand, applies the same clearing to every row. Users' facts survive.
+- **Licence loss:** `catalog:purge`, run by hand, applies the same clearing to every row and deletes every TMDB `ratings` row. Users' facts survive.
 - **Freshness:** every Availability block shows "Updated today / yesterday / N days ago" from `synced_at`, plus a "may be out of date" notice when that is more than 7 days old.
 
-### IMDb import
+### Rating dataset sync
 
 From [Catalog and Rating source boundary](./issues/10-source-boundary.md), [Cache lifetimes and refresh schedule](./issues/26-cache-lifetimes-and-refresh.md) and [Deployment and operations](./issues/19-deployment-and-operations.md):
 
-- A daily job on `imports`. It skips the download when the file is unchanged (`ETag` / `Last-Modified`), and the download URL is config.
-- It streams the gzipped `title.ratings.tsv` without loading it into memory and writes to a staging table.
+One generic daily job per full-dataset Rating source, on `imports`. IMDb's `title.ratings.tsv.gz` is the only one today; its feed supplies the URL (config) and the parser, and the rest below is shared ([ADR 0001](../../docs/adr/0001-one-ratings-table-for-every-rating-source.md)).
+
+- It skips the download when the file is unchanged (`ETag` / `Last-Modified`). An empty set of rows for the source always downloads in full.
+- It streams the file to disk without loading it into memory and writes the parsed rows into a temporary table created for that run. There's no permanent staging table.
 - **Validation before the swap:**
     - the header matches;
     - malformed rows are skipped and counted;
     - the row count is at least 90% of the live table's.
 
-    Then the staging table replaces the live table in one transaction.
+    Then, in one transaction, the source's rows in `ratings` are deleted and the temporary table's rows inserted. Postgres readers keep the old rows until the commit.
 
-- **On any failure** the live table is untouched and keeps serving. The failure reaches Nightwatch and the owner alert, and the next run retries. The owner is alerted when the live table is more than 3 days old. Ratings stay on show however old the table is.
+- **On any failure** the source's live rows are untouched and keep serving. The failure reaches Nightwatch and the owner alert, and the next run retries. The owner is alerted when a source's rows were never synced or are more than 3 days old (an unchanged file counts as a successful sync). Ratings stay on show however old the table is.
 - **Timeouts:** the job's timeout is generous, and the queue's `retry_after` is longer than it, so a slow run isn't delivered twice ([05](./issues/05-infrastructure-baseline.md)).
 - **Flex jobs are killed at 90 s.** A build-time spike measures the import. If it doesn't fit, `imports` moves to a Pro queue (about $5/month) before launch.
 - The IMDb credit, worded as IMDb confirms ([Confirm IMDb permission for the non-commercial ratings dataset](./issues/18-imdb-permission.md)), appears wherever the IMDb rating shows. The wording requested is "Information courtesy of IMDb (https://www.imdb.com). Used with permission."
@@ -373,7 +383,7 @@ Every scheduled task runs from one daily slot at **05:00 UTC** and only dispatch
 
 | Task                                                                    | Cadence                 | Source                                           |
 | ----------------------------------------------------------------------- | ----------------------- | ------------------------------------------------ |
-| IMDb import                                                             | daily                   | [26](./issues/26-cache-lifetimes-and-refresh.md) |
+| Rating dataset syncs (IMDb today)                                       | daily                   | [26](./issues/26-cache-lifetimes-and-refresh.md) |
 | Discover build                                                          | daily                   | [22](./issues/22-homepage-curation.md)           |
 | Refresh planner                                                         | daily                   | [26](./issues/26-cache-lifetimes-and-refresh.md) |
 | Unviewed-Movie purge, unreferenced Streaming service cleanup, cap guard | daily                   | [26](./issues/26-cache-lifetimes-and-refresh.md) |
@@ -901,7 +911,7 @@ From [Analytics and error monitoring](./issues/08-analytics-and-monitoring.md), 
     - a sustained TMDB failure rate;
     - a 401 from TMDB;
     - a Movie with user facts more than 14 days overdue for refresh;
-    - an IMDb table more than 3 days old.
+    - a Rating dataset (IMDb) more than 3 days old, or never synced.
 
 ### Privacy, terms and retention
 
@@ -1045,7 +1055,7 @@ From [Test strategy and tooling](./issues/07-test-strategy.md), with additions f
 | ------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Feature (the bulk)  | Pest 5 on Postgres with Redis                  | Every lifecycle action and Undo rule; guest pending actions; the catalog-id endpoints creating rows; the entry route (redirects, 404, 410, 503); picker candidates, genre filter, Pick again and edge states; sort and keyset paging, including after removals; Removed and cap-cleared Movies; country precedence and cookie checks; refresh triggers, purge, cap guard, `catalog:purge`; Discover assembly and dedupe; every failure state; each rate limit (429 plus `Retry-After`); headers and a fresh nonce on public, private and error pages; the intended-URL guard (`//evil.com`, `/\evil.com`); CSP report redaction; indexing flag behaviour; event recording; retention jobs; session columns and cascade. |
 | TMDB adapter        | Pest with `Http::fake()` and recorded fixtures | Parsing, Director(s), Writers, the trailer ranking (including _Interstellar_ picking "Trailer 4"), US date and certification, Availability mapping (`free` and `ads` to `free`), timeouts, bounded retries, the circuit breaker, 404 vs 401 vs 5xx and 429.                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| IMDb import         | Pest with a tiny gzipped TSV fixture           | A normal row, a missing rating, a malformed row, a header mismatch, a row count under 90% leaving the live table untouched, and an unchanged-file skip.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Rating dataset sync | Pest with a tiny gzipped TSV fixture (IMDb)    | A normal row, a missing rating, a malformed row, a header mismatch, a row count under 90% leaving the live table untouched, and an unchanged-file skip.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | Frontend logic      | Pest browser plugin (Playwright)               | Only client logic that makes its own decisions: search debounce and cancellation, optimistic Watchlist actions with rollback, the Undo toast flow, and theme persistence. Each is driven in the real app, with failures injected through the source fakes or a failing endpoint, and asserted by what the user sees. Display-only components get no tests of their own. Vitest was dropped at build ([01](../reelio-mvp-build/issues/01-postgres-redis-test-foundation.md)).                                                                                                                                                                                                                                            |
 | Browser             | Pest browser plugin (Playwright)               | Five journeys, each at desktop and mobile with `assertNoJavascriptErrors` under the real CSP: discover → details → save; pick from the Watchlist; mark as watched → see it in Watched; see Availability on a Movie page; register and log in. Each ends with `assertNoAccessibilityIssues()` at level 1. Structural image checks: aspect boxes or dimensions; exactly one `fetchpriority="high"` on Discover and the Movie page and none on grids; lazy below the fold.                                                                                                                                                                                                                                                 |
 | Accessibility sweep | Pest browser plugin                            | Level 1 axe at desktop and mobile in both themes, on: Discover; Search (empty, results, no results); a Movie page and a Removed Movie; the Watchlist (empty and full) and Watched; the picker open; auth and settings pages; the 404, 429 and 500 pages.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -1077,7 +1087,7 @@ Cloud preview environments are for manual checks only. Cloud's edge settings are
     - related Movies;
     - the advanced picker (FR-015), whose filters use the same criteria object.
 - **Ratings:** Rotten Tomatoes through Fandango's licensing route.
-- **Watchlist and Watched pages:** a list layout, a rating sort (with a denormalised IMDb column if needed), and a genre filter.
+- **Watchlist and Watched pages:** a list layout, a rating sort (a join on `ratings`), and a genre filter.
 - **Discover:** "See all" pages for its sections.
 - **Data:** change-driven refresh from TMDB's `/movie/changes` feed.
 - **Measurement:** real-user Web Vitals collection, and a privacy-friendly pageview tool.
@@ -1118,7 +1128,7 @@ The contact address, the Resend sender domain, and the HSTS `includeSubDomains`/
 
 ### Build checks (during implementation)
 
-- Measure the IMDb import's duration on a Flex queue. If it doesn't fit in 90 s, move `imports` to Pro ([19](./issues/19-deployment-and-operations.md)).
+- Measure the IMDb dataset sync's duration on a Flex queue. If it doesn't fit in 90 s, move `imports` to Pro ([19](./issues/19-deployment-and-operations.md)).
 - Confirm Nightwatch is backend-only, and Sentry's cookie position with replay and IP capture off ([08](./issues/08-analytics-and-monitoring.md)).
 - Confirm Sentry's and Resend's retention before publishing them ([30](./issues/30-privacy-terms-and-retention.md)).
 - Check whether Cloud's edge access logs hold full query strings, and say so on the Privacy page if they do ([23](./issues/23-search-experience.md), [30](./issues/30-privacy-terms-and-retention.md)).

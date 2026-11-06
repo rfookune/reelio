@@ -25,3 +25,12 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 
 - The Cloud `imports` queue's `retry_after` (visibility timeout) must be longer than the job's 300 s timeout; it's set on Cloud, not in `config/queue.php`.
 - The `imdb_ratings` and `imdb_ratings_staging` migration has not been run on any shared database yet.
+
+## Deviation (2026-11-06)
+
+Per [ADR 0001](../../../docs/adr/0001-one-ratings-table-for-every-rating-source.md):
+
+- The dedicated `imdb_ratings` and `imdb_ratings_staging` tables are replaced by the shared `ratings` table (`source = imdb`, `source_id` = the IMDb id). That migration was never run outside the test database, so it's replaced outright.
+- There's no permanent staging table: each sync streams into a temporary table created for that run, validates it, then replaces the source's rows in one transaction.
+- The IMDb-specific importer, job and freshness check become generic Rating dataset sync code; IMDb keeps only its feed (URL and TSV parser).
+- The duration above was measured on the previous design and is re-measured after the change.

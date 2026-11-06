@@ -17,3 +17,7 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 - [ ] Row links use the canonical URL when a row exists, else the entry route, with the `discover` referrer
 - [ ] The top bar floats over a glow from the hero backdrop
 - [ ] The discover → details → save browser journey at desktop and mobile
+
+## Note from ADR 0001 (2026-11-06)
+
+Per [ADR 0001](../../../docs/adr/0001-one-ratings-table-for-every-rating-source.md), TMDB scores are read from the `ratings` table through the `Ratings` module. When the Discover payload is built, record each title's TMDB score in `ratings` by `tmdb_id` (no Movie row needed), so rows and the hero use the same batch `Ratings` call as every other surface.
