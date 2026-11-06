@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Actions;
+namespace App\Enums;
 
 /**
  * The Watchlist and Watched actions a user can take on a Movie, and so undo; the value names the action in the

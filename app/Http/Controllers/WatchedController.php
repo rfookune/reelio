@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\ClearWatched;
 use App\Actions\MarkAsWatched;
-use App\Actions\UserMovieAction;
+use App\Enums\UserMovieAction;
 use App\Http\LatestUserMovieAction;
 use App\Http\MovieByCatalogId;
 use App\Http\Requests\UserMovieActionRequest;

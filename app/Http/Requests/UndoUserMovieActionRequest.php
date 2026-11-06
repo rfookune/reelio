@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Actions\UserMovieAction;
+use App\Enums\UserMovieAction;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;

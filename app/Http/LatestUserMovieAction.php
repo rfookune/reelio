@@ -2,7 +2,7 @@
 
 namespace App\Http;
 
-use App\Actions\UserMovieAction;
+use App\Enums\UserMovieAction;
 use Illuminate\Http\Request;
 
 /**

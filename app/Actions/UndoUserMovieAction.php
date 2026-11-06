@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\UserMovieAction;
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
