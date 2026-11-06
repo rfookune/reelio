@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Catalog\Source;
+namespace App\Catalog\Sources;
 
 /**
  * The Catalog source rejected our credentials; the owner must fix the configuration.

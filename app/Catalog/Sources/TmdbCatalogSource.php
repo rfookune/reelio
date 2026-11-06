@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Catalog\Source;
+namespace App\Catalog\Sources;
 
 use App\Catalog\CatalogContext;
 use App\Catalog\Enums\CatalogProfile;

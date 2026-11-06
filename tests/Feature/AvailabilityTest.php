@@ -2,9 +2,9 @@
 
 use App\Catalog\AvailabilityWriter;
 use App\Catalog\Enums\OfferType;
-use App\Catalog\Source\CatalogSource;
-use App\Catalog\Source\FakeCatalogSource;
-use App\Catalog\Source\MovieDetails;
+use App\Catalog\Sources\CatalogSource;
+use App\Catalog\Sources\FakeCatalogSource;
+use App\Catalog\Sources\MovieDetails;
 use App\Jobs\RecordAnalyticsEvent;
 use App\Models\Availability;
 use App\Models\Movie;

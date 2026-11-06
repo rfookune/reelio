@@ -1,8 +1,8 @@
 <?php
 
-use App\Catalog\Source\CatalogSource;
-use App\Catalog\Source\FakeCatalogSource;
-use App\Catalog\Source\MovieDetails;
+use App\Catalog\Sources\CatalogSource;
+use App\Catalog\Sources\FakeCatalogSource;
+use App\Catalog\Sources\MovieDetails;
 use App\Models\Movie;
 use App\Ratings\Enums\RatingSourceName;
 use App\Ratings\RatingStore;

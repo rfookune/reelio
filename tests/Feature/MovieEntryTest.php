@@ -1,10 +1,10 @@
 <?php
 
 use App\Catalog\CatalogContext;
-use App\Catalog\Source\CatalogSource;
-use App\Catalog\Source\FakeCatalogSource;
-use App\Catalog\Source\MovieDetails;
-use App\Catalog\Source\SourceMisconfigured;
+use App\Catalog\Sources\CatalogSource;
+use App\Catalog\Sources\FakeCatalogSource;
+use App\Catalog\Sources\MovieDetails;
+use App\Catalog\Sources\SourceMisconfigured;
 use App\Models\Movie;
 use App\Models\User;
 use Illuminate\Contracts\Debug\ExceptionHandler;

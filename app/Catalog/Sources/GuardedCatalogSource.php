@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Catalog\Source;
+namespace App\Catalog\Sources;
 
 use App\Catalog\CacheKey;
 use App\Catalog\CatalogContext;

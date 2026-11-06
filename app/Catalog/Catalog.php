@@ -2,10 +2,10 @@
 
 namespace App\Catalog;
 
-use App\Catalog\Source\CatalogSource;
-use App\Catalog\Source\MovieDetails;
-use App\Catalog\Source\SourceMisconfigured;
-use App\Catalog\Source\SourceUnavailable;
+use App\Catalog\Sources\CatalogSource;
+use App\Catalog\Sources\MovieDetails;
+use App\Catalog\Sources\SourceMisconfigured;
+use App\Catalog\Sources\SourceUnavailable;
 use App\Models\Genre;
 use App\Models\Movie;
 use App\Ratings\Enums\RatingSourceName;

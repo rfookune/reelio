@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Catalog\Source;
+namespace App\Catalog\Sources;
 
 readonly class MovieDetails
 {
