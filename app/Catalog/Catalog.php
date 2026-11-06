@@ -4,6 +4,8 @@ namespace App\Catalog;
 
 use App\Models\Genre;
 use App\Models\Movie;
+use App\Ratings\RatingSourceName;
+use App\Ratings\RatingStore;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -15,7 +17,7 @@ class Catalog
 
     private const DETAILS_HARD_LIFETIME_DAYS = 30;
 
-    public function __construct(private CatalogSource $source, private CacheKey $keys) {}
+    public function __construct(private CatalogSource $source, private CacheKey $keys, private RatingStore $ratings) {}
 
     /** @return CatalogResult<Movie> */
     public function findOrCreate(int $tmdbId, string $actor): CatalogResult
@@ -53,8 +55,6 @@ class Catalog
                 'poster_path' => $details->posterPath,
                 'backdrop_path' => $details->backdropPath,
                 'original_language' => $details->originalLanguage,
-                'vote_average' => $details->voteAverage,
-                'vote_count' => $details->voteCount,
                 'imdb_id' => $details->imdbId,
                 'synced_at' => now(),
                 'last_viewed_at' => now(),
@@ -71,6 +71,7 @@ class Catalog
         });
 
         $this->storeDetails($this->detailsKey($tmdbId, $context), $details);
+        $this->ratings->record(RatingSourceName::Tmdb, (string) $details->tmdbId, $details->voteAverage, $details->voteCount);
 
         return CatalogResult::fresh($movie);
     }
@@ -106,6 +107,7 @@ class Catalog
 
         if ($details !== null) {
             $this->storeDetails($key, $details);
+            $this->ratings->record(RatingSourceName::Tmdb, (string) $details->tmdbId, $details->voteAverage, $details->voteCount);
         }
 
         return CatalogResult::fresh($details);

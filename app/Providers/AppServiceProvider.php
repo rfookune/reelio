@@ -6,9 +6,11 @@ use App\Catalog\CacheKey;
 use App\Catalog\CatalogSource;
 use App\Catalog\GuardedCatalogSource;
 use App\Catalog\TmdbCatalogSource;
-use App\Ratings\ImdbRatingSource;
 use App\Ratings\Ratings;
-use App\Ratings\TmdbRatingSource;
+use App\Ratings\RatingSourceName;
+use App\Ratings\StoredRatingSource;
+use App\Ratings\Sync\ImdbRatingDataset;
+use App\Ratings\Sync\RatingDatasets;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Foundation\Application;
@@ -28,8 +30,13 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(CatalogSource::class, fn (Application $app): CatalogSource => new GuardedCatalogSource($app->make(TmdbCatalogSource::class), $app->make(CacheKey::class)));
 
-        $this->app->tag([ImdbRatingSource::class, TmdbRatingSource::class], 'rating-sources');
-        $this->app->bind(Ratings::class, fn (Application $app): Ratings => new Ratings(iterator_to_array($app->tagged('rating-sources'))));
+        $this->app->bind(Ratings::class, fn (): Ratings => new Ratings(array_map(
+            fn (RatingSourceName $source): StoredRatingSource => new StoredRatingSource($source),
+            RatingSourceName::cases(),
+        )));
+
+        $this->app->tag([ImdbRatingDataset::class], 'rating-datasets');
+        $this->app->bind(RatingDatasets::class, fn (Application $app): RatingDatasets => new RatingDatasets(iterator_to_array($app->tagged('rating-datasets'))));
     }
 
     /**

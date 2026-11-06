@@ -18,13 +18,17 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 
 ## Import duration
 
-- **Local (2026-11-06):** 20.3 s for 1,729,129 rows (0 skipped), 52.5 MiB peak memory, measured on a developer machine against a local Postgres. Memory stays flat because the file streams to disk and is read line by line.
-- **Flex: not yet measured.** It needs a deployed `imports` queue on Laravel Cloud. A Flex worker with a remote database will be slower than the local run; if a real run approaches 90 s, move `imports` to Pro. This is why the ticket is `ready-for-human`.
+All local runs are on a developer machine against a local Postgres, with the real dataset (1,729,129 rows, 0 skipped) and 52.5 MiB peak memory: memory stays flat because the file streams to disk and is read line by line.
+
+- **Rename-swap design (superseded, 2026-11-06):** 20.3 s.
+- **Shared `ratings` table (ADR 0001, 2026-11-06):** 28.3 s into an empty source, 32.4 s replacing 1.7M existing rows (the daily case), with the whole load in one transaction. The delete-and-insert costs about 12 s over the rename swap.
+- **Flex: not yet measured.** It needs a deployed `imports` queue on Laravel Cloud. A Flex worker with a remote database will be slower than the local 32.4 s; if a real run approaches 90 s, move `imports` to Pro. This is why the ticket is `ready-for-human`.
 
 ## Deploy checks
 
 - The Cloud `imports` queue's `retry_after` (visibility timeout) must be longer than the job's 300 s timeout; it's set on Cloud, not in `config/queue.php`.
-- The `imdb_ratings` and `imdb_ratings_staging` migration has not been run on any shared database yet.
+- The sync's real commit path (the temporary table dropped `ON COMMIT`) can't be exercised under `RefreshDatabase`, which never commits; confirm one real sync on Cloud succeeds twice in a row.
+- The `ratings` table and the migration moving TMDB scores off `movies` have not been run on any shared database yet.
 
 ## Deviation (2026-11-06)
 
@@ -33,4 +37,4 @@ Per [ADR 0001](../../../docs/adr/0001-one-ratings-table-for-every-rating-source.
 - The dedicated `imdb_ratings` and `imdb_ratings_staging` tables are replaced by the shared `ratings` table (`source = imdb`, `source_id` = the IMDb id). That migration was never run outside the test database, so it's replaced outright.
 - There's no permanent staging table: each sync streams into a temporary table created for that run, validates it, then replaces the source's rows in one transaction.
 - The IMDb-specific importer, job and freshness check become generic Rating dataset sync code; IMDb keeps only its feed (URL and TSV parser).
-- The duration above was measured on the previous design and is re-measured after the change.
+- The durations above are re-measured on the new design.

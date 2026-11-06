@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property CarbonImmutable $last_viewed_at
  * @property CarbonImmutable|null $removed_at
  */
-#[Fillable(['tmdb_id', 'slug', 'title', 'original_title', 'overview', 'tagline', 'release_date', 'runtime', 'poster_path', 'backdrop_path', 'original_language', 'vote_average', 'vote_count', 'imdb_id', 'synced_at', 'last_viewed_at', 'removed_at'])]
+#[Fillable(['tmdb_id', 'slug', 'title', 'original_title', 'overview', 'tagline', 'release_date', 'runtime', 'poster_path', 'backdrop_path', 'original_language', 'imdb_id', 'synced_at', 'last_viewed_at', 'removed_at'])]
 class Movie extends Model
 {
     /** @use HasFactory<MovieFactory> */
@@ -30,8 +30,6 @@ class Movie extends Model
             'last_viewed_at' => 'immutable_datetime',
             'removed_at' => 'immutable_datetime',
             'runtime' => 'integer',
-            'vote_average' => 'float',
-            'vote_count' => 'integer',
         ];
     }
 

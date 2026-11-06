@@ -4,7 +4,8 @@ use App\Catalog\CatalogSource;
 use App\Catalog\FakeCatalogSource;
 use App\Catalog\MovieDetails;
 use App\Models\Movie;
-use Illuminate\Support\Facades\DB;
+use App\Ratings\RatingSourceName;
+use App\Ratings\RatingStore;
 
 /** @param array{key: string, name: string, type: string}|null $trailer */
 function layoutMovie(?array $trailer = null): Movie
@@ -129,8 +130,9 @@ it('hides the trailer section without a trailer and shows a panel when the sourc
 });
 
 it('shows the TMDB rating with a compact vote count, or "Not yet rated"', function () {
-    $rated = Movie::factory()->create(['vote_average' => 8.5, 'vote_count' => 41832]);
-    $unrated = Movie::factory()->create(['vote_average' => 0, 'vote_count' => 0]);
+    $rated = Movie::factory()->create(['tmdb_id' => 157336]);
+    $unrated = Movie::factory()->create();
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, '157336', 8.5, 41832);
 
     $page = visitWithCsp(route('movies.show', ['slug' => $rated->slug, 'id' => $rated->id], absolute: false));
     $page->assertSeeIn('[data-slot="external-ratings"]', 'TMDB 8.5 41.8K')->assertDontSee('Not yet rated');
@@ -140,8 +142,9 @@ it('shows the TMDB rating with a compact vote count, or "Not yet rated"', functi
 });
 
 it('shows the IMDb rating before TMDB with IMDb\'s credit, and turning IMDb off leaves TMDB in place', function () {
-    DB::table('imdb_ratings')->insert(['imdb_id' => 'tt0816692', 'rating' => 8.7, 'vote_count' => 2_400_000, 'imported_at' => now()]);
-    $movie = Movie::factory()->create(['imdb_id' => 'tt0816692', 'vote_average' => 8.5, 'vote_count' => 41832]);
+    $movie = Movie::factory()->create(['tmdb_id' => 157336, 'imdb_id' => 'tt0816692']);
+    app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0816692', 8.7, 2_400_000);
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, '157336', 8.5, 41832);
     $url = route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id], absolute: false);
 
     $page = visitWithCsp($url);
@@ -149,7 +152,7 @@ it('shows the IMDb rating before TMDB with IMDb\'s credit, and turning IMDb off 
         ->assertSeeIn('[data-slot="imdb-credit"]', 'Information courtesy of IMDb (https://www.imdb.com). Used with permission.')
         ->assertNoJavaScriptErrors();
 
-    config(['ratings.imdb.enabled' => false]);
+    config(['ratings.sources.imdb.enabled' => false]);
 
     $page = visitWithCsp($url);
     $page->assertSeeIn('[data-slot="external-ratings"]', 'TMDB 8.5 41.8K')

@@ -205,11 +205,11 @@ From [Infrastructure baseline](./issues/05-infrastructure-baseline.md), as amend
 - **Rating source interface:** one batch method, `ratingsFor(Collection $movies)`, returning an `ExternalRating` per Movie id. An `ExternalRating` holds the source (an enum), the value on a 0–10 scale, the vote count and an as-of timestamp. A missing rating is **absent** from the result: never `"N/A"`, `0` or a placeholder. There is never a blended or combined score: each External rating stands alone with its source ([01](./issues/01-tmdb-terms.md)).
     - **Stored adapter:** one generic adapter per source reads the `ratings` table (below) through the identifier that source uses for a Movie: `imdb_id` for IMDb, `tmdb_id` for TMDB. No identifier, or no row, means absent. A missing `imdb_id` never falls back to a title search ([03](./issues/03-omdb-ratings.md)). It needs no Movie row beyond the identifier ([ADR 0001](../../docs/adr/0001-one-ratings-table-for-every-rating-source.md)).
     - **Fake:** returns given ratings per Movie, or none.
-- **A thin `Ratings` module** collects the adapters and returns External ratings in a fixed display order: IMDb, then TMDB. Each source can be switched off in config, which hides it everywhere and stops its sync; the IMDb display must be removable without breaking any page, because IMDb can withdraw permission.
+- **A thin `Ratings` module** collects the adapters and returns External ratings in a fixed display order: IMDb, then TMDB. Each source can be switched off in config, which hides it everywhere and stops its writes and sync; the IMDb display must be removable without breaking any page, because IMDb can withdraw permission.
 - **Writing ratings:** the `Ratings` module owns the `ratings` table.
     - **Full-dataset sources** (IMDb today) are synced by one generic daily job per source. The source supplies only a dataset feed: its URL and a parser that turns the file into rows. Everything else is shared: the conditional download, the temporary table, validation, the swap and the freshness alert (see "Rating dataset sync").
     - **Incremental sources** record single rows. TMDB's score is recorded whenever the Catalog fetches a title: creation, refresh, and the Search and Discover payloads, whether or not a Movie row exists. A zero-vote or missing score deletes the row instead.
-    - Adding a Rating source is a feed (or an incremental writer), an enum case, and its label and colour, with no migration ([ADR 0001](../../docs/adr/0001-one-ratings-table-for-every-rating-source.md)).
+    - Adding a full-dataset Rating source keyed by an id Reelio already stores is a feed, an enum case (label, colour, id mapping) and a config entry, with no migration. A per-title source (such as Rotten Tomatoes) needs its own incremental writer, and a migration if its title id isn't already stored ([ADR 0001](../../docs/adr/0001-one-ratings-table-for-every-rating-source.md)).
 - **User–movie actions** (set Watchlist, clear Watchlist, mark watched, clear Watched, Undo) are Actions over `user_movies`. They implement the lifecycle below and record one analytics event each.
 - **The Movie picker** is a query over the user's candidates plus a criteria object (genres today, the P1 filters later).
 
@@ -364,7 +364,7 @@ From [Catalog and Rating source boundary](./issues/10-source-boundary.md), [Cach
 One generic daily job per full-dataset Rating source, on `imports`. IMDb's `title.ratings.tsv.gz` is the only one today; its feed supplies the URL (config) and the parser, and the rest below is shared ([ADR 0001](../../docs/adr/0001-one-ratings-table-for-every-rating-source.md)).
 
 - It skips the download when the file is unchanged (`ETag` / `Last-Modified`). An empty set of rows for the source always downloads in full.
-- It streams the file to disk without loading it into memory and writes the parsed rows into a temporary table created for that run. There's no permanent staging table.
+- It streams the file to disk without loading it into memory and writes the parsed rows into a temporary table that lives only for the replacing transaction (one transaction also keeps it on one connection behind a pooler). There's no permanent staging table.
 - **Validation before the swap:**
     - the header matches;
     - malformed rows are skipped and counted;

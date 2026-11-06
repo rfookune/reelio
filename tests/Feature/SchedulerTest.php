@@ -1,11 +1,12 @@
 <?php
 
-use App\Jobs\CheckImdbRatingsFreshness;
-use App\Jobs\ImportImdbRatings;
+use App\Jobs\CheckRatingDatasetFreshness;
+use App\Jobs\SyncRatingDataset;
+use App\Ratings\RatingSourceName;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Queue;
 
-test('the single daily slot runs at 05:00 UTC and dispatches the IMDb import and its freshness check', function () {
+test('the single daily slot runs at 05:00 UTC and dispatches each Rating dataset sync and a delayed freshness check', function () {
     Queue::fake();
     $events = collect(app(Schedule::class)->events());
 
@@ -16,6 +17,15 @@ test('the single daily slot runs at 05:00 UTC and dispatches the IMDb import and
 
     $slot->run(app());
 
-    Queue::assertPushedOn('imports', ImportImdbRatings::class);
-    Queue::assertPushed(CheckImdbRatingsFreshness::class, fn (CheckImdbRatingsFreshness $job) => $job->delay !== null);
+    Queue::assertPushedOn('imports', SyncRatingDataset::class, fn (SyncRatingDataset $job) => $job->source === RatingSourceName::Imdb);
+    Queue::assertPushed(CheckRatingDatasetFreshness::class, fn (CheckRatingDatasetFreshness $job) => $job->delay !== null);
+});
+
+test('a switched-off source is not dispatched', function () {
+    Queue::fake();
+    config(['ratings.sources.imdb.enabled' => false]);
+
+    collect(app(Schedule::class)->events())->sole()->run(app());
+
+    Queue::assertNotPushed(SyncRatingDataset::class);
 });

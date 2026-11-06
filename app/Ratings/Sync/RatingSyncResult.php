@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Ratings\Imdb;
+namespace App\Ratings\Sync;
 
-readonly class ImdbImportResult
+readonly class RatingSyncResult
 {
     public function __construct(
-        public ImdbImportOutcome $outcome,
+        public RatingSyncOutcome $outcome,
         public int $imported = 0,
         public int $skipped = 0,
     ) {}
