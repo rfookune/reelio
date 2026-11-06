@@ -88,6 +88,7 @@ test('the movie page arrives in one response with its details, cast and credits'
         cast: $cast,
         certification: 'PG-13',
         usReleaseDate: '2014-11-07',
+        trailer: ['key' => 'LY19rHKAaAg', 'name' => 'Trailer 4', 'type' => 'Trailer'],
     )]));
 
     $this->get(route('movies.show', ['slug' => 'interstellar', 'id' => $movie->id]))
@@ -100,6 +101,7 @@ test('the movie page arrives in one response with its details, cast and credits'
             ->where('movie.writers', ['Jonathan Nolan'])
             ->where('movie.certification', 'PG-13')
             ->where('movie.usReleaseDate', '2014-11-07')
+            ->where('movie.trailer', ['key' => 'LY19rHKAaAg', 'name' => 'Trailer 4', 'type' => 'Trailer'])
             ->has('movie.cast', 12)
             ->has('movie.genres', 0)
             ->missing('deferredProps'));
@@ -121,7 +123,7 @@ test('a sparse movie still renders when the source has nothing', function () {
 
     $this->get(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]))
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->where('movie.originalTitle', 'Autre')->where('movie.cast', [])->where('movie.certification', null));
+        ->assertInertia(fn (Assert $page) => $page->where('movie.originalTitle', 'Autre')->where('movie.cast', [])->where('movie.certification', null)->where('movie.trailer', null));
 });
 
 test('an entry older than a day is served as stale when the source fails, and the page renders normally', function () {

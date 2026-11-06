@@ -205,3 +205,65 @@ test('a 401 is raised immediately as a configuration error and is not retried', 
     Http::assertSentCount(1);
     Sleep::assertNeverSlept();
 });
+
+test('the ranked trailer for the recorded Interstellar fixture is "Trailer 4"', function () {
+    Http::fake(['https://api.themoviedb.org/3/movie/157336?*' => Http::response(json_decode(file_get_contents(base_path('tests/Fixtures/tmdb/movie_157336.json')), true, flags: JSON_THROW_ON_ERROR))]);
+
+    $movie = app(TmdbCatalogSource::class)->movie(157336, new CatalogContext('en-US'));
+
+    expect($movie->trailer)->toBe(['key' => 'LY19rHKAaAg', 'name' => 'Trailer 4', 'type' => 'Trailer']);
+});
+
+function trailerFor(array $videos, string $releaseDate = '2020-06-01', string $language = 'en-US'): ?array
+{
+    Http::fake(['https://api.themoviedb.org/3/movie/11?*' => Http::response([
+        'id' => 11,
+        'release_date' => $releaseDate,
+        'videos' => ['results' => $videos],
+    ])]);
+
+    return app(TmdbCatalogSource::class)->movie(11, new CatalogContext($language))->trailer;
+}
+
+function video(string $key, array $overrides = []): array
+{
+    return array_merge(['key' => $key, 'name' => "Video {$key}", 'site' => 'YouTube', 'type' => 'Trailer', 'official' => true, 'iso_639_1' => 'en', 'published_at' => '2020-01-01T00:00:00.000Z'], $overrides);
+}
+
+test('trailer ranking prefers Trailer over Teaser, then official, then a language match', function (array $videos, string $expectedKey) {
+    expect(trailerFor($videos)['key'])->toBe($expectedKey);
+})->with([
+    'trailer before teaser' => [[video('AAAAAAAAAAA', ['type' => 'Teaser']), video('BBBBBBBBBBB')], 'BBBBBBBBBBB'],
+    'official before unofficial' => [[video('AAAAAAAAAAA', ['official' => false]), video('BBBBBBBBBBB')], 'BBBBBBBBBBB'],
+    'language match before another language' => [[video('AAAAAAAAAAA', ['iso_639_1' => 'fr']), video('BBBBBBBBBBB')], 'BBBBBBBBBBB'],
+    'a teaser when there is no trailer' => [[video('AAAAAAAAAAA', ['type' => 'Teaser'])], 'AAAAAAAAAAA'],
+]);
+
+test('trailer ties go to the latest published on or before the release date, else the earliest', function (array $videos, string $expectedKey) {
+    expect(trailerFor($videos, '2020-06-01')['key'])->toBe($expectedKey);
+})->with([
+    'latest before release' => [[
+        video('AAAAAAAAAAA', ['published_at' => '2020-01-01T00:00:00.000Z']),
+        video('BBBBBBBBBBB', ['published_at' => '2020-05-01T00:00:00.000Z']),
+        video('CCCCCCCCCCC', ['published_at' => '2020-07-01T00:00:00.000Z']),
+    ], 'BBBBBBBBBBB'],
+    'an undated video never counts as published before release' => [[
+        video('AAAAAAAAAAA', ['published_at' => null]),
+        video('BBBBBBBBBBB', ['published_at' => '2020-05-01T00:00:00.000Z']),
+    ], 'BBBBBBBBBBB'],
+    'all after release picks the earliest' => [[
+        video('AAAAAAAAAAA', ['published_at' => '2020-09-01T00:00:00.000Z']),
+        video('BBBBBBBBBBB', ['published_at' => '2020-07-01T00:00:00.000Z']),
+    ], 'BBBBBBBBBBB'],
+]);
+
+test('trailers must be YouTube videos with a well-formed key', function (array $videos) {
+    expect(trailerFor($videos))->toBeNull();
+})->with([
+    'no videos' => [[]],
+    'another site' => [[video('AAAAAAAAAAA', ['site' => 'Vimeo'])]],
+    'short key' => [[video('short')]],
+    'unsafe key' => [[video('AAAAA"><script')]],
+    'trailing newline' => [[video("AAAAAAAAAAA\n")]],
+    'clips only' => [[video('AAAAAAAAAAA', ['type' => 'Clip'])]],
+]);

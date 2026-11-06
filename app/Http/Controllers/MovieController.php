@@ -44,6 +44,7 @@ class MovieController extends Controller
                 'posterPath' => $movie->poster_path,
                 'backdropPath' => $movie->backdrop_path,
                 'genres' => $movie->genres()->orderBy('name')->pluck('name')->all(),
+                'trailer' => $details?->trailer,
                 'detailsUnavailable' => $result->isUnavailable(),
                 'directors' => $details->directors ?? [],
                 'writers' => $details->writers ?? [],

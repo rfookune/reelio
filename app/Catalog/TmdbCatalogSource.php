@@ -11,6 +11,8 @@ use Throwable;
 
 class TmdbCatalogSource implements CatalogSource
 {
+    private const YOUTUBE_KEY_PATTERN = '/^[A-Za-z0-9_-]{11}$/D';
+
     private const MAX_RETRY_AFTER_MILLISECONDS = 2000;
 
     /** TMDB release type for a theatrical release. */
@@ -72,6 +74,7 @@ class TmdbCatalogSource implements CatalogSource
                 'genres.*.name' => ['required', 'string', 'max:255'],
                 'credits' => ['sometimes', 'nullable', 'array'],
                 'release_dates' => ['sometimes', 'nullable', 'array'],
+                'videos' => ['sometimes', 'nullable', 'array'],
             ])->validate();
         } catch (ValidationException $exception) {
             throw new SourceUnavailable('The Catalog source returned invalid movie details.', previous: $exception);
@@ -99,6 +102,7 @@ class TmdbCatalogSource implements CatalogSource
             cast: $this->cast($data['credits'] ?? []),
             certification: $usRelease['certification'] ?? null,
             usReleaseDate: $usRelease['date'] ?? null,
+            trailer: $this->trailer($data['videos'] ?? [], $context->language, ($data['release_date'] ?? null) ?: null),
         );
     }
 
@@ -162,6 +166,56 @@ class TmdbCatalogSource implements CatalogSource
             'character' => ($member['character'] ?? '') !== '' ? $member['character'] : null,
             'profilePath' => $member['profile_path'] ?? null,
         ], array_slice($members, 0, 12));
+    }
+
+    /**
+     * Ranks YouTube Trailers before Teasers, then official, then a language match; ties go to the latest video
+     * published on or before the primary release date, else the earliest.
+     *
+     * @param  array<string, mixed>  $videos
+     * @return array{key: string, name: string, type: string}|null
+     */
+    private function trailer(array $videos, string $language, ?string $releaseDate): ?array
+    {
+        $languageCode = explode('-', $language)[0];
+        $scored = [];
+
+        foreach ((array) ($videos['results'] ?? []) as $video) {
+            if (! is_array($video)
+                || ($video['site'] ?? null) !== 'YouTube'
+                || ! is_string($video['key'] ?? null)
+                || preg_match(self::YOUTUBE_KEY_PATTERN, $video['key']) !== 1
+                || ! in_array($video['type'] ?? null, ['Trailer', 'Teaser'], true)
+                || ! is_string($video['name'] ?? null)) {
+                continue;
+            }
+
+            $scored[] = [
+                'score' => ($video['type'] === 'Trailer' ? 4 : 0) + (($video['official'] ?? false) === true ? 2 : 0) + (($video['iso_639_1'] ?? null) === $languageCode ? 1 : 0),
+                'published' => is_string($video['published_at'] ?? null) ? $video['published_at'] : '',
+                'video' => $video,
+            ];
+        }
+
+        if ($scored === []) {
+            return null;
+        }
+
+        $best = max(array_column($scored, 'score'));
+        $tied = array_values(array_filter($scored, fn (array $candidate): bool => $candidate['score'] === $best));
+        usort($tied, fn (array $a, array $b): int => strcmp($a['published'], $b['published']));
+
+        $chosen = $tied[0];
+
+        if ($releaseDate !== null) {
+            foreach ($tied as $candidate) {
+                if ($candidate['published'] !== '' && substr($candidate['published'], 0, 10) <= $releaseDate) {
+                    $chosen = $candidate;
+                }
+            }
+        }
+
+        return ['key' => $chosen['video']['key'], 'name' => $chosen['video']['name'], 'type' => $chosen['video']['type']];
     }
 
     /**

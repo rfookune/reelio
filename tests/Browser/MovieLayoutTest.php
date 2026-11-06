@@ -5,7 +5,8 @@ use App\Catalog\FakeCatalogSource;
 use App\Catalog\MovieDetails;
 use App\Models\Movie;
 
-function layoutMovie(): Movie
+/** @param array{key: string, name: string, type: string}|null $trailer */
+function layoutMovie(?array $trailer = null): Movie
 {
     config(['catalog.image_base_url' => '/test-images/']);
     $movie = Movie::factory()->create([
@@ -25,6 +26,7 @@ function layoutMovie(): Movie
         cast: [['id' => 1, 'name' => 'Matthew McConaughey', 'character' => 'Cooper', 'profilePath' => null]],
         certification: 'PG-13',
         usReleaseDate: '2014-11-07',
+        trailer: $trailer,
     )]));
 
     return $movie;
@@ -88,4 +90,39 @@ it('shows temporarily unavailable panels when the source is down', function () {
         ->assertSee('Temporarily unavailable')
         ->assertMissing('[data-slot="movie-hero"] .border-control')
         ->assertNoJavaScriptErrors();
+});
+
+it('loads nothing from YouTube until play is pressed, then embeds the trailer', function () {
+    $movie = layoutMovie(trailer: ['key' => 'LY19rHKAaAg', 'name' => 'Trailer 4', 'type' => 'Trailer']);
+
+    $page = visitWithCsp(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id], absolute: false));
+
+    $page->assertSee('Trailer · Trailer 4')
+        ->assertSee('Plays from YouTube. YouTube may set cookies once you press play.')
+        ->assertAttribute('[data-slot="trailer"] a', 'href', 'https://www.youtube.com/watch?v=LY19rHKAaAg')
+        ->assertAttribute('[data-slot="trailer"] a', 'target', '_blank')
+        ->assertAttribute('[data-slot="trailer"] a', 'rel', 'noopener noreferrer')
+        ->assertAttribute('[data-slot="trailer"] button', 'aria-label', 'Play trailer: Interstellar')
+        ->assertMissing('[data-slot="trailer"] iframe');
+
+    $page->click('[data-slot="trailer"] button')
+        ->assertPresent('[data-slot="trailer"] iframe')
+        ->assertAttribute('[data-slot="trailer"] iframe', 'src', 'https://www.youtube-nocookie.com/embed/LY19rHKAaAg?rel=0&autoplay=1')
+        ->assertAttribute('[data-slot="trailer"] iframe', 'title', 'Trailer: Interstellar')
+        ->assertAttribute('[data-slot="trailer"] iframe', 'referrerpolicy', 'strict-origin-when-cross-origin')
+        ->assertAttribute('[data-slot="trailer"] iframe', 'allow', 'autoplay; fullscreen; encrypted-media');
+
+    expect($page->script('document.activeElement === document.querySelector("[data-slot=trailer] iframe")'))->toBeTrue();
+    expect($page->script('(() => { const r = document.querySelector("[data-slot=trailer] iframe").getBoundingClientRect(); return r.width >= 200 && r.height >= 200; })()'))->toBeTrue();
+});
+
+it('hides the trailer section without a trailer and shows a panel when the source is down', function () {
+    $movie = layoutMovie();
+    $page = visitWithCsp(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id], absolute: false));
+    $page->assertMissing('[data-slot="trailer"]')->assertMissing('[data-slot="trailer-unavailable"]');
+
+    $down = Movie::factory()->create();
+    app()->instance(CatalogSource::class, new FakeCatalogSource(failing: true));
+    $page = visitWithCsp(route('movies.show', ['slug' => $down->slug, 'id' => $down->id], absolute: false));
+    $page->assertSee('The trailer is temporarily unavailable.');
 });

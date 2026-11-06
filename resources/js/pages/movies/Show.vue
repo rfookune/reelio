@@ -5,6 +5,8 @@ import MovieCast from '@/components/movie/MovieCast.vue';
 import type { CastMember } from '@/components/movie/MovieCast.vue';
 import MovieDetailsCard from '@/components/movie/MovieDetailsCard.vue';
 import MovieHero from '@/components/movie/MovieHero.vue';
+import TrailerPlayer from '@/components/movie/TrailerPlayer.vue';
+import type { Trailer } from '@/components/movie/TrailerPlayer.vue';
 import { isSafeTmdbPath, tmdbImageUrl } from '@/lib/tmdb';
 
 const props = defineProps<{
@@ -28,6 +30,7 @@ const props = defineProps<{
         cast: CastMember[];
         certification: string | null;
         usReleaseDate: string | null;
+        trailer: Trailer | null;
         detailsUnavailable: boolean;
     };
 }>();
@@ -124,7 +127,31 @@ onBeforeUnmount(() => {
                 </p>
             </section>
 
-            <!-- Where to watch and Trailer slot in here, before Cast. -->
+            <!-- Where to watch slots in here, before the Trailer. -->
+
+            <TrailerPlayer
+                v-if="movie.trailer"
+                :image-base-url="imageBaseUrl"
+                :title="movie.title ?? 'Movie'"
+                :trailer="movie.trailer"
+                :cover-path="movie.backdropPath"
+                class="lg:col-start-1 lg:mb-10"
+            />
+            <section
+                v-else-if="movie.detailsUnavailable"
+                data-slot="trailer-unavailable"
+                aria-labelledby="trailer-heading"
+                class="lg:col-start-1 lg:mb-10"
+            >
+                <h2 id="trailer-heading" class="mb-4 text-xl font-semibold">
+                    Trailer
+                </h2>
+                <p
+                    class="rounded-xl border border-line bg-surface p-5 text-sm text-muted"
+                >
+                    The trailer is temporarily unavailable.
+                </p>
+            </section>
 
             <MovieCast
                 :image-base-url="imageBaseUrl"

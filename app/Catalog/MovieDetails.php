@@ -9,6 +9,7 @@ readonly class MovieDetails
      * @param  list<string>  $directors
      * @param  list<string>  $writers
      * @param  list<array{id: int, name: string, character: ?string, profilePath: ?string}>  $cast
+     * @param  array{key: string, name: string, type: string}|null  $trailer
      */
     public function __construct(
         public int $tmdbId,
@@ -30,6 +31,7 @@ readonly class MovieDetails
         public array $cast = [],
         public ?string $certification = null,
         public ?string $usReleaseDate = null,
+        public ?array $trailer = null,
     ) {}
 
     /**
