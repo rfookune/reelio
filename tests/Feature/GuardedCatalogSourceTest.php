@@ -3,7 +3,8 @@
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
-use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Enums\SectionKind;
+use App\Services\Catalog\Sources\FakeCatalogSource;
 use App\Services\Catalog\Sources\GuardedCatalogSource;
 use App\Services\Catalog\Sources\MovieDetails;
 use App\Services\Catalog\Sources\SourceMisconfigured;
@@ -14,7 +15,7 @@ use App\Services\Catalog\Sources\SourceUnavailable;
  */
 function countingSource(): object
 {
-    return new class implements CatalogSource
+    return new class extends FakeCatalogSource
     {
         public int $calls = 0;
 
@@ -96,7 +97,7 @@ test('background calls bypass the breaker and the live throttle', function () {
 });
 
 test('an answer of not found does not count as a failure', function () {
-    $inner = new class implements CatalogSource
+    $inner = new class extends FakeCatalogSource
     {
         public function movie(int $tmdbId, CatalogContext $context): ?MovieDetails
         {
@@ -111,7 +112,7 @@ test('an answer of not found does not count as a failure', function () {
 });
 
 test('a rejected token does not trip the breaker, so the configuration error keeps surfacing', function () {
-    $inner = new class implements CatalogSource
+    $inner = new class extends FakeCatalogSource
     {
         public function movie(int $tmdbId, CatalogContext $context): ?MovieDetails
         {
@@ -123,4 +124,17 @@ test('a rejected token does not trip the breaker, so the configuration error kee
     foreach (range(1, 7) as $ignored) {
         expect(fn () => $guarded->movie(1, new CatalogContext))->toThrow(SourceMisconfigured::class);
     }
+});
+
+test('interactive section calls share the breaker', function () {
+    $inner = new FakeCatalogSource(failingSections: [SectionKind::Popular]);
+    $guarded = new GuardedCatalogSource($inner, new CacheKey);
+
+    foreach (range(1, 5) as $ignored) {
+        expect(fn () => $guarded->section(SectionKind::Popular, 1, new CatalogContext))->toThrow(SourceUnavailable::class);
+    }
+
+    expect(fn () => $guarded->section(SectionKind::Trending, 1, new CatalogContext))->toThrow(SourceUnavailable::class)
+        ->and($inner->sectionCalls)->toHaveCount(5)
+        ->and($guarded->section(SectionKind::Trending, 1, new CatalogContext(profile: CatalogProfile::Background))->listings)->toBe([]);
 });

@@ -5,8 +5,10 @@ namespace App\Services\Catalog\Sources;
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Enums\OfferType;
+use App\Services\Catalog\Enums\SectionKind;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -33,35 +35,15 @@ class TmdbCatalogSource implements CatalogSource
 
     public function movie(int $tmdbId, CatalogContext $context): ?MovieDetails
     {
-        $profile = $context->profile;
+        $response = $this->get("movie/{$tmdbId}", [
+            'language' => $context->language,
+            'include_adult' => 'false',
+            'include_video_language' => explode('-', $context->language)[0].',null',
+            'append_to_response' => 'credits,videos,release_dates,watch/providers',
+        ], $context);
 
-        try {
-            $response = Http::baseUrl(config('catalog.tmdb.base_url'))
-                ->withToken(config('catalog.tmdb.token'))
-                ->acceptJson()
-                ->connectTimeout($profile->timeoutSeconds())
-                ->timeout($profile->timeoutSeconds())
-                ->retry($profile->attempts(), fn (int $attempt, Throwable $exception): int => $this->retryDelayMilliseconds($profile, $attempt, $exception), $this->isRetryable(...), throw: false)
-                ->get("movie/{$tmdbId}", [
-                    'language' => $context->language,
-                    'include_adult' => 'false',
-                    'include_video_language' => explode('-', $context->language)[0].',null',
-                    'append_to_response' => 'credits,videos,release_dates,watch/providers',
-                ]);
-        } catch (ConnectionException $exception) {
-            throw new SourceUnavailable('The Catalog source is unavailable.', previous: $exception);
-        }
-
-        if ($response->notFound()) {
+        if ($response === null) {
             return null;
-        }
-
-        if ($response->unauthorized()) {
-            throw new SourceMisconfigured('The Catalog source rejected our credentials.');
-        }
-
-        if (! $response->successful()) {
-            throw new SourceUnavailable('The Catalog source returned an unsuccessful response.');
         }
 
         try {
@@ -116,6 +98,122 @@ class TmdbCatalogSource implements CatalogSource
             availability: $this->availability($data['watch/providers'] ?? []),
             trailer: $this->trailer($data['videos'] ?? [], $context->language, ($data['release_date'] ?? null) ?: null),
         );
+    }
+
+    /**
+     * One page of a list. Trending is global, so no list call carries a region. Adult listings, listings that
+     * aren't well formed and repeats within the page are dropped; an unsafe image path is cleared.
+     */
+    public function section(SectionKind $kind, int $page, CatalogContext $context): SectionPage
+    {
+        $path = match ($kind) {
+            SectionKind::Trending => 'trending/movie/week',
+            SectionKind::Popular => 'movie/popular',
+            SectionKind::TopRated => 'movie/top_rated',
+        };
+        $response = $this->get($path, ['language' => $context->language, 'include_adult' => 'false', 'page' => $page], $context)
+            ?? throw new SourceUnavailable('The Catalog source has no such list page.');
+
+        try {
+            $data = Validator::make((array) $response->json(), [
+                'total_pages' => ['required', 'integer', 'min:0'],
+                'results' => ['present', 'array'],
+            ])->validate();
+        } catch (ValidationException $exception) {
+            throw new SourceUnavailable('The Catalog source returned an invalid list.', previous: $exception);
+        }
+
+        $listings = [];
+
+        foreach ($data['results'] as $result) {
+            $listing = is_array($result) ? $this->listing($result) : null;
+
+            if ($listing !== null && ! isset($listings[$listing->tmdbId])) {
+                $listings[$listing->tmdbId] = $listing;
+            }
+        }
+
+        return new SectionPage(array_values($listings), (int) $data['total_pages']);
+    }
+
+    /**
+     * A GET with the profile's timeout and retries. A 404 is an answer, returned as null; a 401 is a configuration
+     * error; anything else unsuccessful, or no connection, is a failure.
+     *
+     * @param  array<string, string|int>  $query
+     */
+    private function get(string $path, array $query, CatalogContext $context): ?Response
+    {
+        $profile = $context->profile;
+
+        try {
+            $response = Http::baseUrl(config('catalog.tmdb.base_url'))
+                ->withToken(config('catalog.tmdb.token'))
+                ->acceptJson()
+                ->connectTimeout($profile->timeoutSeconds())
+                ->timeout($profile->timeoutSeconds())
+                ->retry($profile->attempts(), fn (int $attempt, Throwable $exception): int => $this->retryDelayMilliseconds($profile, $attempt, $exception), $this->isRetryable(...), throw: false)
+                ->get($path, $query);
+        } catch (ConnectionException $exception) {
+            throw new SourceUnavailable('The Catalog source is unavailable.', previous: $exception);
+        }
+
+        if ($response->notFound()) {
+            return null;
+        }
+
+        if ($response->unauthorized()) {
+            throw new SourceMisconfigured('The Catalog source rejected our credentials.');
+        }
+
+        if (! $response->successful()) {
+            throw new SourceUnavailable('The Catalog source returned an unsuccessful response.');
+        }
+
+        return $response;
+    }
+
+    /**
+     * A well-formed, non-adult list entry, or null.
+     *
+     * @param  array<mixed>  $result
+     */
+    private function listing(array $result): ?MovieListing
+    {
+        $validator = Validator::make($result, [
+            'id' => ['required', 'integer', 'min:1'],
+            'adult' => ['sometimes', 'boolean', 'declined'],
+            'title' => ['nullable', 'string', 'max:255'],
+            'overview' => ['nullable', 'string'],
+            'release_date' => ['nullable', 'string'],
+            'poster_path' => ['nullable', 'string', 'max:255'],
+            'backdrop_path' => ['nullable', 'string', 'max:255'],
+            'vote_average' => ['nullable', 'numeric', 'between:0,10'],
+            'vote_count' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        if ($validator->fails()) {
+            return null;
+        }
+
+        $data = $validator->validated();
+        $releaseDate = $data['release_date'] ?? null;
+
+        return new MovieListing(
+            tmdbId: (int) $data['id'],
+            title: $data['title'] ?? null,
+            overview: ($data['overview'] ?? null) ?: null,
+            releaseDate: is_string($releaseDate) && preg_match('/^\d{4}-\d{2}-\d{2}$/D', $releaseDate) === 1 ? $releaseDate : null,
+            posterPath: $this->safeImagePath($data['poster_path'] ?? null),
+            backdropPath: $this->safeImagePath($data['backdrop_path'] ?? null),
+            voteAverage: isset($data['vote_average']) ? (float) $data['vote_average'] : null,
+            voteCount: isset($data['vote_count']) ? (int) $data['vote_count'] : null,
+        );
+    }
+
+    private function safeImagePath(?string $path): ?string
+    {
+        return is_string($path) && preg_match(self::IMAGE_PATH_PATTERN, $path) === 1 ? $path : null;
     }
 
     /** Only connection errors, server errors and 429 are retried; a 404 is an answer and a 401 a configuration error. */

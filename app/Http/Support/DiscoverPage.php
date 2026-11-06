@@ -1,0 +1,136 @@
+<?php
+
+namespace App\Http\Support;
+
+use App\Jobs\BuildDiscover;
+use App\Models\Movie;
+use App\Models\User;
+use App\Services\Catalog\Catalog;
+use App\Services\Catalog\Discover;
+use App\Services\Catalog\DiscoverMovie;
+use App\Services\Catalog\DiscoverSection;
+use App\Services\Ratings\ExternalRating;
+use App\Services\Ratings\Ratings;
+use Illuminate\Support\Collection;
+
+/**
+ * The Discover page's props for one response, read from the payload at most once. Each Movie links to its
+ * canonical URL when it has a row, else to the entry route, both with the `discover` referrer. Its runtime and IMDb
+ * id come from the payload, else from its row, and its External ratings from one batch `Ratings` call, so a Movie
+ * with no row still shows the TMDB score recorded when the payload was built.
+ */
+class DiscoverPage
+{
+    private ?Discover $discover = null;
+
+    /** @var Collection<int, Movie>|null keyed by catalog id */
+    private ?Collection $rows = null;
+
+    /** @var array<int, list<ExternalRating>>|null keyed by catalog id */
+    private ?array $ratings = null;
+
+    public function __construct(private Catalog $catalog, private Ratings $ratingSources, private ?User $user) {}
+
+    /**
+     * @return array{tmdbId: int, title: ?string, year: ?int, runtime: ?int, posterPath: ?string, ratings: list<array{source: string, name: string, value: float, voteCount: int}>, href: string, overview: ?string, backdropPath: ?string, genres: list<string>, trailer: array{key: string, name: string, type: string}|null}|null
+     */
+    public function hero(): ?array
+    {
+        $hero = $this->discover()->hero;
+
+        if ($hero === null) {
+            return null;
+        }
+
+        return [
+            ...$this->movie($hero),
+            'overview' => $hero->overview,
+            'backdropPath' => $hero->backdropPath,
+            'genres' => $hero->genres,
+            'trailer' => $hero->trailer,
+        ];
+    }
+
+    /** @return list<array{kind: string, title: string, numbered: bool, movies: list<array<string, mixed>>}> */
+    public function sections(): array
+    {
+        return array_map(fn (DiscoverSection $section): array => [
+            'kind' => $section->kind->value,
+            'title' => $section->kind->label(),
+            'numbered' => $section->kind->isNumbered(),
+            'movies' => array_map($this->movie(...), $section->movies),
+        ], $this->discover()->sections);
+    }
+
+    /**
+     * The viewer's facts for every Movie shown, keyed by catalog id, including Movies with no row yet.
+     *
+     * @return array<int, array{watchlisted: bool, watched: bool, watchedDate: ?string}>
+     */
+    public function userMovies(): array
+    {
+        $none = ['watchlisted' => false, 'watched' => false, 'watchedDate' => null];
+
+        return array_replace(array_fill_keys($this->discover()->catalogIds(), $none), UserMovies::for($this->user, $this->rows()));
+    }
+
+    /**
+     * The payload. One a visitor built has no row details yet, so the full build is queued; it is unique, so
+     * visitors arriving meanwhile queue nothing more. Nothing is queued while there's nothing to show: the source
+     * is down, and each visitor's own attempt is held back by the circuit breaker until it recovers.
+     */
+    private function discover(): Discover
+    {
+        if ($this->discover === null) {
+            $this->discover = $this->catalog->discover();
+
+            if (! $this->discover->detailed && ! $this->discover->isEmpty()) {
+                BuildDiscover::dispatch();
+            }
+        }
+
+        return $this->discover;
+    }
+
+    /**
+     * @return array{tmdbId: int, title: ?string, year: ?int, runtime: ?int, posterPath: ?string, ratings: list<array{source: string, name: string, value: float, voteCount: int}>, href: string}
+     */
+    private function movie(DiscoverMovie $movie): array
+    {
+        $row = $this->rows()->get($movie->tmdbId);
+
+        return [
+            'tmdbId' => $movie->tmdbId,
+            'title' => $movie->title,
+            'year' => $movie->releaseDate === null ? null : (int) substr($movie->releaseDate, 0, 4),
+            'runtime' => $movie->runtime ?? $row?->runtime,
+            'posterPath' => $movie->posterPath,
+            'ratings' => array_map(fn (ExternalRating $rating): array => $rating->toArray(), $this->ratings()[$movie->tmdbId] ?? []),
+            'href' => $row?->canonicalUrl('discover') ?? route('movies.entry', ['tmdbId' => $movie->tmdbId, 'referrer' => 'discover']),
+        ];
+    }
+
+    /** @return Collection<int, Movie> keyed by catalog id */
+    private function rows(): Collection
+    {
+        return $this->rows ??= Movie::query()
+            ->whereIn('tmdb_id', $this->discover()->catalogIds())
+            ->get()
+            ->keyBy('tmdb_id');
+    }
+
+    /**
+     * Each Movie's External ratings, keyed by catalog id. The batch lookup is keyed by Movie id, so every Movie,
+     * with a row or not, goes in as a stand-in whose id is its catalog id, keeping the two id spaces apart.
+     *
+     * @return array<int, list<ExternalRating>>
+     */
+    private function ratings(): array
+    {
+        return $this->ratings ??= $this->ratingSources->ratingsFor(collect($this->discover()->movies())->map(fn (DiscoverMovie $movie): Movie => (new Movie)->forceFill([
+            'id' => $movie->tmdbId,
+            'tmdb_id' => $movie->tmdbId,
+            'imdb_id' => $movie->imdbId ?? $this->rows()->get($movie->tmdbId)?->imdb_id,
+        ])));
+    }
+}

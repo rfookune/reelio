@@ -116,7 +116,7 @@ test('a source outage on the entry route renders the 503 page with Retry-After a
 });
 
 test('a rejected TMDB token is reported to the owner and still shows the 503 page', function () {
-    $this->app->instance(CatalogSource::class, new class implements CatalogSource
+    $this->app->instance(CatalogSource::class, new class extends FakeCatalogSource
     {
         public function movie(int $tmdbId, CatalogContext $context): ?MovieDetails
         {

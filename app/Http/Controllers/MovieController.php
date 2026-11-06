@@ -85,12 +85,7 @@ class MovieController extends Controller
             'posterPath' => $movie->poster_path,
             'backdropPath' => $movie->backdrop_path,
             'genres' => $movie->genres()->orderBy('name')->pluck('name')->all(),
-            'ratings' => array_map(fn (ExternalRating $rating): array => [
-                'source' => $rating->source->value,
-                'name' => $rating->source->label(),
-                'value' => $rating->value,
-                'voteCount' => $rating->voteCount,
-            ], $ratings->ratingsFor(collect([$movie]))[$movie->id]),
+            'ratings' => array_map(fn (ExternalRating $rating): array => $rating->toArray(), $ratings->ratingsFor(collect([$movie]))[$movie->id]),
             'trailer' => $details?->trailer,
             'detailsUnavailable' => $result->isUnavailable(),
             'directors' => $details->directors ?? [],

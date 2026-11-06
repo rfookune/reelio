@@ -5,6 +5,8 @@ namespace App\Services\Catalog\Sources;
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
+use App\Services\Catalog\Enums\SectionKind;
+use Closure;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 
@@ -18,8 +20,27 @@ class GuardedCatalogSource implements CatalogSource
 
     public function movie(int $tmdbId, CatalogContext $context): ?MovieDetails
     {
+        return $this->guard($context, fn (): ?MovieDetails => $this->inner->movie($tmdbId, $context));
+    }
+
+    public function section(SectionKind $kind, int $page, CatalogContext $context): SectionPage
+    {
+        return $this->guard($context, fn (): SectionPage => $this->inner->section($kind, $page, $context));
+    }
+
+    /**
+     * Makes an interactive call through the circuit breaker and the live throttle; a background call goes
+     * straight through.
+     *
+     * @template T
+     *
+     * @param  Closure(): T  $call
+     * @return T
+     */
+    private function guard(CatalogContext $context, Closure $call): mixed
+    {
         if ($context->profile !== CatalogProfile::Interactive) {
-            return $this->inner->movie($tmdbId, $context);
+            return $call();
         }
 
         $openKey = $this->keys->build('breaker-open', [], $context);
@@ -36,7 +57,7 @@ class GuardedCatalogSource implements CatalogSource
         }
 
         try {
-            $details = $this->inner->movie($tmdbId, $context);
+            $result = $call();
         } catch (SourceMisconfigured $exception) {
             throw $exception;
         } catch (SourceUnavailable $exception) {
@@ -51,6 +72,6 @@ class GuardedCatalogSource implements CatalogSource
 
         Cache::forget($failuresKey);
 
-        return $details;
+        return $result;
     }
 }

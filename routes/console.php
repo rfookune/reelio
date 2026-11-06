@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\BuildDiscover;
 use App\Jobs\CheckRatingDatasetFreshness;
 use App\Jobs\SyncRatingDataset;
 use App\Services\Ratings\Sync\Datasets\RatingDatasets;
@@ -21,4 +22,5 @@ Schedule::call(function (RatingDatasets $datasets): void {
     }
 
     CheckRatingDatasetFreshness::dispatch()->delay(now()->addMinutes(10));
+    BuildDiscover::dispatch();
 })->name('daily-slot')->dailyAt('05:00')->timezone('UTC')->onOneServer();

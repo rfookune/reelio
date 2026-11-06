@@ -4,6 +4,7 @@ use App\Models\Movie;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\FakeCatalogSource;
 use App\Services\Catalog\Sources\MovieDetails;
+use App\Services\Catalog\Sources\MovieListing;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Vite;
 use Pest\Browser\Api\AwaitableWebpage;
@@ -136,6 +137,46 @@ function sourceDetailsFor(Movie $movie, mixed ...$overrides): MovieDetails
 function fakeCatalogKnowing(Movie|MovieDetails ...$movies): FakeCatalogSource
 {
     $source = new FakeCatalogSource(array_map(fn (Movie|MovieDetails $movie): MovieDetails => $movie instanceof Movie ? sourceDetailsFor($movie) : $movie, array_values($movies)));
+    app()->instance(CatalogSource::class, $source);
+
+    return $source;
+}
+
+/** A list entry for a Discover section, with a poster, a backdrop and an overview unless told otherwise. */
+function movieListing(int $tmdbId, mixed ...$overrides): MovieListing
+{
+    return new MovieListing(...[
+        'tmdbId' => $tmdbId,
+        'title' => "Movie {$tmdbId}",
+        'overview' => "About movie {$tmdbId}.",
+        'releaseDate' => '2026-01-01',
+        'posterPath' => "/poster{$tmdbId}.jpg",
+        'backdropPath' => "/backdrop{$tmdbId}.jpg",
+        'voteAverage' => 7.5,
+        'voteCount' => 1000,
+        ...$overrides,
+    ]);
+}
+
+/** @return list<MovieListing> */
+function movieListings(int $from, int $to): array
+{
+    return array_map(fn (int $tmdbId): MovieListing => movieListing($tmdbId), range($from, $to));
+}
+
+/**
+ * Installs a fake source with the given section pages, and returns it. Every listed Movie has details, the given
+ * ones or bare ones, unless it is named as unknown.
+ *
+ * @param  list<MovieDetails>  $movies
+ * @param  list<int>  $unknown
+ */
+function fakeDiscoverSource(array $sections, array $movies = [], array $failingSections = [], array $unknown = []): FakeCatalogSource
+{
+    $given = collect($movies)->keyBy('tmdbId');
+    $listed = collect($sections)->flatten(2)->map(fn (MovieListing $listing): int => $listing->tmdbId)->unique()->diff($unknown);
+    $details = $listed->map(fn (int $tmdbId): MovieDetails => $given->get($tmdbId) ?? new MovieDetails(tmdbId: $tmdbId, title: "Movie {$tmdbId}"))->values()->all();
+    $source = new FakeCatalogSource(movies: $details, sections: $sections, failingSections: $failingSections);
     app()->instance(CatalogSource::class, $source);
 
     return $source;

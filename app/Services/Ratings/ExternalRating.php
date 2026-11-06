@@ -16,4 +16,14 @@ readonly class ExternalRating
         public int $voteCount,
         public CarbonImmutable $asOf,
     ) {}
+
+    /**
+     * The rating as pages show it, credited to its source.
+     *
+     * @return array{source: string, name: string, value: float, voteCount: int}
+     */
+    public function toArray(): array
+    {
+        return ['source' => $this->source->value, 'name' => $this->source->label(), 'value' => $this->value, 'voteCount' => $this->voteCount];
+    }
 }

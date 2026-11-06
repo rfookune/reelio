@@ -2,6 +2,8 @@
 
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
+use App\Services\Catalog\Enums\SectionKind;
+use App\Services\Catalog\Sources\MovieListing;
 use App\Services\Catalog\Sources\SourceMisconfigured;
 use App\Services\Catalog\Sources\SourceUnavailable;
 use App\Services\Catalog\Sources\TmdbCatalogSource;
@@ -321,4 +323,76 @@ test('malformed Availability entries are dropped and an unsafe logo path is clea
     expect(app(TmdbCatalogSource::class)->movie(6, new CatalogContext)->availability)->toBe([
         ['serviceId' => 10, 'serviceName' => 'No logo', 'logoPath' => null, 'country' => 'US', 'offerType' => 'stream', 'displayPriority' => 2],
     ]);
+});
+
+test('a section page is translated from the recorded Trending fixture with one call carrying no region', function () {
+    config(['catalog.tmdb.token' => 'test-read-token']);
+    Http::fake(['https://api.themoviedb.org/3/trending/movie/week?*' => Http::response(json_decode(file_get_contents(base_path('tests/Fixtures/tmdb/trending_p2.json')), true, flags: JSON_THROW_ON_ERROR))]);
+
+    $page = app(TmdbCatalogSource::class)->section(SectionKind::Trending, 2, new CatalogContext('en-US', 'US'));
+
+    expect($page->totalPages)->toBe(500)
+        ->and($page->listings)->toHaveCount(20)
+        ->and($page->listings[0])->toMatchArray([
+            'tmdbId' => 1170608,
+            'title' => 'Dune: Part Three',
+            'releaseDate' => '2026-12-15',
+            'posterPath' => '/glt0v4I89rMWstDNCaFXc5SNyO1.jpg',
+            'backdropPath' => '/i5E9H7Ik0u61ylDDTbmUpTL3Yw.jpg',
+            'voteAverage' => 0.0,
+            'voteCount' => 0,
+        ]);
+    Http::assertSentCount(1);
+    Http::assertSent(fn (Request $request) => $request->hasHeader('Authorization', 'Bearer test-read-token')
+        && str_contains($request->url(), 'page=2')
+        && $request['language'] === 'en-US'
+        && $request['include_adult'] === 'false'
+        && ! isset($request['region']));
+});
+
+test('each section kind reads its own TMDB list', function (SectionKind $kind, string $path) {
+    Http::fake(["https://api.themoviedb.org/3/{$path}?*" => Http::response(['page' => 1, 'total_pages' => 1, 'results' => []])]);
+
+    expect(app(TmdbCatalogSource::class)->section($kind, 1, new CatalogContext)->listings)->toBe([]);
+    Http::assertSentCount(1);
+})->with([
+    'Trending' => [SectionKind::Trending, 'trending/movie/week'],
+    'Popular' => [SectionKind::Popular, 'movie/popular'],
+    'Top rated' => [SectionKind::TopRated, 'movie/top_rated'],
+]);
+
+test('adult, malformed and duplicate listings are dropped, and unsafe image paths are cleared', function () {
+    Http::fake(['https://api.themoviedb.org/3/movie/popular?*' => Http::response(['page' => 1, 'total_pages' => 3, 'results' => [
+        ['id' => 1, 'title' => 'Kept', 'poster_path' => '/kept.jpg', 'backdrop_path' => 'javascript:alert(1)', 'release_date' => ''],
+        ['id' => 2, 'title' => 'Adult', 'adult' => true, 'poster_path' => '/adult.jpg'],
+        ['id' => 'three', 'title' => 'Bad id'],
+        'not a listing',
+        ['id' => 4, 'title' => 'Bad score', 'vote_average' => 11],
+        ['id' => 1, 'title' => 'Repeated'],
+    ]])]);
+
+    $page = app(TmdbCatalogSource::class)->section(SectionKind::Popular, 1, new CatalogContext);
+
+    expect($page->totalPages)->toBe(3)
+        ->and(array_map(fn (MovieListing $listing): int => $listing->tmdbId, $page->listings))->toBe([1])
+        ->and($page->listings[0]->posterPath)->toBe('/kept.jpg')
+        ->and($page->listings[0]->backdropPath)->toBeNull()
+        ->and($page->listings[0]->releaseDate)->toBeNull();
+});
+
+test('a section fails explicitly on unsuccessful or malformed responses', function (array $body, int $status) {
+    Http::fake(['https://api.themoviedb.org/3/movie/top_rated?*' => Http::response($body, $status)]);
+
+    expect(fn () => app(TmdbCatalogSource::class)->section(SectionKind::TopRated, 1, new CatalogContext))->toThrow(SourceUnavailable::class);
+})->with([
+    'not found' => [[], 404],
+    'server error' => [[], 500],
+    'no results' => [['page' => 1, 'total_pages' => 1], 200],
+    'no page count' => [['page' => 1, 'results' => []], 200],
+]);
+
+test('a section raises a rejected token as a configuration error', function () {
+    Http::fake(['https://api.themoviedb.org/3/movie/popular?*' => Http::response([], 401)]);
+
+    expect(fn () => app(TmdbCatalogSource::class)->section(SectionKind::Popular, 1, new CatalogContext))->toThrow(SourceMisconfigured::class);
 });

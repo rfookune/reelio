@@ -34,6 +34,36 @@ return [
         'on_view_after_seconds' => 86400,
     ],
 
+    'discover' => [
+        'movies_per_section' => 10,
+
+        /*
+         * How many pages a section reads to fill up after the poster filter and the dedupe, at most. TMDB's own
+         * cap of 500 pages is applied whatever this says.
+         */
+        'max_pages_per_section' => 3,
+
+        /*
+         * A section, or the hero, whose rebuild fails keeps its previous version this long, then is hidden.
+         */
+        'stale_after_days' => 7,
+
+        /*
+         * How long a build may keep asking the source, by profile. The calls are made one after another, so the
+         * background budget leaves room for one more slow call (about 35 s with its retries) inside the job's 85 s
+         * timeout; the interactive one keeps the first visitor's wait short.
+         */
+        'build_budget_seconds' => [
+            'background' => 45,
+            'interactive' => 6,
+        ],
+
+        /*
+         * How long a first visitor waits for another visitor's build before the page renders without it.
+         */
+        'build_wait_seconds' => 10,
+    ],
+
     'creation_limit' => [
         'attempts' => 20,
         'decay_seconds' => 60,

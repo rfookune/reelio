@@ -4,13 +4,14 @@ namespace App\Services\Catalog;
 
 use App\Models\Genre;
 use App\Models\Movie;
+use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Exceptions\CreationLimited;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\MovieDetails;
-use App\Services\Catalog\Sources\SourceMisconfigured;
 use App\Services\Catalog\Sources\SourceUnavailable;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -23,6 +24,8 @@ class Catalog
         private CacheKey $keys,
         private RatingStore $ratings,
         private AvailabilityWriter $availability,
+        private DiscoverBuilder $discover,
+        private MisconfigurationReporter $misconfiguration,
     ) {}
 
     /** @return CatalogResult<Movie> */
@@ -40,7 +43,7 @@ class Catalog
         try {
             $details = $this->source->movie($tmdbId, $context);
         } catch (SourceUnavailable $exception) {
-            $this->reportIfMisconfigured($exception, $context);
+            $this->misconfiguration->reportIfMisconfigured($exception, $context);
 
             return CatalogResult::unavailable();
         }
@@ -63,6 +66,38 @@ class Catalog
         $this->ratings->record(RatingSourceName::Tmdb, (string) $details->tmdbId, $details->voteAverage, $details->voteCount);
 
         return CatalogResult::fresh($movie);
+    }
+
+    /**
+     * What Discover shows, the same for every visitor. It is read, never built, while it has something to show;
+     * otherwise this request builds it, asking only for the hero's details, while other visitors wait for that
+     * build up to a limit.
+     */
+    public function discover(): Discover
+    {
+        $context = new CatalogContext(config('catalog.language'));
+        $discover = $this->discover->stored($context);
+
+        if (! $discover->isEmpty()) {
+            return $discover;
+        }
+
+        try {
+            Cache::lock($this->discover->key($context).':build', 60)->block(config('catalog.discover.build_wait_seconds'), function () use ($context): void {
+                if ($this->discover->stored($context)->isEmpty()) {
+                    $this->discover->build(CatalogProfile::Interactive);
+                }
+            });
+        } catch (LockTimeoutException) {
+        }
+
+        return $this->discover->stored($context);
+    }
+
+    /** Rebuilds the Discover payload; see `DiscoverBuilder::build()`. */
+    public function buildDiscover(CatalogProfile $profile): void
+    {
+        $this->discover->build($profile);
     }
 
     /** The stored Movie for a catalog id, without asking the source. */
@@ -119,7 +154,7 @@ class Catalog
         try {
             $details = $this->source->movie($movie->tmdb_id, $context);
         } catch (SourceUnavailable $exception) {
-            $this->reportIfMisconfigured($exception, $context);
+            $this->misconfiguration->reportIfMisconfigured($exception, $context);
 
             return CatalogResult::unavailable();
         }
@@ -241,14 +276,6 @@ class Catalog
         $cached = Cache::get($key);
 
         return is_array($cached) && is_array($cached['details'] ?? null) ? MovieDetails::fromArray($cached['details']) : null;
-    }
-
-    /** Reports a rejected token to the owner, at most once every five minutes. */
-    private function reportIfMisconfigured(SourceUnavailable $exception, CatalogContext $context): void
-    {
-        if ($exception instanceof SourceMisconfigured && Cache::add($this->keys->build('misconfigured-reported', [], $context), true, 300)) {
-            report($exception);
-        }
     }
 
     private function limitCreation(string $actor, CatalogContext $context): void

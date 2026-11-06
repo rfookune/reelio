@@ -14,6 +14,8 @@ const props = defineProps<{
     title: string;
     trailer: Trailer;
     coverPath: string | null;
+    /** Keeps the "Trailer" heading for screen readers only, where a dialog title already names it. */
+    hideHeading?: boolean;
 }>();
 
 const playing = ref(false);
@@ -42,7 +44,12 @@ const hasCover = computed(() => isSafeTmdbPath(props.coverPath));
         data-slot="trailer"
         aria-labelledby="trailer-heading"
     >
-        <h2 id="trailer-heading" class="mb-4 text-xl font-semibold">Trailer</h2>
+        <h2
+            id="trailer-heading"
+            :class="hideHeading ? 'sr-only' : 'mb-4 text-xl font-semibold'"
+        >
+            Trailer
+        </h2>
 
         <div
             class="relative aspect-video min-h-[200px] w-full overflow-hidden rounded-xl bg-raised"
