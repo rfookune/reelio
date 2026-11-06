@@ -12,25 +12,6 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * Renders the shared error page for an HTTP error the app raises itself, with the exception's title, description and
- * headers. JSON requests get the framework's default rendering.
- */
-$errorPage = function (ErrorPageException $exception, Request $request): ?Response {
-    if ($request->expectsJson()) {
-        return null;
-    }
-
-    $response = Inertia::render('Error', [
-        'status' => $exception->getStatusCode(),
-        'title' => $exception->getMessage(),
-        'message' => $exception->description,
-    ])->toResponse($request)->setStatusCode($exception->getStatusCode());
-    $response->headers->add($exception->getHeaders());
-
-    return $response;
-};
-
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
@@ -48,8 +29,25 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
     })
-    ->withExceptions(function (Exceptions $exceptions) use ($errorPage): void {
-        $exceptions->render($errorPage);
+    ->withExceptions(function (Exceptions $exceptions): void {
+        /*
+         * The shared error page for an HTTP error the app raises itself, with the exception's title, description and
+         * headers. JSON requests get the framework's default rendering.
+         */
+        $exceptions->render(function (ErrorPageException $exception, Request $request): ?Response {
+            if ($request->expectsJson()) {
+                return null;
+            }
+
+            $response = Inertia::render('Error', [
+                'status' => $exception->getStatusCode(),
+                'title' => $exception->getMessage(),
+                'message' => $exception->description,
+            ])->toResponse($request)->setStatusCode($exception->getStatusCode());
+            $response->headers->add($exception->getHeaders());
+
+            return $response;
+        });
 
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
