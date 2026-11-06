@@ -2,14 +2,13 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     /**
-     * Moves TMDB's score off the Movie row into `ratings`, keeping every stored score that is showable: a value
-     * from 0 to 10 and a vote count that fits `ratings.vote_count`.
+     * Drops TMDB's score from the Movie row; it lives in `ratings` now. Existing scores aren't copied over: each
+     * Movie's TMDB score is recorded again the next time the Catalog fetches it.
      */
     public function up(): void
     {
@@ -19,7 +18,7 @@ return new class extends Migration
     }
 
     /**
-     * Puts the columns back and copies TMDB's scores onto the Movie rows.
+     * Puts the columns back, empty.
      */
     public function down(): void
     {

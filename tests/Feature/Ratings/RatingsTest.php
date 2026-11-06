@@ -151,17 +151,13 @@ test('switching a source off hides only that source', function () {
         ->assertInertia(fn ($page) => $page->has('movie.ratings', 1)->where('movie.ratings.0.source', 'tmdb'));
 });
 
-test('moving TMDB scores off movies keeps every stored score with votes', function () {
+test('the TMDB score columns come off movies, and rolling back restores them', function () {
     Artisan::call('migrate:rollback', ['--step' => 1]);
-    DB::table('movies')->insert([
-        ['tmdb_id' => 1, 'vote_average' => 8.49, 'vote_count' => 100, 'synced_at' => '2026-11-01 00:00:00', 'last_viewed_at' => now()],
-        ['tmdb_id' => 2, 'vote_average' => 0, 'vote_count' => 0, 'synced_at' => now(), 'last_viewed_at' => now()],
-        ['tmdb_id' => 3, 'vote_average' => null, 'vote_count' => null, 'synced_at' => now(), 'last_viewed_at' => now()],
-    ]);
+
+    expect(Schema::hasColumns('movies', ['vote_average', 'vote_count']))->toBeTrue();
 
     Artisan::call('migrate');
 
-    expect(Schema::hasColumns('movies', ['vote_average']))->toBeFalse()
-        ->and(DB::table('ratings')->get()->map(fn ($row) => [$row->source, $row->source_id, $row->value, $row->vote_count, $row->as_of])->all())
-        ->toBe([['tmdb', '1', '8.490', 100, '2026-11-01 00:00:00']]);
+    expect(Schema::hasColumn('movies', 'vote_average'))->toBeFalse()
+        ->and(Schema::hasColumn('movies', 'vote_count'))->toBeFalse();
 });
