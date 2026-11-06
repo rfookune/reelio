@@ -6,10 +6,10 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 
 **Blocked by:** [07: Movie page layout and details](./07-movie-page-layout-and-details.md)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] A Rating source interface with one batch method `ratingsFor(Collection $movies)` returning an `ExternalRating` (source enum, 0–10 value, vote count, as-of) per Movie id; a missing rating is absent, never `N/A`, `0` or a placeholder; no blended score anywhere
-- [ ] A TMDB adapter reads `vote_average`/`vote_count` from the row, with zero votes counting as absent; an in-memory fake returns given ratings or none
-- [ ] A thin `Ratings` module returns ratings in the fixed order IMDb, then TMDB, in one batch for many Movies (no per-card lookups)
-- [ ] The Movie page hero shows each rating as the source name in its colour, the score and a compact vote count ("TMDB 8.5 41.8K"), or "Not yet rated"
-- [ ] A shared rating display for cards (IMDb, else TMDB, else "Not yet rated") is ready for the list surfaces
+- [x] A Rating source interface with one batch method `ratingsFor(Collection $movies)` returning an `ExternalRating` (source enum, 0–10 value, vote count, as-of) per Movie id; a missing rating is absent, never `N/A`, `0` or a placeholder; no blended score anywhere
+- [x] A TMDB adapter reads `vote_average`/`vote_count` from the row, with zero votes counting as absent; an in-memory fake returns given ratings or none
+- [x] A thin `Ratings` module returns ratings in the fixed order IMDb, then TMDB, in one batch for many Movies (no per-card lookups)
+- [x] The Movie page hero shows each rating as the source name in its colour, the score and a compact vote count ("TMDB 8.5 41.8K"), or "Not yet rated"
+- [x] A shared rating display for cards (IMDb, else TMDB, else "Not yet rated") is ready for the list surfaces

@@ -39,3 +39,10 @@ export function formatDate(date: string | null): string | null {
               timeZone: 'UTC',
           }).format(parsed);
 }
+
+export function formatVoteCount(count: number): string {
+    return new Intl.NumberFormat('en-US', {
+        notation: 'compact',
+        maximumFractionDigits: 1,
+    }).format(count);
+}

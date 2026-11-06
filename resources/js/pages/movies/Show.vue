@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import type { ExternalRating } from '@/components/ExternalRatings.vue';
 import MovieCast from '@/components/movie/MovieCast.vue';
 import type { CastMember } from '@/components/movie/MovieCast.vue';
 import MovieDetailsCard from '@/components/movie/MovieDetailsCard.vue';
@@ -30,6 +31,7 @@ const props = defineProps<{
         cast: CastMember[];
         certification: string | null;
         usReleaseDate: string | null;
+        ratings: ExternalRating[];
         trailer: Trailer | null;
         detailsUnavailable: boolean;
     };
@@ -91,6 +93,7 @@ onBeforeUnmount(() => {
             :genres="movie.genres"
             :poster-path="movie.posterPath"
             :backdrop-path="movie.backdropPath"
+            :ratings="movie.ratings"
         />
 
         <div

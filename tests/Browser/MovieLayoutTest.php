@@ -126,3 +126,14 @@ it('hides the trailer section without a trailer and shows a panel when the sourc
     $page = visitWithCsp(route('movies.show', ['slug' => $down->slug, 'id' => $down->id], absolute: false));
     $page->assertSee('The trailer is temporarily unavailable.');
 });
+
+it('shows the TMDB rating with a compact vote count, or "Not yet rated"', function () {
+    $rated = Movie::factory()->create(['vote_average' => 8.5, 'vote_count' => 41832]);
+    $unrated = Movie::factory()->create(['vote_average' => 0, 'vote_count' => 0]);
+
+    $page = visitWithCsp(route('movies.show', ['slug' => $rated->slug, 'id' => $rated->id], absolute: false));
+    $page->assertSeeIn('[data-slot="external-ratings"]', 'TMDB 8.5 41.8K')->assertDontSee('Not yet rated');
+
+    $page = visitWithCsp(route('movies.show', ['slug' => $unrated->slug, 'id' => $unrated->id], absolute: false));
+    $page->assertSeeIn('[data-slot="external-ratings"]', 'Not yet rated')->assertDontSee('0.0');
+});

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import ExternalRatings from '@/components/ExternalRatings.vue';
+import type { ExternalRating } from '@/components/ExternalRatings.vue';
 import TmdbImage from '@/components/TmdbImage.vue';
 import { formatRuntime, isSafeTmdbPath, tmdbImageUrl } from '@/lib/tmdb';
 
@@ -14,6 +16,7 @@ const props = defineProps<{
     genres: string[];
     posterPath: string | null;
     backdropPath: string | null;
+    ratings: ExternalRating[];
 }>();
 
 const displayTitle = computed(() => props.title ?? 'Movie');
@@ -115,6 +118,7 @@ const meta = computed(() =>
                         <span>{{ genres.join(', ') }}</span>
                     </template>
                 </p>
+                <ExternalRatings :ratings="ratings" />
             </div>
         </div>
     </header>
