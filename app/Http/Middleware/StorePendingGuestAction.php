@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Response;
  * is stored as their pending action and they are sent to sign in, to return to the page they were on. Nothing is
  * saved and no Movie row is created until they sign in.
  */
-class PendGuestUserMovieAction
+class StorePendingGuestAction
 {
     public function __construct(private MovieByCatalogId $movies) {}
 
