@@ -17,7 +17,12 @@ class Catalog
 
     private const DETAILS_HARD_LIFETIME_DAYS = 30;
 
-    public function __construct(private CatalogSource $source, private CacheKey $keys, private RatingStore $ratings) {}
+    public function __construct(
+        private CatalogSource $source,
+        private CacheKey $keys,
+        private RatingStore $ratings,
+        private AvailabilityWriter $availability,
+    ) {}
 
     /** @return CatalogResult<Movie> */
     public function findOrCreate(int $tmdbId, string $actor): CatalogResult
@@ -65,6 +70,7 @@ class Catalog
                     Genre::query()->updateOrCreate(['id' => $genre['id']], ['name' => $genre['name']]);
                 }
                 $movie->genres()->sync(array_column($details->genres, 'id'));
+                $this->availability->replace($movie, $details->availability);
             }
 
             return $movie;

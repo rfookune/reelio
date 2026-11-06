@@ -11,6 +11,13 @@ use Throwable;
 
 class TmdbCatalogSource implements CatalogSource
 {
+    /** TMDB's watch-provider groups and the offer type each becomes. */
+    private const OFFER_TYPES = ['flatrate' => OfferType::Stream, 'free' => OfferType::Free, 'ads' => OfferType::Free, 'rent' => OfferType::Rent, 'buy' => OfferType::Buy];
+
+    private const IMAGE_PATH_PATTERN = '/^\/[A-Za-z0-9_-]+\.(jpg|png|svg)$/D';
+
+    private const MAXIMUM_DISPLAY_PRIORITY = 2_147_483_647;
+
     private const YOUTUBE_KEY_PATTERN = '/^[A-Za-z0-9_-]{11}$/D';
 
     private const MAX_RETRY_AFTER_MILLISECONDS = 2000;
@@ -75,6 +82,7 @@ class TmdbCatalogSource implements CatalogSource
                 'credits' => ['sometimes', 'nullable', 'array'],
                 'release_dates' => ['sometimes', 'nullable', 'array'],
                 'videos' => ['sometimes', 'nullable', 'array'],
+                'watch/providers' => ['sometimes', 'nullable', 'array'],
             ])->validate();
         } catch (ValidationException $exception) {
             throw new SourceUnavailable('The Catalog source returned invalid movie details.', previous: $exception);
@@ -102,6 +110,7 @@ class TmdbCatalogSource implements CatalogSource
             cast: $this->cast($data['credits'] ?? []),
             certification: $usRelease['certification'] ?? null,
             usReleaseDate: $usRelease['date'] ?? null,
+            availability: $this->availability($data['watch/providers'] ?? []),
             trailer: $this->trailer($data['videos'] ?? [], $context->language, ($data['release_date'] ?? null) ?: null),
         );
     }
@@ -166,6 +175,54 @@ class TmdbCatalogSource implements CatalogSource
             'character' => ($member['character'] ?? '') !== '' ? $member['character'] : null,
             'profilePath' => $member['profile_path'] ?? null,
         ], array_slice($members, 0, 12));
+    }
+
+    /**
+     * Availability in the supported countries. TMDB's `flatrate` is a subscription stream; its `free` and `ads`
+     * both become `free`, keeping one row per service with its best `display_priority`. TMDB's own `link` is
+     * never used.
+     *
+     * @param  array<string, mixed>  $watchProviders
+     * @return list<array{serviceId: int, serviceName: string, logoPath: ?string, country: string, offerType: string, displayPriority: int}>
+     */
+    private function availability(array $watchProviders): array
+    {
+        $offers = [];
+        $results = (array) ($watchProviders['results'] ?? []);
+
+        foreach (config('catalog.supported_countries') as $country) {
+            if (! is_array($results[$country] ?? null)) {
+                continue;
+            }
+
+            foreach (self::OFFER_TYPES as $tmdbType => $offerType) {
+                foreach ((array) ($results[$country][$tmdbType] ?? []) as $entry) {
+                    if (! is_array($entry) || ! is_int($entry['provider_id'] ?? null) || ! is_string($entry['provider_name'] ?? null) || $entry['provider_name'] === '') {
+                        continue;
+                    }
+
+                    $priority = is_int($entry['display_priority'] ?? null) ? $entry['display_priority'] : PHP_INT_MAX;
+                    $key = "{$country}:{$offerType->value}:{$entry['provider_id']}";
+
+                    if (isset($offers[$key]) && $offers[$key]['displayPriority'] <= $priority) {
+                        continue;
+                    }
+
+                    $logoPath = $entry['logo_path'] ?? null;
+
+                    $offers[$key] = [
+                        'serviceId' => $entry['provider_id'],
+                        'serviceName' => $entry['provider_name'],
+                        'logoPath' => is_string($logoPath) && preg_match(self::IMAGE_PATH_PATTERN, $logoPath) === 1 ? $logoPath : null,
+                        'country' => $country,
+                        'offerType' => $offerType->value,
+                        'displayPriority' => max(0, min($priority, self::MAXIMUM_DISPLAY_PRIORITY)),
+                    ];
+                }
+            }
+        }
+
+        return array_values($offers);
     }
 
     /**

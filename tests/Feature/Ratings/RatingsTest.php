@@ -152,7 +152,7 @@ test('switching a source off hides only that source', function () {
 });
 
 test('the TMDB score columns come off movies, and rolling back restores them', function () {
-    Artisan::call('migrate:rollback', ['--step' => 1]);
+    Artisan::call('migrate:rollback', ['--path' => 'database/migrations/2026_11_06_045705_drop_tmdb_scores_from_movies_table.php']);
 
     expect(Schema::hasColumns('movies', ['vote_average', 'vote_count']))->toBeTrue();
 

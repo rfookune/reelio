@@ -267,3 +267,58 @@ test('trailers must be YouTube videos with a well-formed key', function (array $
     'trailing newline' => [[video("AAAAAAAAAAA\n")]],
     'clips only' => [[video('AAAAAAAAAAA', ['type' => 'Clip'])]],
 ]);
+
+test('Availability is mapped for the supported countries only, with flatrate as stream', function () {
+    Http::fake(['https://api.themoviedb.org/3/movie/157336?*' => Http::response(json_decode(file_get_contents(base_path('tests/Fixtures/tmdb/movie_157336.json')), true, flags: JSON_THROW_ON_ERROR))]);
+
+    $availability = app(TmdbCatalogSource::class)->movie(157336, new CatalogContext('en-US'))->availability;
+
+    expect(collect($availability)->pluck('country')->unique()->sort()->values()->all())->toBe(['AU', 'CA', 'DE', 'ES', 'FR', 'GB', 'IE', 'IT', 'NZ', 'US'])
+        ->and(collect($availability)->first(fn ($offer) => $offer['country'] === 'US' && $offer['offerType'] === 'stream'))
+        ->toBe(['serviceId' => 350, 'serviceName' => 'Apple TV', 'logoPath' => '/9icYBfYFcwgCbky5VdGUIKJ4C5i.png', 'country' => 'US', 'offerType' => 'stream', 'displayPriority' => 5])
+        ->and(collect($availability)->where('country', 'US')->where('offerType', 'rent')->count())->toBe(8)
+        ->and(collect($availability)->where('country', 'US')->where('offerType', 'buy')->count())->toBe(5);
+});
+
+test('free and ads both map to free, keeping one row per service with its best priority', function () {
+    Http::fake(['https://api.themoviedb.org/3/movie/5?*' => Http::response([
+        'id' => 5,
+        'watch/providers' => ['results' => [
+            'US' => [
+                'free' => [['provider_id' => 73, 'provider_name' => 'Tubi TV', 'logo_path' => '/tubi.jpg', 'display_priority' => 8]],
+                'ads' => [
+                    ['provider_id' => 73, 'provider_name' => 'Tubi TV', 'logo_path' => '/tubi.jpg', 'display_priority' => 3],
+                    ['provider_id' => 300, 'provider_name' => 'Pluto TV', 'logo_path' => '/pluto.jpg', 'display_priority' => 12],
+                ],
+            ],
+            'BR' => ['flatrate' => [['provider_id' => 8, 'provider_name' => 'Netflix', 'logo_path' => '/n.jpg', 'display_priority' => 1]]],
+        ]],
+    ])]);
+
+    $availability = app(TmdbCatalogSource::class)->movie(5, new CatalogContext)->availability;
+
+    expect($availability)->toBe([
+        ['serviceId' => 73, 'serviceName' => 'Tubi TV', 'logoPath' => '/tubi.jpg', 'country' => 'US', 'offerType' => 'free', 'displayPriority' => 3],
+        ['serviceId' => 300, 'serviceName' => 'Pluto TV', 'logoPath' => '/pluto.jpg', 'country' => 'US', 'offerType' => 'free', 'displayPriority' => 12],
+    ]);
+});
+
+test('malformed Availability entries are dropped and an unsafe logo path is cleared', function () {
+    Http::fake(['https://api.themoviedb.org/3/movie/6?*' => Http::response([
+        'id' => 6,
+        'watch/providers' => ['results' => [
+            'US' => [
+                'flatrate' => [
+                    ['provider_id' => 'eight', 'provider_name' => 'Bad id', 'display_priority' => 1],
+                    ['provider_id' => 9, 'display_priority' => 1],
+                    ['provider_id' => 10, 'provider_name' => 'No logo', 'logo_path' => 'https://evil.example/x.png', 'display_priority' => 2],
+                ],
+                'link' => 'https://evil.example',
+            ],
+        ]],
+    ])]);
+
+    expect(app(TmdbCatalogSource::class)->movie(6, new CatalogContext)->availability)->toBe([
+        ['serviceId' => 10, 'serviceName' => 'No logo', 'logoPath' => null, 'country' => 'US', 'offerType' => 'stream', 'displayPriority' => 2],
+    ]);
+});

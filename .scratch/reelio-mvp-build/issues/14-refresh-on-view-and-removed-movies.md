@@ -17,3 +17,8 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 ## Note from ADR 0001 (2026-11-06)
 
 Per [ADR 0001](../../../docs/adr/0001-one-ratings-table-for-every-rating-source.md), TMDB's score lives in the `ratings` table, not on the Movie row. The refresh operation records the Movie's TMDB rating (or deletes it when the score is missing or has zero votes), and making a Movie a Removed Movie deletes its TMDB rating along with the other TMDB-derived fields.
+
+## Note from ticket 12 (2026-11-06)
+
+- Availability is written only where `synced_at` is set, so "Updated N days ago" stays truthful. The refresh operation should call `AvailabilityWriter::replace()` in the same step that moves `synced_at`; the `Catalog::details()` refetch deliberately doesn't touch Availability.
+- Where to watch already shows "may be out of date" when `Catalog::details()` is served `stale`, as well as past 7 calendar days since `synced_at`. When the real in-request refresh lands, a failed refresh should feed the same flag (spec, Movie page States).

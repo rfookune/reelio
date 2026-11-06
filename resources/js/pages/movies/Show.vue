@@ -7,12 +7,15 @@ import type { CastMember } from '@/components/movie/MovieCast.vue';
 import MovieDetailsCard from '@/components/movie/MovieDetailsCard.vue';
 import MovieHero from '@/components/movie/MovieHero.vue';
 import TrailerPlayer from '@/components/movie/TrailerPlayer.vue';
+import WhereToWatch from '@/components/movie/WhereToWatch.vue';
+import type { WhereToWatchBlock } from '@/components/movie/WhereToWatch.vue';
 import type { Trailer } from '@/components/movie/TrailerPlayer.vue';
 import { isSafeTmdbPath, tmdbImageUrl } from '@/lib/tmdb';
 
 const props = defineProps<{
     canonicalUrl: string;
     imageBaseUrl: string;
+    whereToWatch: WhereToWatchBlock;
     movie: {
         id: number;
         title: string | null;
@@ -66,13 +69,22 @@ function measureStickyTop(): void {
     stickyTop.value = `${top}px`;
 }
 
+/* The column's height changes with the viewport and when a Where to watch tab is switched. */
+let columnObserver: ResizeObserver | null = null;
+
 onMounted(() => {
     void nextTick(measureStickyTop);
     window.addEventListener('resize', measureStickyTop);
+
+    if (stickyColumn.value !== null && 'ResizeObserver' in window) {
+        columnObserver = new ResizeObserver(measureStickyTop);
+        columnObserver.observe(stickyColumn.value);
+    }
 });
 
 onBeforeUnmount(() => {
     window.removeEventListener('resize', measureStickyTop);
+    columnObserver?.disconnect();
 });
 </script>
 
@@ -119,7 +131,7 @@ onBeforeUnmount(() => {
             <section
                 v-if="movie.tagline || movie.overview"
                 data-slot="movie-overview"
-                class="flex max-w-prose flex-col gap-3 lg:col-start-1 lg:mb-10"
+                class="order-1 flex max-w-prose flex-col gap-3 lg:col-start-1 lg:mb-10"
             >
                 <p v-if="movie.tagline" class="text-lg text-muted italic">
                     {{ movie.tagline }}
@@ -130,7 +142,33 @@ onBeforeUnmount(() => {
                 </p>
             </section>
 
-            <!-- Where to watch slots in here, before the Trailer. -->
+            <div
+                ref="stickyColumn"
+                data-slot="movie-details-column"
+                :style="{ top: stickyTop }"
+                class="contents lg:sticky lg:col-start-2 lg:row-span-4 lg:row-start-1 lg:flex lg:flex-col lg:gap-6 lg:self-start"
+            >
+                <MovieDetailsCard
+                    :directors="movie.directors"
+                    :writers="movie.writers"
+                    :release-date="movie.releaseDate"
+                    :us-release-date="movie.usReleaseDate"
+                    :runtime="movie.runtime"
+                    :certification="movie.certification"
+                    :genres="movie.genres"
+                    :title="movie.title"
+                    :original-title="movie.originalTitle"
+                    :original-language="movie.originalLanguage"
+                    :unavailable="movie.detailsUnavailable"
+                    class="order-5 lg:order-none"
+                />
+                <WhereToWatch
+                    :image-base-url="imageBaseUrl"
+                    :movie-id="movie.id"
+                    :block="whereToWatch"
+                    class="order-2 lg:order-none"
+                />
+            </div>
 
             <TrailerPlayer
                 v-if="movie.trailer"
@@ -138,13 +176,13 @@ onBeforeUnmount(() => {
                 :title="movie.title ?? 'Movie'"
                 :trailer="movie.trailer"
                 :cover-path="movie.backdropPath"
-                class="lg:col-start-1 lg:mb-10"
+                class="order-3 lg:col-start-1 lg:mb-10"
             />
             <section
                 v-else-if="movie.detailsUnavailable"
                 data-slot="trailer-unavailable"
                 aria-labelledby="trailer-heading"
-                class="lg:col-start-1 lg:mb-10"
+                class="order-3 lg:col-start-1 lg:mb-10"
             >
                 <h2 id="trailer-heading" class="mb-4 text-xl font-semibold">
                     Trailer
@@ -160,29 +198,8 @@ onBeforeUnmount(() => {
                 :image-base-url="imageBaseUrl"
                 :cast="movie.cast"
                 :unavailable="movie.detailsUnavailable"
-                class="lg:col-start-1 lg:mb-10"
+                class="order-4 lg:col-start-1 lg:mb-10"
             />
-
-            <div
-                ref="stickyColumn"
-                data-slot="movie-details-column"
-                :style="{ top: stickyTop }"
-                class="lg:sticky lg:col-start-2 lg:row-span-4 lg:row-start-1 lg:self-start"
-            >
-                <MovieDetailsCard
-                    :directors="movie.directors"
-                    :writers="movie.writers"
-                    :release-date="movie.releaseDate"
-                    :us-release-date="movie.usReleaseDate"
-                    :runtime="movie.runtime"
-                    :certification="movie.certification"
-                    :genres="movie.genres"
-                    :title="movie.title"
-                    :original-title="movie.originalTitle"
-                    :original-language="movie.originalLanguage"
-                    :unavailable="movie.detailsUnavailable"
-                />
-            </div>
         </div>
     </div>
 </template>

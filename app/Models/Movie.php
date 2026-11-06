@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property CarbonImmutable|null $release_date
@@ -37,6 +38,12 @@ class Movie extends Model
     public function genres(): BelongsToMany
     {
         return $this->belongsToMany(Genre::class);
+    }
+
+    /** @return HasMany<Availability, $this> */
+    public function availabilities(): HasMany
+    {
+        return $this->hasMany(Availability::class);
     }
 
     public function canonicalUrl(?string $referrer = null): string
