@@ -14,3 +14,7 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 - [ ] The owner is alerted when a Movie with user facts is more than 14 days past its due refresh
 - [ ] The `genres` table is refreshed weekly (Mondays, same slot)
 - [ ] Feature tests cover due selection, uniqueness and continuation with the fake adapter and a faked queue
+
+## Note from the Services layout (2026-11-06)
+
+The planner and per-Movie jobs live in `app/Jobs/`; the refresh logic they call is `Catalog` in `app/Services/Catalog/`. The 3-day and 30-day due ages and the 20 requests/s background throttle belong in `config/catalog.php`.

@@ -16,3 +16,7 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 - [x] Movie page with a row but the source unavailable: stored fields render; Cast shows a "temporarily unavailable" panel; Director, Writers and Rated read "Temporarily unavailable"; the certification badge is hidden
 - [x] The entry route with no row and the source down shows a 503 page
 - [x] Adapter tests (fixtures) cover retries, timeouts, 429, 404, 401 and the breaker; feature tests drive every state through the failing fake
+
+## Note from the Services layout (2026-11-06)
+
+The thresholds above (five failures, 30 s open, 15 requests/s) are now `guard.*` keys in `config/catalog.php`, and the detail-cache freshness and lifetime are `details.*`. The profiles' timeouts and attempts stay on `CatalogProfile`. The breaker is `GuardedCatalogSource` in `app/Services/Catalog/Sources/`.

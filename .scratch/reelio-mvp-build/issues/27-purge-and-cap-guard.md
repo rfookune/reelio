@@ -18,3 +18,7 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 ## Note from ADR 0001 (2026-11-06)
 
 Per [ADR 0001](../../../docs/adr/0001-one-ratings-table-for-every-rating-source.md), TMDB scores live in the `ratings` table (`source = tmdb`), with no foreign key to `movies`. The purge deletes a purged Movie's TMDB rating; the daily cleanup also deletes TMDB rating rows with `as_of` more than 170 days old, whether or not a Movie row exists (Search and Discover record scores for titles with no Movie); `catalog:purge` deletes every TMDB rating row. IMDb rows are not TMDB data and are untouched.
+
+## Note from the Services layout (2026-11-06)
+
+The purge and cap-guard logic goes in `app/Services/Catalog/`, and `catalog:purge` is a console command. The 170-day cap and the `catalog.purge_unviewed.*` keys it specifies live in `config/catalog.php`. The cap-guard 503 reuses `DetailsUnavailable` from `app/Http/Exceptions/`, thrown by the controller, not by the Catalog.

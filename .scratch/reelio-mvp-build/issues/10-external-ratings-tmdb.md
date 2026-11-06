@@ -17,3 +17,7 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 ## Deviation (2026-11-06)
 
 Per [ADR 0001](../../../docs/adr/0001-one-ratings-table-for-every-rating-source.md), TMDB's score no longer lives on the Movie row. The "TMDB adapter reads `vote_average`/`vote_count` from the row" criterion is superseded: a generic stored adapter reads TMDB's score from the `ratings` table by `tmdb_id`, the Catalog records it when it creates a Movie, and the `vote_average`/`vote_count` columns are dropped from `movies` without copying their values: each Movie's TMDB score is recorded again the next time the Catalog fetches it. Zero votes still count as absent, now by never storing the row.
+
+## Note from the Services layout (2026-11-06)
+
+The `Ratings` module now lives in `app/Services/Ratings/` (sources and the fake in `Sources/`). `Ratings` must not depend on `Catalog`; the Catalog records TMDB's score through `RatingStore`. `tests/Unit/ArchitectureTest.php` enforces it.

@@ -38,3 +38,7 @@ Per [ADR 0001](../../../docs/adr/0001-one-ratings-table-for-every-rating-source.
 - There's no permanent staging table: each sync streams into a temporary table created for that run, validates it, then replaces the source's rows in one transaction.
 - The IMDb-specific importer, job and freshness check become generic Rating dataset sync code; IMDb keeps only its feed (URL and TSV parser).
 - The durations above are re-measured on the new design.
+
+## Note from the Services layout (2026-11-06)
+
+The dataset sync code now lives in `app/Services/Ratings/Sync/` (`Datasets/` holds the `RatingDataset` interface, the IMDb feed and the registry). Its download timeout, insert batch size and 90% minimum-share rule are `sync.*` keys in `config/ratings.php`. When the measured import time changes the timeout, change it there.

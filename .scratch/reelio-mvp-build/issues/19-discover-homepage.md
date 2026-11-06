@@ -21,3 +21,7 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 ## Note from ADR 0001 (2026-11-06)
 
 Per [ADR 0001](../../../docs/adr/0001-one-ratings-table-for-every-rating-source.md), TMDB scores are read from the `ratings` table through the `Ratings` module. When the Discover payload is built, record each title's TMDB score in `ratings` by `tmdb_id` (no Movie row needed), so rows and the hero use the same batch `Ratings` call as every other surface.
+
+## Note from the Services layout (2026-11-06)
+
+`section(kind, page)` is added to `CatalogSource` and implemented in `TmdbCatalogSource`, `GuardedCatalogSource` and `FakeCatalogSource`, all in `app/Services/Catalog/Sources/`. Section cache lifetimes (the 7-day stale window) go in `config/catalog.php`. The daily job is in `app/Jobs/`; the logic stays in `app/Services/Catalog/`.

@@ -181,7 +181,10 @@ From [Infrastructure baseline](./issues/05-infrastructure-baseline.md), as amend
 
 ### Modules
 
-[Catalog and Rating source boundary](./issues/10-source-boundary.md) sets two seams with nothing shared, in the new namespaces `App\Catalog` and `App\Ratings` (approved):
+[Catalog and Rating source boundary](./issues/10-source-boundary.md) sets two seams with nothing shared, in the new namespaces `App\Services\Catalog` and `App\Services\Ratings` (the original `App\Catalog` and `App\Ratings` namespaces were approved, then grouped under `app/Services/` on 2026-11-06):
+
+**Layout (updated 2026-11-06).** Both modules now live under `app/Services/`, as `App\Services\Catalog` and `App\Services\Ratings`, so `app/` doesn't gain a top-level folder per abstraction. Inside each, files are grouped by kind: `Sources/` (the source interface, its adapters and the fake), `Enums/`, `Exceptions/`, and for Ratings `Sync/` (with `Sync/Datasets/` and `Sync/Enums/`). Tunable limits live in `config/catalog.php` and `config/ratings.php`. `App\Services` may not depend on `App\Http`, and `Ratings` may not depend on `Catalog`; the Catalog may call `Ratings` to record TMDB's score. `tests/Unit/ArchitectureTest.php` enforces both rules. HTTP-shaped exceptions such as `DetailsUnavailable` (a 503) live in `app/Http/Exceptions/`.
+
 
 - **Catalog adapter interface** (small and neutral), with the TMDB adapter and an in-memory fake:
     - `search(query, page)`;
@@ -308,6 +311,7 @@ From [Catalog and Rating source boundary](./issues/10-source-boundary.md) and [R
     - the last tiebreak is the latest published on or before the primary release date, else the earliest. ([Movie detail page](./issues/24-movie-detail-page.md))
 - **Director(s):** every crew member with job Director.
 - **US certification and US release date:** from `release_dates`. The release date is type 3 (theatrical), else the earliest type 2.
+- **Where the numbers live (2026-11-06):** the detail-cache freshness and hard lifetime, the row-creation limit, the circuit-breaker threshold and open time, and the live throttle are in `config/catalog.php` (`details.*`, `creation_limit.*`, `guard.*`). The interactive and background timeouts and attempts stay on `CatalogProfile`.
 
 ### Refresh, cache lifetimes, purge and the cap guard
 
@@ -373,6 +377,7 @@ One generic daily job per full-dataset Rating source, on `imports`. IMDb's `titl
     Then, in one transaction, the source's rows in `ratings` are deleted and the temporary table's rows inserted. Postgres readers keep the old rows until the commit.
 
 - **On any failure** the source's live rows are untouched and keep serving. The failure reaches Nightwatch and the owner alert, and the next run retries. The owner is alerted when a source's rows were never synced or are more than 3 days old (an unchanged file counts as a successful sync). Ratings stay on show however old the table is.
+- **Tunables (2026-11-06):** the download timeout, insert batch size and the minimum share of live rows a new dataset must hold are in `config/ratings.php` under `sync.*`.
 - **Timeouts:** the job's timeout is generous, and the queue's `retry_after` is longer than it, so a slow run isn't delivered twice ([05](./issues/05-infrastructure-baseline.md)).
 - **Flex jobs are killed at 90 s.** A build-time spike measures the import. If it doesn't fit, `imports` moves to a Pro queue (about $5/month) before launch.
 - The IMDb credit, worded as IMDb confirms ([Confirm IMDb permission for the non-commercial ratings dataset](./issues/18-imdb-permission.md)), appears wherever the IMDb rating shows. The wording requested is "Information courtesy of IMDb (https://www.imdb.com). Used with permission."

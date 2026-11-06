@@ -90,3 +90,12 @@ Use the `codebase-design` skill.
     - **Detail cache:** a 30-day hard lifetime.
     - **Movie refresh:** a detail view refreshes during the request (interactive profile) when the data is more than 24 h old. Planner jobs (background profile, one per Movie) share a 20 requests/s throttle in Valkey.
     - **IMDb import:** daily, skipped when the file is unchanged, with an alert when the table is more than 3 days old.
+
+## Update (2026-11-06): grouped under `app/Services/`
+
+The namespaces approved above are now `App\Services\Catalog` and `App\Services\Ratings`. Decision: keep `app/` from gaining a custom top-level folder for every new abstraction, and keep the service layer separate from the framework-role folders.
+
+- **Admission rule:** a folder belongs in `app/Services/` only if it has a single public entry point class and swappable sources behind it.
+- **Layout inside a service:** `Sources/`, `Enums/`, `Exceptions/`; Ratings also has `Sync/` with `Datasets/` and `Enums/`. Tunables go to `config/<service>.php`.
+- **Dependency rule:** `App\Services` doesn't depend on `App\Http` (so `DetailsUnavailable`, a 503, is in `app/Http/Exceptions/`), and `Ratings` doesn't depend on `Catalog`. The reverse is allowed: the Catalog records TMDB's score through `RatingStore`, as the spec describes. Both rules are in `tests/Unit/ArchitectureTest.php`.
+- **"Nothing shared"** above means the two source interfaces share nothing, so swapping TMDB touches no Rating source and adding a Rating source touches no Catalog source. It doesn't mean the Catalog never calls `Ratings`.

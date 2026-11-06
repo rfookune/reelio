@@ -17,3 +17,7 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 - [x] A TMDB image component builds URLs from the configured base and a validated path (`^/[A-Za-z0-9_-]+\.(jpg|png|svg)$`), with `srcset`/`sizes`, a fixed-ratio box filled with the raised colour, and fallback to the missing-poster tile
 - [x] `movie_viewed` with `movie_id` and `referrer` (`discover`, `search`, `watchlist`, `watched`, `picker`, `direct`) is recorded for signed-in users
 - [x] Feature tests use the fake adapter and cover creation, redirects, 404, the limit and the event
+
+## Note from the Services layout (2026-11-06)
+
+This ticket's `Catalog`, adapter interface, `MovieDetails` and `CatalogContext` now live in `app/Services/Catalog/` (adapters, the fake and `MovieDetails` in `Sources/`; `CreationLimited` in `Exceptions/`). The 503 `DetailsUnavailable` is in `app/Http/Exceptions/`. See the spec's "Modules" section.

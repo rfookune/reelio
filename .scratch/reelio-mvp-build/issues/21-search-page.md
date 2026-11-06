@@ -22,3 +22,7 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 ## Note from ADR 0001 (2026-11-06)
 
 Per [ADR 0001](../../../docs/adr/0001-one-ratings-table-for-every-rating-source.md), TMDB scores are read from the `ratings` table through the `Ratings` module. When search results are fetched, record each result's TMDB score in `ratings` by `tmdb_id` (no Movie row needed), so the card rating comes from the same batch `Ratings` call as every other surface.
+
+## Note from the Services layout (2026-11-06)
+
+`search(query, page)` is added to `CatalogSource` and its three implementations in `app/Services/Catalog/Sources/`. The 1 h fresh and 24 h stale windows go in `config/catalog.php`, not as class constants. Recording the TMDB score goes through `RatingStore` (`App\Services\Ratings`), the allowed direction.

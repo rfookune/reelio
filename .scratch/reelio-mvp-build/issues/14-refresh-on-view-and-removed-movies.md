@@ -22,3 +22,7 @@ Per [ADR 0001](../../../docs/adr/0001-one-ratings-table-for-every-rating-source.
 
 - Availability is written only where `synced_at` is set, so "Updated N days ago" stays truthful. The refresh operation should call `AvailabilityWriter::replace()` in the same step that moves `synced_at`; the `Catalog::details()` refetch deliberately doesn't touch Availability.
 - Where to watch already shows "may be out of date" when `Catalog::details()` is served `stale`, as well as past 7 calendar days since `synced_at`. When the real in-request refresh lands, a failed refresh should feed the same flag (spec, Movie page States).
+
+## Note from the Services layout (2026-11-06)
+
+Put the refresh and removal logic in `app/Services/Catalog/` and keep it free of HTTP: `Catalog` reports a Removed Movie as a result, and the controller turns it into the 410, as `DetailsUnavailable` (in `app/Http/Exceptions/`) does for the 503. A new exception for the Catalog goes in `app/Services/Catalog/Exceptions/`, and a new tunable (such as the 24 h refresh age) in `config/catalog.php`. `App\Services` must not import `App\Http` (`tests/Unit/ArchitectureTest.php`).
