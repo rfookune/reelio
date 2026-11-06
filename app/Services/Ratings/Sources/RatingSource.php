@@ -2,9 +2,8 @@
 
 namespace App\Services\Ratings\Sources;
 
-use App\Services\Ratings\ExternalRating;
-
 use App\Models\Movie;
+use App\Services\Ratings\ExternalRating;
 use Illuminate\Support\Collection;
 
 interface RatingSource

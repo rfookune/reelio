@@ -2,10 +2,9 @@
 
 namespace App\Services\Ratings\Sync\Datasets;
 
-use App\Services\Ratings\Sync\RatingSyncFailed;
-
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingRow;
+use App\Services\Ratings\Sync\RatingSyncFailed;
 
 /**
  * A Rating source that publishes its scores as one downloadable file. The feed knows only where the file is

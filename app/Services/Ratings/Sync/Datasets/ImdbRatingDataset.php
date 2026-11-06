@@ -2,10 +2,9 @@
 
 namespace App\Services\Ratings\Sync\Datasets;
 
-use App\Services\Ratings\Sync\RatingSyncFailed;
-
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingRow;
+use App\Services\Ratings\Sync\RatingSyncFailed;
 
 /**
  * IMDb's non-commercial `title.ratings.tsv.gz`: a gzipped TSV of IMDb id, average rating and vote count.

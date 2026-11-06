@@ -2,8 +2,8 @@
 
 namespace App\Services\Catalog;
 
-use App\Services\Catalog\Enums\OfferType;
 use App\Models\Movie;
+use App\Services\Catalog\Enums\OfferType;
 use Illuminate\Support\Facades\DB;
 
 /**

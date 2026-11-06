@@ -3,7 +3,6 @@
 namespace App\Services\Ratings\Sources;
 
 use App\Services\Ratings\ExternalRating;
-
 use Illuminate\Support\Collection;
 
 class FakeRatingSource implements RatingSource

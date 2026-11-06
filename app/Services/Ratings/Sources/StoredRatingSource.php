@@ -2,9 +2,8 @@
 
 namespace App\Services\Ratings\Sources;
 
-use App\Services\Ratings\ExternalRating;
-
 use App\Services\Ratings\Enums\RatingSourceName;
+use App\Services\Ratings\ExternalRating;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;

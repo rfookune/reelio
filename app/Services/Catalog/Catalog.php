@@ -2,13 +2,13 @@
 
 namespace App\Services\Catalog;
 
+use App\Models\Genre;
+use App\Models\Movie;
 use App\Services\Catalog\Exceptions\CreationLimited;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\MovieDetails;
 use App\Services\Catalog\Sources\SourceMisconfigured;
 use App\Services\Catalog\Sources\SourceUnavailable;
-use App\Models\Genre;
-use App\Models\Movie;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
 use Illuminate\Support\Facades\Cache;
