@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http;
+namespace App\Http\Support;
 
 use App\Models\Movie;
 use App\Models\User;

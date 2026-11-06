@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\MovieByCatalogId;
+use App\Http\Support\MovieByCatalogId;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 

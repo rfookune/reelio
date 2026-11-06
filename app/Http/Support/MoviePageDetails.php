@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http;
+namespace App\Http\Support;
 
 use App\Http\Exceptions\MovieRemoved;
 use App\Models\Movie;

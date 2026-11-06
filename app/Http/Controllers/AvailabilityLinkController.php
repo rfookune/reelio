@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
-use App\Http\VisitorCountry;
+use App\Http\Support\VisitorCountry;
 use App\Services\Catalog\Catalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

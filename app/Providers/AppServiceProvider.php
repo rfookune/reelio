@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Http\RateLimitKey;
+use App\Http\Support\RateLimitKey;
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\GuardedCatalogSource;

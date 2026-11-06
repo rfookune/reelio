@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Actions\ClearWatched;
 use App\Actions\MarkAsWatched;
 use App\Enums\UserMovieAction;
-use App\Http\LatestUserMovieAction;
-use App\Http\MovieByCatalogId;
 use App\Http\Requests\UserMovieActionRequest;
+use App\Http\Support\LatestUserMovieAction;
+use App\Http\Support\MovieByCatalogId;
 use App\Models\UserMovie;
 use Illuminate\Http\RedirectResponse;
 

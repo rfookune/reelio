@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
 use App\Http\Exceptions\MovieRemoved;
-use App\Http\MoviePageDetails;
-use App\Http\UserMovies;
-use App\Http\VisitorCountry;
+use App\Http\Support\MoviePageDetails;
+use App\Http\Support\UserMovies;
+use App\Http\Support\VisitorCountry;
 use App\Models\Availability;
 use App\Models\Movie;
 use App\Services\Catalog\Catalog;
