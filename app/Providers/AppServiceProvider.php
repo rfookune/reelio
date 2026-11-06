@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\RateLimitKey;
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\GuardedCatalogSource;
@@ -49,13 +50,15 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Configure the application's rate limiters.
+     * Configure the application's rate limiters. Watchlist and Watched actions and Undo share one budget.
      */
     protected function configureRateLimiting(): void
     {
         RateLimiter::for('csp-reports', fn (Request $request): Limit => Limit::perMinute(10)
             ->by((string) $request->ip())
             ->response(fn () => response()->noContent()));
+
+        RateLimiter::for('user-movie-actions', fn (Request $request): Limit => Limit::perMinute(60)->by(RateLimitKey::for($request)));
     }
 
     /**

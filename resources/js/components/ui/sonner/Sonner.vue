@@ -7,6 +7,23 @@ import { cn } from "@/lib/utils"
 import 'vue-sonner/style.css';
 
 const props = defineProps<ToasterProps>()
+
+/*
+ * Sonner pauses its timers while the pointer is over the toaster, but not while
+ * focus is inside it, so focus is reported to it as the pointer entering and
+ * leaving.
+ */
+function pauseWhileFocused(event: FocusEvent) {
+  (event.currentTarget as HTMLElement).dispatchEvent(new MouseEvent("mouseenter"))
+}
+
+function resumeWhenFocusLeaves(event: FocusEvent) {
+  const toaster = event.currentTarget as HTMLElement
+
+  if (!toaster.contains(event.relatedTarget as Node | null) && !toaster.matches(":hover")) {
+    toaster.dispatchEvent(new MouseEvent("mouseleave"))
+  }
+}
 </script>
 
 <template>
@@ -19,6 +36,8 @@ const props = defineProps<ToasterProps>()
       '--border-radius': '0.75rem',
     }"
     v-bind="props"
+    @focusin="pauseWhileFocused"
+    @focusout="resumeWhenFocusLeaves"
   >
     <template #success-icon>
       <CircleCheckIcon class="size-4" />

@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
 use App\Http\Exceptions\MovieRemoved;
+use App\Http\UserMovies;
 use App\Http\VisitorCountry;
 use App\Models\Availability;
 use App\Models\Movie;
 use App\Services\Catalog\Catalog;
+use App\Services\Catalog\CatalogResult;
 use App\Services\Catalog\Enums\OfferType;
+use App\Services\Catalog\Sources\MovieDetails;
 use App\Services\Ratings\ExternalRating;
 use App\Services\Ratings\Ratings;
 use Illuminate\Http\RedirectResponse;
@@ -24,7 +27,9 @@ class MovieController extends Controller
     /**
      * Records a view of the Movie unless the request is a partial reload, such as after changing the country,
      * which refreshes the page the visitor is already on. A Removed Movie, including one the refresh in this
-     * request finds removed, is a 410 at any slug and records no view.
+     * request finds removed, is a 410 at any slug and records no view. The Catalog details, and the refresh they
+     * may bring, are fetched only for the props that need them, so reloading just `userMovies` after a Watchlist
+     * action never refreshes the Movie.
      */
     public function show(Request $request, string $slug, string $id, Catalog $catalog, RecordEvent $recordEvent, Ratings $ratings): Response|RedirectResponse
     {
@@ -38,11 +43,16 @@ class MovieController extends Controller
             return redirect($movie->canonicalUrl(is_string($referrer) ? $referrer : null), 301);
         }
 
-        $result = $catalog->details($movie);
-        throw_if($result->isRemoved(), MovieRemoved::class);
-        $details = $result->value;
+        $result = null;
+        $details = function () use (&$result, $catalog, $movie): CatalogResult {
+            $result ??= $catalog->details($movie);
+            throw_if($result->isRemoved(), MovieRemoved::class);
+
+            return $result;
+        };
 
         if (! $request->hasHeader(Header::PARTIAL_COMPONENT)) {
+            $details();
             $catalog->recordView($movie);
             $referrer = in_array($referrer, ['discover', 'search', 'watchlist', 'watched', 'picker', 'direct'], true) ? $referrer : 'direct';
             $recordEvent->handle($request->user(), 'movie_viewed', ['movie_id' => $movie->id, 'referrer' => $referrer]);
@@ -50,36 +60,55 @@ class MovieController extends Controller
 
         return Inertia::render('movies/Show', [
             'imageBaseUrl' => config('catalog.image_base_url'),
-            'whereToWatch' => $this->whereToWatch($movie, VisitorCountry::resolve($request), $catalog->isDueOnView($movie)),
+            'whereToWatch' => function () use ($details, $movie, $request, $catalog): array {
+                $details();
+
+                return $this->whereToWatch($movie, VisitorCountry::resolve($request), $catalog->isDueOnView($movie));
+            },
             'canonicalUrl' => $movie->canonicalUrl(),
-            'movie' => [
-                'id' => $movie->id,
-                'title' => $movie->title,
-                'originalTitle' => $movie->original_title,
-                'originalLanguage' => $movie->original_language,
-                'year' => $movie->release_date?->year,
-                'releaseDate' => $movie->release_date?->toDateString(),
-                'runtime' => $movie->runtime,
-                'tagline' => $movie->tagline,
-                'overview' => $movie->overview,
-                'posterPath' => $movie->poster_path,
-                'backdropPath' => $movie->backdrop_path,
-                'genres' => $movie->genres()->orderBy('name')->pluck('name')->all(),
-                'ratings' => array_map(fn (ExternalRating $rating): array => [
-                    'source' => $rating->source->value,
-                    'name' => $rating->source->label(),
-                    'value' => $rating->value,
-                    'voteCount' => $rating->voteCount,
-                ], $ratings->ratingsFor(collect([$movie]))[$movie->id]),
-                'trailer' => $details?->trailer,
-                'detailsUnavailable' => $result->isUnavailable(),
-                'directors' => $details->directors ?? [],
-                'writers' => $details->writers ?? [],
-                'cast' => $details->cast ?? [],
-                'certification' => $details?->certification,
-                'usReleaseDate' => $details?->usReleaseDate,
-            ],
+            'userMovies' => fn (): array => UserMovies::for($request->user(), [$movie]),
+            'movie' => fn (): array => $this->movie($movie, $details(), $ratings),
         ]);
+    }
+
+    /**
+     * The Movie's stored fields, its External ratings and its Catalog details, which are empty when unavailable.
+     *
+     * @param  CatalogResult<MovieDetails>  $result
+     * @return array<string, mixed>
+     */
+    private function movie(Movie $movie, CatalogResult $result, Ratings $ratings): array
+    {
+        $details = $result->value;
+
+        return [
+            'id' => $movie->id,
+            'tmdbId' => $movie->tmdb_id,
+            'title' => $movie->title,
+            'originalTitle' => $movie->original_title,
+            'originalLanguage' => $movie->original_language,
+            'year' => $movie->release_date?->year,
+            'releaseDate' => $movie->release_date?->toDateString(),
+            'runtime' => $movie->runtime,
+            'tagline' => $movie->tagline,
+            'overview' => $movie->overview,
+            'posterPath' => $movie->poster_path,
+            'backdropPath' => $movie->backdrop_path,
+            'genres' => $movie->genres()->orderBy('name')->pluck('name')->all(),
+            'ratings' => array_map(fn (ExternalRating $rating): array => [
+                'source' => $rating->source->value,
+                'name' => $rating->source->label(),
+                'value' => $rating->value,
+                'voteCount' => $rating->voteCount,
+            ], $ratings->ratingsFor(collect([$movie]))[$movie->id]),
+            'trailer' => $details?->trailer,
+            'detailsUnavailable' => $result->isUnavailable(),
+            'directors' => $details->directors ?? [],
+            'writers' => $details->writers ?? [],
+            'cast' => $details->cast ?? [],
+            'certification' => $details?->certification,
+            'usReleaseDate' => $details?->usReleaseDate,
+        ];
     }
 
     /**

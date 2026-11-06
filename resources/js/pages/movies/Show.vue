@@ -7,17 +7,21 @@ import type { CastMember } from '@/components/movie/MovieCast.vue';
 import MovieDetailsCard from '@/components/movie/MovieDetailsCard.vue';
 import MovieHero from '@/components/movie/MovieHero.vue';
 import TrailerPlayer from '@/components/movie/TrailerPlayer.vue';
+import WatchlistButton from '@/components/movie/WatchlistButton.vue';
 import WhereToWatch from '@/components/movie/WhereToWatch.vue';
 import type { WhereToWatchBlock } from '@/components/movie/WhereToWatch.vue';
 import type { Trailer } from '@/components/movie/TrailerPlayer.vue';
 import { isSafeTmdbPath, tmdbImageUrl } from '@/lib/tmdb';
+import type { UserMovies } from '@/types';
 
 const props = defineProps<{
     canonicalUrl: string;
     imageBaseUrl: string;
     whereToWatch: WhereToWatchBlock;
+    userMovies: UserMovies;
     movie: {
         id: number;
+        tmdbId: number;
         title: string | null;
         originalTitle: string | null;
         originalLanguage: string | null;
@@ -106,7 +110,15 @@ onBeforeUnmount(() => {
             :poster-path="movie.posterPath"
             :backdrop-path="movie.backdropPath"
             :ratings="movie.ratings"
-        />
+        >
+            <template #actions>
+                <WatchlistButton
+                    :tmdb-id="movie.tmdbId"
+                    :facts="userMovies[movie.tmdbId]"
+                    source="movie"
+                />
+            </template>
+        </MovieHero>
 
         <div
             data-slot="movie-body"

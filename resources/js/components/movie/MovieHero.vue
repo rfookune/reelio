@@ -119,6 +119,13 @@ const meta = computed(() =>
                     </template>
                 </p>
                 <ExternalRatings :ratings="ratings" />
+                <div
+                    v-if="$slots.actions"
+                    data-slot="movie-actions"
+                    class="mt-3 flex flex-wrap items-center gap-3"
+                >
+                    <slot name="actions" />
+                </div>
             </div>
         </div>
     </header>

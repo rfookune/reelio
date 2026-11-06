@@ -28,7 +28,7 @@ class Catalog
     /** @return CatalogResult<Movie> */
     public function findOrCreate(int $tmdbId, string $actor): CatalogResult
     {
-        $existing = Movie::query()->where('tmdb_id', $tmdbId)->first();
+        $existing = $this->findByCatalogId($tmdbId);
 
         if ($existing !== null) {
             return CatalogResult::fresh($existing);
@@ -63,6 +63,12 @@ class Catalog
         $this->ratings->record(RatingSourceName::Tmdb, (string) $details->tmdbId, $details->voteAverage, $details->voteCount);
 
         return CatalogResult::fresh($movie);
+    }
+
+    /** The stored Movie for a catalog id, without asking the source. */
+    public function findByCatalogId(int $tmdbId): ?Movie
+    {
+        return Movie::query()->where('tmdb_id', $tmdbId)->first();
     }
 
     public function find(int $id): Movie
