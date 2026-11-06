@@ -2,6 +2,7 @@
 
 namespace App\Catalog;
 
+use App\Catalog\Exceptions\CreationLimited;
 use App\Catalog\Sources\CatalogSource;
 use App\Catalog\Sources\MovieDetails;
 use App\Catalog\Sources\SourceMisconfigured;

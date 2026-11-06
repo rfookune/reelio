@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Catalog\Catalog;
-use App\Catalog\CreationLimited;
+use App\Catalog\Exceptions\CreationLimited;
 use App\Http\Exceptions\DetailsUnavailable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
