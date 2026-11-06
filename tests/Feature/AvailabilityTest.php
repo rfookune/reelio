@@ -1,7 +1,7 @@
 <?php
 
 use App\Catalog\AvailabilityWriter;
-use App\Catalog\OfferType;
+use App\Catalog\Enums\OfferType;
 use App\Catalog\Source\CatalogSource;
 use App\Catalog\Source\FakeCatalogSource;
 use App\Catalog\Source\MovieDetails;

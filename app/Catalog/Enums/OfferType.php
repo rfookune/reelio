@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Catalog;
+namespace App\Catalog\Enums;
 
 /**
  * How a Streaming service offers a Movie in a country. Case order is tab order.

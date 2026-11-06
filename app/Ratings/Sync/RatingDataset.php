@@ -2,8 +2,8 @@
 
 namespace App\Ratings\Sync;
 
+use App\Ratings\Enums\RatingSourceName;
 use App\Ratings\RatingRow;
-use App\Ratings\RatingSourceName;
 
 /**
  * A Rating source that publishes its scores as one downloadable file. The feed knows only where the file is

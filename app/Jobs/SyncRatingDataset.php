@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Ratings\RatingSourceName;
+use App\Ratings\Enums\RatingSourceName;
 use App\Ratings\Sync\RatingDatasets;
 use App\Ratings\Sync\RatingDatasetSync;
 use Illuminate\Contracts\Queue\ShouldBeUnique;

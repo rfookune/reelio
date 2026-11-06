@@ -2,7 +2,7 @@
 
 use App\Catalog\CacheKey;
 use App\Catalog\CatalogContext;
-use App\Catalog\CatalogProfile;
+use App\Catalog\Enums\CatalogProfile;
 use App\Catalog\Source\CatalogSource;
 use App\Catalog\Source\GuardedCatalogSource;
 use App\Catalog\Source\MovieDetails;

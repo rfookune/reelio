@@ -4,7 +4,7 @@ use App\Catalog\Source\CatalogSource;
 use App\Catalog\Source\FakeCatalogSource;
 use App\Catalog\Source\MovieDetails;
 use App\Models\Movie;
-use App\Ratings\RatingSourceName;
+use App\Ratings\Enums\RatingSourceName;
 use App\Ratings\RatingStore;
 
 /** @param array{key: string, name: string, type: string}|null $trailer */

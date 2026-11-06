@@ -2,8 +2,8 @@
 
 namespace App\Ratings\Sync;
 
+use App\Ratings\Enums\RatingSourceName;
 use App\Ratings\RatingRow;
-use App\Ratings\RatingSourceName;
 
 /**
  * IMDb's non-commercial `title.ratings.tsv.gz`: a gzipped TSV of IMDb id, average rating and vote count.

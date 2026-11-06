@@ -8,7 +8,7 @@ use App\Catalog\Source\SourceMisconfigured;
 use App\Catalog\Source\SourceUnavailable;
 use App\Models\Genre;
 use App\Models\Movie;
-use App\Ratings\RatingSourceName;
+use App\Ratings\Enums\RatingSourceName;
 use App\Ratings\RatingStore;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;

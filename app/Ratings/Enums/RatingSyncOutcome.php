@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Ratings\Sync;
+namespace App\Ratings\Enums;
 
 enum RatingSyncOutcome
 {

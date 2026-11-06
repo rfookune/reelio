@@ -2,8 +2,9 @@
 
 namespace App\Ratings\Sync;
 
+use App\Ratings\Enums\RatingSourceName;
+use App\Ratings\Enums\RatingSyncOutcome;
 use App\Ratings\RatingReplacementRefused;
-use App\Ratings\RatingSourceName;
 use App\Ratings\RatingStore;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\ConnectionException;

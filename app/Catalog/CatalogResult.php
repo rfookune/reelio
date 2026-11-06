@@ -2,6 +2,8 @@
 
 namespace App\Catalog;
 
+use App\Catalog\Enums\CatalogStatus;
+
 /**
  * What the Catalog knows right now: fresh from the source or cache, stale because the source failed,
  * or unavailable. A `null` value with a fresh status is the source's answer that the thing doesn't exist.

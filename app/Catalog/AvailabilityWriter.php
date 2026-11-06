@@ -2,6 +2,7 @@
 
 namespace App\Catalog;
 
+use App\Catalog\Enums\OfferType;
 use App\Models\Movie;
 use Illuminate\Support\Facades\DB;
 

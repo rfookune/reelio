@@ -2,7 +2,7 @@
 
 namespace App\Ratings\Sync;
 
-use App\Ratings\RatingSourceName;
+use App\Ratings\Enums\RatingSourceName;
 
 /**
  * The registered full-dataset Rating sources.

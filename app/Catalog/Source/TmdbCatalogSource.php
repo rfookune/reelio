@@ -3,9 +3,8 @@
 namespace App\Catalog\Source;
 
 use App\Catalog\CatalogContext;
-use App\Catalog\CatalogProfile;
-use App\Catalog\OfferType;
-
+use App\Catalog\Enums\CatalogProfile;
+use App\Catalog\Enums\OfferType;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;

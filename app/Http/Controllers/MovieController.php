@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
 use App\Catalog\Catalog;
-use App\Catalog\CatalogStatus;
-use App\Catalog\OfferType;
+use App\Catalog\Enums\CatalogStatus;
+use App\Catalog\Enums\OfferType;
 use App\Models\Availability;
 use App\Models\Movie;
 use App\Ratings\ExternalRating;

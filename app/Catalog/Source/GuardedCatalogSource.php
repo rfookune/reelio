@@ -2,10 +2,9 @@
 
 namespace App\Catalog\Source;
 
-use App\Catalog\CatalogContext;
-use App\Catalog\CatalogProfile;
 use App\Catalog\CacheKey;
-
+use App\Catalog\CatalogContext;
+use App\Catalog\Enums\CatalogProfile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 

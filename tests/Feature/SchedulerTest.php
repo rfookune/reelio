@@ -2,7 +2,7 @@
 
 use App\Jobs\CheckRatingDatasetFreshness;
 use App\Jobs\SyncRatingDataset;
-use App\Ratings\RatingSourceName;
+use App\Ratings\Enums\RatingSourceName;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Queue;
 

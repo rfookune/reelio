@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Catalog\OfferType;
+use App\Catalog\Enums\OfferType;
 use App\Models\Availability;
 use App\Models\Movie;
 use App\Models\StreamingService;

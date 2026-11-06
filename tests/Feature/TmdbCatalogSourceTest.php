@@ -1,7 +1,7 @@
 <?php
 
 use App\Catalog\CatalogContext;
-use App\Catalog\CatalogProfile;
+use App\Catalog\Enums\CatalogProfile;
 use App\Catalog\Source\SourceMisconfigured;
 use App\Catalog\Source\SourceUnavailable;
 use App\Catalog\Source\TmdbCatalogSource;

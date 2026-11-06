@@ -2,6 +2,7 @@
 
 namespace App\Ratings;
 
+use App\Ratings\Enums\RatingSourceName;
 use Carbon\CarbonImmutable;
 
 /**

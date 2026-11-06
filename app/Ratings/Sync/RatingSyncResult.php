@@ -2,6 +2,8 @@
 
 namespace App\Ratings\Sync;
 
+use App\Ratings\Enums\RatingSyncOutcome;
+
 readonly class RatingSyncResult
 {
     public function __construct(

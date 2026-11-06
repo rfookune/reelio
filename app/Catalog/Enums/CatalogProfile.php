@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Catalog;
+namespace App\Catalog\Enums;
 
 /**
  * How a Catalog source call is made: a visitor is waiting (Interactive) or a job is running (Background).
