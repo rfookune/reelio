@@ -5,6 +5,7 @@ import AuthLayout from '@/layouts/AuthLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
 import { initializePageFocus } from '@/lib/pageFocus';
+import { initializeAppliedActionToast } from '@/lib/userMovieActions';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -39,6 +40,9 @@ initializeTheme();
 
 // This will listen for flash toast data from the server...
 initializeFlashToast();
+
+// This will show the toast for a guest's action applied on sign-in...
+initializeAppliedActionToast();
 
 // This will move focus to each new page's heading...
 initializePageFocus();

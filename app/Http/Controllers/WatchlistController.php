@@ -2,36 +2,29 @@
 
 namespace App\Http\Controllers;
 
-use App\Actions\AddToWatchlist;
-use App\Actions\RemoveFromWatchlist;
 use App\Enums\UserMovieAction;
 use App\Http\Requests\UserMovieActionRequest;
-use App\Http\Support\LatestUserMovieAction;
-use App\Http\Support\MovieByCatalogId;
-use App\Models\UserMovie;
+use App\Http\Support\UserMovieActionByCatalogId;
 use Illuminate\Http\RedirectResponse;
 
 /**
  * Idempotent set and clear of the signed-in user's Watchlist fact, by catalog id, so a Movie with no row yet can
- * be saved from any list.
+ * be saved from any list. A guest's request is held as a pending action until sign-in instead.
  */
 class WatchlistController extends Controller
 {
     /** A Removed Movie can only be taken off the Watchlist, never put on it. */
-    public function update(UserMovieActionRequest $request, string $tmdbId, MovieByCatalogId $movies, AddToWatchlist $addToWatchlist): RedirectResponse
+    public function update(UserMovieActionRequest $request, string $tmdbId, UserMovieActionByCatalogId $actions): RedirectResponse
     {
-        $facts = $addToWatchlist->handle($request->user(), $movies->findOrCreateUnremoved($request, $tmdbId), $request->source());
-        LatestUserMovieAction::remember($request, $movies->catalogId($tmdbId), UserMovieAction::AddToWatchlist, $facts);
+        $actions->apply($request, $request->user(), $tmdbId, UserMovieAction::AddToWatchlist, $request->source());
 
         return back();
     }
 
     /** A catalog id with no Movie row holds no facts, so there is nothing to remove and no row is created. */
-    public function destroy(UserMovieActionRequest $request, string $tmdbId, MovieByCatalogId $movies, RemoveFromWatchlist $removeFromWatchlist): RedirectResponse
+    public function destroy(UserMovieActionRequest $request, string $tmdbId, UserMovieActionByCatalogId $actions): RedirectResponse
     {
-        $movie = $movies->find($tmdbId);
-        $facts = $movie === null ? UserMovie::NO_CHANGE : $removeFromWatchlist->handle($request->user(), $movie, $request->source());
-        LatestUserMovieAction::remember($request, $movies->catalogId($tmdbId), UserMovieAction::RemoveFromWatchlist, $facts);
+        $actions->apply($request, $request->user(), $tmdbId, UserMovieAction::RemoveFromWatchlist, $request->source());
 
         return back();
     }

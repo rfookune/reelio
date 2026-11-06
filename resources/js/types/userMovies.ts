@@ -24,3 +24,11 @@ export type UserMovieActionSource =
     | 'watchlist'
     | 'watched'
     | 'picker';
+
+/** A guest's pending action, applied when they signed in, as the server flashes it to the page they return to. */
+export type AppliedUserMovieAction = {
+    tmdbId: number;
+    action: UserMovieAction;
+    /** The Movie's facts before the action, which its Undo restores. */
+    previous: UserMovieFacts;
+};

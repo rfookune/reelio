@@ -5,6 +5,7 @@ import { undo as undoRoute } from '@/routes/movies';
 import * as watched from '@/routes/movies/watched';
 import * as watchlist from '@/routes/movies/watchlist';
 import type {
+    AppliedUserMovieAction,
     UserMovieAction,
     UserMovieActionSource,
     UserMovieFacts,
@@ -17,6 +18,12 @@ const NO_FACTS: UserMovieFacts = {
     watchlisted: false,
     watched: false,
     watchedDate: null,
+};
+const SUCCESS_MESSAGES: Record<UserMovieAction, string> = {
+    add_to_watchlist: 'Added to your Watchlist',
+    remove_from_watchlist: 'Removed from your Watchlist',
+    mark_as_watched: 'Marked as watched',
+    clear_watched: 'Cleared from Watched',
 };
 
 /**
@@ -59,7 +66,7 @@ function visitUserMovies({
         preserveScroll: true,
         preserveState: true,
         optimistic: (props) => {
-            const userMovies = props.userMovies as UserMovies;
+            const userMovies = (props.userMovies ?? {}) as UserMovies;
 
             return {
                 userMovies: {
@@ -149,12 +156,29 @@ function undo(
     restoreFocus();
 }
 
+/** Shows an action's success toast, whose Undo restores `previous`, the facts the Movie had before it. */
+function showSuccessToast(
+    tmdbId: number,
+    action: UserMovieAction,
+    previous: UserMovieFacts,
+    restoreFocus: () => void,
+): void {
+    toast.success(SUCCESS_MESSAGES[action], {
+        duration: TOAST_DURATION,
+        action: {
+            label: 'Undo',
+            onClick: () => undo(tmdbId, action, previous, restoreFocus),
+        },
+    });
+}
+
 /**
  * Sends one Watchlist or Watched action for a Movie, by catalog id.
  *
  * For a signed-in user the visit is optimistic (see `visitUserMovies`), and its success toast offers Undo, which
  * restores the facts the Movie had and returns focus to `control`, the control pressed. A guest's visit is sent
- * plainly, so sign-in takes over the page. The request never carries dates: the server sets them.
+ * plainly, so sign-in takes over the page; the server holds the action and applies it once they sign in (see
+ * `initializeAppliedActionToast`). The request never carries dates: the server sets them.
  */
 function sendUserMovieAction({
     tmdbId,
@@ -163,7 +187,6 @@ function sendUserMovieAction({
     source,
     control,
     produce,
-    successMessage,
 }: {
     tmdbId: number;
     action: UserMovieAction;
@@ -172,7 +195,6 @@ function sendUserMovieAction({
     control: HTMLElement | null;
     /** The Movie's facts once the action succeeds, shown until the server answers. */
     produce: (facts: UserMovieFacts) => UserMovieFacts;
-    successMessage: string;
 }): void {
     const page = usePage();
 
@@ -197,13 +219,7 @@ function sendUserMovieAction({
                 return;
             }
 
-            toast.success(successMessage, {
-                duration: TOAST_DURATION,
-                action: {
-                    label: 'Undo',
-                    onClick: () => undo(tmdbId, action, previous, restoreFocus),
-                },
-            });
+            showSuccessToast(tmdbId, action, previous, restoreFocus);
         },
     });
 }
@@ -224,9 +240,6 @@ export function setWatchlist(
         source,
         control,
         produce: (facts) => ({ ...facts, watchlisted }),
-        successMessage: watchlisted
-            ? 'Added to your Watchlist'
-            : 'Removed from your Watchlist',
     });
 }
 
@@ -247,7 +260,6 @@ export function markAsWatched(
             watched: true,
             watchedDate: new Date().toISOString(),
         }),
-        successMessage: 'Marked as watched',
     });
 }
 
@@ -264,6 +276,28 @@ export function clearWatched(
         source,
         control,
         produce: (facts) => ({ ...facts, watched: false, watchedDate: null }),
-        successMessage: 'Cleared from Watched',
+    });
+}
+
+/**
+ * Shows the success toast, with Undo, for a guest's pending action once sign-in or registration has applied it and
+ * returned them to the page they were on. No control was pressed on this page, so Undo's focus goes to the Movie's
+ * first control, if focus is lost meanwhile.
+ */
+export function initializeAppliedActionToast(): void {
+    router.on('flash', (event) => {
+        const applied = (event as CustomEvent).detail?.flash
+            ?.userMovieAction as AppliedUserMovieAction | undefined;
+
+        if (!applied) {
+            return;
+        }
+
+        showSuccessToast(
+            applied.tmdbId,
+            applied.action,
+            applied.previous,
+            focusRestorer(applied.tmdbId, null),
+        );
     });
 }

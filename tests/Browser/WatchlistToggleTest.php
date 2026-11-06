@@ -89,15 +89,28 @@ it('rolls the toggle back and says so when saving fails', function () {
     $this->assertDatabaseCount('user_movies', 0);
 });
 
-it('sends a guest who uses the toggle to sign in', function () {
+it('sends a guest who uses the toggle to sign in, then saves the Movie and offers Undo back on its page', function () {
     $movie = Movie::factory()->create(['tmdb_id' => 157336, 'title' => 'Interstellar']);
     fakeCatalogKnowing($movie);
+    User::factory()->create(['email' => 'alex@example.com']);
 
     $page = visitWithCsp($movie->canonicalUrl());
 
     $page->click('[data-slot="watchlist-toggle"]')
         ->assertPathIs('/login')
         ->assertSee('Log in to your account')
+        ->assertNoJavaScriptErrors();
+    $this->assertDatabaseCount('user_movies', 0);
+
+    pasteInto($page, '#email', 'alex@example.com');
+    pasteInto($page, '#password', 'password');
+
+    $page->click('@login-button')
+        ->assertPathIs(parse_url($movie->fresh()->canonicalUrl(), PHP_URL_PATH))
+        ->assertSeeIn('[data-sonner-toast]', 'Added to your Watchlist')
+        ->assertSeeIn('[data-slot="watchlist-toggle"]', 'On your Watchlist')
+        ->click('[data-sonner-toast] [data-action]')
+        ->assertSeeIn('[data-slot="watchlist-toggle"]', 'Add to Watchlist')
         ->assertNoJavaScriptErrors();
 
     $this->assertDatabaseCount('user_movies', 0);
