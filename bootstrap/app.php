@@ -14,6 +14,23 @@ use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
+/**
+ * Renders the shared error page for an HTTP exception the app raises itself, keeping the exception's headers.
+ * JSON requests get the framework's default rendering.
+ */
+$errorPage = function (HttpException $exception, Request $request, string $title, string $message): ?Response {
+    if ($request->expectsJson()) {
+        return null;
+    }
+
+    $response = Inertia::render('Error', ['status' => $exception->getStatusCode(), 'title' => $title, 'message' => $message])
+        ->toResponse($request)
+        ->setStatusCode($exception->getStatusCode());
+    $response->headers->add($exception->getHeaders());
+
+    return $response;
+};
+
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
@@ -31,24 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
     })
-    ->withExceptions(function (Exceptions $exceptions): void {
-        /**
-         * Renders the shared error page for an HTTP exception the app raises itself, keeping the exception's headers.
-         * JSON requests get the framework's default rendering.
-         */
-        $errorPage = function (HttpException $exception, Request $request, string $title, string $message): ?Response {
-            if ($request->expectsJson()) {
-                return null;
-            }
-
-            $response = Inertia::render('Error', ['status' => $exception->getStatusCode(), 'title' => $title, 'message' => $message])
-                ->toResponse($request)
-                ->setStatusCode($exception->getStatusCode());
-            $response->headers->add($exception->getHeaders());
-
-            return $response;
-        };
-
+    ->withExceptions(function (Exceptions $exceptions) use ($errorPage): void {
         $exceptions->render(fn (DetailsUnavailable $exception, Request $request) => $errorPage(
             $exception,
             $request,
