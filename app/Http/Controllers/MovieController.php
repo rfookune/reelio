@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
 use App\Http\Exceptions\MovieRemoved;
+use App\Http\MoviePageDetails;
 use App\Http\UserMovies;
 use App\Http\VisitorCountry;
 use App\Models\Availability;
@@ -27,9 +28,8 @@ class MovieController extends Controller
     /**
      * Records a view of the Movie unless the request is a partial reload, such as after changing the country,
      * which refreshes the page the visitor is already on. A Removed Movie, including one the refresh in this
-     * request finds removed, is a 410 at any slug and records no view. The Catalog details, and the refresh they
-     * may bring, are fetched only for the props that need them, so reloading just `userMovies` after a Watchlist
-     * action never refreshes the Movie.
+     * request finds removed, is a 410 at any slug and records no view. The props that need the Catalog details are
+     * lazy, so a partial reload that asks for none of them never fetches the details (see `MoviePageDetails`).
      */
     public function show(Request $request, string $slug, string $id, Catalog $catalog, RecordEvent $recordEvent, Ratings $ratings): Response|RedirectResponse
     {
@@ -43,16 +43,10 @@ class MovieController extends Controller
             return redirect($movie->canonicalUrl(is_string($referrer) ? $referrer : null), 301);
         }
 
-        $result = null;
-        $details = function () use (&$result, $catalog, $movie): CatalogResult {
-            $result ??= $catalog->details($movie);
-            throw_if($result->isRemoved(), MovieRemoved::class);
-
-            return $result;
-        };
+        $details = new MoviePageDetails($catalog, $movie);
 
         if (! $request->hasHeader(Header::PARTIAL_COMPONENT)) {
-            $details();
+            $details->result();
             $catalog->recordView($movie);
             $referrer = in_array($referrer, ['discover', 'search', 'watchlist', 'watched', 'picker', 'direct'], true) ? $referrer : 'direct';
             $recordEvent->handle($request->user(), 'movie_viewed', ['movie_id' => $movie->id, 'referrer' => $referrer]);
@@ -60,14 +54,10 @@ class MovieController extends Controller
 
         return Inertia::render('movies/Show', [
             'imageBaseUrl' => config('catalog.image_base_url'),
-            'whereToWatch' => function () use ($details, $movie, $request, $catalog): array {
-                $details();
-
-                return $this->whereToWatch($movie, VisitorCountry::resolve($request), $catalog->isDueOnView($movie));
-            },
+            'whereToWatch' => fn (): array => $this->whereToWatch($movie, VisitorCountry::resolve($request), $details->refreshFailed()),
             'canonicalUrl' => $movie->canonicalUrl(),
-            'userMovies' => fn (): array => UserMovies::for($request->user(), [$movie]),
-            'movie' => fn (): array => $this->movie($movie, $details(), $ratings),
+            'userMovies' => UserMovies::for($request->user(), [$movie]),
+            'movie' => fn (): array => $this->movie($movie, $details->result(), $ratings),
         ]);
     }
 
