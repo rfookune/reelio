@@ -1,13 +1,13 @@
 <?php
 
-use App\Catalog\CacheKey;
-use App\Catalog\CatalogContext;
-use App\Catalog\Enums\CatalogProfile;
-use App\Catalog\Sources\CatalogSource;
-use App\Catalog\Sources\GuardedCatalogSource;
-use App\Catalog\Sources\MovieDetails;
-use App\Catalog\Sources\SourceMisconfigured;
-use App\Catalog\Sources\SourceUnavailable;
+use App\Services\Catalog\CacheKey;
+use App\Services\Catalog\CatalogContext;
+use App\Services\Catalog\Enums\CatalogProfile;
+use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\GuardedCatalogSource;
+use App\Services\Catalog\Sources\MovieDetails;
+use App\Services\Catalog\Sources\SourceMisconfigured;
+use App\Services\Catalog\Sources\SourceUnavailable;
 
 /**
  * An inner source that counts calls and fails while told to.

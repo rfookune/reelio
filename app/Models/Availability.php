@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Catalog\Enums\OfferType;
+use App\Services\Catalog\Enums\OfferType;
 use Database\Factories\AvailabilityFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

@@ -1,15 +1,15 @@
 <?php
 
-use App\Catalog\Sources\CatalogSource;
-use App\Catalog\Sources\FakeCatalogSource;
-use App\Catalog\Sources\MovieDetails;
 use App\Models\Movie;
-use App\Ratings\Enums\RatingSourceName;
-use App\Ratings\ExternalRating;
-use App\Ratings\Ratings;
-use App\Ratings\RatingStore;
-use App\Ratings\Sources\FakeRatingSource;
-use App\Ratings\Sources\StoredRatingSource;
+use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\FakeCatalogSource;
+use App\Services\Catalog\Sources\MovieDetails;
+use App\Services\Ratings\Enums\RatingSourceName;
+use App\Services\Ratings\ExternalRating;
+use App\Services\Ratings\Ratings;
+use App\Services\Ratings\RatingStore;
+use App\Services\Ratings\Sources\FakeRatingSource;
+use App\Services\Ratings\Sources\StoredRatingSource;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;

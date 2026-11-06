@@ -1,11 +1,11 @@
 <?php
 
-use App\Catalog\Sources\CatalogSource;
-use App\Catalog\Sources\FakeCatalogSource;
-use App\Catalog\Sources\MovieDetails;
 use App\Jobs\RecordAnalyticsEvent;
 use App\Models\Movie;
 use App\Models\User;
+use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\FakeCatalogSource;
+use App\Services\Catalog\Sources\MovieDetails;
 use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia as Assert;
 

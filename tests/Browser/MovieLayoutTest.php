@@ -1,11 +1,11 @@
 <?php
 
-use App\Catalog\Sources\CatalogSource;
-use App\Catalog\Sources\FakeCatalogSource;
-use App\Catalog\Sources\MovieDetails;
 use App\Models\Movie;
-use App\Ratings\Enums\RatingSourceName;
-use App\Ratings\RatingStore;
+use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\FakeCatalogSource;
+use App\Services\Catalog\Sources\MovieDetails;
+use App\Services\Ratings\Enums\RatingSourceName;
+use App\Services\Ratings\RatingStore;
 
 /** @param array{key: string, name: string, type: string}|null $trailer */
 function layoutMovie(?array $trailer = null): Movie

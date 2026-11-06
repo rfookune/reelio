@@ -1,7 +1,7 @@
 <?php
 
-use App\Catalog\CacheKey;
-use App\Catalog\CatalogContext;
+use App\Services\Catalog\CacheKey;
+use App\Services\Catalog\CatalogContext;
 
 test('catalog cache keys are versioned and independent of parameter order', function () {
     $keys = new CacheKey;

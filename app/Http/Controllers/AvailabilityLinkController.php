@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
-use App\Catalog\Catalog;
+use App\Services\Catalog\Catalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 

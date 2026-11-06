@@ -2,15 +2,15 @@
 
 namespace App\Providers;
 
-use App\Catalog\CacheKey;
-use App\Catalog\Sources\CatalogSource;
-use App\Catalog\Sources\GuardedCatalogSource;
-use App\Catalog\Sources\TmdbCatalogSource;
-use App\Ratings\Enums\RatingSourceName;
-use App\Ratings\Ratings;
-use App\Ratings\Sources\StoredRatingSource;
-use App\Ratings\Sync\Datasets\ImdbRatingDataset;
-use App\Ratings\Sync\Datasets\RatingDatasets;
+use App\Services\Catalog\CacheKey;
+use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\GuardedCatalogSource;
+use App\Services\Catalog\Sources\TmdbCatalogSource;
+use App\Services\Ratings\Enums\RatingSourceName;
+use App\Services\Ratings\Ratings;
+use App\Services\Ratings\Sources\StoredRatingSource;
+use App\Services\Ratings\Sync\Datasets\ImdbRatingDataset;
+use App\Services\Ratings\Sync\Datasets\RatingDatasets;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Foundation\Application;

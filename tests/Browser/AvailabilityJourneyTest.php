@@ -1,7 +1,7 @@
 <?php
 
-use App\Catalog\AvailabilityWriter;
 use App\Models\Movie;
+use App\Services\Catalog\AvailabilityWriter;
 use Illuminate\Support\Facades\Route;
 
 function availabilityMovie(): Movie

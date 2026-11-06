@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Catalog\Enums\OfferType;
 use App\Models\Availability;
 use App\Models\Movie;
 use App\Models\StreamingService;
+use App\Services\Catalog\Enums\OfferType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

@@ -1,7 +1,7 @@
 <?php
 
-use App\Catalog\Sources\CatalogSource;
-use App\Catalog\Sources\FakeCatalogSource;
+use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\FakeCatalogSource;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Vite;
 use Pest\Browser\Api\AwaitableWebpage;

@@ -2,13 +2,13 @@
 
 use App\Jobs\CheckRatingDatasetFreshness;
 use App\Jobs\SyncRatingDataset;
-use App\Ratings\Enums\RatingSourceName;
-use App\Ratings\RatingStore;
-use App\Ratings\Sync\Datasets\ImdbRatingDataset;
-use App\Ratings\Sync\Enums\RatingSyncOutcome;
-use App\Ratings\Sync\RatingDatasetSync;
-use App\Ratings\Sync\RatingSyncFailed;
-use App\Ratings\Sync\RatingSyncResult;
+use App\Services\Ratings\Enums\RatingSourceName;
+use App\Services\Ratings\RatingStore;
+use App\Services\Ratings\Sync\Datasets\ImdbRatingDataset;
+use App\Services\Ratings\Sync\Enums\RatingSyncOutcome;
+use App\Services\Ratings\Sync\RatingDatasetSync;
+use App\Services\Ratings\Sync\RatingSyncFailed;
+use App\Services\Ratings\Sync\RatingSyncResult;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\DB;

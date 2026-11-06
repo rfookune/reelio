@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Catalog\Catalog;
-use App\Catalog\Exceptions\CreationLimited;
 use App\Http\Exceptions\DetailsUnavailable;
+use App\Services\Catalog\Catalog;
+use App\Services\Catalog\Exceptions\CreationLimited;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 

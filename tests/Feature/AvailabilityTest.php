@@ -1,15 +1,15 @@
 <?php
 
-use App\Catalog\AvailabilityWriter;
-use App\Catalog\Enums\OfferType;
-use App\Catalog\Sources\CatalogSource;
-use App\Catalog\Sources\FakeCatalogSource;
-use App\Catalog\Sources\MovieDetails;
 use App\Jobs\RecordAnalyticsEvent;
 use App\Models\Availability;
 use App\Models\Movie;
 use App\Models\StreamingService;
 use App\Models\User;
+use App\Services\Catalog\AvailabilityWriter;
+use App\Services\Catalog\Enums\OfferType;
+use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\FakeCatalogSource;
+use App\Services\Catalog\Sources\MovieDetails;
 use Illuminate\Support\Facades\Queue;
 
 /** @return array{serviceId: int, serviceName: string, logoPath: ?string, country: string, offerType: string, displayPriority: int} */

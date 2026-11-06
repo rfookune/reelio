@@ -1,12 +1,12 @@
 <?php
 
-use App\Catalog\CatalogContext;
-use App\Catalog\Sources\CatalogSource;
-use App\Catalog\Sources\FakeCatalogSource;
-use App\Catalog\Sources\MovieDetails;
-use App\Catalog\Sources\SourceMisconfigured;
 use App\Models\Movie;
 use App\Models\User;
+use App\Services\Catalog\CatalogContext;
+use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\FakeCatalogSource;
+use App\Services\Catalog\Sources\MovieDetails;
+use App\Services\Catalog\Sources\SourceMisconfigured;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Inertia\Testing\AssertableInertia as Assert;
 

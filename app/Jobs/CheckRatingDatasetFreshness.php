@@ -2,9 +2,9 @@
 
 namespace App\Jobs;
 
-use App\Ratings\RatingStore;
-use App\Ratings\Sync\Datasets\RatingDatasets;
-use App\Ratings\Sync\RatingDatasetSync;
+use App\Services\Ratings\RatingStore;
+use App\Services\Ratings\Sync\Datasets\RatingDatasets;
+use App\Services\Ratings\Sync\RatingDatasetSync;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
