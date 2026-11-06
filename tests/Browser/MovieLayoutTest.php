@@ -4,6 +4,7 @@ use App\Catalog\CatalogSource;
 use App\Catalog\FakeCatalogSource;
 use App\Catalog\MovieDetails;
 use App\Models\Movie;
+use Illuminate\Support\Facades\DB;
 
 /** @param array{key: string, name: string, type: string}|null $trailer */
 function layoutMovie(?array $trailer = null): Movie
@@ -136,4 +137,22 @@ it('shows the TMDB rating with a compact vote count, or "Not yet rated"', functi
 
     $page = visitWithCsp(route('movies.show', ['slug' => $unrated->slug, 'id' => $unrated->id], absolute: false));
     $page->assertSeeIn('[data-slot="external-ratings"]', 'Not yet rated')->assertDontSee('0.0');
+});
+
+it('shows the IMDb rating before TMDB with IMDb\'s credit, and turning IMDb off leaves TMDB in place', function () {
+    DB::table('imdb_ratings')->insert(['imdb_id' => 'tt0816692', 'rating' => 8.7, 'vote_count' => 2_400_000, 'imported_at' => now()]);
+    $movie = Movie::factory()->create(['imdb_id' => 'tt0816692', 'vote_average' => 8.5, 'vote_count' => 41832]);
+    $url = route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id], absolute: false);
+
+    $page = visitWithCsp($url);
+    $page->assertSeeIn('[data-slot="external-ratings"]', 'IMDb 8.7 2.4M · TMDB 8.5 41.8K')
+        ->assertSeeIn('[data-slot="imdb-credit"]', 'Information courtesy of IMDb (https://www.imdb.com). Used with permission.')
+        ->assertNoJavaScriptErrors();
+
+    config(['ratings.imdb.enabled' => false]);
+
+    $page = visitWithCsp($url);
+    $page->assertSeeIn('[data-slot="external-ratings"]', 'TMDB 8.5 41.8K')
+        ->assertDontSee('IMDb 8.7')
+        ->assertMissing('[data-slot="imdb-credit"]');
 });

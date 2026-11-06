@@ -6,12 +6,22 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 
 **Blocked by:** [10: External ratings: the TMDB rating](./10-external-ratings-tmdb.md)
 
-**Status:** ready-for-agent
+**Status:** ready-for-human
 
-- [ ] An IMDb ratings table keyed by IMDb id (rating, vote count, `imported_at`), loaded through a staging table
-- [ ] A daily job on the `imports` queue, dispatched from the single 05:00 UTC scheduler slot this ticket creates; it skips the download when `ETag`/`Last-Modified` is unchanged, streams the gzipped TSV without loading it into memory, validates (header matches, malformed rows skipped and counted, row count at least 90% of the live table's) and swaps in one transaction; any failure leaves the live table untouched; the download URL is config; the job timeout is generous and the queue's `retry_after` longer than it
-- [ ] The owner is alerted (log error now, Nightwatch later) when an import fails or the live table is more than 3 days old
-- [ ] An IMDb Rating source adapter joins through `imdb_id`; no `imdb_id` or no entry means absent, and there's never a title-search fallback; ratings from it appear wherever the `Ratings` module is used
-- [ ] The Movie page shows "IMDb 8.7 2.4M" before TMDB, with IMDb's credit under it (the wording requested is "Information courtesy of IMDb (https://www.imdb.com). Used with permission."; final wording per the map's IMDb permission ticket); turning the IMDb source off moves nothing else on the page
-- [ ] Import tests use a tiny gzipped TSV fixture: a normal row, a missing rating, a malformed row, a header mismatch, a low row count and an unchanged file
+- [x] An IMDb ratings table keyed by IMDb id (rating, vote count, `imported_at`), loaded through a staging table
+- [x] A daily job on the `imports` queue, dispatched from the single 05:00 UTC scheduler slot this ticket creates; it skips the download when `ETag`/`Last-Modified` is unchanged, streams the gzipped TSV without loading it into memory, validates (header matches, malformed rows skipped and counted, row count at least 90% of the live table's) and swaps in one transaction; any failure leaves the live table untouched; the download URL is config; the job timeout is generous and the queue's `retry_after` longer than it
+- [x] The owner is alerted (log error now, Nightwatch later) when an import fails or the live table is more than 3 days old
+- [x] An IMDb Rating source adapter joins through `imdb_id`; no `imdb_id` or no entry means absent, and there's never a title-search fallback; ratings from it appear wherever the `Ratings` module is used
+- [x] The Movie page shows "IMDb 8.7 2.4M" before TMDB, with IMDb's credit under it (the wording requested is "Information courtesy of IMDb (https://www.imdb.com). Used with permission."; final wording per the map's IMDb permission ticket); turning the IMDb source off moves nothing else on the page
+- [x] Import tests use a tiny gzipped TSV fixture: a normal row, a missing rating, a malformed row, a header mismatch, a low row count and an unchanged file
 - [ ] The import's real duration is measured against Flex's 90 s limit and recorded on this ticket (it decides whether `imports` moves to Pro)
+
+## Import duration
+
+- **Local (2026-11-06):** 20.3 s for 1,729,129 rows (0 skipped), 52.5 MiB peak memory, measured on a developer machine against a local Postgres. Memory stays flat because the file streams to disk and is read line by line.
+- **Flex: not yet measured.** It needs a deployed `imports` queue on Laravel Cloud. A Flex worker with a remote database will be slower than the local run; if a real run approaches 90 s, move `imports` to Pro. This is why the ticket is `ready-for-human`.
+
+## Deploy checks
+
+- The Cloud `imports` queue's `retry_after` (visibility timeout) must be longer than the job's 300 s timeout; it's set on Cloud, not in `config/queue.php`.
+- The `imdb_ratings` and `imdb_ratings_staging` migration has not been run on any shared database yet.

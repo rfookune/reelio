@@ -21,6 +21,9 @@ const props = withDefaults(
 const shown = computed(() =>
     props.variant === 'single' ? props.ratings.slice(0, 1) : props.ratings,
 );
+const showsImdb = computed(() =>
+    shown.value.some((rating) => rating.source === 'imdb'),
+);
 const sourceClass = {
     imdb: 'text-imdb',
     tmdb: 'text-tmdb',
@@ -28,28 +31,45 @@ const sourceClass = {
 </script>
 
 <template>
-    <p
-        data-slot="external-ratings"
-        class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted"
-    >
-        <template v-if="shown.length > 0">
-            <template v-for="(rating, index) in shown" :key="rating.source">
-                <span v-if="index > 0" aria-hidden="true">·</span>
-                <span data-slot="external-rating">
-                    <span
-                        :class="[sourceClass[rating.source], 'font-semibold']"
-                    >
-                        {{ rating.name }}
+    <div data-slot="external-ratings" class="flex flex-col gap-1">
+        <p
+            class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted"
+        >
+            <template v-if="shown.length > 0">
+                <template v-for="(rating, index) in shown" :key="rating.source">
+                    <template v-if="index > 0">
+                        {{ ' ' }}
+                        <span aria-hidden="true">·</span>
+                        {{ ' ' }}
+                    </template>
+                    <span data-slot="external-rating">
+                        <span
+                            :class="[
+                                sourceClass[rating.source],
+                                'font-semibold',
+                            ]"
+                        >
+                            {{ rating.name }}
+                        </span>
+                        {{ ' ' }}
+                        <span class="text-foreground">
+                            {{ rating.value.toFixed(1) }}
+                        </span>
+                        {{ ' ' }}
+                        <span>{{ formatVoteCount(rating.voteCount) }}</span>
                     </span>
-                    {{ ' ' }}
-                    <span class="text-foreground">
-                        {{ rating.value.toFixed(1) }}
-                    </span>
-                    {{ ' ' }}
-                    <span>{{ formatVoteCount(rating.voteCount) }}</span>
-                </span>
+                </template>
             </template>
-        </template>
-        <span v-else>Not yet rated</span>
-    </p>
+            <span v-else>Not yet rated</span>
+        </p>
+        <p v-if="showsImdb" data-slot="imdb-credit" class="text-xs text-muted">
+            Information courtesy of IMDb (<a
+                href="https://www.imdb.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="underline-offset-4 hover:underline"
+                >https://www.imdb.com</a
+            >). Used with permission.
+        </p>
+    </div>
 </template>
