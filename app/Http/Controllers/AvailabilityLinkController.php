@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
+use App\Http\VisitorCountry;
 use App\Services\Catalog\Catalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,7 +23,7 @@ class AvailabilityLinkController extends Controller
         abort_if($movieId === false, 404);
         $movie = $catalog->find($movieId);
         $country = $request->query('country');
-        abort_unless(is_string($country) && in_array($country, config('catalog.supported_countries'), true), 404);
+        abort_unless(VisitorCountry::isSupported($country), 404);
 
         $recordEvent->handle($request->user(), 'availability_link_clicked', ['movie_id' => $movie->id, 'country' => $country]);
 

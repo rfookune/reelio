@@ -15,3 +15,7 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 - [ ] Server-rendered Vue pages, no `v-html` or Markdown; the contact address and governing state are placeholders marked for the owner
 - [ ] Under the registration button: "By creating an account you agree to the Terms and have read the Privacy Policy" with links, and the 13+ age line; no checkbox
 - [ ] The owner reviews the drafted copy before this ticket closes
+
+## Note from ticket 13 (2026-11-06)
+
+The cookies table needs the `country` cookie: first-party, strictly necessary, set only when a guest explicitly chooses a country in Where to watch, encrypted and HttpOnly, kept for a year. It holds one of the supported country codes. The detected country is never stored.

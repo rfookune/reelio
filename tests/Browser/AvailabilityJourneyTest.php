@@ -82,3 +82,31 @@ it('shows the empty state with the caveat, credit and link still present', funct
         ->assertSeeIn('[data-slot="where-to-watch"]', 'See all watch options on TMDB')
         ->assertNoJavaScriptErrors();
 });
+
+it('switches the country from the selector without counting a new view', function () {
+    $movie = availabilityMovie();
+    $movie->availabilities()->create(['streaming_service_id' => 350, 'country' => 'CA', 'offer_type' => 'rent', 'display_priority' => 1]);
+    $page = visitWithCsp(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id], absolute: false));
+    $movie->update(['last_viewed_at' => '2026-01-01 00:00:00']);
+
+    $page->click('[data-slot="country-selector"]')
+        ->click('[role="menuitemradio"]:has-text("Canada")')
+        ->assertSeeIn('[data-slot="country-selector"]', 'Showing Canada')
+        ->assertSeeIn('[data-slot="where-to-watch"] [role="tab"][aria-selected="true"]', 'Rent 1')
+        ->assertAttribute('[data-slot="where-to-watch"] a', 'href', "/movies/{$movie->id}/watch?country=CA")
+        ->assertNoJavaScriptErrors();
+
+    expect($movie->refresh()->last_viewed_at->toDateTimeString())->toBe('2026-01-01 00:00:00');
+
+    $page->assertMissing('[role="menu"]')->assertNoAccessibilityIssues();
+});
+
+it('says when the detected country is not supported yet', function () {
+    $movie = availabilityMovie();
+
+    $page = visitWithCsp(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id], absolute: false), headers: ['CF-IPCountry' => 'BR']);
+
+    $page->assertSeeIn('[data-slot="country-unsupported"]', 'Showing US availability. Your country isn\'t supported yet')
+        ->assertSeeIn('[data-slot="country-selector"]', 'Showing United States')
+        ->assertNoJavaScriptErrors();
+});

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
+use App\Http\VisitorCountry;
 use App\Models\Availability;
 use App\Models\Movie;
 use App\Services\Catalog\Catalog;
@@ -14,12 +15,16 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Locale;
+use Inertia\Support\Header;
 
 class MovieController extends Controller
 {
     private const AVAILABILITY_OUT_OF_DATE_DAYS = 7;
 
+    /**
+     * Records a view of the Movie unless the request is a partial reload, such as after changing the country,
+     * which refreshes the page the visitor is already on.
+     */
     public function show(Request $request, string $slug, string $id, Catalog $catalog, RecordEvent $recordEvent, Ratings $ratings): Response|RedirectResponse
     {
         $movieId = filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
@@ -31,15 +36,23 @@ class MovieController extends Controller
             return redirect($movie->canonicalUrl(is_string($referrer) ? $referrer : null), 301);
         }
 
-        $catalog->recordView($movie);
+        $isNewView = ! $request->hasHeader(Header::PARTIAL_COMPONENT);
+
+        if ($isNewView) {
+            $catalog->recordView($movie);
+        }
+
         $result = $catalog->details($movie);
         $details = $result->value;
-        $referrer = in_array($referrer, ['discover', 'search', 'watchlist', 'watched', 'picker', 'direct'], true) ? $referrer : 'direct';
-        $recordEvent->handle($request->user(), 'movie_viewed', ['movie_id' => $movie->id, 'referrer' => $referrer]);
+
+        if ($isNewView) {
+            $referrer = in_array($referrer, ['discover', 'search', 'watchlist', 'watched', 'picker', 'direct'], true) ? $referrer : 'direct';
+            $recordEvent->handle($request->user(), 'movie_viewed', ['movie_id' => $movie->id, 'referrer' => $referrer]);
+        }
 
         return Inertia::render('movies/Show', [
             'imageBaseUrl' => config('catalog.image_base_url'),
-            'whereToWatch' => $this->whereToWatch($movie, config('catalog.default_country'), $result->status === CatalogStatus::Stale),
+            'whereToWatch' => $this->whereToWatch($movie, VisitorCountry::resolve($request), $result->status === CatalogStatus::Stale),
             'canonicalUrl' => $movie->canonicalUrl(),
             'movie' => [
                 'id' => $movie->id,
@@ -76,10 +89,11 @@ class MovieController extends Controller
      * Streaming services in `display_priority` order, and the freshness line from `synced_at`. It's flagged as
      * possibly out of date past seven calendar days, or when the Movie's details could only be served stale.
      *
-     * @return array{country: string, countryName: string, groups: list<array{type: string, label: string, caption: ?string, services: list<array{id: int, name: string, logoPath: ?string}>}>, updated: ?string, outOfDate: bool}
+     * @return array{country: string, countryName: string, countryUnsupported: bool, countries: list<array{code: string, name: string}>, groups: list<array{type: string, label: string, caption: ?string, services: list<array{id: int, name: string, logoPath: ?string}>}>, updated: ?string, outOfDate: bool}
      */
-    private function whereToWatch(Movie $movie, string $country, bool $detailsStale): array
+    private function whereToWatch(Movie $movie, VisitorCountry $visitorCountry, bool $detailsStale): array
     {
+        $country = $visitorCountry->code;
         $offers = $movie->availabilities()
             ->with('streamingService')
             ->where('country', $country)
@@ -110,7 +124,9 @@ class MovieController extends Controller
 
         return [
             'country' => $country,
-            'countryName' => Locale::getDisplayRegion("-{$country}", 'en') ?: $country,
+            'countryName' => VisitorCountry::name($country),
+            'countryUnsupported' => $visitorCountry->detectedUnsupported,
+            'countries' => VisitorCountry::choices(),
             'groups' => $groups,
             'updated' => $this->updatedLabel($daysSinceSync),
             'outOfDate' => $detailsStale || ($daysSinceSync !== null && $daysSinceSync > self::AVAILABILITY_OUT_OF_DATE_DAYS),

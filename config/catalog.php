@@ -10,9 +10,14 @@ return [
     'supported_countries' => ['US', 'CA', 'GB', 'AU', 'NZ', 'IE', 'DE', 'FR', 'ES', 'IT'],
 
     /*
-     * Where to watch shows this country until the visitor's country is resolved per request.
+     * Shown when the visitor hasn't chosen a country and the edge detected none, or one that isn't supported.
      */
     'default_country' => 'US',
+
+    /*
+     * The request header the edge puts the visitor's detected country in. Detection is never stored.
+     */
+    'country_header' => env('CATALOG_COUNTRY_HEADER', 'CF-IPCountry'),
     'tmdb' => [
         'base_url' => 'https://api.themoviedb.org/3/',
         'token' => env('TMDB_READ_TOKEN', ''),

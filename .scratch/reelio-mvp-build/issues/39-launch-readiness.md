@@ -15,3 +15,7 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 - [ ] The breach runbook written
 - [ ] The manual accessibility checklist run with a dated entry; PageSpeed Insights (mobile) results recorded for Discover, a Movie page and Search
 - [ ] Launch still waits on the map's TMDB classification, IMDb permission and register clearance tickets for the features they gate
+
+## Note from ticket 13 (2026-11-06)
+
+The edge country header's name is `config('catalog.country_header')`, set by `CATALOG_COUNTRY_HEADER` (default `CF-IPCountry`). If Cloud sends a different header, set the variable; no code change is needed. Without the header every visitor without a choice sees US, with no "not supported" notice.

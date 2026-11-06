@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Jobs\RecordAnalyticsEvent;
 use App\Models\Movie;
 use App\Models\User;
@@ -67,6 +68,28 @@ test('guest views update the last viewed time without recording analytics', func
         ->assertInertia(fn (Assert $page) => $page->where('canonicalUrl', route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id])));
 
     $this->assertDatabaseHas('movies', ['id' => $movie->id, 'last_viewed_at' => '2026-11-05 12:00:00']);
+    Queue::assertNothingPushed();
+});
+
+test('reloading only part of the Movie page records no new view', function () {
+    $user = User::factory()->create();
+    $movie = Movie::factory()->create(['last_viewed_at' => '2026-11-01 00:00:00']);
+    $this->travelTo('2026-11-05 12:00:00');
+    Queue::fake([RecordAnalyticsEvent::class]);
+
+    $this->actingAs($user)
+        ->withHeaders([
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => (string) app(HandleInertiaRequests::class)->version(request()),
+            'X-Inertia-Partial-Component' => 'movies/Show',
+            'X-Inertia-Partial-Data' => 'whereToWatch',
+        ])
+        ->get(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]))
+        ->assertOk()
+        ->assertJsonPath('props.whereToWatch.country', 'US')
+        ->assertJsonMissingPath('props.movie');
+
+    $this->assertDatabaseHas('movies', ['id' => $movie->id, 'last_viewed_at' => '2026-11-01 00:00:00']);
     Queue::assertNothingPushed();
 });
 

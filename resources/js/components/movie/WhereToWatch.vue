@@ -1,9 +1,20 @@
 <script setup lang="ts">
-import { Tv } from '@lucide/vue';
+import { router } from '@inertiajs/vue3';
+import { ChevronDown, Tv } from '@lucide/vue';
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui';
 import { computed } from 'vue';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuLabel,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { isSafeTmdbPath, tmdbImageUrl } from '@/lib/tmdb';
+import { update as updateCountry } from '@/routes/country';
 import { watch as watchPage } from '@/routes/movies';
+import type { CountryChoice } from '@/types';
 
 export type AvailabilityGroup = {
     type: 'stream' | 'free' | 'rent' | 'buy';
@@ -15,6 +26,8 @@ export type AvailabilityGroup = {
 export type WhereToWatchBlock = {
     country: string;
     countryName: string;
+    countryUnsupported: boolean;
+    countries: CountryChoice[];
     groups: AvailabilityGroup[];
     updated: string | null;
     outOfDate: boolean;
@@ -34,6 +47,21 @@ const watchPageUrl = computed(
             { query: { country: props.block.country } },
         ).url,
 );
+
+/**
+ * Saves the choice, then reloads only this block, so changing the country isn't counted as a new view.
+ */
+function chooseCountry(country: unknown): void {
+    if (typeof country !== 'string' || country === props.block.country) {
+        return;
+    }
+
+    router.put(
+        updateCountry.url(),
+        { country },
+        { only: ['whereToWatch'], preserveScroll: true },
+    );
+}
 </script>
 
 <template>
@@ -46,11 +74,48 @@ const watchPageUrl = computed(
             <h2 id="where-to-watch-heading" class="text-lg font-semibold">
                 Where to watch
             </h2>
-            <p class="text-sm text-muted">Showing {{ block.countryName }}</p>
+            <DropdownMenu>
+                <DropdownMenuTrigger as-child>
+                    <button
+                        type="button"
+                        data-slot="country-selector"
+                        :aria-label="`Showing ${block.countryName}, change country`"
+                        class="inline-flex items-center gap-1 rounded-md text-sm text-muted transition-colors hover:text-foreground"
+                    >
+                        Showing {{ block.countryName }}
+                        <ChevronDown class="size-4" aria-hidden="true" />
+                    </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" class="w-56">
+                    <DropdownMenuLabel>Country</DropdownMenuLabel>
+                    <DropdownMenuRadioGroup
+                        :model-value="block.country"
+                        @update:model-value="chooseCountry"
+                    >
+                        <DropdownMenuRadioItem
+                            v-for="choice in block.countries"
+                            :key="choice.code"
+                            :value="choice.code"
+                        >
+                            {{ choice.name }}
+                        </DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
+
+        <p
+            v-if="block.countryUnsupported"
+            data-slot="country-unsupported"
+            class="mb-4 text-sm"
+        >
+            Showing {{ block.country }} availability. Your country isn't
+            supported yet.
+        </p>
 
         <TabsRoot
             v-if="block.groups.length > 0"
+            :key="block.country"
             :default-value="firstGroup"
             activation-mode="automatic"
         >

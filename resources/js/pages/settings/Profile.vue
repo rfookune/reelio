@@ -10,7 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { send } from '@/routes/verification';
-import type { User } from '@/types';
+import type { CountryChoice, User } from '@/types';
+
+defineProps<{
+    countries: CountryChoice[];
+}>();
 
 const page = usePage();
 
@@ -27,7 +31,7 @@ const user = computed(() => page.props.auth.user as User);
         <Heading
             variant="small"
             title="Profile"
-            description="Update your name and email address"
+            description="Update your name, email address and country"
         />
 
         <Form
@@ -62,6 +66,35 @@ const user = computed(() => page.props.auth.user as User);
                     placeholder="Email address"
                 />
                 <InputError class="mt-2" :message="errors.email" />
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="preferred_country"
+                    >Country for where to watch</Label
+                >
+                <select
+                    id="preferred_country"
+                    name="preferred_country"
+                    class="mt-1 block h-9 w-full rounded-md border border-input bg-surface px-3 py-1 text-base shadow-xs outline-none aria-invalid:border-destructive md:text-sm"
+                    :aria-invalid="errors.preferred_country ? true : undefined"
+                    aria-describedby="preferred_country_hint"
+                >
+                    <option value="" :selected="!user.preferred_country">
+                        Automatic, from your connection
+                    </option>
+                    <option
+                        v-for="country in countries"
+                        :key="country.code"
+                        :value="country.code"
+                        :selected="user.preferred_country === country.code"
+                    >
+                        {{ country.name }}
+                    </option>
+                </select>
+                <p id="preferred_country_hint" class="text-sm text-muted">
+                    Streaming availability is shown for this country.
+                </p>
+                <InputError class="mt-2" :message="errors.preferred_country" />
             </div>
 
             <div v-if="page.props.mustVerifyEmail && !user.email_verified_at">

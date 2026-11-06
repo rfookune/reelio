@@ -93,3 +93,33 @@ test('correct password must be provided to delete account', function () {
 
     expect($user->fresh())->not->toBeNull();
 });
+
+test('profile page offers the supported countries', function () {
+    $this->actingAs(User::factory()->create())
+        ->get(route('profile.edit'))
+        ->assertInertia(fn ($page) => $page->has('countries', 10)->where('countries.0', ['code' => 'AU', 'name' => 'Australia']));
+});
+
+test('preferred country can be chosen and cleared', function (?string $country, ?string $expected) {
+    $user = User::factory()->create(['preferred_country' => 'CA']);
+
+    $this->actingAs($user)
+        ->patch(route('profile.update'), ['name' => $user->name, 'email' => $user->email, 'preferred_country' => $country])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('profile.edit'));
+
+    expect($user->refresh()->preferred_country)->toBe($expected);
+})->with([
+    'a supported country' => ['GB', 'GB'],
+    'automatic' => ['', null],
+]);
+
+test('preferred country must be a supported country', function () {
+    $user = User::factory()->create(['preferred_country' => 'CA']);
+
+    $this->actingAs($user)
+        ->patch(route('profile.update'), ['name' => $user->name, 'email' => $user->email, 'preferred_country' => 'BR'])
+        ->assertSessionHasErrors(['preferred_country' => 'The selected preferred country is invalid.']);
+
+    expect($user->refresh()->preferred_country)->toBe('CA');
+});

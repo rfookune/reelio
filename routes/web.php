@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AvailabilityLinkController;
+use App\Http\Controllers\CountryController;
 use App\Http\Controllers\CspReportController;
 use App\Http\Controllers\MovieController;
 use App\Http\Controllers\MovieEntryController;
@@ -12,6 +13,8 @@ Route::inertia('/', 'Discover')->name('home');
 Route::get('movies/tmdb/{tmdbId}', MovieEntryController::class)->whereNumber('tmdbId')->name('movies.entry');
 Route::get('movies/{id}/watch', AvailabilityLinkController::class)->whereNumber('id')->name('movies.watch');
 Route::get('movies/{slug}-{id}', [MovieController::class, 'show'])->where('slug', '[^/]+')->whereNumber('id')->name('movies.show');
+
+Route::put('country', CountryController::class)->name('country.update');
 
 Route::post('csp-report', CspReportController::class)
     ->withoutMiddleware(PreventRequestForgery::class)
