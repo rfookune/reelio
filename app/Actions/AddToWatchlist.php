@@ -13,8 +13,11 @@ class AddToWatchlist
     /**
      * Sets the Date added to now. A Movie already on the Watchlist keeps its original Date added and records no
      * event.
+     * Returns the facts before and after.
+     *
+     * @return array{before: array{watchlisted_at: ?string, watched_at: ?string}, after: array{watchlisted_at: ?string, watched_at: ?string}}
      */
-    public function handle(User $user, Movie $movie, string $source): void
+    public function handle(User $user, Movie $movie, string $source): array
     {
         $facts = UserMovie::change($user, $movie, function (UserMovie $row): void {
             $row->watchlisted_at ??= now();
@@ -23,5 +26,7 @@ class AddToWatchlist
         if ($facts['before'] !== $facts['after']) {
             $this->recordEvent->handle($user, 'movie_watchlisted', ['movie_id' => $movie->id, 'source' => $source]);
         }
+
+        return $facts;
     }
 }

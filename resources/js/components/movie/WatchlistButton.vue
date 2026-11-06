@@ -21,7 +21,14 @@ const watchlisted = computed(() => props.facts?.watchlisted ?? false);
         data-slot="watchlist-toggle"
         :variant="watchlisted ? 'outline' : 'default'"
         :aria-pressed="watchlisted"
-        @click="setWatchlist(tmdbId, !watchlisted, source)"
+        @click="
+            setWatchlist(
+                tmdbId,
+                !watchlisted,
+                source,
+                $event.currentTarget as HTMLElement,
+            )
+        "
     >
         <BookmarkCheck v-if="watchlisted" aria-hidden="true" />
         <BookmarkPlus v-else aria-hidden="true" />

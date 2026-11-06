@@ -25,6 +25,20 @@ class UserMovie extends Model
     /** @use HasFactory<UserMovieFactory> */
     use HasFactory;
 
+    /**
+     * The facts of a Movie the user holds nothing about.
+     *
+     * @var array{watchlisted_at: null, watched_at: null}
+     */
+    public const NO_FACTS = ['watchlisted_at' => null, 'watched_at' => null];
+
+    /**
+     * The facts before and after an action that found nothing to change about a Movie the user holds nothing about.
+     *
+     * @var array{before: array{watchlisted_at: null, watched_at: null}, after: array{watchlisted_at: null, watched_at: null}}
+     */
+    public const NO_CHANGE = ['before' => self::NO_FACTS, 'after' => self::NO_FACTS];
+
     public $timestamps = false;
 
     /** @return array<string, string> */
@@ -65,6 +79,29 @@ class UserMovie extends Model
 
             return ['before' => $before, 'after' => $row->snapshot()];
         });
+    }
+
+    /**
+     * Puts a user's facts about a Movie back to `$restored`, under the row's lock as `change()` takes it, but only
+     * if they still stand at `$expected`. Facts held in neither leave no row. Returns whether they did.
+     *
+     * @param  array{watchlisted_at: ?string, watched_at: ?string}  $expected
+     * @param  array{watchlisted_at: ?string, watched_at: ?string}  $restored
+     */
+    public static function restore(User $user, Movie $movie, array $expected, array $restored): bool
+    {
+        $asExpected = false;
+
+        self::change($user, $movie, function (self $row) use ($expected, $restored, &$asExpected): void {
+            $asExpected = $row->snapshot() === $expected;
+
+            if ($asExpected) {
+                $row->watchlisted_at = CarbonImmutable::make($restored['watchlisted_at']);
+                $row->watched_at = CarbonImmutable::make($restored['watched_at']);
+            }
+        });
+
+        return $asExpected;
     }
 
     /** @return array{watchlisted_at: ?string, watched_at: ?string} */

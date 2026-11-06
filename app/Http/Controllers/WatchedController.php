@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Actions\ClearWatched;
 use App\Actions\MarkAsWatched;
+use App\Actions\UserMovieAction;
+use App\Http\LatestUserMovieAction;
 use App\Http\MovieByCatalogId;
 use App\Http\Requests\UserMovieActionRequest;
+use App\Models\UserMovie;
 use Illuminate\Http\RedirectResponse;
 
 /**
@@ -17,7 +20,8 @@ class WatchedController extends Controller
     /** A Removed Movie's Watched record can only be cleared, never set. */
     public function update(UserMovieActionRequest $request, string $tmdbId, MovieByCatalogId $movies, MarkAsWatched $markAsWatched): RedirectResponse
     {
-        $markAsWatched->handle($request->user(), $movies->findOrCreateUnremoved($request, $tmdbId), $request->source());
+        $facts = $markAsWatched->handle($request->user(), $movies->findOrCreateUnremoved($request, $tmdbId), $request->source());
+        LatestUserMovieAction::remember($request, $movies->catalogId($tmdbId), UserMovieAction::MarkAsWatched, $facts);
 
         return back();
     }
@@ -26,10 +30,8 @@ class WatchedController extends Controller
     public function destroy(UserMovieActionRequest $request, string $tmdbId, MovieByCatalogId $movies, ClearWatched $clearWatched): RedirectResponse
     {
         $movie = $movies->find($tmdbId);
-
-        if ($movie !== null) {
-            $clearWatched->handle($request->user(), $movie, $request->source());
-        }
+        $facts = $movie === null ? UserMovie::NO_CHANGE : $clearWatched->handle($request->user(), $movie, $request->source());
+        LatestUserMovieAction::remember($request, $movies->catalogId($tmdbId), UserMovieAction::ClearWatched, $facts);
 
         return back();
     }

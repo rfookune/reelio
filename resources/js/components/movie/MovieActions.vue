@@ -59,6 +59,7 @@ onUpdated(() => {
     <div
         ref="actions"
         data-slot="movie-actions"
+        :data-tmdb-id="tmdbId"
         class="mt-3 flex flex-wrap items-center gap-3"
     >
         <WatchlistButton :tmdb-id="tmdbId" :facts="facts" source="movie" />
@@ -79,7 +80,13 @@ onUpdated(() => {
                 aria-label="Clear Watched"
                 title="Clear Watched"
                 class="ml-1 flex size-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-raised hover:text-foreground"
-                @click="clearWatched(tmdbId, 'movie')"
+                @click="
+                    clearWatched(
+                        tmdbId,
+                        'movie',
+                        $event.currentTarget as HTMLElement,
+                    )
+                "
             >
                 <X class="size-4" aria-hidden="true" />
             </button>
@@ -90,7 +97,13 @@ onUpdated(() => {
             size="lg"
             variant="outline"
             data-slot="mark-as-watched"
-            @click="markAsWatched(tmdbId, 'movie')"
+            @click="
+                markAsWatched(
+                    tmdbId,
+                    'movie',
+                    $event.currentTarget as HTMLElement,
+                )
+            "
         >
             <Check aria-hidden="true" />
             Mark as watched
@@ -105,9 +118,16 @@ onUpdated(() => {
             <span class="tabular-nums">{{ watchedDateLabel }}</span> ·
             <button
                 type="button"
+                data-slot="clear-last-watched"
                 aria-label="Clear Watched"
                 class="underline underline-offset-2 transition-colors hover:text-foreground"
-                @click="clearWatched(tmdbId, 'movie')"
+                @click="
+                    clearWatched(
+                        tmdbId,
+                        'movie',
+                        $event.currentTarget as HTMLElement,
+                    )
+                "
             >
                 Clear
             </button>

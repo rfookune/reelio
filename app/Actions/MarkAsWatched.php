@@ -14,8 +14,11 @@ class MarkAsWatched
      * Sets the Watched date to now and takes the Movie off the Watchlist. On a Watched Movie that's on the
      * Watchlist, a rewatch, the date moves. A Watched Movie that isn't on the Watchlist is left alone and records
      * no event. Taking it off the Watchlist records no Watchlist removal.
+     * Returns the facts before and after.
+     *
+     * @return array{before: array{watchlisted_at: ?string, watched_at: ?string}, after: array{watchlisted_at: ?string, watched_at: ?string}}
      */
-    public function handle(User $user, Movie $movie, string $source): void
+    public function handle(User $user, Movie $movie, string $source): array
     {
         $facts = UserMovie::change($user, $movie, function (UserMovie $row): void {
             if ($row->watched_at === null || $row->watchlisted_at !== null) {
@@ -31,5 +34,7 @@ class MarkAsWatched
                 'was_on_watchlist' => $facts['before']['watchlisted_at'] !== null,
             ]);
         }
+
+        return $facts;
     }
 }

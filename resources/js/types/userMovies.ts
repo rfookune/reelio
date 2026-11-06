@@ -9,6 +9,13 @@ export type UserMovieFacts = {
 /** The `userMovies` page prop: facts for each Movie on the page, keyed by catalog id. */
 export type UserMovies = Record<string, UserMovieFacts>;
 
+/** A Watchlist or Watched action, as the Undo request names it. */
+export type UserMovieAction =
+    | 'add_to_watchlist'
+    | 'remove_from_watchlist'
+    | 'mark_as_watched'
+    | 'clear_watched';
+
 /** The surface a Watchlist or Watched control was used on, recorded with the action. */
 export type UserMovieActionSource =
     | 'discover'

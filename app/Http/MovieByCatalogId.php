@@ -24,7 +24,7 @@ class MovieByCatalogId
     public function findOrCreate(Request $request, string $tmdbId): Movie
     {
         try {
-            $result = $this->catalog->findOrCreate($this->parse($tmdbId), RateLimitKey::for($request));
+            $result = $this->catalog->findOrCreate($this->catalogId($tmdbId), RateLimitKey::for($request));
         } catch (CreationLimited $exception) {
             abort(429, $exception->getMessage(), ['Retry-After' => $exception->retryAfter, 'X-Robots-Tag' => 'noindex']);
         }
@@ -50,11 +50,11 @@ class MovieByCatalogId
     /** The stored Movie, if any, without asking the Catalog source or creating a row. */
     public function find(string $tmdbId): ?Movie
     {
-        return $this->catalog->findByCatalogId($this->parse($tmdbId));
+        return $this->catalog->findByCatalogId($this->catalogId($tmdbId));
     }
 
     /** A positive id that fits an integer; anything else, such as an oversized id, is a 404. */
-    private function parse(string $tmdbId): int
+    public function catalogId(string $tmdbId): int
     {
         $catalogId = filter_var($tmdbId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         abort_if($catalogId === false, 404);

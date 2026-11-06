@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Actions\AddToWatchlist;
 use App\Actions\RemoveFromWatchlist;
+use App\Actions\UserMovieAction;
+use App\Http\LatestUserMovieAction;
 use App\Http\MovieByCatalogId;
 use App\Http\Requests\UserMovieActionRequest;
+use App\Models\UserMovie;
 use Illuminate\Http\RedirectResponse;
 
 /**
@@ -17,7 +20,8 @@ class WatchlistController extends Controller
     /** A Removed Movie can only be taken off the Watchlist, never put on it. */
     public function update(UserMovieActionRequest $request, string $tmdbId, MovieByCatalogId $movies, AddToWatchlist $addToWatchlist): RedirectResponse
     {
-        $addToWatchlist->handle($request->user(), $movies->findOrCreateUnremoved($request, $tmdbId), $request->source());
+        $facts = $addToWatchlist->handle($request->user(), $movies->findOrCreateUnremoved($request, $tmdbId), $request->source());
+        LatestUserMovieAction::remember($request, $movies->catalogId($tmdbId), UserMovieAction::AddToWatchlist, $facts);
 
         return back();
     }
@@ -26,10 +30,8 @@ class WatchlistController extends Controller
     public function destroy(UserMovieActionRequest $request, string $tmdbId, MovieByCatalogId $movies, RemoveFromWatchlist $removeFromWatchlist): RedirectResponse
     {
         $movie = $movies->find($tmdbId);
-
-        if ($movie !== null) {
-            $removeFromWatchlist->handle($request->user(), $movie, $request->source());
-        }
+        $facts = $movie === null ? UserMovie::NO_CHANGE : $removeFromWatchlist->handle($request->user(), $movie, $request->source());
+        LatestUserMovieAction::remember($request, $movies->catalogId($tmdbId), UserMovieAction::RemoveFromWatchlist, $facts);
 
         return back();
     }
