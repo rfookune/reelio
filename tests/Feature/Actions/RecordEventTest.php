@@ -49,3 +49,13 @@ test('an enqueue failure is swallowed and reported', function () {
 
     Exceptions::assertReported(fn (InvalidArgumentException $exception) => $exception->getMessage() === 'The [unavailable] queue connection has not been configured.');
 });
+
+test('an event is queued once, however many times the app terminates afterwards', function () {
+    Queue::fake([RecordAnalyticsEvent::class]);
+
+    app(RecordEvent::class)->handle(User::factory()->create(), 'movie_viewed', ['movie_id' => 42]);
+    app()->terminate();
+    app()->terminate();
+
+    Queue::assertPushed(RecordAnalyticsEvent::class, 1);
+});
