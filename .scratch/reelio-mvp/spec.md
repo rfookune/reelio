@@ -185,7 +185,6 @@ From [Infrastructure baseline](./issues/05-infrastructure-baseline.md), as amend
 
 **Layout (updated 2026-11-06).** Both modules now live under `app/Services/`, as `App\Services\Catalog` and `App\Services\Ratings`, so `app/` doesn't gain a top-level folder per abstraction. Inside each, files are grouped by kind: `Sources/` (the source interface, its adapters and the fake), `Enums/`, `Exceptions/`, and for Ratings `Sync/` (with `Sync/Datasets/` and `Sync/Enums/`). Tunable limits live in `config/catalog.php` and `config/ratings.php`. `App\Services` may not depend on `App\Http`, and `Ratings` may not depend on `Catalog`; the Catalog may call `Ratings` to record TMDB's score. `tests/Unit/ArchitectureTest.php` enforces both rules. HTTP-shaped exceptions such as `DetailsUnavailable` (a 503) live in `app/Http/Exceptions/`.
 
-
 - **Catalog adapter interface** (small and neutral), with the TMDB adapter and an in-memory fake:
     - `search(query, page)`;
     - `section(kind, page)`, where kind is trending, popular, top rated, upcoming/discover or genre;
