@@ -53,14 +53,14 @@ test('a Movie\'s Availability is replaced wholesale and services are updated in 
 
 test('the Movie page groups the visitor\'s country\'s Availability by offer type in display priority order', function () {
     $this->travelTo('2026-11-05 12:00:00');
-    $movie = Movie::factory()->create(['synced_at' => '2026-11-05 08:00:00']);
-    app(AvailabilityWriter::class)->replace($movie, [
+    $movie = Movie::factory()->create();
+    fakeCatalogKnowing(sourceDetailsFor($movie, availability: [
         offer(2, 'stream', priority: 17, name: 'Paramount Plus Premium'),
         offer(1, 'stream', priority: 5, name: 'Apple TV'),
         offer(3, 'stream', priority: 29, name: 'Paramount+ Amazon Channel'),
         offer(4, 'buy', priority: 9, name: 'Amazon Video'),
         offer(5, 'stream', 'GB', 1, 'Not shown in the US'),
-    ]);
+    ]));
 
     $this->get(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]))
         ->assertInertia(fn ($page) => $page
@@ -82,25 +82,25 @@ test('the Movie page groups the visitor\'s country\'s Availability by offer type
 
 test('the free group carries its ads caption', function () {
     $movie = Movie::factory()->create();
-    app(AvailabilityWriter::class)->replace($movie, [offer(73, 'free', name: 'Tubi TV')]);
+    fakeCatalogKnowing(sourceDetailsFor($movie, availability: [offer(73, 'free', name: 'Tubi TV')]));
 
     $this->get(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]))
         ->assertInertia(fn ($page) => $page->where('whereToWatch.groups.0.type', 'free')->where('whereToWatch.groups.0.caption', 'Free, may include ads'));
 });
 
-test('the freshness line counts days since the last sync and flags data over a week old', function (string $syncedAt, string $updated, bool $outOfDate) {
+test('the freshness line counts calendar days since the last sync', function (string $syncedAt, string $updated) {
     $this->travelTo('2026-11-05 12:00:00');
     $movie = Movie::factory()->create(['synced_at' => $syncedAt]);
+    $this->app->instance(CatalogSource::class, new FakeCatalogSource(failing: true));
 
     $this->get(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]))
-        ->assertInertia(fn ($page) => $page->where('whereToWatch.updated', $updated)->where('whereToWatch.outOfDate', $outOfDate));
+        ->assertInertia(fn ($page) => $page->where('whereToWatch.updated', $updated));
 })->with([
-    'earlier today' => ['2026-11-05 00:10:00', 'Updated today', false],
-    'yesterday' => ['2026-11-04 23:50:00', 'Updated yesterday', false],
-    'seven days ago, early' => ['2026-10-29 00:10:00', 'Updated 7 days ago', false],
-    'seven days ago, late' => ['2026-10-29 23:50:00', 'Updated 7 days ago', false],
-    'eight days ago' => ['2026-10-28 23:50:00', 'Updated 8 days ago', true],
-    'a month ago' => ['2026-10-06 12:00:00', 'Updated 30 days ago', true],
+    'earlier today' => ['2026-11-05 00:10:00', 'Updated today'],
+    'yesterday' => ['2026-11-04 23:50:00', 'Updated yesterday'],
+    'seven days ago, early' => ['2026-10-29 00:10:00', 'Updated 7 days ago'],
+    'seven days ago, late' => ['2026-10-29 23:50:00', 'Updated 7 days ago'],
+    'a month ago' => ['2026-10-06 12:00:00', 'Updated 30 days ago'],
 ]);
 
 test('Availability renders from storage even when the source is down', function () {
@@ -109,18 +109,30 @@ test('Availability renders from storage even when the source is down', function 
     $this->app->instance(CatalogSource::class, new FakeCatalogSource(failing: true));
 
     $this->get(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]))
-        ->assertInertia(fn ($page) => $page->where('movie.detailsUnavailable', true)->has('whereToWatch.groups', 1));
+        ->assertInertia(fn ($page) => $page->where('movie.detailsUnavailable', true)->has('whereToWatch.groups', 1)->where('whereToWatch.outOfDate', false));
+});
+
+test('Availability over a week old is flagged even when a longer refresh age keeps the Movie from refreshing', function () {
+    config(['catalog.refresh.on_view_after_seconds' => 30 * 86400]);
+    $this->travelTo('2026-11-05 12:00:00');
+    $movie = Movie::factory()->create();
+    fakeCatalogKnowing($movie);
+    $url = route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]);
+    $this->get($url)->assertOk();
+
+    $this->travelTo('2026-11-12 23:50:00');
+    $this->get($url)->assertInertia(fn ($page) => $page->where('whereToWatch.updated', 'Updated 7 days ago')->where('whereToWatch.outOfDate', false));
+    $this->travelTo('2026-11-13 00:10:00');
+    $this->get($url)->assertInertia(fn ($page) => $page->where('whereToWatch.updated', 'Updated 8 days ago')->where('whereToWatch.outOfDate', true));
 });
 
 test('Availability is flagged as possibly out of date when the Movie\'s details are served stale', function () {
-    $movie = Movie::factory()->create(['tmdb_id' => 9, 'synced_at' => now()]);
-    $source = new FakeCatalogSource([new MovieDetails(tmdbId: 9)]);
-    $this->app->instance(CatalogSource::class, $source);
+    $movie = Movie::factory()->create();
+    $source = fakeCatalogKnowing($movie);
     $url = route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]);
     $this->get($url)->assertInertia(fn ($page) => $page->where('whereToWatch.outOfDate', false));
 
     $this->travel(2)->days();
-    $movie->update(['synced_at' => now()]);
     $source->failing = true;
 
     $this->get($url)->assertInertia(fn ($page) => $page->where('whereToWatch.outOfDate', true));
@@ -128,6 +140,7 @@ test('Availability is flagged as possibly out of date when the Movie\'s details 
 
 test('no Availability gives an empty set of groups', function () {
     $movie = Movie::factory()->create();
+    fakeCatalogKnowing($movie);
 
     $this->get(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]))
         ->assertInertia(fn ($page) => $page->where('whereToWatch.groups', []));

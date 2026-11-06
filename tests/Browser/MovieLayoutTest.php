@@ -3,7 +3,6 @@
 use App\Models\Movie;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\FakeCatalogSource;
-use App\Services\Catalog\Sources\MovieDetails;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
 
@@ -21,15 +20,15 @@ function layoutMovie(?array $trailer = null): Movie
         'backdrop_path' => '/backdrop.jpg',
         'runtime' => 169,
     ]);
-    app()->instance(CatalogSource::class, new FakeCatalogSource([new MovieDetails(
-        tmdbId: 42,
+    fakeCatalogKnowing(sourceDetailsFor(
+        $movie,
         directors: ['Christopher Nolan'],
         writers: ['Jonathan Nolan'],
         cast: [['id' => 1, 'name' => 'Matthew McConaughey', 'character' => 'Cooper', 'profilePath' => null]],
         certification: 'PG-13',
         usReleaseDate: '2014-11-07',
         trailer: $trailer,
-    )]));
+    ));
 
     return $movie;
 }
@@ -72,6 +71,7 @@ it('stacks the sections in the decided order below 1024px without the hero poste
 it('renders a sparse movie with a blurred poster hero and no optional sections', function () {
     config(['catalog.image_base_url' => '/test-images/']);
     $movie = Movie::factory()->create(['tagline' => null, 'overview' => null, 'backdrop_path' => null, 'poster_path' => '/poster.jpg']);
+    fakeCatalogKnowing($movie);
 
     $page = visitWithCsp(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id], absolute: false));
 
@@ -132,7 +132,7 @@ it('hides the trailer section without a trailer and shows a panel when the sourc
 it('shows the TMDB rating with a compact vote count, or "Not yet rated"', function () {
     $rated = Movie::factory()->create(['tmdb_id' => 157336]);
     $unrated = Movie::factory()->create();
-    app(RatingStore::class)->record(RatingSourceName::Tmdb, '157336', 8.5, 41832);
+    fakeCatalogKnowing(sourceDetailsFor($rated, voteAverage: 8.5, voteCount: 41832), $unrated);
 
     $page = visitWithCsp(route('movies.show', ['slug' => $rated->slug, 'id' => $rated->id], absolute: false));
     $page->assertSeeIn('[data-slot="external-ratings"]', 'TMDB 8.5 41.8K')->assertDontSee('Not yet rated');
@@ -143,8 +143,8 @@ it('shows the TMDB rating with a compact vote count, or "Not yet rated"', functi
 
 it('shows the IMDb rating before TMDB with IMDb\'s credit, and turning IMDb off leaves TMDB in place', function () {
     $movie = Movie::factory()->create(['tmdb_id' => 157336, 'imdb_id' => 'tt0816692']);
+    fakeCatalogKnowing(sourceDetailsFor($movie, voteAverage: 8.5, voteCount: 41832));
     app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0816692', 8.7, 2_400_000);
-    app(RatingStore::class)->record(RatingSourceName::Tmdb, '157336', 8.5, 41832);
     $url = route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id], absolute: false);
 
     $page = visitWithCsp($url);

@@ -13,6 +13,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 test('signed-in movie views record only an allowed referrer', function (mixed $referrer, string $expected) {
     $user = User::factory()->create();
     $movie = Movie::factory()->create();
+    fakeCatalogKnowing($movie);
     Queue::fake([RecordAnalyticsEvent::class]);
     $url = route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id, 'referrer' => $referrer]);
 
@@ -60,6 +61,7 @@ test('stale slugs permanently redirect without recording an extra view', functio
 
 test('guest views update the last viewed time without recording analytics', function () {
     $movie = Movie::factory()->create(['last_viewed_at' => '2026-11-01 00:00:00']);
+    fakeCatalogKnowing($movie);
     $this->travelTo('2026-11-05 12:00:00');
     Queue::fake([RecordAnalyticsEvent::class]);
 
@@ -74,6 +76,7 @@ test('guest views update the last viewed time without recording analytics', func
 test('reloading only part of the Movie page records no new view', function () {
     $user = User::factory()->create();
     $movie = Movie::factory()->create(['last_viewed_at' => '2026-11-01 00:00:00']);
+    fakeCatalogKnowing($movie);
     $this->travelTo('2026-11-05 12:00:00');
     Queue::fake([RecordAnalyticsEvent::class]);
 
@@ -104,15 +107,15 @@ test('oversized local ids return 404', function () {
 test('the movie page arrives in one response with its details, cast and credits', function () {
     $movie = Movie::factory()->create(['tmdb_id' => 157336, 'title' => 'Interstellar', 'slug' => 'interstellar', 'tagline' => 'Go further.', 'backdrop_path' => '/b.jpg', 'original_title' => 'Interstellar']);
     $cast = array_map(fn (int $i) => ['id' => $i, 'name' => "Actor {$i}", 'character' => "Role {$i}", 'profilePath' => null], range(1, 12));
-    $this->app->instance(CatalogSource::class, new FakeCatalogSource([new MovieDetails(
-        tmdbId: 157336,
+    fakeCatalogKnowing(sourceDetailsFor(
+        $movie,
         directors: ['Christopher Nolan'],
         writers: ['Jonathan Nolan'],
         cast: $cast,
         certification: 'PG-13',
         usReleaseDate: '2014-11-07',
         trailer: ['key' => 'LY19rHKAaAg', 'name' => 'Trailer 4', 'type' => 'Trailer'],
-    )]));
+    ));
 
     $this->get(route('movies.show', ['slug' => 'interstellar', 'id' => $movie->id]))
         ->assertOk()
@@ -131,9 +134,8 @@ test('the movie page arrives in one response with its details, cast and credits'
 });
 
 test('movie details are fetched in the request when missing and then served from the cache', function () {
-    $movie = Movie::factory()->create(['tmdb_id' => 7]);
-    $source = new FakeCatalogSource([new MovieDetails(tmdbId: 7, directors: ['A'])]);
-    $this->app->instance(CatalogSource::class, $source);
+    $movie = Movie::factory()->create();
+    $source = fakeCatalogKnowing(sourceDetailsFor($movie, directors: ['A']));
     $url = route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]);
 
     $this->get($url)->assertInertia(fn (Assert $page) => $page->where('movie.directors', ['A']));
@@ -141,8 +143,9 @@ test('movie details are fetched in the request when missing and then served from
     $this->get($url)->assertInertia(fn (Assert $page) => $page->where('movie.directors', ['A']));
 });
 
-test('a sparse movie still renders when the source has nothing', function () {
+test('a sparse movie still renders when the source has little', function () {
     $movie = Movie::factory()->create(['tagline' => null, 'backdrop_path' => null, 'poster_path' => null, 'original_title' => 'Autre']);
+    fakeCatalogKnowing($movie);
 
     $this->get(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]))
         ->assertOk()
@@ -150,9 +153,8 @@ test('a sparse movie still renders when the source has nothing', function () {
 });
 
 test('an entry older than a day is served as stale when the source fails, and the page renders normally', function () {
-    $movie = Movie::factory()->create(['tmdb_id' => 9]);
-    $source = new FakeCatalogSource([new MovieDetails(tmdbId: 9, directors: ['A'], certification: 'R')]);
-    $this->app->instance(CatalogSource::class, $source);
+    $movie = Movie::factory()->create();
+    $source = fakeCatalogKnowing(sourceDetailsFor($movie, directors: ['A'], certification: 'R'));
     $url = route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]);
     $this->get($url)->assertOk();
 
@@ -166,14 +168,13 @@ test('an entry older than a day is served as stale when the source fails, and th
 });
 
 test('a stale entry is refreshed in the request once the source answers again', function () {
-    $movie = Movie::factory()->create(['tmdb_id' => 9]);
-    $source = new FakeCatalogSource([new MovieDetails(tmdbId: 9, directors: ['Old'])]);
-    $this->app->instance(CatalogSource::class, $source);
+    $movie = Movie::factory()->create();
+    $source = fakeCatalogKnowing(sourceDetailsFor($movie, directors: ['Old']));
     $url = route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]);
     $this->get($url)->assertOk();
 
     $this->travel(2)->days();
-    $source->movies = [new MovieDetails(tmdbId: 9, directors: ['New'])];
+    $source->movies = [sourceDetailsFor($movie, directors: ['New'])];
 
     $this->get($url)->assertInertia(fn (Assert $page) => $page->where('movie.directors', ['New']));
 });
@@ -192,10 +193,8 @@ test('with a row but no cached details and the source down, stored fields render
             ->where('movie.certification', null));
 });
 
-test('a 404 from the source is an answer, not an outage', function () {
+test('a 404 from the source is an answer, not an outage: the Movie is gone rather than unavailable', function () {
     $movie = Movie::factory()->create();
 
-    $this->get(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->where('movie.detailsUnavailable', false));
+    $this->get(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]))->assertGone();
 });

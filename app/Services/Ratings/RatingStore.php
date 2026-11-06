@@ -41,6 +41,12 @@ class RatingStore
         );
     }
 
+    /** Deletes the source's row for the title, even when the source is switched off. */
+    public function forget(RatingSourceName $source, string $sourceId): void
+    {
+        DB::table('ratings')->where('source', $source->value)->where('source_id', $sourceId)->delete();
+    }
+
     /**
      * Replaces every row of a source with the given rows, in one transaction: they stream into a temporary table
      * that lives only for that transaction, are checked (at least 90% of the source's live rows must be valid),

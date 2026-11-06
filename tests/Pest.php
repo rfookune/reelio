@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\Movie;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\FakeCatalogSource;
+use App\Services\Catalog\Sources\MovieDetails;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Vite;
 use Pest\Browser\Api\AwaitableWebpage;
@@ -97,4 +99,37 @@ function pasteInto(AwaitableWebpage $page, string $selector, string $value): voi
 {
     $page->script('() => navigator.clipboard.writeText('.json_encode($value, JSON_THROW_ON_ERROR).')');
     $page->keys($selector, 'ControlOrMeta+V')->assertValue($selector, $value);
+}
+
+/**
+ * The Catalog source's details for a stored Movie, matching its row, so a refresh keeps what the test stored.
+ * Named arguments override any field, such as `directors` or `availability`.
+ */
+function sourceDetailsFor(Movie $movie, mixed ...$overrides): MovieDetails
+{
+    return new MovieDetails(...[
+        'tmdbId' => $movie->tmdb_id,
+        'title' => $movie->title,
+        'originalTitle' => $movie->original_title,
+        'overview' => $movie->overview,
+        'tagline' => $movie->tagline,
+        'releaseDate' => $movie->release_date?->toDateString(),
+        'runtime' => $movie->runtime,
+        'posterPath' => $movie->poster_path,
+        'backdropPath' => $movie->backdrop_path,
+        'originalLanguage' => $movie->original_language,
+        'imdbId' => $movie->imdb_id,
+        ...$overrides,
+    ]);
+}
+
+/**
+ * Binds a fake Catalog source that knows the given Movies: a stored Movie as its row stands, or explicit details.
+ */
+function fakeCatalogKnowing(Movie|MovieDetails ...$movies): FakeCatalogSource
+{
+    $source = new FakeCatalogSource(array_map(fn (Movie|MovieDetails $movie): MovieDetails => $movie instanceof Movie ? sourceDetailsFor($movie) : $movie, array_values($movies)));
+    app()->instance(CatalogSource::class, $source);
+
+    return $source;
 }

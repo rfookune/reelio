@@ -2,8 +2,11 @@
 
 use App\Models\Movie;
 use App\Services\Catalog\AvailabilityWriter;
+use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\FakeCatalogSource;
 use Illuminate\Support\Facades\Route;
 
+/** A Movie last synced 9 days ago whose refresh on view fails, so its stored Availability shows as possibly out of date. */
 function availabilityMovie(): Movie
 {
     config(['catalog.image_base_url' => '/test-images/']);
@@ -16,6 +19,7 @@ function availabilityMovie(): Movie
         $offer(73, 'free', 3, 'Tubi TV'),
         $offer(10, 'rent', 9, 'Amazon Video'),
     ]);
+    app()->instance(CatalogSource::class, new FakeCatalogSource(failing: true));
 
     return $movie;
 }
@@ -72,6 +76,7 @@ it('shows Availability right after the overview on mobile', function () {
 
 it('shows the empty state with the caveat, credit and link still present', function () {
     $movie = Movie::factory()->create(['synced_at' => now()]);
+    fakeCatalogKnowing($movie);
 
     $page = visitWithCsp(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id], absolute: false));
 

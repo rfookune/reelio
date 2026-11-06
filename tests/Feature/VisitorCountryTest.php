@@ -6,6 +6,7 @@ use App\Models\User;
 function moviePageUrl(): string
 {
     $movie = Movie::factory()->create();
+    fakeCatalogKnowing($movie);
 
     return route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]);
 }

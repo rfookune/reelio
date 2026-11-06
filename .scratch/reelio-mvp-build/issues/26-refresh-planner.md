@@ -18,3 +18,7 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 ## Note from the Services layout (2026-11-06)
 
 The planner and per-Movie jobs live in `app/Jobs/`; the refresh logic they call is `Catalog` in `app/Services/Catalog/`. The 3-day and 30-day due ages and the 20 requests/s background throttle belong in `config/catalog.php`.
+
+## Note from ticket 14 (2026-11-06)
+
+Each Movie job calls `Catalog::refresh($movie, new CatalogContext(config('catalog.language'), profile: CatalogProfile::Background))`. A 404 already makes it a Removed Movie there. Exclude Movies with `removed_at` set from due selection.

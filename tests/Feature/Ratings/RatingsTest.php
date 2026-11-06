@@ -121,7 +121,7 @@ test('a switched-off source records nothing', function () {
 
 test('the movie page sends its External ratings in display order', function () {
     $movie = Movie::factory()->create(['tmdb_id' => 157336, 'imdb_id' => 'tt0816692']);
-    recordRating(RatingSourceName::Tmdb, '157336', 8.5, 41832);
+    fakeCatalogKnowing(sourceDetailsFor($movie, voteAverage: 8.5, voteCount: 41832));
     recordRating(RatingSourceName::Imdb, 'tt0816692', 8.7, 2_400_000);
 
     $this->get(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]))
@@ -136,6 +136,7 @@ test('the movie page sends its External ratings in display order', function () {
 
 test('the movie page sends no ratings when there are none', function () {
     $movie = Movie::factory()->create();
+    fakeCatalogKnowing($movie);
 
     $this->get(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]))
         ->assertInertia(fn ($page) => $page->where('movie.ratings', []));
@@ -143,7 +144,7 @@ test('the movie page sends no ratings when there are none', function () {
 
 test('switching a source off hides only that source', function () {
     $movie = Movie::factory()->create(['tmdb_id' => 157336, 'imdb_id' => 'tt0816692']);
-    recordRating(RatingSourceName::Tmdb, '157336', 8.5, 41832);
+    fakeCatalogKnowing(sourceDetailsFor($movie, voteAverage: 8.5, voteCount: 41832));
     recordRating(RatingSourceName::Imdb, 'tt0816692', 8.7, 2_400_000);
     config(['ratings.sources.imdb.enabled' => false]);
 

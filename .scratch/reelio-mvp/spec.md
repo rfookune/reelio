@@ -310,7 +310,7 @@ From [Catalog and Rating source boundary](./issues/10-source-boundary.md) and [R
     - the last tiebreak is the latest published on or before the primary release date, else the earliest. ([Movie detail page](./issues/24-movie-detail-page.md))
 - **Director(s):** every crew member with job Director.
 - **US certification and US release date:** from `release_dates`. The release date is type 3 (theatrical), else the earliest type 2.
-- **Where the numbers live (2026-11-06):** the detail-cache freshness and hard lifetime, the row-creation limit, the circuit-breaker threshold and open time, and the live throttle are in `config/catalog.php` (`details.*`, `creation_limit.*`, `guard.*`). The interactive and background timeouts and attempts stay on `CatalogProfile`.
+- **Where the numbers live (2026-11-06):** the detail-cache hard lifetime, the refresh-on-view age (`refresh.*`), the row-creation limit, the circuit-breaker threshold and open time, and the live throttle are in `config/catalog.php` (`details.*`, `creation_limit.*`, `guard.*`). The interactive and background timeouts and attempts stay on `CatalogProfile`.
 
 ### Refresh, cache lifetimes, purge and the cap guard
 
@@ -593,7 +593,7 @@ From [Movie detail page](./issues/24-movie-detail-page.md). The throwaway protot
         - A signed-in user with facts sees "It's still in your lists" with Remove and Clear (toast and Undo).
         - Links to Discover, plus Your Watchlist when signed in.
     - **Cap-cleared Movie, refresh failed:** a 503 with `Retry-After` and `noindex`: "Details temporarily unavailable", no stored fields, and Remove and Clear for a signed-in user with facts (see the cap guard).
-- **On view:** `last_viewed_at` is updated. `movie_viewed` is recorded for signed-in users with the referrer (`discover`, `search`, `watchlist`, `watched`, `picker`, `direct`).
+- **On view:** `last_viewed_at` is updated, except on a Removed Movie's 410, so the purge can still reach it. `movie_viewed` is recorded for signed-in users with the referrer (`discover`, `search`, `watchlist`, `watched`, `picker`, `direct`).
 
 ### Watchlist and Watched pages
 

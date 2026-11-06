@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
+use App\Http\Exceptions\MovieRemoved;
 use App\Http\VisitorCountry;
 use App\Models\Availability;
 use App\Models\Movie;
 use App\Services\Catalog\Catalog;
-use App\Services\Catalog\Enums\CatalogStatus;
 use App\Services\Catalog\Enums\OfferType;
 use App\Services\Ratings\ExternalRating;
 use App\Services\Ratings\Ratings;
@@ -23,36 +23,34 @@ class MovieController extends Controller
 
     /**
      * Records a view of the Movie unless the request is a partial reload, such as after changing the country,
-     * which refreshes the page the visitor is already on.
+     * which refreshes the page the visitor is already on. A Removed Movie, including one the refresh in this
+     * request finds removed, is a 410 at any slug and records no view.
      */
     public function show(Request $request, string $slug, string $id, Catalog $catalog, RecordEvent $recordEvent, Ratings $ratings): Response|RedirectResponse
     {
         $movieId = filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         abort_if($movieId === false, 404);
         $movie = $catalog->find($movieId);
+        throw_if($movie->isRemoved(), MovieRemoved::class);
         $referrer = $request->query('referrer');
 
         if ($slug !== ($movie->slug ?? 'movie')) {
             return redirect($movie->canonicalUrl(is_string($referrer) ? $referrer : null), 301);
         }
 
-        $isNewView = ! $request->hasHeader(Header::PARTIAL_COMPONENT);
-
-        if ($isNewView) {
-            $catalog->recordView($movie);
-        }
-
         $result = $catalog->details($movie);
+        throw_if($result->isRemoved(), MovieRemoved::class);
         $details = $result->value;
 
-        if ($isNewView) {
+        if (! $request->hasHeader(Header::PARTIAL_COMPONENT)) {
+            $catalog->recordView($movie);
             $referrer = in_array($referrer, ['discover', 'search', 'watchlist', 'watched', 'picker', 'direct'], true) ? $referrer : 'direct';
             $recordEvent->handle($request->user(), 'movie_viewed', ['movie_id' => $movie->id, 'referrer' => $referrer]);
         }
 
         return Inertia::render('movies/Show', [
             'imageBaseUrl' => config('catalog.image_base_url'),
-            'whereToWatch' => $this->whereToWatch($movie, VisitorCountry::resolve($request), $result->status === CatalogStatus::Stale),
+            'whereToWatch' => $this->whereToWatch($movie, VisitorCountry::resolve($request), $catalog->isDueOnView($movie)),
             'canonicalUrl' => $movie->canonicalUrl(),
             'movie' => [
                 'id' => $movie->id,
@@ -87,11 +85,12 @@ class MovieController extends Controller
     /**
      * The Where to watch block for one country: the non-empty offer-type groups in tab order, each listing its
      * Streaming services in `display_priority` order, and the freshness line from `synced_at`. It's flagged as
-     * possibly out of date past seven calendar days, or when the Movie's details could only be served stale.
+     * possibly out of date when the Movie is still due a refresh after this view, which means its refresh failed,
+     * or past seven calendar days since the last sync.
      *
      * @return array{country: string, countryName: string, countryUnsupported: bool, countries: list<array{code: string, name: string}>, groups: list<array{type: string, label: string, caption: ?string, services: list<array{id: int, name: string, logoPath: ?string}>}>, updated: ?string, outOfDate: bool}
      */
-    private function whereToWatch(Movie $movie, VisitorCountry $visitorCountry, bool $detailsStale): array
+    private function whereToWatch(Movie $movie, VisitorCountry $visitorCountry, bool $refreshFailed): array
     {
         $country = $visitorCountry->code;
         $offers = $movie->availabilities()
@@ -129,7 +128,7 @@ class MovieController extends Controller
             'countries' => VisitorCountry::choices(),
             'groups' => $groups,
             'updated' => $this->updatedLabel($daysSinceSync),
-            'outOfDate' => $detailsStale || ($daysSinceSync !== null && $daysSinceSync > self::AVAILABILITY_OUT_OF_DATE_DAYS),
+            'outOfDate' => $refreshFailed || ($daysSinceSync !== null && $daysSinceSync > self::AVAILABILITY_OUT_OF_DATE_DAYS),
         ];
     }
 

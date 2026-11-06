@@ -30,4 +30,17 @@ class MovieFactory extends Factory
             'last_viewed_at' => now(),
         ];
     }
+
+    /** A Removed Movie: the Catalog source dropped it, so every TMDB-derived field is cleared. */
+    public function removed(): static
+    {
+        return $this->state(fn (): array => [
+            'slug' => null,
+            'title' => null,
+            'overview' => null,
+            'release_date' => null,
+            'synced_at' => null,
+            'removed_at' => now(),
+        ]);
+    }
 }

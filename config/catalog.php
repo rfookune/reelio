@@ -24,8 +24,14 @@ return [
     ],
 
     'details' => [
-        'fresh_seconds' => 86400,
         'hard_lifetime_days' => 30,
+    ],
+
+    'refresh' => [
+        /*
+         * A Movie page view refreshes the Movie in the request once its last sync is older than this.
+         */
+        'on_view_after_seconds' => 86400,
     ],
 
     'creation_limit' => [

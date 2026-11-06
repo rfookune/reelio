@@ -22,3 +22,7 @@ Per [ADR 0001](../../../docs/adr/0001-one-ratings-table-for-every-rating-source.
 ## Note from the Services layout (2026-11-06)
 
 The purge and cap-guard logic goes in `app/Services/Catalog/`, and `catalog:purge` is a console command. The 170-day cap and the `catalog.purge_unviewed.*` keys it specifies live in `config/catalog.php`. The cap-guard 503 reuses `DetailsUnavailable` from `app/Http/Exceptions/`, thrown by the controller, not by the Catalog.
+
+## Note from ticket 14 (2026-11-06)
+
+`Catalog::markRemoved()` already clears every TMDB-derived column through the same list the refresh writes (`clearedSourceAttributes()`). It also detaches genres, deletes Availability, forgets the detail cache and deletes the TMDB rating with `RatingStore::forget()`, which works even while the source is switched off. The cap guard's clearing can share that, minus setting `removed_at`. A Removed Movie's page records no view, so its `last_viewed_at` ages normally for the purge.

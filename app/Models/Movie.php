@@ -46,6 +46,12 @@ class Movie extends Model
         return $this->hasMany(Availability::class);
     }
 
+    /** A Removed Movie: the Catalog source no longer has it, so none of its details are kept. */
+    public function isRemoved(): bool
+    {
+        return $this->removed_at !== null;
+    }
+
     public function canonicalUrl(?string $referrer = null): string
     {
         return route('movies.show', ['slug' => $this->slug ?? 'movie', 'id' => $this->id, 'referrer' => $referrer]);

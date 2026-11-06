@@ -50,28 +50,10 @@ class Catalog
         }
 
         $movie = DB::transaction(function () use ($details): Movie {
-            $movie = Movie::query()->firstOrCreate(['tmdb_id' => $details->tmdbId], [
-                'slug' => Str::slug($details->title ?? '') ?: 'movie',
-                'title' => $details->title,
-                'original_title' => $details->originalTitle,
-                'overview' => $details->overview,
-                'tagline' => $details->tagline,
-                'release_date' => $details->releaseDate,
-                'runtime' => $details->runtime,
-                'poster_path' => $details->posterPath,
-                'backdrop_path' => $details->backdropPath,
-                'original_language' => $details->originalLanguage,
-                'imdb_id' => $details->imdbId,
-                'synced_at' => now(),
-                'last_viewed_at' => now(),
-            ]);
+            $movie = Movie::query()->firstOrCreate(['tmdb_id' => $details->tmdbId], [...$this->sourceAttributes($details), 'last_viewed_at' => now()]);
 
             if ($movie->wasRecentlyCreated) {
-                foreach ($details->genres as $genre) {
-                    Genre::query()->updateOrCreate(['id' => $genre['id']], ['name' => $genre['name']]);
-                }
-                $movie->genres()->sync(array_column($details->genres, 'id'));
-                $this->availability->replace($movie, $details->availability);
+                $this->storeRelations($movie, $details);
             }
 
             return $movie;
@@ -89,19 +71,43 @@ class Catalog
     }
 
     /**
-     * The Movie's Catalog source details. A cached entry younger than a day is fresh; an older one is refreshed
-     * in the request, and served as stale if the source fails. With no entry and no source, the result is unavailable.
+     * The Movie's Catalog source details for its page. A Movie last synced within the refresh age is served from
+     * the detail cache; one synced longer ago, or with nothing cached, is refreshed in the request. When that
+     * refresh fails, the cached entry is served as stale, or the result is unavailable with nothing cached. A 404
+     * makes it a Removed Movie, and a Removed Movie is never fetched again.
      *
      * @return CatalogResult<MovieDetails>
      */
     public function details(Movie $movie): CatalogResult
     {
         $context = new CatalogContext(config('catalog.language'));
-        $key = $this->detailsKey($movie->tmdb_id, $context);
-        $entry = $this->cachedDetails($key);
+        $cached = $this->cachedDetails($this->detailsKey($movie->tmdb_id, $context));
 
-        if ($entry !== null && $entry['storedAt'] > now()->subSeconds(config('catalog.details.fresh_seconds'))->getTimestamp()) {
-            return CatalogResult::fresh($entry['details']);
+        if ($cached !== null && ! $this->isDueOnView($movie)) {
+            return CatalogResult::fresh($cached);
+        }
+
+        $result = $this->refresh($movie, $context);
+
+        if ($result->isUnavailable() && $cached !== null) {
+            return CatalogResult::stale($cached);
+        }
+
+        return $result;
+    }
+
+    /**
+     * One refresh of a stored Movie from a single Catalog source call: its row, genres, Availability, the Streaming
+     * services that references, the detail cache and its TMDB rating, with `synced_at` moved to now. A 404 makes it
+     * a Removed Movie instead. A Removed Movie stays removed: it isn't fetched again. The writes hold the Movie's
+     * row lock, so a refresh and a removal of the same Movie never interleave.
+     *
+     * @return CatalogResult<MovieDetails>
+     */
+    public function refresh(Movie $movie, CatalogContext $context): CatalogResult
+    {
+        if ($movie->isRemoved()) {
+            return CatalogResult::removed();
         }
 
         try {
@@ -109,20 +115,109 @@ class Catalog
         } catch (SourceUnavailable $exception) {
             $this->reportIfMisconfigured($exception, $context);
 
-            return $entry !== null ? CatalogResult::stale($entry['details']) : CatalogResult::unavailable();
+            return CatalogResult::unavailable();
         }
 
-        if ($details !== null) {
-            $this->storeDetails($key, $details);
-            $this->ratings->record(RatingSourceName::Tmdb, (string) $details->tmdbId, $details->voteAverage, $details->voteCount);
-        }
+        return DB::transaction(function () use ($movie, $details, $context): CatalogResult {
+            $this->lockAndReload($movie);
 
-        return CatalogResult::fresh($details);
+            if ($movie->isRemoved()) {
+                return CatalogResult::removed();
+            }
+
+            if ($details === null) {
+                $this->markRemoved($movie, $context);
+
+                return CatalogResult::removed();
+            }
+
+            $movie->update($this->sourceAttributes($details));
+            $this->storeRelations($movie, $details);
+            $this->ratings->record(RatingSourceName::Tmdb, (string) $movie->tmdb_id, $details->voteAverage, $details->voteCount);
+            $this->storeDetails($this->detailsKey($movie->tmdb_id, $context), $details);
+
+            return CatalogResult::fresh($details);
+        });
+    }
+
+    /**
+     * Whether the Movie's last sync is older than a page view allows. After a view, a Movie still past this age is
+     * one whose refresh failed, so what's stored may be out of date.
+     */
+    public function isDueOnView(Movie $movie): bool
+    {
+        return $movie->synced_at === null || $movie->synced_at->lessThan(now()->subSeconds(config('catalog.refresh.on_view_after_seconds')));
     }
 
     public function recordView(Movie $movie): void
     {
         $movie->update(['last_viewed_at' => now()]);
+    }
+
+    /**
+     * Takes the Movie's row lock for the rest of the transaction and reloads the model from the locked row, so the
+     * writes that follow start from what's stored now, not from a copy another writer has since changed.
+     */
+    private function lockAndReload(Movie $movie): void
+    {
+        $movie->setRawAttributes(Movie::query()->whereKey($movie->id)->lockForUpdate()->firstOrFail()->getAttributes(), sync: true);
+    }
+
+    /**
+     * Keeps the row, so users' facts about the Movie survive, and clears everything taken from the Catalog source:
+     * the TMDB-derived columns, genre links, Availability, the detail cache and the TMDB rating. Runs inside the
+     * refresh's transaction, under the Movie's row lock.
+     */
+    private function markRemoved(Movie $movie, CatalogContext $context): void
+    {
+        $movie->update([...$this->clearedSourceAttributes($movie), 'removed_at' => now()]);
+        $movie->genres()->detach();
+        $movie->availabilities()->delete();
+        $this->ratings->forget(RatingSourceName::Tmdb, (string) $movie->tmdb_id);
+        Cache::forget($this->detailsKey($movie->tmdb_id, $context));
+    }
+
+    /**
+     * The Movie columns taken from the Catalog source, stamped as synced now.
+     *
+     * @return array<string, mixed>
+     */
+    private function sourceAttributes(MovieDetails $details): array
+    {
+        return [
+            'slug' => Str::slug($details->title ?? '') ?: 'movie',
+            'title' => $details->title,
+            'original_title' => $details->originalTitle,
+            'overview' => $details->overview,
+            'tagline' => $details->tagline,
+            'release_date' => $details->releaseDate,
+            'runtime' => $details->runtime,
+            'poster_path' => $details->posterPath,
+            'backdrop_path' => $details->backdropPath,
+            'original_language' => $details->originalLanguage,
+            'imdb_id' => $details->imdbId,
+            'synced_at' => now(),
+        ];
+    }
+
+    /**
+     * Every column `sourceAttributes()` writes, set to null, so a new source column is cleared on removal too.
+     *
+     * @return array<string, null>
+     */
+    private function clearedSourceAttributes(Movie $movie): array
+    {
+        return array_fill_keys(array_keys($this->sourceAttributes(new MovieDetails($movie->tmdb_id))), null);
+    }
+
+    private function storeRelations(Movie $movie, MovieDetails $details): void
+    {
+        foreach ($details->genres as $genre) {
+            Genre::query()->updateOrCreate(['id' => $genre['id']], ['name' => $genre['name']]);
+        }
+
+        $movie->genres()->sync(array_column($details->genres, 'id'));
+        $this->availability->replace($movie, $details->availability);
     }
 
     private function detailsKey(int $tmdbId, CatalogContext $context): string
@@ -132,21 +227,14 @@ class Catalog
 
     private function storeDetails(string $key, MovieDetails $details): void
     {
-        Cache::put($key, ['storedAt' => now()->getTimestamp(), 'details' => $details->toArray()], now()->addDays(config('catalog.details.hard_lifetime_days')));
+        Cache::put($key, ['details' => $details->toArray()], now()->addDays(config('catalog.details.hard_lifetime_days')));
     }
 
-    /** @return array{storedAt: int, details: MovieDetails}|null */
-    private function cachedDetails(string $key): ?array
+    private function cachedDetails(string $key): ?MovieDetails
     {
         $cached = Cache::get($key);
 
-        if (! is_array($cached) || ! is_int($cached['storedAt'] ?? null) || ! is_array($cached['details'] ?? null)) {
-            return null;
-        }
-
-        $details = MovieDetails::fromArray($cached['details']);
-
-        return $details === null ? null : ['storedAt' => $cached['storedAt'], 'details' => $details];
+        return is_array($cached) && is_array($cached['details'] ?? null) ? MovieDetails::fromArray($cached['details']) : null;
     }
 
     /** Reports a rejected token to the owner, at most once every five minutes. */

@@ -6,7 +6,8 @@ use App\Services\Catalog\Enums\CatalogStatus;
 
 /**
  * What the Catalog knows right now: fresh from the source or cache, stale because the source failed,
- * or unavailable. A `null` value with a fresh status is the source's answer that the thing doesn't exist.
+ * unavailable, or removed because the source no longer has a stored Movie. A `null` value with a fresh
+ * status is the source's answer that the thing doesn't exist.
  *
  * @template TValue
  */
@@ -43,8 +44,19 @@ readonly class CatalogResult
         return new self(CatalogStatus::Unavailable, null);
     }
 
+    /** @return self<never> */
+    public static function removed(): self
+    {
+        return new self(CatalogStatus::Removed, null);
+    }
+
     public function isUnavailable(): bool
     {
         return $this->status === CatalogStatus::Unavailable;
+    }
+
+    public function isRemoved(): bool
+    {
+        return $this->status === CatalogStatus::Removed;
     }
 }
