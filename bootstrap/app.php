@@ -5,13 +5,11 @@ use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RecordGuestPage;
 use App\Http\Middleware\SecurityHeaders;
-use App\Http\Middleware\StartSession;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
-use Illuminate\Session\Middleware\StartSession as FrameworkStartSession;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -26,9 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->prepend(SecurityHeaders::class);
 
-        $middleware->web(replace: [
-            FrameworkStartSession::class => StartSession::class,
-        ], append: [
+        $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
