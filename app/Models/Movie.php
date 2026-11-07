@@ -46,6 +46,12 @@ class Movie extends Model
         return $this->hasMany(Availability::class);
     }
 
+    /** @return HasMany<UserMovie, $this> */
+    public function userMovies(): HasMany
+    {
+        return $this->hasMany(UserMovie::class);
+    }
+
     /** A Removed Movie: the Catalog source no longer has it, so none of its details are kept. */
     public function isRemoved(): bool
     {

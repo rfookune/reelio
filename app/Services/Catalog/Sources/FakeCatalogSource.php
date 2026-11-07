@@ -7,17 +7,24 @@ use App\Services\Catalog\Enums\SectionKind;
 
 class FakeCatalogSource implements CatalogSource
 {
+    /** @var list<array{tmdbId: int, context: CatalogContext}> */
+    public array $movieCalls = [];
+
     /** @var list<array{kind: SectionKind, key: string, query: SectionQuery, page: int}> */
     public array $sectionCalls = [];
 
     /** @var list<array{query: string, page: int}> */
     public array $searchCalls = [];
 
+    /** @var list<CatalogContext> */
+    public array $genreCalls = [];
+
     /**
      * @param  list<MovieDetails>  $movies
      * @param  array<string, list<list<MovieListing>>>  $sections  each list's pages, keyed by `SectionQuery::key()`
      * @param  list<SectionKind|string>  $failingSections  kinds, or `SectionQuery::key()`s
      * @param  array<string, list<list<MovieListing>>>  $searches  each query's result pages
+     * @param  list<array{id: int, name: string}>  $genres
      */
     public function __construct(
         public array $movies = [],
@@ -25,10 +32,13 @@ class FakeCatalogSource implements CatalogSource
         public array $sections = [],
         public array $failingSections = [],
         public array $searches = [],
+        public array $genres = [],
     ) {}
 
     public function movie(int $tmdbId, CatalogContext $context): ?MovieDetails
     {
+        $this->movieCalls[] = ['tmdbId' => $tmdbId, 'context' => $context];
+
         if ($this->failing) {
             throw new SourceUnavailable('The Catalog source is unavailable.');
         }
@@ -79,5 +89,17 @@ class FakeCatalogSource implements CatalogSource
         }
 
         return new SearchResults($pages[$page - 1], count($pages), array_sum(array_map(count(...), $pages)));
+    }
+
+    /** @return list<array{id: int, name: string}> */
+    public function genres(CatalogContext $context): array
+    {
+        $this->genreCalls[] = $context;
+
+        if ($this->failing) {
+            throw new SourceUnavailable('The Catalog source is unavailable.');
+        }
+
+        return $this->genres;
     }
 }

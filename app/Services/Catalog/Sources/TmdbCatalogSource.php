@@ -7,6 +7,7 @@ use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Enums\OfferType;
 use App\Services\Catalog\Enums\SectionKind;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -35,6 +36,8 @@ class TmdbCatalogSource implements CatalogSource
 
     /** TMDB release type for a digital release. */
     private const RELEASE_TYPE_DIGITAL = 4;
+
+    public function __construct(private BackgroundThrottle $backgroundThrottle) {}
 
     public function movie(int $tmdbId, CatalogContext $context): ?MovieDetails
     {
@@ -159,6 +162,29 @@ class TmdbCatalogSource implements CatalogSource
     }
 
     /**
+     * TMDB's Movie genre list, by id, with names in the context's language.
+     *
+     * @return list<array{id: int, name: string}>
+     */
+    public function genres(CatalogContext $context): array
+    {
+        $response = $this->get('genre/movie/list', ['language' => $context->language], $context)
+            ?? throw new SourceUnavailable('The Catalog source has no genre list.');
+
+        try {
+            $data = Validator::make((array) $response->json(), [
+                'genres' => ['required', 'array', 'min:1'],
+                'genres.*.id' => ['required', 'integer', 'min:1', 'distinct'],
+                'genres.*.name' => ['required', 'string', 'max:255'],
+            ])->validate();
+        } catch (ValidationException $exception) {
+            throw new SourceUnavailable('The Catalog source returned an invalid genre list.', previous: $exception);
+        }
+
+        return array_values(array_map(fn (array $genre): array => ['id' => (int) $genre['id'], 'name' => $genre['name']], $data['genres']));
+    }
+
+    /**
      * A list page's body: its results and page count.
      *
      * @return array{results: array<mixed>, total_pages: int}
@@ -200,7 +226,8 @@ class TmdbCatalogSource implements CatalogSource
 
     /**
      * A GET with the profile's timeout and retries. A 404 is an answer, returned as null; a 401 is a configuration
-     * error; anything else unsuccessful, or no connection, is a failure.
+     * error; anything else unsuccessful, or no connection, is a failure. Each background attempt, a retry too, first
+     * takes its turn in the background throttle.
      *
      * @param  array<string, string|int>  $query
      */
@@ -215,6 +242,7 @@ class TmdbCatalogSource implements CatalogSource
                 ->connectTimeout($profile->timeoutSeconds())
                 ->timeout($profile->timeoutSeconds())
                 ->retry($profile->attempts(), fn (int $attempt, Throwable $exception): int => $this->retryDelayMilliseconds($profile, $attempt, $exception), $this->isRetryable(...), throw: false)
+                ->when($profile === CatalogProfile::Background, fn (PendingRequest $request): PendingRequest => $request->beforeSending(fn () => $this->backgroundThrottle->awaitTurn()))
                 ->get($path, $query);
         } catch (ConnectionException $exception) {
             throw new SourceUnavailable('The Catalog source is unavailable.', previous: $exception);

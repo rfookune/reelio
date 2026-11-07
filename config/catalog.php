@@ -39,6 +39,21 @@ return [
          * A Movie page view refreshes the Movie in the request once its last sync is older than this.
          */
         'on_view_after_seconds' => 86400,
+
+        /*
+         * The daily planner refreshes a Movie on any Watchlist once its last sync is more than `watchlist_after_days`
+         * old, and one that is only Watched once it is more than `watched_after_days` old. A Movie nobody holds is
+         * never refreshed by schedule. Each planner run dispatches at most `planner_page_size` refreshes, then hands
+         * the rest to its next run, so each stays short.
+         */
+        'watchlist_after_days' => 3,
+        'watched_after_days' => 30,
+        'planner_page_size' => 200,
+
+        /*
+         * The owner is alerted when a Movie someone holds is more than this many days past its scheduled refresh.
+         */
+        'overdue_alert_after_days' => 14,
     ],
 
     'search' => [
@@ -102,11 +117,11 @@ return [
 
         /*
          * How long a build may keep asking the source, by profile. The calls are made one after another, so the
-         * background budget leaves room for one more slow call (about 35 s with its retries) inside the job's 85 s
-         * timeout; the interactive one keeps the first visitor's wait short.
+         * background budget leaves room for one more slow call (about 40 s with its retries and throttle waits) inside
+         * the job's 85 s timeout; the interactive one keeps the first visitor's wait short.
          */
         'build_budget_seconds' => [
-            'background' => 45,
+            'background' => 35,
             'interactive' => 6,
         ],
 
@@ -126,5 +141,13 @@ return [
         'breaker_open_seconds' => 30,
         'failure_memory_seconds' => 86400,
         'live_requests_per_second' => 15,
+
+        /*
+         * Every background request shares this rate, retries included. Over it, a request waits its turn for up to
+         * `background_wait_seconds`, then fails as unavailable. With three attempts of 10 s, a background call can
+         * take about 40 s at worst.
+         */
+        'background_requests_per_second' => 20,
+        'background_wait_seconds' => 3,
     ],
 ];

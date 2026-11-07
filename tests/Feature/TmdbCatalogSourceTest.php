@@ -9,6 +9,7 @@ use App\Services\Catalog\Sources\SourceMisconfigured;
 use App\Services\Catalog\Sources\SourceUnavailable;
 use App\Services\Catalog\Sources\TmdbCatalogSource;
 use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Sleep;
 
@@ -178,6 +179,47 @@ test('interactive calls give up after one retry', function (callable $fake) {
     'rate limited' => [fn () => Http::fake(['*' => Http::response([], 429)])],
     'connection errors' => [fn () => Http::fake(['*' => Http::failedConnection()])],
 ]);
+
+test('over the background throttle, a background request waits for the next second', function () {
+    config(['catalog.guard.background_requests_per_second' => 1]);
+    Sleep::fake();
+    Sleep::whenFakingSleep(fn () => Cache::flush()); // The throttle's window lives in Redis: emptying it ends the second.
+    Http::fake(['https://api.themoviedb.org/3/movie/*' => Http::response(['id' => 157336])]);
+    $background = new CatalogContext(profile: CatalogProfile::Background);
+
+    app(TmdbCatalogSource::class)->movie(157336, $background);
+    Sleep::assertNeverSlept();
+    app(TmdbCatalogSource::class)->movie(157336, $background);
+
+    Http::assertSentCount(2);
+    Sleep::assertSleptTimes(1);
+});
+
+test('background retries take their own turns, and a request still over the throttle after its wait fails unsent', function () {
+    config(['catalog.guard.background_requests_per_second' => 2, 'catalog.guard.background_wait_seconds' => 3]);
+    Sleep::fake();
+    Http::fakeSequence('https://api.themoviedb.org/3/movie/157336?*')
+        ->push([], 500)
+        ->push(['id' => 157336]);
+    $background = new CatalogContext(profile: CatalogProfile::Background);
+
+    expect(app(TmdbCatalogSource::class)->movie(157336, $background)->tmdbId)->toBe(157336)
+        ->and(fn () => app(TmdbCatalogSource::class)->movie(157336, $background))->toThrow(SourceUnavailable::class);
+    Http::assertSentCount(2);
+    Sleep::assertSlept(fn ($duration) => $duration->totalMilliseconds == 100, 30);
+});
+
+test('interactive requests are not held by the background throttle', function () {
+    config(['catalog.guard.background_requests_per_second' => 1]);
+    Sleep::fake();
+    Http::fake(['https://api.themoviedb.org/3/movie/*' => Http::response(['id' => 157336])]);
+
+    app(TmdbCatalogSource::class)->movie(157336, new CatalogContext(profile: CatalogProfile::Background));
+    app(TmdbCatalogSource::class)->movie(157336, new CatalogContext);
+
+    Http::assertSentCount(2);
+    Sleep::assertNeverSlept();
+});
 
 test('a 429 honours Retry-After but waits at most two seconds', function (string $retryAfter, int $expectedMicroseconds) {
     Sleep::fake();
@@ -498,3 +540,21 @@ test('a section raises a rejected token as a configuration error', function () {
 
     expect(fn () => app(TmdbCatalogSource::class)->section(SectionQuery::of(SectionKind::Popular), 1, new CatalogContext))->toThrow(SourceMisconfigured::class);
 });
+
+test('the genre list is read in the configured language', function () {
+    Http::fake(['https://api.themoviedb.org/3/genre/movie/list?*' => Http::response(['genres' => [['id' => 28, 'name' => 'Action'], ['id' => 878, 'name' => 'Science Fiction']]])]);
+
+    expect(app(TmdbCatalogSource::class)->genres(new CatalogContext('en-US')))->toBe([['id' => 28, 'name' => 'Action'], ['id' => 878, 'name' => 'Science Fiction']]);
+    Http::assertSent(fn (Request $request) => $request['language'] === 'en-US');
+});
+
+test('the genre list fails explicitly on unsuccessful, empty or malformed responses', function (array $body, int $status) {
+    Http::fake(['https://api.themoviedb.org/3/genre/movie/list?*' => Http::response($body, $status)]);
+
+    expect(fn () => app(TmdbCatalogSource::class)->genres(new CatalogContext))->toThrow(SourceUnavailable::class);
+})->with([
+    'not found' => [[], 404],
+    'server error' => [[], 500],
+    'no genres' => [['genres' => []], 200],
+    'a nameless genre' => [['genres' => [['id' => 28]]], 200],
+]);

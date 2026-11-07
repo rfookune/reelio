@@ -8,12 +8,12 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 
 **Status:** ready-for-agent
 
-- [ ] A planner job, dispatched from the 05:00 UTC slot, selects due Movies page by page, dispatches one unique job per Movie on `default`, and re-dispatches itself so no job runs over 90 s
-- [ ] Due means: on any Watchlist and `synced_at` over 3 days old; Watched only and over 30 days old; Movies with no facts are never scheduled
-- [ ] Each Movie job is one background-profile `movie()` refresh; all background TMDB calls share a 20 requests/s throttle
-- [ ] The owner is alerted when a Movie with user facts is more than 14 days past its due refresh
-- [ ] The `genres` table is refreshed weekly (Mondays, same slot)
-- [ ] Feature tests cover due selection, uniqueness and continuation with the fake adapter and a faked queue
+- [x] A planner job, dispatched from the 05:00 UTC slot, selects due Movies page by page, dispatches one unique job per Movie on `default`, and re-dispatches itself so no job runs over 90 s
+- [x] Due means: on any Watchlist and `synced_at` over 3 days old; Watched only and over 30 days old; Movies with no facts are never scheduled
+- [x] Each Movie job is one background-profile `movie()` refresh; all background TMDB calls share a 20 requests/s throttle
+- [x] The owner is alerted when a Movie with user facts is more than 14 days past its due refresh
+- [x] The `genres` table is refreshed weekly (Mondays, same slot)
+- [x] Feature tests cover due selection, uniqueness and continuation with the fake adapter and a faked queue
 
 ## Note from the Services layout (2026-11-06)
 

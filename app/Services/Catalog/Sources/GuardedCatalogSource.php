@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\RateLimiter;
 
 /**
  * Protects the Catalog source from a struggling or overloaded upstream: a circuit breaker and a shared throttle
- * for interactive calls. Background calls pass straight through.
+ * for interactive calls. Background calls pass straight through; their throttle counts each request the source
+ * sends, retries included, so it is applied there (`BackgroundThrottle`).
  */
 class GuardedCatalogSource implements CatalogSource
 {
@@ -30,6 +31,12 @@ class GuardedCatalogSource implements CatalogSource
     public function search(string $query, int $page, CatalogContext $context): SearchResults
     {
         return $this->guard($context, fn (): SearchResults => $this->inner->search($query, $page, $context));
+    }
+
+    /** @return list<array{id: int, name: string}> */
+    public function genres(CatalogContext $context): array
+    {
+        return $this->guard($context, fn (): array => $this->inner->genres($context));
     }
 
     /**

@@ -13,4 +13,11 @@ interface CatalogSource
 
     /** One page of a title search, in the source's order. A missing page is a failure, not an empty answer. */
     public function search(string $query, int $page, CatalogContext $context): SearchResults;
+
+    /**
+     * The source's whole list of Movie genres. An empty or malformed list is a failure, not an empty answer.
+     *
+     * @return list<array{id: int, name: string}>
+     */
+    public function genres(CatalogContext $context): array;
 }
