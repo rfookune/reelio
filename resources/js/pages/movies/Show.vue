@@ -16,6 +16,7 @@ import type { UserMovies } from '@/types';
 
 const props = defineProps<{
     canonicalUrl: string;
+    castUrl: string;
     imageBaseUrl: string;
     whereToWatch: WhereToWatchBlock;
     userMovies: UserMovies;
@@ -36,6 +37,7 @@ const props = defineProps<{
         directors: string[];
         writers: string[];
         cast: CastMember[];
+        castCount: number;
         certification: string | null;
         usReleaseDate: string | null;
         ratings: ExternalRating[];
@@ -209,6 +211,7 @@ onBeforeUnmount(() => {
                 :image-base-url="imageBaseUrl"
                 :cast="movie.cast"
                 :unavailable="movie.detailsUnavailable"
+                :full-cast="{ href: castUrl, count: movie.castCount }"
                 class="order-4 lg:col-start-1 lg:mb-10"
             />
         </div>

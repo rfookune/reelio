@@ -90,7 +90,7 @@ test('the catalog source reads credits and US release details from the recorded 
         ->and($movie->writers)->toBe(['Jonathan Nolan', 'Christopher Nolan'])
         ->and($movie->certification)->toBe('PG-13')
         ->and($movie->usReleaseDate)->toBe('2014-11-07')
-        ->and($movie->cast)->toHaveCount(12)
+        ->and($movie->cast)->toHaveCount(37)
         ->and($movie->cast[0])->toBe(['id' => 10297, 'name' => 'Matthew McConaughey', 'character' => 'Cooper', 'profilePath' => '/lCySuYjhXix3FzQdS4oceDDrXKI.jpg']);
 });
 

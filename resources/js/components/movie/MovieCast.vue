@@ -1,18 +1,16 @@
 <script setup lang="ts">
-import { User } from '@lucide/vue';
-import { isSafeTmdbPath, tmdbImageUrl } from '@/lib/tmdb';
+import { Link } from '@inertiajs/vue3';
+import CastGrid from '@/components/movie/CastGrid.vue';
+import type { CastMember } from '@/components/movie/CastGrid.vue';
 
-export type CastMember = {
-    id: number;
-    name: string;
-    character: string | null;
-    profilePath: string | null;
-};
+export type { CastMember };
 
 defineProps<{
     imageBaseUrl: string;
     cast: CastMember[];
     unavailable?: boolean;
+    /** Links the full cast page when it lists more than the members shown. */
+    fullCast?: { href: string; count: number } | null;
 }>();
 </script>
 
@@ -21,7 +19,17 @@ defineProps<{
         v-if="unavailable || cast.length > 0"
         aria-labelledby="cast-heading"
     >
-        <h2 id="cast-heading" class="mb-4 text-xl font-semibold">Cast</h2>
+        <div class="mb-4 flex items-baseline justify-between gap-4">
+            <h2 id="cast-heading" class="text-xl font-semibold">Cast</h2>
+            <Link
+                v-if="!unavailable && fullCast && fullCast.count > cast.length"
+                data-slot="full-cast-link"
+                :href="fullCast.href"
+                class="rounded-lg text-sm text-accent underline-offset-4 hover:underline"
+            >
+                Full cast ({{ fullCast.count }})
+            </Link>
+        </div>
         <p
             v-if="unavailable"
             data-slot="cast-unavailable"
@@ -29,39 +37,6 @@ defineProps<{
         >
             Cast is temporarily unavailable.
         </p>
-        <ul v-else class="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
-            <li v-for="member in cast" :key="member.id" class="min-w-0">
-                <div
-                    class="aspect-[2/3] overflow-hidden rounded-lg bg-raised text-muted"
-                >
-                    <img
-                        v-if="isSafeTmdbPath(member.profilePath)"
-                        :src="
-                            tmdbImageUrl(imageBaseUrl, 185, member.profilePath)
-                        "
-                        alt=""
-                        width="185"
-                        height="278"
-                        loading="lazy"
-                        decoding="async"
-                        class="size-full object-cover"
-                    />
-                    <div
-                        v-else
-                        data-slot="person-fallback"
-                        aria-hidden="true"
-                        class="flex size-full items-center justify-center"
-                    >
-                        <User class="size-8" :stroke-width="1.5" />
-                    </div>
-                </div>
-                <p class="mt-2 text-sm leading-tight font-medium">
-                    {{ member.name }}
-                </p>
-                <p v-if="member.character" class="text-xs text-muted">
-                    {{ member.character }}
-                </p>
-            </li>
-        </ul>
+        <CastGrid v-else :image-base-url="imageBaseUrl" :cast="cast" />
     </section>
 </template>

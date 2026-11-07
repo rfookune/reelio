@@ -133,6 +133,18 @@ test('the movie page arrives in one response with its details, cast and credits'
             ->missing('deferredProps'));
 });
 
+test('the movie page shows the top-billed cast and links the full cast', function () {
+    $movie = Movie::factory()->create(['title' => 'Interstellar', 'slug' => 'interstellar']);
+    $cast = array_map(fn (int $i) => ['id' => $i, 'name' => "Actor {$i}", 'character' => null, 'profilePath' => null], range(1, 20));
+    fakeCatalogKnowing(sourceDetailsFor($movie, cast: $cast));
+
+    $this->get(route('movies.show', ['slug' => 'interstellar', 'id' => $movie->id]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('movie.cast', array_slice($cast, 0, 12))
+            ->where('movie.castCount', 20)
+            ->where('castUrl', route('movies.cast', ['slug' => 'interstellar', 'id' => $movie->id])));
+});
+
 test('movie details are fetched in the request when missing and then served from the cache', function () {
     $movie = Movie::factory()->create();
     $source = fakeCatalogKnowing(sourceDetailsFor($movie, directors: ['A']));

@@ -5,6 +5,7 @@ use App\Http\Controllers\AvailabilityLinkController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\CspReportController;
 use App\Http\Controllers\DiscoverController;
+use App\Http\Controllers\MovieCastController;
 use App\Http\Controllers\MovieController;
 use App\Http\Controllers\MovieEntryController;
 use App\Http\Controllers\MoviePickerController;
@@ -35,6 +36,7 @@ Route::middleware('throttle:user-movie-actions')->group(function () {
 });
 Route::get('movies/{id}/watch', AvailabilityLinkController::class)->whereNumber('id')->name('movies.watch');
 Route::get('movies/{slug}-{id}', [MovieController::class, 'show'])->where('slug', '[^/]+')->whereNumber('id')->name('movies.show');
+Route::get('movies/{slug}-{id}/casts', MovieCastController::class)->where('slug', '[^/]+')->whereNumber('id')->name('movies.cast');
 
 Route::put('country', CountryController::class)->name('country.update');
 

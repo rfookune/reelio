@@ -324,6 +324,8 @@ class TmdbCatalogSource implements CatalogSource
     }
 
     /**
+     * The whole billed cast, in billing order.
+     *
      * @param  array<string, mixed>  $credits
      * @return list<array{id: int, name: string, character: ?string, profilePath: ?string}>
      */
@@ -337,7 +339,7 @@ class TmdbCatalogSource implements CatalogSource
             'name' => $member['name'],
             'character' => ($member['character'] ?? '') !== '' ? $member['character'] : null,
             'profilePath' => $member['profile_path'] ?? null,
-        ], array_slice($members, 0, 12));
+        ], $members);
     }
 
     /**

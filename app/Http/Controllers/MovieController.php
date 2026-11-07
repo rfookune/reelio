@@ -53,13 +53,15 @@ class MovieController extends Controller
             'imageBaseUrl' => config('catalog.image_base_url'),
             'whereToWatch' => fn (): array => WhereToWatch::for($movie, VisitorCountry::resolve($request), $details->refreshFailed()),
             'canonicalUrl' => $movie->canonicalUrl(),
+            'castUrl' => route('movies.cast', ['slug' => $movie->slug ?? 'movie', 'id' => $movie->id]),
             'userMovies' => UserMovies::for($request->user(), [$movie]),
             'movie' => fn (): array => $this->movie($movie, $details->result(), $ratings),
         ]);
     }
 
     /**
-     * The Movie's stored fields, its External ratings and its Catalog details, which are empty when unavailable.
+     * The Movie's stored fields, its External ratings and its Catalog details, which are empty when unavailable. The
+     * cast is cut to the top billed; `castCount` says whether the full cast page lists more.
      *
      * @param  CatalogResult<MovieDetails>  $result
      * @return array<string, mixed>
@@ -87,7 +89,8 @@ class MovieController extends Controller
             'detailsUnavailable' => $result->isUnavailable(),
             'directors' => $details->directors ?? [],
             'writers' => $details->writers ?? [],
-            'cast' => $details->cast ?? [],
+            'cast' => array_slice($details->cast ?? [], 0, config('catalog.movie_page.cast_limit')),
+            'castCount' => count($details->cast ?? []),
             'certification' => $details?->certification,
             'usReleaseDate' => $details?->usReleaseDate,
         ];

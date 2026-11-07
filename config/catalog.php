@@ -27,6 +27,13 @@ return [
         'hard_lifetime_days' => 30,
     ],
 
+    'movie_page' => [
+        /*
+         * How many top-billed cast members the Movie page shows; the rest are on its full cast page.
+         */
+        'cast_limit' => 12,
+    ],
+
     'refresh' => [
         /*
          * A Movie page view refreshes the Movie in the request once its last sync is older than this.
