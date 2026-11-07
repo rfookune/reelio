@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { ChevronDown, Tv } from '@lucide/vue';
+import { ChevronDown } from '@lucide/vue';
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui';
 import { computed } from 'vue';
 import {
@@ -11,7 +11,7 @@ import {
     DropdownMenuRadioItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { isSafeTmdbPath, tmdbImageUrl } from '@/lib/tmdb';
+import StreamingServiceLogo from '@/components/movie/StreamingServiceLogo.vue';
 import { update as updateCountry } from '@/routes/country';
 import { watch as watchPage } from '@/routes/movies';
 import type { CountryChoice } from '@/types';
@@ -152,25 +152,11 @@ function chooseCountry(country: unknown): void {
                         data-slot="streaming-service"
                         class="flex items-center gap-3"
                     >
-                        <img
-                            v-if="isSafeTmdbPath(service.logoPath)"
-                            :src="
-                                tmdbImageUrl(imageBaseUrl, 92, service.logoPath)
-                            "
-                            :alt="service.name"
-                            width="40"
-                            height="40"
-                            loading="lazy"
-                            decoding="async"
-                            class="size-10 shrink-0 rounded-lg bg-raised object-cover"
+                        <StreamingServiceLogo
+                            :image-base-url="imageBaseUrl"
+                            :service="service"
+                            name-shown
                         />
-                        <span
-                            v-else
-                            aria-hidden="true"
-                            class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-raised text-muted"
-                        >
-                            <Tv class="size-5" :stroke-width="1.5" />
-                        </span>
                         <span class="text-sm">{{ service.name }}</span>
                     </li>
                 </ul>

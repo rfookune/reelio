@@ -51,7 +51,7 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Configure the application's rate limiters. Search has its own budget; Watchlist and Watched actions and Undo share one.
+     * Configure the application's rate limiters. Search and the Movie picker each have their own budget; Watchlist and Watched actions and Undo share one.
      */
     protected function configureRateLimiting(): void
     {
@@ -68,6 +68,8 @@ class AppServiceProvider extends ServiceProvider
             : Limit::perMinute(60)->by(RateLimitKey::for($request)));
 
         RateLimiter::for('user-movie-actions', fn (Request $request): Limit => Limit::perMinute(60)->by(RateLimitKey::for($request)));
+
+        RateLimiter::for('movie-picker', fn (Request $request): Limit => Limit::perMinute(30)->by(RateLimitKey::for($request)));
     }
 
     /**

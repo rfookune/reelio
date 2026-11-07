@@ -2,6 +2,7 @@
 import { Head, InfiniteScroll, Link, router } from '@inertiajs/vue3';
 import { LoaderCircle } from '@lucide/vue';
 import { computed, nextTick, ref, watch } from 'vue';
+import MoviePicker from '@/components/movie/MoviePicker.vue';
 import PosterCard from '@/components/movie/PosterCard.vue';
 import PosterCardSkeleton from '@/components/movie/PosterCardSkeleton.vue';
 import UserMovieCardMenu from '@/components/movie/UserMovieCardMenu.vue';
@@ -57,6 +58,10 @@ const unavailableCards = computed(() =>
     props.unavailableMovies.filter(
         (movie) => props.userMovies[movie.tmdbId]?.[fact.value],
     ),
+);
+/** Watchlist Movies the picker can choose: every one but those in the "No longer available" group. */
+const pickerCandidates = computed(() =>
+    isWatchlist.value ? count.value - unavailableCards.value.length : 0,
 );
 let menuRemoval: number | null = null;
 
@@ -190,7 +195,13 @@ const showMoreParams = {
             >
                 {{ title }} · {{ count }}
             </h1>
-            <div class="flex items-center gap-3">
+            <div class="flex flex-wrap items-center gap-3">
+                <MoviePicker
+                    v-if="isWatchlist"
+                    :image-base-url="imageBaseUrl"
+                    :available="pickerCandidates > 0"
+                    @trigger-removed="(emptyHeading ?? heading)?.focus()"
+                />
                 <label :for="`${collection}-sort`" class="text-sm text-muted"
                     >Sort by</label
                 >
