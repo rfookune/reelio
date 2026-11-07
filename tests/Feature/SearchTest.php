@@ -242,6 +242,14 @@ test('reloading userMovies alone, as after a Watchlist action, reads the cache o
     expect(collect($source->searchCalls)->pluck('query')->unique()->values()->all())->toBe(['inter', 'interstellar']);
 });
 
+test('the session keeps Search as the previous page without its search text', function () {
+    fakeSearchWithTrending(['inter' => [movieListings(1, 3)]]);
+
+    $this->get(route('search', ['q' => 'inter', 'page' => 1]))->assertOk();
+
+    expect(session()->previousUrl())->toBe(url('/search'));
+});
+
 test('search is limited to 60 requests a minute per user or IP', function () {
     fakeSearchWithTrending();
     $this->freezeTime();

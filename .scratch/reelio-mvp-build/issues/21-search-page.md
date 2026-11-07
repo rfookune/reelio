@@ -51,7 +51,12 @@ Per [ADR 0001](../../../docs/adr/0001-one-ratings-table-for-every-rating-source.
 - **Components.** `PosterCard` (the Watchlist and Watched card, ready for ticket 22) and `PosterCardSkeleton`. `BookmarkToggle` gains a `floating` variant on a solid chip (44 px on mobile), and `TmdbImage` gains `loading` and `placeholder`, so card posters have empty alt text while the missing-poster tile still shows the title. The first 6 cards load eagerly.
 - **Focus.** `pageFocus` now focuses an element marked `data-autofocus` instead of the `<h1>`, so Search with no query starts in its input.
 - **Wayfinder.** The Search nav item and Discover's failure-state link now use the `search` route.
-- **Guests.** The recorded last page for a guest is `/search` without `q`, so search text isn't kept in the session. A guest who saves from Search returns to an empty Search after signing in, with the usual toast.
+- **Search text in the session.** Two places would otherwise keep `q` in the session.
+  - The framework's previous URL, stored on every full-page GET. `App\Http\Middleware\StartSession` replaces the framework's in the web group and stores Search's path alone.
+  - A guest's recorded last page, which `IntendedUrl` now records as `/search` without `q`.
+
+  The spec says a guest lands back on the page after signing in, and user story 19 says search text is never stored. Privacy wins: a guest who saves from Search returns to an empty Search, with the usual toast.
+- **Accepted risk.** The `throttle:search` exemption for `userMovies`-only reloads trusts two Inertia request headers the client controls. Anyone who forges them gets unlimited cache-only search reads plus a few database queries per request, never a TMDB call. Cloud's edge limit covers production.
 - **Known limits:**
   - Redacting `q` from request logs, Nightwatch and Sentry is left to the monitoring ticket (29).
   - A deep link to a page past the search's last page is `unavailable`, because TMDB (and the fake) answer it as a missing page.
