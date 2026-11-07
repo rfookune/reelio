@@ -67,6 +67,8 @@ class AppServiceProvider extends ServiceProvider
             ? Limit::none()
             : Limit::perMinute(60)->by(RateLimitKey::for($request)));
 
+        RateLimiter::for('search-ratings', fn (Request $request): Limit => Limit::perMinute(60)->by(RateLimitKey::for($request)));
+
         RateLimiter::for('user-movie-actions', fn (Request $request): Limit => Limit::perMinute(60)->by(RateLimitKey::for($request)));
 
         RateLimiter::for('movie-picker', fn (Request $request): Limit => Limit::perMinute(30)->by(RateLimitKey::for($request)));

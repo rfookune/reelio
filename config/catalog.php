@@ -56,6 +56,24 @@ return [
         'unreferenced_service_grace_seconds' => 3600,
     ],
 
+    /*
+     * A search result carries no IMDb id, so the Search page looks it up, one small source call per Movie, to find
+     * the Movie's IMDb rating. An id is remembered for `lifetime_days`, and the answer that the source has none for
+     * a Movie for `missing_lifetime_seconds`, since a new release gains one. A request looks up at most
+     * `max_per_request` Movies, within `budget_seconds`, and lookups share `requests_per_second` across all
+     * visitors, below the live ceiling so they never starve the pages visitors are waiting on. No visitor waits on a
+     * lookup, so one over the ceiling waits for the next second, within the budget. A lookup still without a turn
+     * then, or over `max_per_request`, is skipped (it tries for a turn every `wait_milliseconds`), and its Movie shows no IMDb rating until a later search finds room.
+     */
+    'imdb_lookup' => [
+        'lifetime_days' => 30,
+        'missing_lifetime_seconds' => 86400,
+        'max_per_request' => 20,
+        'requests_per_second' => 8,
+        'budget_seconds' => 6,
+        'wait_milliseconds' => 100,
+    ],
+
     'movie_page' => [
         /*
          * How many top-billed cast members the Movie page shows; the rest are on its full cast page.

@@ -33,6 +33,11 @@ class GuardedCatalogSource implements CatalogSource
         return $this->guard($context, fn (): SearchResults => $this->inner->search($query, $page, $context));
     }
 
+    public function imdbId(int $tmdbId, CatalogContext $context): ?string
+    {
+        return $this->guard($context, fn (): ?string => $this->inner->imdbId($tmdbId, $context));
+    }
+
     /** @return list<array{id: int, name: string}> */
     public function genres(CatalogContext $context): array
     {

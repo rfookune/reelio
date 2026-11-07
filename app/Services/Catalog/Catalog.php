@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
 
 class Catalog
@@ -71,6 +72,7 @@ class Catalog
         });
 
         $this->storeDetails($this->detailsKey($tmdbId, $context), $details);
+        $this->rememberImdbId($details->tmdbId, $details->imdbId, $context);
         $this->ratings->record(RatingSourceName::Tmdb, (string) $details->tmdbId, $details->voteAverage, $details->voteCount);
 
         return CatalogResult::fresh($movie);
@@ -182,6 +184,59 @@ class Catalog
         Genre::query()->upsert($genres, ['id'], ['name']);
     }
 
+    /**
+     * The IMDb ids already remembered for the catalog ids, without asking the source; a Movie whose id isn't
+     * remembered, or is remembered as having none, is left out.
+     *
+     * @param  list<int>  $tmdbIds
+     * @return array<int, string> keyed by catalog id
+     */
+    public function cachedImdbIds(array $tmdbIds): array
+    {
+        return array_filter($this->rememberedImdbIds($tmdbIds), is_string(...));
+    }
+
+    /**
+     * The IMDb ids for the catalog ids: those remembered, and a lookup in the source for the rest, interactively
+     * and within `imdb_lookup`'s limits. Each answer is remembered, a missing id too, but a failure isn't, and the
+     * first failure stops the lookups, so a struggling source is left alone. A lookup waits for its turn in the
+     * lookups' shared ceiling, since no visitor is waiting on it, but only within the budget; one still without a
+     * turn then is skipped, with the rest.
+     *
+     * @param  list<int>  $tmdbIds
+     * @return array<int, string> keyed by catalog id
+     */
+    public function lookUpImdbIds(array $tmdbIds): array
+    {
+        $tmdbIds = array_values(array_unique($tmdbIds));
+        $remembered = $this->rememberedImdbIds($tmdbIds);
+        $context = new CatalogContext(config('catalog.language'));
+        $generation = $this->purgeGeneration($context);
+        $lookups = 0;
+        $deadline = now()->addSeconds(config('catalog.imdb_lookup.budget_seconds'));
+
+        foreach (array_diff($tmdbIds, array_keys($remembered)) as $tmdbId) {
+            if ($lookups >= config('catalog.imdb_lookup.max_per_request') || now()->greaterThan($deadline) || ! $this->awaitImdbLookupTurn($context, $deadline)) {
+                break;
+            }
+
+            $lookups++;
+
+            try {
+                $imdbId = $this->source->imdbId($tmdbId, $context);
+            } catch (SourceUnavailable $exception) {
+                $this->misconfiguration->reportIfMisconfigured($exception, $context);
+
+                break;
+            }
+
+            $this->rememberImdbId($tmdbId, $imdbId, $context, $generation);
+            $remembered[$tmdbId] = $imdbId;
+        }
+
+        return array_filter($remembered, is_string(...));
+    }
+
     /** The stored Movie for a catalog id, without asking the source. */
     public function findByCatalogId(int $tmdbId): ?Movie
     {
@@ -258,6 +313,7 @@ class Catalog
             $this->storeRelations($movie, $details);
             $this->ratings->record(RatingSourceName::Tmdb, (string) $movie->tmdb_id, $details->voteAverage, $details->voteCount);
             $this->storeDetails($this->detailsKey($movie->tmdb_id, $context), $details);
+            $this->rememberImdbId($movie->tmdb_id, $details->imdbId, $context);
 
             return CatalogResult::fresh($details);
         });
@@ -330,7 +386,8 @@ class Catalog
      * that holds details from the Catalog source, then deletes the genres and Streaming services nothing references
      * any more, and the Discover payload. Users' facts survive. Movies are taken once each, in id order, so a refresh running
      * meanwhile can't keep it going; one that runs afterwards fetches the Movie again, so the source's token should
-     * be removed first. A refresh running meanwhile can also lose its genre links, which cascade when a genre is
+     * be removed first. The IMDb ids remembered for Movies with no row can't be listed, so a new purge generation
+     * makes them unreachable. A refresh running meanwhile can also lose its genre links, which cascade when a genre is
      * deleted, or fail. Cached search pages aren't listed anywhere, so they are left to expire within
      * `search.stale_seconds`. Returns how many Movies were cleared and how many ratings deleted.
      *
@@ -355,7 +412,11 @@ class Catalog
         while ($this->availability->deleteUnreferencedServices($batchSize) === $batchSize) {
         }
 
-        Cache::forget($this->discover->key(new CatalogContext(config('catalog.language'))));
+        $context = new CatalogContext(config('catalog.language'));
+        Cache::forget($this->discover->key($context));
+        $generationKey = $this->keys->build('purge-generation', [], $context);
+        Cache::add($generationKey, 0);
+        Cache::increment($generationKey);
 
         return ['movies' => $cleared, 'ratings' => $ratings];
     }
@@ -483,6 +544,7 @@ class Catalog
 
         foreach ($purged as $tmdbId) {
             Cache::forget($this->detailsKey($tmdbId, $context));
+            $this->forgetImdbId($tmdbId, $context);
         }
 
         return count($candidateIds);
@@ -520,6 +582,7 @@ class Catalog
         $movie->availabilities()->delete();
         $this->ratings->forget(RatingSourceName::Tmdb, (string) $movie->tmdb_id);
         Cache::forget($this->detailsKey($movie->tmdb_id, $context));
+        $this->forgetImdbId($movie->tmdb_id, $context);
     }
 
     /**
@@ -587,6 +650,81 @@ class Catalog
         $results = SearchResults::fromArray($cached['results'] ?? null);
 
         return $results === null ? null : ['fetchedAt' => $fetchedAt, 'results' => $results];
+    }
+
+    /**
+     * What is remembered of the catalog ids' IMDb ids: a string, null for a Movie the source has none for, and no
+     * entry for one not remembered.
+     *
+     * @param  list<int>  $tmdbIds
+     * @return array<int, string|null>
+     */
+    private function rememberedImdbIds(array $tmdbIds): array
+    {
+        $context = new CatalogContext(config('catalog.language'));
+        $generation = $this->purgeGeneration($context);
+        $entries = Cache::many(array_map(fn (int $tmdbId): string => $this->imdbIdKey($tmdbId, $context, $generation), $tmdbIds));
+        $remembered = [];
+
+        foreach ($tmdbIds as $tmdbId) {
+            $entry = $entries[$this->imdbIdKey($tmdbId, $context, $generation)] ?? null;
+
+            if (is_array($entry) && array_key_exists('imdbId', $entry)) {
+                $remembered[$tmdbId] = is_string($entry['imdbId']) ? $entry['imdbId'] : null;
+            }
+        }
+
+        return $remembered;
+    }
+
+    private function rememberImdbId(int $tmdbId, ?string $imdbId, CatalogContext $context, ?int $generation = null): void
+    {
+        Cache::put(
+            $this->imdbIdKey($tmdbId, $context, $generation ?? $this->purgeGeneration($context)),
+            ['imdbId' => $imdbId],
+            $imdbId === null ? now()->addSeconds(config('catalog.imdb_lookup.missing_lifetime_seconds')) : now()->addDays(config('catalog.imdb_lookup.lifetime_days')),
+        );
+    }
+
+    private function forgetImdbId(int $tmdbId, CatalogContext $context): void
+    {
+        Cache::forget($this->imdbIdKey($tmdbId, $context, $this->purgeGeneration($context)));
+    }
+
+    /**
+     * Takes a place in this second's `imdb_lookup.requests_per_second`, which every visitor's lookups share, waiting
+     * for the next second while it is full, until `$deadline`. The waits are counted as well, so the wait stays
+     * bounded whatever the clock says.
+     */
+    private function awaitImdbLookupTurn(CatalogContext $context, CarbonInterface $deadline): bool
+    {
+        $key = $this->keys->build('imdb-lookup-throttle', [], $context);
+        $maximumWaits = intdiv(config('catalog.imdb_lookup.budget_seconds') * 1000, config('catalog.imdb_lookup.wait_milliseconds'));
+
+        for ($waits = 0; ! RateLimiter::attempt($key, config('catalog.imdb_lookup.requests_per_second'), fn (): bool => true, 1); $waits++) {
+            if ($waits >= $maximumWaits || now()->greaterThan($deadline)) {
+                return false;
+            }
+
+            Sleep::for(config('catalog.imdb_lookup.wait_milliseconds'))->milliseconds();
+        }
+
+        return true;
+    }
+
+    /**
+     * Part of every remembered IMDb id's key, raised by `catalog:purge`: it can't list the ids remembered for Movies
+     * with no row, so it makes them unreachable instead, and they expire unread. It never expires itself, since a
+     * generation that reset would make an earlier purge's ids reachable again.
+     */
+    private function purgeGeneration(CatalogContext $context): int
+    {
+        return (int) Cache::get($this->keys->build('purge-generation', [], $context), 0);
+    }
+
+    private function imdbIdKey(int $tmdbId, CatalogContext $context, int $generation): string
+    {
+        return $this->keys->build('imdb-id', ['tmdb_id' => $tmdbId, 'generation' => $generation], $context);
     }
 
     private function detailsKey(int $tmdbId, CatalogContext $context): string

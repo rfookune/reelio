@@ -10,6 +10,7 @@ use App\Services\Catalog\CatalogResult;
 use App\Services\Catalog\DiscoverMovie;
 use App\Services\Catalog\Sources\MovieListing;
 use App\Services\Catalog\Sources\SearchResults;
+use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\ExternalRating;
 use App\Services\Ratings\Ratings;
 use Illuminate\Http\Request;
@@ -21,7 +22,8 @@ use Inertia\ScrollMetadata;
  * The Search page's props for one response, asking the Catalog for the search at most once. A query shorter than
  * `search.minimum_query_length` isn't searched. Trending, from the stored Discover payload, shows when there is no
  * search, no result or no answer. Each Movie links to its canonical URL when it has a row, else to the entry route,
- * both with the `search` referrer, and shows one External rating: IMDb when its row has an IMDb rating, else TMDB.
+ * both with the `search` referrer, and shows one External rating: IMDb when its IMDb id is known, from its row or
+ * remembered, and rated, else TMDB. The ids not known are looked up afterwards, by `lookedUpRatings()`.
  * A results page records `movie_searched`; a reload of `userMovies` alone records nothing and asks no source.
  *
  * @phpstan-type Card array{tmdbId: int, title: ?string, year: ?int, posterPath: ?string, ratings: list<array{source: string, name: string, value: float, voteCount: int}>, href: string}
@@ -57,18 +59,40 @@ class SearchPage
      */
     public static function fromRequest(Request $request, Catalog $catalog, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
-        $query = $request->query('q');
-        $page = $request->query('page');
-
         return new self(
             $catalog,
             $ratingSources,
             $recordEvent,
             $request->user(),
-            is_string($query) ? Str::trim(mb_substr(Str::trim($query), 0, config('catalog.search.maximum_query_length'))) : '',
-            max(1, min(Catalog::LAST_SOURCE_PAGE, is_string($page) && ctype_digit($page) ? (int) $page : 1)),
+            self::queryFrom($request),
+            self::pageFrom($request),
             self::reloadsUserMoviesOnly($request),
         );
+    }
+
+    /**
+     * The page asked for by the Search page's lookups of the IMDb ratings: the request's query and page, read as
+     * `fromRequest()` reads them, from the cache alone. It searches nothing and records nothing.
+     */
+    public static function cachedFromRequest(Request $request, Catalog $catalog, Ratings $ratingSources, RecordEvent $recordEvent): self
+    {
+        return new self($catalog, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), readsCacheOnly: true);
+    }
+
+    /** The request's `q`, trimmed of Unicode whitespace and cut to `search.maximum_query_length` characters. */
+    private static function queryFrom(Request $request): string
+    {
+        $query = $request->query('q');
+
+        return is_string($query) ? Str::trim(mb_substr(Str::trim($query), 0, config('catalog.search.maximum_query_length'))) : '';
+    }
+
+    /** The request's `page`, kept from 1 to the source's last page. */
+    private static function pageFrom(Request $request): int
+    {
+        $page = $request->query('page');
+
+        return max(1, min(Catalog::LAST_SOURCE_PAGE, is_string($page) && ctype_digit($page) ? (int) $page : 1));
     }
 
     /** Whether the request is Search's partial reload of `userMovies` alone, which searches nothing new. */
@@ -86,7 +110,7 @@ class SearchPage
      * The page's results. A signed-in viewer's first page records `movie_searched` with the query's length and the
      * result count, never its text.
      *
-     * @return array{data: list<Card>}
+     * @return array{data: list<array{tmdbId: int, title: ?string, year: ?int, posterPath: ?string, ratings: list<array{source: string, name: string, value: float, voteCount: int}>, href: string, page: int}>}
      */
     public function results(): array
     {
@@ -96,7 +120,39 @@ class SearchPage
             $this->recordEvent->handle($this->user, 'movie_searched', ['query_length' => mb_strlen($this->query), 'result_count' => $results->totalResults]);
         }
 
-        return ['data' => array_map(fn (MovieListing $listing): array => $this->card($listing->tmdbId, $listing->title, $listing->releaseDate, $listing->posterPath), $results->listings ?? [])];
+        return ['data' => array_map(fn (MovieListing $listing): array => [...$this->card($listing->tmdbId, $listing->title, $listing->releaseDate, $listing->posterPath), 'page' => $this->page], $results->listings ?? [])];
+    }
+
+    /**
+     * The ratings, by catalog id, of the Movies on this page that have an IMDb rating once their IMDb id is known,
+     * from a lookup if need be, which the page's cards couldn't show without one. A Movie whose row has its IMDb id
+     * isn't listed, since its card already shows it. Only the cached page's own ids are looked up, never ids a
+     * visitor supplies, and nothing is looked up while IMDb is switched off.
+     *
+     * @return array<int, list<array{source: string, name: string, value: float, voteCount: int}>>
+     */
+    public function lookedUpRatings(): array
+    {
+        $listings = $this->search()?->value->listings ?? [];
+
+        if (! RatingSourceName::Imdb->isEnabled() || $listings === []) {
+            return [];
+        }
+
+        $tmdbIdsWithoutImdbId = array_values(array_filter(
+            array_map(fn (MovieListing $listing): int => $listing->tmdbId, $listings),
+            fn (int $tmdbId): bool => $this->rows()->get($tmdbId)?->imdb_id === null,
+        ));
+        $imdbIds = $this->catalog->lookUpImdbIds($tmdbIdsWithoutImdbId);
+        $found = [];
+
+        foreach (RatingsByCatalogId::for($this->ratingSources, $imdbIds) as $tmdbId => $ratings) {
+            if (array_filter($ratings, fn (ExternalRating $rating): bool => $rating->source === RatingSourceName::Imdb) !== []) {
+                $found[$tmdbId] = array_map(fn (ExternalRating $rating): array => $rating->toArray(), $ratings);
+            }
+        }
+
+        return $found;
     }
 
     /**
@@ -209,13 +265,26 @@ class SearchPage
         return $this->rows ??= Movie::query()->whereIn('tmdb_id', $this->catalogIds())->get()->keyBy('tmdb_id');
     }
 
+    /**
+     * The IMDb ids by catalog id, with those already remembered filling the gaps.
+     *
+     * @param  array<int, ?string>  $imdbIds
+     * @return array<int, ?string>
+     */
+    private function withRememberedImdbIds(array $imdbIds): array
+    {
+        $missing = array_keys(array_filter($imdbIds, fn (?string $imdbId): bool => $imdbId === null));
+
+        return array_replace($imdbIds, $this->catalog->cachedImdbIds($missing));
+    }
+
     /** @return array<int, list<ExternalRating>> keyed by catalog id */
     private function ratings(): array
     {
         $trendingImdbIds = collect($this->trendingMovies())->mapWithKeys(fn (DiscoverMovie $movie): array => [$movie->tmdbId => $movie->imdbId]);
 
-        return $this->ratings ??= RatingsByCatalogId::for($this->ratingSources, collect($this->catalogIds())->mapWithKeys(fn (int $tmdbId): array => [
+        return $this->ratings ??= RatingsByCatalogId::for($this->ratingSources, $this->withRememberedImdbIds(collect($this->catalogIds())->mapWithKeys(fn (int $tmdbId): array => [
             $tmdbId => $this->rows()->get($tmdbId)->imdb_id ?? $trendingImdbIds->get($tmdbId),
-        ])->all());
+        ])->all()));
     }
 }

@@ -118,6 +118,7 @@ test('results are 20 a page in TMDB\'s order, poster-less Movies kept, each with
             'posterPath' => '/poster1.jpg',
             'ratings' => [['source' => 'tmdb', 'name' => 'TMDB', 'value' => 7.5, 'voteCount' => 1000]],
             'href' => route('movies.entry', ['tmdbId' => 1, 'referrer' => 'search']),
+            'page' => 1,
         ])
         ->where('results.data.1.ratings.0.source', 'imdb')
         ->where('results.data.1.href', $stored->canonicalUrl('search'))
@@ -253,3 +254,18 @@ test('search is limited to 60 requests a minute per user or IP', function () {
     $this->get(route('search'))->assertTooManyRequests();
     $this->actingAs(User::factory()->create())->get(route('search'))->assertOk();
 });
+
+test('each result says which page of the search it is on, so its IMDb rating can be asked for by that page', function () {
+    fakeSearchWithTrending(['inter' => [[movieListing(1)], [movieListing(2)]]]);
+
+    $this->get(route('search', ['q' => 'inter', 'page' => 2]))->assertInertia(fn (Assert $page) => $page
+        ->where('results.data.0.tmdbId', 2)
+        ->where('results.data.0.page', 2));
+});
+
+test('the page says whether the IMDb ratings of its results are looked up, which is not while IMDb is switched off', function (bool $enabled) {
+    config(['ratings.sources.imdb.enabled' => $enabled]);
+    fakeSearchWithTrending();
+
+    $this->get(route('search'))->assertInertia(fn (Assert $page) => $page->where('looksUpImdbRatings', $enabled));
+})->with([true, false]);

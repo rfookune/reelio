@@ -4,6 +4,8 @@ use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\FakeCatalogSource;
 use App\Services\Catalog\Sources\MovieDetails;
 use App\Services\Catalog\Sources\MovieListing;
+use App\Services\Ratings\Enums\RatingSourceName;
+use App\Services\Ratings\RatingStore;
 use Illuminate\Support\Facades\RateLimiter;
 
 /**
@@ -175,4 +177,66 @@ it('says inline when searches come too fast, and Retry searches again from the i
         ->assertNoJavaScriptErrors();
 
     expect($page->script('document.activeElement.id'))->toBe('search-query');
+});
+
+/** Holds back, in the browser, the sending of each request for a page's IMDb ratings by the given milliseconds. */
+function delayRatingsRequests(int $milliseconds): string
+{
+    return sprintf(<<<'JS'
+        (() => {
+            const open = XMLHttpRequest.prototype.open;
+            const send = XMLHttpRequest.prototype.send;
+            XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+                this.__delayed = new URL(url, location.href).pathname === '/search/ratings';
+                return open.call(this, method, url, ...rest);
+            };
+            XMLHttpRequest.prototype.send = function (...body) {
+                return this.__delayed ? setTimeout(() => send.apply(this, body), %d) : send.apply(this, body);
+            };
+            return true;
+        })()
+        JS, $milliseconds);
+}
+
+it('shows a card\'s TMDB rating as a placeholder while its IMDb rating is looked up, then the IMDb rating', function () {
+    config(['ratings.sources.imdb.enabled' => true]);
+    app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000001', 8.1, 5000);
+    $source = fakeBrowserSearch(['inter' => [[movieListing(1, voteAverage: 7.5), movieListing(2, voteAverage: 6.5)]]]);
+    $source->imdbIds = [1 => 'tt0000001'];
+
+    $page = visitWithCsp('/search');
+    $page->script(delayRatingsRequests(1500));
+
+    $page->typeSlowly('#search-query', 'inter', 20)
+        ->assertPresent('[data-tmdb-id="1"] [data-slot="ratings-pending"]')
+        ->assertPresent('[data-tmdb-id="2"] [data-slot="ratings-pending"]')
+        ->wait(2)
+        ->assertSeeIn('[data-tmdb-id="1"] [data-slot="external-rating"]', 'IMDb')
+        ->assertSeeIn('[data-tmdb-id="1"] [data-slot="external-rating"]', '8.1')
+        ->assertMissing('[data-tmdb-id="1"] [data-slot="ratings-pending"]')
+        ->assertSeeIn('[data-tmdb-id="2"] [data-slot="external-rating"]', 'TMDB')
+        ->assertSeeIn('[data-tmdb-id="2"] [data-slot="external-rating"]', '6.5')
+        ->assertMissing('[data-slot="ratings-pending"]')
+        ->assertNoJavaScriptErrors();
+
+    expect(array_column($source->imdbIdCalls, 'tmdbId'))->toBe([1, 2]);
+});
+
+it('looks up the IMDb ratings of each further page as it is shown, and none a second time', function () {
+    config(['ratings.sources.imdb.enabled' => true, 'catalog.imdb_lookup.requests_per_second' => 100]);
+    app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000021', 7.7, 300);
+    $source = fakeBrowserSearch(['inter' => [movieListings(1, 20), [movieListing(21, voteAverage: 5.5)]]]);
+    $source->imdbIds = [21 => 'tt0000021'];
+
+    $page = visitWithCsp('/search');
+    $page->typeSlowly('#search-query', 'inter', 20)
+        ->assertSeeIn('[data-slot=search-results]', '21 results')
+        ->wait(1)
+        ->click('Show more results')
+        ->assertSeeIn('[data-tmdb-id="21"] [data-slot="external-rating"]', 'IMDb')
+        ->assertSeeIn('[data-tmdb-id="21"] [data-slot="external-rating"]', '7.7')
+        ->assertNoJavaScriptErrors();
+
+    expect(array_count_values(array_column($source->imdbIdCalls, 'tmdbId')))->each->toBe(1)
+        ->and(array_column($source->imdbIdCalls, 'tmdbId'))->toContain(21)->toHaveCount(21);
 });

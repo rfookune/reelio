@@ -32,8 +32,10 @@ const props = withDefaults(
         /** Load the poster at once, for cards above the fold. */
         eager?: boolean;
         showBookmark?: boolean;
+        /** The card's ratings are still being looked up, so a placeholder shows where they go. */
+        ratingPending?: boolean;
     }>(),
-    { eager: false, showBookmark: true },
+    { eager: false, showBookmark: true, ratingPending: false },
 );
 
 const title = computed(() => props.movie.title ?? 'Movie');
@@ -74,7 +76,11 @@ const title = computed(() => props.movie.title ?? 'Movie');
             <span v-if="movie.year !== null" class="text-muted tabular-nums">
                 {{ movie.year }}
             </span>
-            <ExternalRatings :ratings="movie.ratings" variant="single" />
+            <ExternalRatings
+                :ratings="movie.ratings"
+                variant="single"
+                :pending="ratingPending"
+            />
             <slot name="date" />
         </div>
     </article>

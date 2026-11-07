@@ -162,6 +162,32 @@ class TmdbCatalogSource implements CatalogSource
     }
 
     /**
+     * The Movie's IMDb title id from its external ids, a response far smaller than its details. TMDB's 404 means it
+     * doesn't know the Movie, and an id that isn't an IMDb title id (`tt` and digits) counts as none.
+     */
+    public function imdbId(int $tmdbId, CatalogContext $context): ?string
+    {
+        $response = $this->get("movie/{$tmdbId}/external_ids", [], $context);
+
+        if ($response === null) {
+            return null;
+        }
+
+        try {
+            $data = Validator::make((array) $response->json(), [
+                'id' => ['required', 'integer', 'in:'.$tmdbId],
+                'imdb_id' => ['nullable', 'string', 'max:255'],
+            ])->validate();
+        } catch (ValidationException $exception) {
+            throw new SourceUnavailable('The Catalog source returned invalid external ids.', previous: $exception);
+        }
+
+        $imdbId = $data['imdb_id'] ?? null;
+
+        return is_string($imdbId) && preg_match('/^tt\d+$/D', $imdbId) === 1 ? $imdbId : null;
+    }
+
+    /**
      * TMDB's Movie genre list, by id, with names in the context's language.
      *
      * @return list<array{id: int, name: string}>

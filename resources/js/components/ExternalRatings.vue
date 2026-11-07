@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import ShimmerSkeleton from '@/components/ShimmerSkeleton.vue';
 import { formatVoteCount } from '@/lib/tmdb';
 
 export type ExternalRating = {
@@ -14,8 +15,10 @@ const props = withDefaults(
         ratings: ExternalRating[];
         /** `all` lists every source; `single` shows only the first, as cards do. */
         variant?: 'all' | 'single';
+        /** The ratings are still being looked up: a placeholder shows in place of them. */
+        pending?: boolean;
     }>(),
-    { variant: 'all' },
+    { variant: 'all', pending: false },
 );
 
 const shown = computed(() =>
@@ -32,7 +35,11 @@ const sourceClass = {
 
 <template>
     <div data-slot="external-ratings" class="flex flex-col gap-1">
+        <div v-if="pending" data-slot="ratings-pending" class="py-0.5">
+            <ShimmerSkeleton class="h-4 w-28" />
+        </div>
         <p
+            v-else
             class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted"
         >
             <template v-if="shown.length > 0">
@@ -62,7 +69,11 @@ const sourceClass = {
             </template>
             <span v-else>Not yet rated</span>
         </p>
-        <p v-if="showsImdb" data-slot="imdb-credit" class="text-xs text-muted">
+        <p
+            v-if="showsImdb && !pending"
+            data-slot="imdb-credit"
+            class="text-xs text-muted"
+        >
             Information courtesy of IMDb (<a
                 href="https://www.imdb.com"
                 target="_blank"

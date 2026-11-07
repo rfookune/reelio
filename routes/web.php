@@ -10,6 +10,7 @@ use App\Http\Controllers\MovieController;
 use App\Http\Controllers\MovieEntryController;
 use App\Http\Controllers\MoviePickerController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SearchRatingsController;
 use App\Http\Controllers\UndoController;
 use App\Http\Controllers\UserMovieListController;
 use App\Http\Controllers\WatchedController;
@@ -21,6 +22,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', DiscoverController::class)->name('home');
 
 Route::get('search', SearchController::class)->middleware('throttle:search')->name('search');
+Route::get('search/ratings', SearchRatingsController::class)->middleware('throttle:search-ratings')->name('search.ratings');
 Route::get('watchlist', UserMovieListController::class)->middleware('auth')->name('watchlist');
 Route::get('watched', UserMovieListController::class)->middleware('auth')->name('watched');
 Route::get('watchlist/pick', MoviePickerController::class)->middleware(['auth', 'throttle:movie-picker'])->name('watchlist.pick');

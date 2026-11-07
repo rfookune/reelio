@@ -558,3 +558,40 @@ test('the genre list fails explicitly on unsuccessful, empty or malformed respon
     'no genres' => [['genres' => []], 200],
     'a nameless genre' => [['genres' => [['id' => 28]]], 200],
 ]);
+
+test('a Movie\'s IMDb id is read from the recorded external ids with one small call', function () {
+    config(['catalog.tmdb.token' => 'test-read-token']);
+    Http::fake(['https://api.themoviedb.org/3/movie/157336/external_ids*' => Http::response(json_decode(file_get_contents(base_path('tests/Fixtures/tmdb/external_ids_157336.json')), true, flags: JSON_THROW_ON_ERROR))]);
+
+    expect(app(TmdbCatalogSource::class)->imdbId(157336, new CatalogContext))->toBe('tt0816692');
+    Http::assertSentCount(1);
+    Http::assertSent(fn (Request $request) => $request->hasHeader('Authorization', 'Bearer test-read-token') && $request->url() === 'https://api.themoviedb.org/3/movie/157336/external_ids');
+});
+
+test('a Movie with no usable IMDb id, or none at TMDB, has none', function (array $body, int $status) {
+    Http::fake(['https://api.themoviedb.org/3/movie/9/external_ids*' => Http::response($body, $status)]);
+
+    expect(app(TmdbCatalogSource::class)->imdbId(9, new CatalogContext))->toBeNull();
+})->with([
+    'null' => [['id' => 9, 'imdb_id' => null], 200],
+    'empty' => [['id' => 9, 'imdb_id' => ''], 200],
+    'not an IMDb title id' => [['id' => 9, 'imdb_id' => 'nm0000093'], 200],
+    'a missing Movie' => [['status_code' => 34], 404],
+]);
+
+test('the external ids fail explicitly on unsuccessful or malformed responses', function (array $body, int $status) {
+    Http::fake(['https://api.themoviedb.org/3/movie/9/external_ids*' => Http::response($body, $status)]);
+
+    expect(fn () => app(TmdbCatalogSource::class)->imdbId(9, new CatalogContext))->toThrow(SourceUnavailable::class);
+})->with([
+    'server error' => [[], 500],
+    'another Movie\'s ids' => [['id' => 10, 'imdb_id' => 'tt0000001'], 200],
+    'no id' => [['imdb_id' => 'tt0000001'], 200],
+    'a non-string IMDb id' => [['id' => 9, 'imdb_id' => ['tt0000001']], 200],
+]);
+
+test('a rejected token on the external ids is a configuration error', function () {
+    Http::fake(['https://api.themoviedb.org/3/movie/9/external_ids*' => Http::response([], 401)]);
+
+    expect(fn () => app(TmdbCatalogSource::class)->imdbId(9, new CatalogContext))->toThrow(SourceMisconfigured::class);
+});

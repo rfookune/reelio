@@ -7,8 +7,12 @@ import type { PosterCardMovie } from '@/components/movie/PosterCard.vue';
 import PosterCardSkeleton from '@/components/movie/PosterCardSkeleton.vue';
 import { Button } from '@/components/ui/button';
 import { announce } from '@/composables/useAnnouncer';
+import { useLookedUpRatings } from '@/composables/useLookedUpRatings';
 import { search } from '@/routes';
 import type { UserMovies } from '@/types';
+
+/** A result card, and the page of the search it is on. */
+type SearchResult = PosterCardMovie & { page: number };
 
 const props = defineProps<{
     imageBaseUrl: string;
@@ -16,13 +20,21 @@ const props = defineProps<{
     query: string;
     minimumQueryLength: number;
     maximumQueryLength: number;
-    results: { data: PosterCardMovie[] };
+    /** Whether the IMDb ratings of results are looked up; they aren't while IMDb is switched off. */
+    looksUpImdbRatings: boolean;
+    results: { data: SearchResult[] };
     totalResults: number | null;
     /** How the Catalog answered the search; null with no search. */
     status: 'fresh' | 'stale' | 'unavailable' | null;
     trending: PosterCardMovie[];
     userMovies: UserMovies;
 }>();
+
+const { withLookedUpRatings, isLookingUp } = useLookedUpRatings(
+    () => props.query,
+    () => props.results.data,
+    () => props.looksUpImdbRatings,
+);
 
 const DEBOUNCE_MILLISECONDS = 300;
 const EAGER_CARDS = 6;
@@ -349,10 +361,11 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
                     >
                         <PosterCard
                             :image-base-url="imageBaseUrl"
-                            :movie="movie"
+                            :movie="withLookedUpRatings(movie)"
                             :facts="userMovies[movie.tmdbId]"
                             source="search"
                             :eager="index < EAGER_CARDS"
+                            :rating-pending="isLookingUp(movie)"
                         />
                     </li>
                 </ul>

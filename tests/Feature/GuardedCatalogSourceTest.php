@@ -139,3 +139,17 @@ test('interactive section calls share the breaker', function () {
         ->and($inner->sectionCalls)->toHaveCount(5)
         ->and($guarded->section(SectionQuery::of(SectionKind::Trending), 1, new CatalogContext(profile: CatalogProfile::Background))->listings)->toBe([]);
 });
+
+test('IMDb id lookups go through the breaker and the live throttle like any interactive call', function () {
+    $inner = new FakeCatalogSource(failing: true);
+    $guarded = new GuardedCatalogSource($inner, new CacheKey);
+
+    foreach (range(1, 5) as $ignored) {
+        expect(fn () => $guarded->imdbId(1, new CatalogContext))->toThrow(SourceUnavailable::class);
+    }
+    $inner->failing = false;
+
+    expect(fn () => $guarded->imdbId(1, new CatalogContext))->toThrow(SourceUnavailable::class)
+        ->and($inner->imdbIdCalls)->toHaveCount(5)
+        ->and($guarded->imdbId(1, new CatalogContext(profile: CatalogProfile::Background)))->toBeNull();
+});

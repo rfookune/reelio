@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\RecordEvent;
 use App\Http\Support\SearchPage;
 use App\Services\Catalog\Catalog;
+use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\Ratings;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -26,6 +27,7 @@ class SearchController extends Controller
             'query' => $page->query,
             'minimumQueryLength' => config('catalog.search.minimum_query_length'),
             'maximumQueryLength' => config('catalog.search.maximum_query_length'),
+            'looksUpImdbRatings' => RatingSourceName::Imdb->isEnabled(),
             'results' => Inertia::scroll(fn (): array => $page->results(), metadata: fn (): ScrollMetadata => $page->scrollMetadata())->matchOn('data.tmdbId'),
             'totalResults' => fn (): ?int => $page->totalResults(),
             'status' => fn (): ?string => $page->status(),

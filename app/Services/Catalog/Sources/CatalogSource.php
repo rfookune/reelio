@@ -15,6 +15,12 @@ interface CatalogSource
     public function search(string $query, int $page, CatalogContext $context): SearchResults;
 
     /**
+     * The Movie's IMDb title id, which a list or a search doesn't carry; null when the source has none for it, or
+     * doesn't know the Movie. A failure is an exception, not a null.
+     */
+    public function imdbId(int $tmdbId, CatalogContext $context): ?string;
+
+    /**
      * The source's whole list of Movie genres. An empty or malformed list is a failure, not an empty answer.
      *
      * @return list<array{id: int, name: string}>
