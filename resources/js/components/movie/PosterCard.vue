@@ -31,8 +31,9 @@ const props = withDefaults(
         source: UserMovieActionSource;
         /** Load the poster at once, for cards above the fold. */
         eager?: boolean;
+        showBookmark?: boolean;
     }>(),
-    { eager: false },
+    { eager: false, showBookmark: true },
 );
 
 const title = computed(() => props.movie.title ?? 'Movie');
@@ -52,7 +53,7 @@ const title = computed(() => props.movie.title ?? 'Movie');
                     :loading="eager ? 'eager' : 'lazy'"
                 />
             </Link>
-            <div class="absolute top-1.5 right-1.5">
+            <div v-if="showBookmark" class="absolute top-1.5 right-1.5">
                 <BookmarkToggle
                     :tmdb-id="movie.tmdbId"
                     :title="title"

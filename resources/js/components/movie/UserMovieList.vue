@@ -6,6 +6,7 @@ import PosterCard from '@/components/movie/PosterCard.vue';
 import PosterCardSkeleton from '@/components/movie/PosterCardSkeleton.vue';
 import UserMovieCardMenu from '@/components/movie/UserMovieCardMenu.vue';
 import { Button } from '@/components/ui/button';
+import { useShortDate } from '@/composables/useShortDate';
 import { watched, watchlist } from '@/routes';
 import type { UserMovieList, UserMovieListPageProps } from '@/types';
 
@@ -35,17 +36,11 @@ const sorts = computed(() => [
     ['newest-release', 'Newest release'],
     ['oldest-release', 'Oldest release'],
 ]);
-/** Both lists render on the client, where the browser supplies the viewer's locale and time zone. */
-const dateFormatter = new Intl.DateTimeFormat(undefined, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-});
-const formatShortDate = (timestamp: string): string =>
-    dateFormatter.format(new Date(timestamp));
+const formatShortDate = useShortDate({ localized: true });
 const pending = ref(false);
 const failure = ref<string | null>(null);
 const list = ref<HTMLElement | null>(null);
+const container = ref<HTMLElement | null>(null);
 const emptyHeading = ref<HTMLElement | null>(null);
 const heading = ref<HTMLElement | null>(null);
 const count = computed(
@@ -58,11 +53,19 @@ const cards = computed(() =>
         (movie) => props.userMovies[movie.tmdbId]?.[fact.value],
     ),
 );
+const unavailableCards = computed(() =>
+    props.unavailableMovies.filter(
+        (movie) => props.userMovies[movie.tmdbId]?.[fact.value],
+    ),
+);
 let menuRemoval: number | null = null;
 
 /** Keep hidden cards in the merged pages so failure and Undo restore them in their original position. */
 watch(
-    () => cards.value.map((movie) => movie.tmdbId),
+    () =>
+        [...unavailableCards.value, ...cards.value].map(
+            (movie) => movie.tmdbId,
+        ),
     async (current, previous) => {
         const control = document.activeElement as HTMLElement | null;
         const focusedMovie = control?.closest<HTMLElement>('[data-tmdb-id]');
@@ -90,11 +93,14 @@ watch(
         if (next === undefined) {
             (emptyHeading.value ?? heading.value)?.focus();
         } else {
-            list.value
-                ?.querySelector<HTMLElement>(
-                    `[data-tmdb-id="${next}"] [data-slot="${slot}"]`,
-                )
-                ?.focus();
+            const card = container.value?.querySelector<HTMLElement>(
+                `[data-tmdb-id="${next}"]`,
+            );
+            (
+                card?.querySelector<HTMLElement>(`[data-slot="${slot}"]`) ??
+                card?.querySelector<HTMLElement>('[data-slot="movie-menu"]') ??
+                heading.value
+            )?.focus();
         }
     },
 );
@@ -107,7 +113,13 @@ function changeSort(sort: string): void {
             replace: true,
             preserveState: true,
             reset: ['movies'],
-            only: ['sort', 'movies', 'trending', 'userMovies'],
+            only: [
+                'sort',
+                'movies',
+                'unavailableMovies',
+                'trending',
+                'userMovies',
+            ],
             onStart: () => {
                 pending.value = true;
                 failure.value = null;
@@ -124,7 +136,7 @@ function changeSort(sort: string): void {
 }
 
 const showMoreParams = {
-    only: ['userMovies'],
+    only: ['userMovies', 'unavailableMovies'],
     onStart: () => {
         failure.value = null;
     },
@@ -140,7 +152,7 @@ const showMoreParams = {
 </script>
 
 <template>
-    <div class="flex flex-col gap-8 py-8">
+    <div ref="container" class="flex flex-col gap-8 py-8">
         <Head :title="title"><meta name="robots" content="noindex" /></Head>
         <nav
             aria-label="Your movies"
@@ -226,6 +238,45 @@ const showMoreParams = {
                 class="self-start text-sm underline underline-offset-4"
                 >Your Watchlist</Link
             >
+        </section>
+        <section
+            v-if="unavailableCards.length > 0"
+            aria-labelledby="unavailable-heading"
+            class="flex flex-col gap-4"
+        >
+            <h2 id="unavailable-heading" class="text-xl font-semibold">
+                No longer available
+            </h2>
+            <p class="text-sm text-muted">
+                TMDB has removed these movies, so we can't show their details.
+            </p>
+            <ul :class="GRID">
+                <li v-for="movie in unavailableCards" :key="movie.tmdbId">
+                    <PosterCard
+                        :image-base-url="imageBaseUrl"
+                        :movie="movie"
+                        :facts="userMovies[movie.tmdbId]"
+                        :source="collection"
+                        :show-bookmark="false"
+                    >
+                        <template #controls>
+                            <UserMovieCardMenu
+                                :tmdb-id="movie.tmdbId"
+                                :title="movie.title"
+                                :collection="collection"
+                                unavailable
+                                @removing="menuRemoval = movie.tmdbId"
+                            />
+                        </template>
+                        <template #date>
+                            <span class="text-muted tabular-nums"
+                                >{{ isWatchlist ? 'Added' : 'Watched' }}
+                                {{ formatShortDate(movie.date) }}</span
+                            >
+                        </template>
+                    </PosterCard>
+                </li>
+            </ul>
         </section>
         <InfiniteScroll
             v-if="movies.data.length > 0"

@@ -2,10 +2,15 @@ import type { PosterCardMovie } from '@/components/movie/PosterCard.vue';
 
 export type UserMovieList = 'watchlist' | 'watched';
 
+interface UnavailableMovie extends PosterCardMovie {
+    date: string;
+}
+
 export type UserMovieListPageProps = {
     imageBaseUrl: string;
     sort: string;
     movies: { data: PosterCardMovie[] };
+    unavailableMovies: UnavailableMovie[];
     trending: PosterCardMovie[];
     userMovies: UserMovies;
 };

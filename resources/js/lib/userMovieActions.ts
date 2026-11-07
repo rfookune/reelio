@@ -1,4 +1,4 @@
-import type { Errors, UrlMethodPair } from '@inertiajs/core';
+import type { Errors, Page, UrlMethodPair } from '@inertiajs/core';
 import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { watched as watchedPage, watchlist as watchlistPage } from '@/routes';
@@ -59,14 +59,19 @@ function visitUserMovies({
 
         return false;
     };
+    const removedMovieId =
+        usePage().component === 'Error'
+            ? usePage().props.removedMovieId
+            : undefined;
 
     router.visit(route, {
         data,
         async: true,
-        only:
-            usePage().component === 'Watchlist'
-                ? ['userMovies', 'trending']
-                : ['userMovies'],
+        only: removedMovieId
+            ? ['userMovies', 'removedMovieId']
+            : usePage().component === 'Watchlist'
+              ? ['userMovies', 'trending']
+              : ['userMovies'],
         preserveScroll: true,
         preserveState: true,
         optimistic: (props) => {
@@ -81,7 +86,21 @@ function visitUserMovies({
         },
         onSuccess: (response) => onSuccess?.(response.component),
         onError: failed,
-        onHttpException: () => failed(),
+        onHttpException: (response) => {
+            const page = response.data as Partial<Page>;
+            // The action returns to the same Removed Movie page, whose successful render still has status 410.
+            if (
+                response.status === 410 &&
+                response.headers['x-inertia'] &&
+                removedMovieId === tmdbId &&
+                page.component === 'Error' &&
+                page.props?.removedMovieId === removedMovieId
+            ) {
+                return;
+            }
+
+            return failed();
+        },
         onNetworkError: () => failed(),
     });
 }
@@ -159,10 +178,14 @@ function undo(
             const movies = usePage().props.movies as
                 | { data: { tmdbId: number }[] }
                 | undefined;
+            const unavailableMovies = usePage().props.unavailableMovies as
+                | { tmdbId: number }[]
+                | undefined;
             if (
                 ((component === 'Watchlist' && restored.watchlisted) ||
                     (component === 'Watched' && restored.watched)) &&
-                !movies?.data.some((movie) => movie.tmdbId === tmdbId)
+                !movies?.data.some((movie) => movie.tmdbId === tmdbId) &&
+                !unavailableMovies?.some((movie) => movie.tmdbId === tmdbId)
             ) {
                 revealUserMovieCard(tmdbId, restoreFocus);
             }
@@ -186,7 +209,7 @@ function revealUserMovieCard(tmdbId: number, restoreFocus: () => void): void {
             preserveScroll: true,
             replace: true,
             reset: ['movies'],
-            only: ['movies', 'userMovies', 'trending'],
+            only: ['movies', 'unavailableMovies', 'userMovies', 'trending'],
             onSuccess: restoreFocus,
         },
     );

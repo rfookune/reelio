@@ -36,7 +36,7 @@ class MovieController extends Controller
         $movieId = filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         abort_if($movieId === false, 404);
         $movie = $catalog->find($movieId);
-        throw_if($movie->isRemoved(), MovieRemoved::class);
+        throw_if($movie->isRemoved(), MovieRemoved::class, $movie);
         $referrer = $request->query('referrer');
 
         if ($slug !== ($movie->slug ?? 'movie')) {

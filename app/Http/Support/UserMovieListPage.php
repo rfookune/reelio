@@ -48,6 +48,17 @@ class UserMovieListPage
         return ScrollMetadata::fromPaginator($this->page());
     }
 
+    /** @return list<array{tmdbId: int, title: string, year: ?int, posterPath: ?string, ratings: array{}, href: string, date: string}> */
+    public function unavailableMovies(): array
+    {
+        return array_values($this->facts()->whereHas('movie', fn (Builder $query): Builder => $query->whereNull('title'))
+            ->with('movie')->orderBy('id')->get()->map(fn (UserMovie $facts): array => [
+                ...$this->card($facts->movie, []),
+                'title' => $facts->movie->isRemoved() ? 'Removed movie' : 'Details temporarily unavailable',
+                'date' => $facts->getAttribute($this->list->dateColumn())->toJSON(),
+            ])->all());
+    }
+
     /** A fresh page starting at the restored Movie, so Undo can reveal it even after a sort reset. */
     public function restoredMovieUrl(int $tmdbId): string
     {

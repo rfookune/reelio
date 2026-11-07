@@ -2,12 +2,14 @@
 
 namespace App\Http\Exceptions;
 
+use App\Models\Movie;
+
 /**
  * The Movie page of a Removed Movie: gone for good, so crawlers drop it, and showing none of its details.
  */
 class MovieRemoved extends ErrorPageException
 {
-    public function __construct()
+    public function __construct(public readonly ?Movie $movie = null)
     {
         parent::__construct(
             410,

@@ -30,6 +30,7 @@ class UserMovieListController extends Controller
         $response = Inertia::render($list->name, [
             'imageBaseUrl' => config('catalog.image_base_url'),
             'sort' => $sort,
+            'unavailableMovies' => fn (): array => $page->unavailableMovies(),
             'movies' => Inertia::scroll(fn (): array => $page->movies(), metadata: fn (): ScrollMetadata => $page->scrollMetadata())->matchOn('data.tmdbId'),
             'trending' => fn (): array => $page->trending(),
             'userMovies' => fn (): array => $page->userMovies(),

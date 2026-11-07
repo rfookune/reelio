@@ -24,7 +24,7 @@ class MoviePageDetails
     public function result(): CatalogResult
     {
         $this->result ??= $this->catalog->details($this->movie);
-        throw_if($this->result->isRemoved(), MovieRemoved::class);
+        throw_if($this->result->isRemoved(), MovieRemoved::class, $this->movie);
 
         return $this->result;
     }
