@@ -9,6 +9,7 @@ use App\Services\Catalog\Catalog;
 use App\Services\Catalog\Discover;
 use App\Services\Catalog\DiscoverMovie;
 use App\Services\Catalog\DiscoverSection;
+use App\Services\Catalog\Enums\SectionKind;
 use App\Services\Ratings\ExternalRating;
 use App\Services\Ratings\Ratings;
 use Illuminate\Support\Collection;
@@ -51,14 +52,23 @@ class DiscoverPage
         ];
     }
 
-    /** @return list<array{kind: string, title: string, numbered: bool, movies: list<array<string, mixed>>}> */
+    /**
+     * Each section with a key unique on the page, such as `genre-878` for a genre collection. Coming soon's Movies
+     * carry their US date; other sections' carry none.
+     *
+     * @return list<array{key: string, kind: string, title: string, numbered: bool, movies: list<array<string, mixed>>}>
+     */
     public function sections(): array
     {
         return array_map(fn (DiscoverSection $section): array => [
+            'key' => $section->key(),
             'kind' => $section->kind->value,
-            'title' => $section->kind->label(),
+            'title' => $section->title(),
             'numbered' => $section->kind->isNumbered(),
-            'movies' => array_map($this->movie(...), $section->movies),
+            'movies' => array_map(fn (DiscoverMovie $movie): array => [
+                ...$this->movie($movie),
+                'opensOn' => $section->kind === SectionKind::ComingSoon ? $movie->opensOn : null,
+            ], $section->movies),
         ], $this->discover()->sections);
     }
 

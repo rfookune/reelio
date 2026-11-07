@@ -7,7 +7,8 @@ use App\Services\Catalog\Sources\MovieListing;
 use Error;
 
 /**
- * One Movie in the Discover payload: its listing, completed with its details when they could be fetched.
+ * One Movie in the Discover payload: its listing, completed with its details when they could be fetched. It
+ * `opensOn` its US date: the theatrical premiere, else the first digital release.
  */
 readonly class DiscoverMovie
 {
@@ -26,6 +27,7 @@ readonly class DiscoverMovie
         public ?string $imdbId = null,
         public array $genres = [],
         public ?array $trailer = null,
+        public ?string $opensOn = null,
     ) {}
 
     public static function fromListing(MovieListing $listing, ?MovieDetails $details = null): self
@@ -41,6 +43,7 @@ readonly class DiscoverMovie
             imdbId: $details?->imdbId,
             genres: array_column($details->genres ?? [], 'name'),
             trailer: $details?->trailer,
+            opensOn: $details->usReleaseDate ?? $details->usDigitalReleaseDate ?? null,
         );
     }
 
@@ -58,6 +61,7 @@ readonly class DiscoverMovie
             imdbId: $other->imdbId,
             genres: $other->genres,
             trailer: $other->trailer,
+            opensOn: $other->opensOn,
         );
     }
 

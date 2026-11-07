@@ -7,13 +7,13 @@ use App\Services\Catalog\Enums\SectionKind;
 
 class FakeCatalogSource implements CatalogSource
 {
-    /** @var list<array{kind: SectionKind, page: int}> */
+    /** @var list<array{kind: SectionKind, key: string, query: SectionQuery, page: int}> */
     public array $sectionCalls = [];
 
     /**
      * @param  list<MovieDetails>  $movies
-     * @param  array<string, list<list<MovieListing>>>  $sections  each kind's pages, keyed by `SectionKind` value
-     * @param  list<SectionKind>  $failingSections
+     * @param  array<string, list<list<MovieListing>>>  $sections  each list's pages, keyed by `SectionQuery::key()`
+     * @param  list<SectionKind|string>  $failingSections  kinds, or `SectionQuery::key()`s
      */
     public function __construct(
         public array $movies = [],
@@ -37,16 +37,16 @@ class FakeCatalogSource implements CatalogSource
         return null;
     }
 
-    /** A kind with no pages given has one empty page; a page past the last is a failure, as TMDB's 404 is. */
-    public function section(SectionKind $kind, int $page, CatalogContext $context): SectionPage
+    /** A list with no pages given has one empty page; a page past the last is a failure, as TMDB's 404 is. */
+    public function section(SectionQuery $query, int $page, CatalogContext $context): SectionPage
     {
-        $this->sectionCalls[] = ['kind' => $kind, 'page' => $page];
+        $this->sectionCalls[] = ['kind' => $query->kind, 'key' => $query->key(), 'query' => $query, 'page' => $page];
 
-        if ($this->failing || in_array($kind, $this->failingSections, true)) {
+        if ($this->failing || in_array($query->kind, $this->failingSections, true) || in_array($query->key(), $this->failingSections, true)) {
             throw new SourceUnavailable('The Catalog source is unavailable.');
         }
 
-        $pages = $this->sections[$kind->value] ?? [[]];
+        $pages = $this->sections[$query->key()] ?? [[]];
 
         if (! isset($pages[$page - 1])) {
             throw new SourceUnavailable('The Catalog source has no such list page.');

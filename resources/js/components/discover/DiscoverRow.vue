@@ -5,6 +5,7 @@ import ExternalRatings from '@/components/ExternalRatings.vue';
 import type { ExternalRating } from '@/components/ExternalRatings.vue';
 import BookmarkToggle from '@/components/movie/BookmarkToggle.vue';
 import TmdbImage from '@/components/TmdbImage.vue';
+import { formatDayMonth } from '@/lib/dates';
 import { formatRuntime } from '@/lib/tmdb';
 import type { UserMovieFacts } from '@/types';
 
@@ -17,9 +18,14 @@ export type DiscoverMovie = {
     posterPath: string | null;
     ratings: ExternalRating[];
     href: string;
+    /** Coming soon's US date (Y-m-d); null in other sections. */
+    opensOn: string | null;
 };
 
-/** A list row: rank (when numbered), small poster, title, year / runtime, both External ratings, bookmark. */
+/**
+ * A list row: rank (when numbered), small poster, title, year (or, in Coming soon, "Opens 21 Nov") / runtime, both
+ * External ratings, bookmark.
+ */
 const props = defineProps<{
     imageBaseUrl: string;
     movie: DiscoverMovie;
@@ -29,7 +35,12 @@ const props = defineProps<{
 
 const title = computed(() => props.movie.title ?? 'Movie');
 const meta = computed(() =>
-    [props.movie.year, formatRuntime(props.movie.runtime)]
+    [
+        props.movie.opensOn === null
+            ? props.movie.year
+            : `Opens ${formatDayMonth(props.movie.opensOn)}`,
+        formatRuntime(props.movie.runtime),
+    ]
         .filter((part) => part !== null)
         .join(' · '),
 );

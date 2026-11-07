@@ -33,6 +33,9 @@ class TmdbCatalogSource implements CatalogSource
     /** TMDB release type for a limited theatrical release. */
     private const RELEASE_TYPE_THEATRICAL_LIMITED = 2;
 
+    /** TMDB release type for a digital release. */
+    private const RELEASE_TYPE_DIGITAL = 4;
+
     public function movie(int $tmdbId, CatalogContext $context): ?MovieDetails
     {
         $response = $this->get("movie/{$tmdbId}", [
@@ -95,23 +98,42 @@ class TmdbCatalogSource implements CatalogSource
             cast: $this->cast($data['credits'] ?? []),
             certification: $usRelease['certification'] ?? null,
             usReleaseDate: $usRelease['date'] ?? null,
+            usDigitalReleaseDate: $this->usDigitalReleaseDate($data),
             availability: $this->availability($data['watch/providers'] ?? []),
             trailer: $this->trailer($data['videos'] ?? [], $context->language, ($data['release_date'] ?? null) ?: null),
         );
     }
 
     /**
-     * One page of a list. Trending is global, so no list call carries a region. Adult listings, listings that
-     * aren't well formed and repeats within the page are dropped; an unsafe image path is cleared.
+     * One page of a list. Trending is global, so only Coming soon, which is about US release dates, carries a
+     * region. It and the genre collections read TMDB's discover list by popularity; Coming soon takes the same
+     * release types, theatrical and digital, that its US date is read from. Adult listings, listings that aren't
+     * well formed and repeats within the page are dropped; an unsafe image path is cleared.
      */
-    public function section(SectionKind $kind, int $page, CatalogContext $context): SectionPage
+    public function section(SectionQuery $query, int $page, CatalogContext $context): SectionPage
     {
-        $path = match ($kind) {
+        $path = match ($query->kind) {
             SectionKind::Trending => 'trending/movie/week',
             SectionKind::Popular => 'movie/popular',
             SectionKind::TopRated => 'movie/top_rated',
+            SectionKind::ComingSoon, SectionKind::Genre => 'discover/movie',
         };
-        $response = $this->get($path, ['language' => $context->language, 'include_adult' => 'false', 'page' => $page], $context)
+        $filters = match ($query->kind) {
+            SectionKind::ComingSoon => [
+                'region' => 'US',
+                'with_release_type' => implode('|', [self::RELEASE_TYPE_THEATRICAL_LIMITED, self::RELEASE_TYPE_THEATRICAL, self::RELEASE_TYPE_DIGITAL]),
+                'release_date.gte' => (string) $query->releasedFrom,
+                'release_date.lte' => (string) $query->releasedUntil,
+                'sort_by' => 'popularity.desc',
+            ],
+            SectionKind::Genre => [
+                'with_genres' => (int) $query->genreId,
+                'vote_count.gte' => (int) $query->minimumVotes,
+                'sort_by' => 'popularity.desc',
+            ],
+            default => [],
+        };
+        $response = $this->get($path, ['language' => $context->language, 'include_adult' => 'false', 'page' => $page, ...$filters], $context)
             ?? throw new SourceUnavailable('The Catalog source has no such list page.');
 
         try {
@@ -374,6 +396,30 @@ class TmdbCatalogSource implements CatalogSource
         }
 
         return ['key' => $chosen['video']['key'], 'name' => $chosen['video']['name'], 'type' => $chosen['video']['type']];
+    }
+
+    /**
+     * The earliest US digital release.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function usDigitalReleaseDate(array $data): ?string
+    {
+        $dates = [];
+
+        foreach ((array) ($data['release_dates']['results'] ?? []) as $country) {
+            if (! is_array($country) || ($country['iso_3166_1'] ?? null) !== 'US') {
+                continue;
+            }
+
+            foreach ((array) ($country['release_dates'] ?? []) as $release) {
+                if (is_array($release) && ($release['type'] ?? null) === self::RELEASE_TYPE_DIGITAL && is_string($release['release_date'] ?? null)) {
+                    $dates[] = substr($release['release_date'], 0, 10);
+                }
+            }
+        }
+
+        return $dates === [] ? null : min($dates);
     }
 
     /**

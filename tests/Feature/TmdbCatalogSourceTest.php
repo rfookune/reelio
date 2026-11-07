@@ -4,6 +4,7 @@ use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Enums\SectionKind;
 use App\Services\Catalog\Sources\MovieListing;
+use App\Services\Catalog\Sources\SectionQuery;
 use App\Services\Catalog\Sources\SourceMisconfigured;
 use App\Services\Catalog\Sources\SourceUnavailable;
 use App\Services\Catalog\Sources\TmdbCatalogSource;
@@ -134,6 +135,24 @@ test('the US certification survives when no theatrical or premiere release exist
     $movie = app(TmdbCatalogSource::class)->movie(8, new CatalogContext);
 
     expect($movie->certification)->toBe('PG')->and($movie->usReleaseDate)->toBeNull();
+});
+
+test('the US digital release date is the earliest US digital release', function () {
+    Http::fake(['https://api.themoviedb.org/3/movie/9?*' => Http::response([
+        'id' => 9,
+        'release_dates' => ['results' => [
+            ['iso_3166_1' => 'GB', 'release_dates' => [['release_date' => '2026-11-10T00:00:00.000Z', 'type' => 4]]],
+            ['iso_3166_1' => 'US', 'release_dates' => [
+                ['release_date' => '2026-12-20T00:00:00.000Z', 'type' => 4],
+                ['release_date' => '2026-11-21T00:00:00.000Z', 'type' => 4],
+                ['release_date' => '2026-11-15T00:00:00.000Z', 'type' => 5],
+            ]],
+        ]],
+    ])]);
+
+    $movie = app(TmdbCatalogSource::class)->movie(9, new CatalogContext);
+
+    expect($movie->usDigitalReleaseDate)->toBe('2026-11-21')->and($movie->usReleaseDate)->toBeNull();
 });
 
 test('interactive calls retry once on a server error and then succeed', function () {
@@ -329,7 +348,7 @@ test('a section page is translated from the recorded Trending fixture with one c
     config(['catalog.tmdb.token' => 'test-read-token']);
     Http::fake(['https://api.themoviedb.org/3/trending/movie/week?*' => Http::response(json_decode(file_get_contents(base_path('tests/Fixtures/tmdb/trending_p2.json')), true, flags: JSON_THROW_ON_ERROR))]);
 
-    $page = app(TmdbCatalogSource::class)->section(SectionKind::Trending, 2, new CatalogContext('en-US', 'US'));
+    $page = app(TmdbCatalogSource::class)->section(SectionQuery::of(SectionKind::Trending), 2, new CatalogContext('en-US', 'US'));
 
     expect($page->totalPages)->toBe(500)
         ->and($page->listings)->toHaveCount(20)
@@ -353,13 +372,65 @@ test('a section page is translated from the recorded Trending fixture with one c
 test('each section kind reads its own TMDB list', function (SectionKind $kind, string $path) {
     Http::fake(["https://api.themoviedb.org/3/{$path}?*" => Http::response(['page' => 1, 'total_pages' => 1, 'results' => []])]);
 
-    expect(app(TmdbCatalogSource::class)->section($kind, 1, new CatalogContext)->listings)->toBe([]);
+    expect(app(TmdbCatalogSource::class)->section(SectionQuery::of($kind), 1, new CatalogContext)->listings)->toBe([]);
     Http::assertSentCount(1);
 })->with([
     'Trending' => [SectionKind::Trending, 'trending/movie/week'],
     'Popular' => [SectionKind::Popular, 'movie/popular'],
     'Top rated' => [SectionKind::TopRated, 'movie/top_rated'],
 ]);
+
+/**
+ * The request's query, read without `parse_str`, which turns the dots in TMDB's `release_date.gte` into underscores.
+ *
+ * @return array<string, string>
+ */
+function queryOf(Request $request): array
+{
+    $query = [];
+
+    foreach (explode('&', (string) parse_url($request->url(), PHP_URL_QUERY)) as $pair) {
+        [$name, $value] = array_map(urldecode(...), explode('=', $pair, 2) + [1 => '']);
+        $query[$name] = $value;
+    }
+
+    return $query;
+}
+
+test('Coming soon reads TMDB\'s discover list by US theatrical and digital release dates in its window', function () {
+    Http::fake(['https://api.themoviedb.org/3/discover/movie?*' => Http::response(json_decode(file_get_contents(base_path('tests/Fixtures/tmdb/upcoming_us.json')), true, flags: JSON_THROW_ON_ERROR))]);
+
+    $page = app(TmdbCatalogSource::class)->section(SectionQuery::comingSoon('2026-11-07', '2027-01-05'), 2, new CatalogContext('en-US'));
+
+    expect($page->totalPages)->toBe(4)->and($page->listings)->toHaveCount(20);
+    Http::assertSentCount(1);
+    Http::assertSent(fn (Request $request) => queryOf($request) === [
+        'language' => 'en-US',
+        'include_adult' => 'false',
+        'page' => '2',
+        'region' => 'US',
+        'with_release_type' => '2|3|4',
+        'release_date.gte' => '2026-11-07',
+        'release_date.lte' => '2027-01-05',
+        'sort_by' => 'popularity.desc',
+    ]);
+});
+
+test('a genre collection reads TMDB\'s discover list for the genre by popularity, with a vote floor and no region', function () {
+    Http::fake(['https://api.themoviedb.org/3/discover/movie?*' => Http::response(['page' => 1, 'total_pages' => 1, 'results' => [['id' => 1, 'title' => 'Kept', 'poster_path' => '/kept.jpg']]])]);
+
+    $page = app(TmdbCatalogSource::class)->section(SectionQuery::genre(878, minimumVotes: 300), 1, new CatalogContext('en-US'));
+
+    expect(array_map(fn (MovieListing $listing): int => $listing->tmdbId, $page->listings))->toBe([1]);
+    Http::assertSent(fn (Request $request) => queryOf($request) === [
+        'language' => 'en-US',
+        'include_adult' => 'false',
+        'page' => '1',
+        'with_genres' => '878',
+        'vote_count.gte' => '300',
+        'sort_by' => 'popularity.desc',
+    ]);
+});
 
 test('adult, malformed and duplicate listings are dropped, and unsafe image paths are cleared', function () {
     Http::fake(['https://api.themoviedb.org/3/movie/popular?*' => Http::response(['page' => 1, 'total_pages' => 3, 'results' => [
@@ -371,7 +442,7 @@ test('adult, malformed and duplicate listings are dropped, and unsafe image path
         ['id' => 1, 'title' => 'Repeated'],
     ]])]);
 
-    $page = app(TmdbCatalogSource::class)->section(SectionKind::Popular, 1, new CatalogContext);
+    $page = app(TmdbCatalogSource::class)->section(SectionQuery::of(SectionKind::Popular), 1, new CatalogContext);
 
     expect($page->totalPages)->toBe(3)
         ->and(array_map(fn (MovieListing $listing): int => $listing->tmdbId, $page->listings))->toBe([1])
@@ -383,7 +454,7 @@ test('adult, malformed and duplicate listings are dropped, and unsafe image path
 test('a section fails explicitly on unsuccessful or malformed responses', function (array $body, int $status) {
     Http::fake(['https://api.themoviedb.org/3/movie/top_rated?*' => Http::response($body, $status)]);
 
-    expect(fn () => app(TmdbCatalogSource::class)->section(SectionKind::TopRated, 1, new CatalogContext))->toThrow(SourceUnavailable::class);
+    expect(fn () => app(TmdbCatalogSource::class)->section(SectionQuery::of(SectionKind::TopRated), 1, new CatalogContext))->toThrow(SourceUnavailable::class);
 })->with([
     'not found' => [[], 404],
     'server error' => [[], 500],
@@ -394,5 +465,5 @@ test('a section fails explicitly on unsuccessful or malformed responses', functi
 test('a section raises a rejected token as a configuration error', function () {
     Http::fake(['https://api.themoviedb.org/3/movie/popular?*' => Http::response([], 401)]);
 
-    expect(fn () => app(TmdbCatalogSource::class)->section(SectionKind::Popular, 1, new CatalogContext))->toThrow(SourceMisconfigured::class);
+    expect(fn () => app(TmdbCatalogSource::class)->section(SectionQuery::of(SectionKind::Popular), 1, new CatalogContext))->toThrow(SourceMisconfigured::class);
 });

@@ -72,6 +72,35 @@ test('Discover shows the hero and numbered Trending, then Popular and Top rated,
     Queue::assertNotPushed(BuildDiscover::class);
 });
 
+test('Discover shows Coming soon with each Movie\'s US date after Popular, and the day\'s genre collections after Top rated', function () {
+    Queue::fake([BuildDiscover::class]);
+    $this->travelTo('2026-11-06 05:00:00');
+    fakeDiscoverSource([
+        'trending' => [movieListings(1, 10)],
+        'popular' => [movieListings(11, 20)],
+        'coming_soon' => [[movieListing(21)]],
+        'top_rated' => [movieListings(31, 40)],
+        'genre-35' => [movieListings(41, 50)],
+        'genre-18' => [movieListings(51, 60)],
+        'genre-878' => [movieListings(61, 70)],
+    ], [new MovieDetails(tmdbId: 21, usReleaseDate: '2026-11-21')]);
+    app(Catalog::class)->buildDiscover(CatalogProfile::Background);
+
+    $this->get(route('home'))->assertOk()->assertInertia(fn (Assert $page) => $page
+        ->where('sections', fn ($sections) => collect($sections)->map(fn ($section): array => [$section['key'], $section['title']])->all() === [
+            ['trending', 'Trending this week'],
+            ['popular', 'Popular'],
+            ['coming_soon', 'Coming soon'],
+            ['top_rated', 'Top rated'],
+            ['genre-35', 'Comedy'],
+            ['genre-18', 'Drama'],
+            ['genre-878', 'Science Fiction'],
+        ])
+        ->where('sections.2.movies.0.tmdbId', 21)
+        ->where('sections.2.movies.0.opensOn', '2026-11-21')
+        ->where('sections.1.movies.0.opensOn', null));
+});
+
 test('Discover carries the viewer\'s facts by catalog id and reloads only them after an action', function () {
     $facts = UserMovie::factory()->for(Movie::factory()->state(['tmdb_id' => 3]))->create();
     fakeDiscoverSource(['trending' => [movieListings(1, 10)]]);

@@ -6,15 +6,23 @@ use App\Services\Catalog\Catalog;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Sources\MovieDetails;
 
-/** Builds Discover from a fake source: Movie 1 is the hero, with a trailer; every Movie can be opened. */
+/**
+ * Builds Discover from a fake source on 6 Nov 2026: Movie 1 is the hero, with a trailer; Movie 31 opens on 21 Nov;
+ * every Movie can be opened.
+ */
 function buildBrowserDiscover(): void
 {
+    test()->travelTo('2026-11-06 05:00:00');
     config(['catalog.image_base_url' => '/test-images/']);
     fakeDiscoverSource([
         'trending' => [movieListings(1, 10)],
         'popular' => [movieListings(11, 20)],
+        'coming_soon' => [[movieListing(31)]],
         'top_rated' => [movieListings(21, 30)],
-    ], [new MovieDetails(tmdbId: 1, title: 'Movie 1', runtime: 169, posterPath: '/poster1.jpg', trailer: ['key' => 'zSWdZVtXT7E', 'name' => 'Trailer 4', 'type' => 'Trailer'])]);
+    ], [
+        new MovieDetails(tmdbId: 1, title: 'Movie 1', runtime: 169, posterPath: '/poster1.jpg', trailer: ['key' => 'zSWdZVtXT7E', 'name' => 'Trailer 4', 'type' => 'Trailer']),
+        new MovieDetails(tmdbId: 31, title: 'Movie 31', usReleaseDate: '2026-11-21'),
+    ]);
     app(Catalog::class)->buildDiscover(CatalogProfile::Background);
 }
 
@@ -28,6 +36,7 @@ it('opens a Movie from Discover and saves it from its page', function (int $widt
     $page->assertSeeIn('#discover-hero-title', 'Movie 1')
         ->assertSeeIn('[data-section="trending"]', 'Trending this week')
         ->assertSeeIn('[data-section="popular"]', 'Popular')
+        ->assertSeeIn('[data-section="coming_soon"] [data-tmdb-id="31"]', 'Opens 21 Nov')
         ->assertSeeIn('[data-section="top_rated"]', 'Top rated')
         ->assertNoJavaScriptErrors()
         ->assertNoAccessibilityIssues(level: 1)

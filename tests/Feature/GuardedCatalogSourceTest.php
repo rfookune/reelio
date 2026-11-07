@@ -7,6 +7,7 @@ use App\Services\Catalog\Enums\SectionKind;
 use App\Services\Catalog\Sources\FakeCatalogSource;
 use App\Services\Catalog\Sources\GuardedCatalogSource;
 use App\Services\Catalog\Sources\MovieDetails;
+use App\Services\Catalog\Sources\SectionQuery;
 use App\Services\Catalog\Sources\SourceMisconfigured;
 use App\Services\Catalog\Sources\SourceUnavailable;
 
@@ -131,10 +132,10 @@ test('interactive section calls share the breaker', function () {
     $guarded = new GuardedCatalogSource($inner, new CacheKey);
 
     foreach (range(1, 5) as $ignored) {
-        expect(fn () => $guarded->section(SectionKind::Popular, 1, new CatalogContext))->toThrow(SourceUnavailable::class);
+        expect(fn () => $guarded->section(SectionQuery::of(SectionKind::Popular), 1, new CatalogContext))->toThrow(SourceUnavailable::class);
     }
 
-    expect(fn () => $guarded->section(SectionKind::Trending, 1, new CatalogContext))->toThrow(SourceUnavailable::class)
+    expect(fn () => $guarded->section(SectionQuery::of(SectionKind::Trending), 1, new CatalogContext))->toThrow(SourceUnavailable::class)
         ->and($inner->sectionCalls)->toHaveCount(5)
-        ->and($guarded->section(SectionKind::Trending, 1, new CatalogContext(profile: CatalogProfile::Background))->listings)->toBe([]);
+        ->and($guarded->section(SectionQuery::of(SectionKind::Trending), 1, new CatalogContext(profile: CatalogProfile::Background))->listings)->toBe([]);
 });

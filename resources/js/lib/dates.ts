@@ -16,3 +16,20 @@ export function formatShortDate(timestamp: string, timeZone?: string): string {
 
     return `${parts.day} ${parts.month} ${parts.year}`;
 }
+
+/**
+ * A calendar date (Y-m-d) as day and short month ("21 Nov"), read in UTC so that it is the same day everywhere.
+ */
+export function formatDayMonth(date: string): string {
+    const parts = Object.fromEntries(
+        new Intl.DateTimeFormat('en-US', {
+            day: 'numeric',
+            month: 'short',
+            timeZone: 'UTC',
+        })
+            .formatToParts(new Date(`${date}T00:00:00Z`))
+            .map((part) => [part.type, part.value]),
+    );
+
+    return `${parts.day} ${parts.month}`;
+}

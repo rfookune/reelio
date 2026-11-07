@@ -18,7 +18,7 @@ import {
 import { formatRuntime, isSafeTmdbPath, tmdbImageUrl } from '@/lib/tmdb';
 import type { UserMovieFacts } from '@/types';
 
-export type DiscoverHeroMovie = DiscoverMovie & {
+export type DiscoverHeroMovie = Omit<DiscoverMovie, 'opensOn'> & {
     overview: string | null;
     backdropPath: string | null;
     genres: string[];

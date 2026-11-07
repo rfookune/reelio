@@ -4,6 +4,8 @@ import type { DiscoverMovie } from '@/components/discover/DiscoverRow.vue';
 import type { UserMovies } from '@/types';
 
 export type DiscoverSection = {
+    /** Unique on the page, such as `genre-878`; the three genre collections share a kind. */
+    key: string;
     kind: string;
     title: string;
     numbered: boolean;
@@ -19,10 +21,10 @@ defineProps<{
 
 <template>
     <section
-        :data-section="section.kind"
-        :aria-labelledby="`section-${section.kind}`"
+        :data-section="section.key"
+        :aria-labelledby="`section-${section.key}`"
     >
-        <h2 :id="`section-${section.kind}`" class="mb-4 text-xl font-semibold">
+        <h2 :id="`section-${section.key}`" class="mb-4 text-xl font-semibold">
             {{ section.title }}
         </h2>
         <component

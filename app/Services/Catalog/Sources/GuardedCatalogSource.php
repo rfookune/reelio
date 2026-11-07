@@ -5,7 +5,6 @@ namespace App\Services\Catalog\Sources;
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
-use App\Services\Catalog\Enums\SectionKind;
 use Closure;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
@@ -23,9 +22,9 @@ class GuardedCatalogSource implements CatalogSource
         return $this->guard($context, fn (): ?MovieDetails => $this->inner->movie($tmdbId, $context));
     }
 
-    public function section(SectionKind $kind, int $page, CatalogContext $context): SectionPage
+    public function section(SectionQuery $query, int $page, CatalogContext $context): SectionPage
     {
-        return $this->guard($context, fn (): SectionPage => $this->inner->section($kind, $page, $context));
+        return $this->guard($context, fn (): SectionPage => $this->inner->section($query, $page, $context));
     }
 
     /**

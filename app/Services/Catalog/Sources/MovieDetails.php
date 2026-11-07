@@ -32,6 +32,7 @@ readonly class MovieDetails
         public array $cast = [],
         public ?string $certification = null,
         public ?string $usReleaseDate = null,
+        public ?string $usDigitalReleaseDate = null,
         public ?array $trailer = null,
         public array $availability = [],
     ) {}

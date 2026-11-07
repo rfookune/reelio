@@ -44,6 +44,36 @@ return [
         'max_pages_per_section' => 3,
 
         /*
+         * Coming soon lists Movies whose US date is from tomorrow to this many days out. Each candidate's US date
+         * needs a detail call, so a build looks up at most `max_lookups` of them, leaving time for the sections
+         * after it.
+         */
+        'coming_soon' => [
+            'days_ahead' => 60,
+            'max_lookups' => 30,
+        ],
+
+        /*
+         * Each day's genre collections: `per_day` consecutive genres from this list, by TMDB genre id, starting
+         * further along it each day, so consecutive days differ. Each lists the genre's popular Movies with at
+         * least `minimum_votes` votes.
+         */
+        'genre_collections' => [
+            'per_day' => 3,
+            'minimum_votes' => 300,
+            'genres' => [
+                28 => 'Action',
+                35 => 'Comedy',
+                18 => 'Drama',
+                878 => 'Science Fiction',
+                27 => 'Horror',
+                16 => 'Animation',
+                53 => 'Thriller',
+                10749 => 'Romance',
+            ],
+        ],
+
+        /*
          * A section, or the hero, whose rebuild fails keeps its previous version this long, then is hidden.
          */
         'stale_after_days' => 7,

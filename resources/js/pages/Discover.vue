@@ -45,7 +45,7 @@ function retry(): void {
         >
             <DiscoverSection
                 v-for="section in sections"
-                :key="section.kind"
+                :key="section.key"
                 :image-base-url="imageBaseUrl"
                 :section="section"
                 :user-movies="userMovies"
