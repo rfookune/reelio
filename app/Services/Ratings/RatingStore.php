@@ -5,6 +5,8 @@ namespace App\Services\Ratings;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\Exceptions\RatingReplacementRefused;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -45,6 +47,35 @@ class RatingStore
     public function forget(RatingSourceName $source, string $sourceId): void
     {
         DB::table('ratings')->where('source', $source->value)->where('source_id', $sourceId)->delete();
+    }
+
+    /**
+     * Deletes the source's rows for the titles, even when the source is switched off.
+     *
+     * @param  list<string>  $sourceIds
+     */
+    public function forgetMany(RatingSourceName $source, array $sourceIds): void
+    {
+        if ($sourceIds !== []) {
+            DB::table('ratings')->where('source', $source->value)->whereIn('source_id', $sourceIds)->delete();
+        }
+    }
+
+    /**
+     * Deletes up to `$limit` of the source's rows written before `$before`, and returns how many it deleted. The age
+     * is checked again on each locked row, so a row a refresh has just rewritten is kept.
+     */
+    public function forgetOlderThan(RatingSourceName $source, CarbonInterface $before, int $limit): int
+    {
+        $old = fn (Builder $query): Builder => $query->where('source', $source->value)->where('as_of', '<', $before);
+
+        return $old(DB::table('ratings'))->whereIn('id', $old(DB::table('ratings')->select('id'))->limit($limit))->delete();
+    }
+
+    /** Deletes every row of the source, even when it is switched off. */
+    public function forgetSource(RatingSourceName $source): int
+    {
+        return DB::table('ratings')->where('source', $source->value)->delete();
     }
 
     /**

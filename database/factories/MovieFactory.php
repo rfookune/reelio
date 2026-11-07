@@ -31,6 +31,21 @@ class MovieFactory extends Factory
         ];
     }
 
+    /**
+     * A Movie cleared at TMDB's 6-month cap: every TMDB-derived field is cleared, but it isn't removed, so its next
+     * successful refresh restores it.
+     */
+    public function capCleared(): static
+    {
+        return $this->state(fn (): array => [
+            'slug' => null,
+            'title' => null,
+            'overview' => null,
+            'release_date' => null,
+            'synced_at' => null,
+        ]);
+    }
+
     /** A Removed Movie: the Catalog source dropped it, so every TMDB-derived field is cleared. */
     public function removed(): static
     {

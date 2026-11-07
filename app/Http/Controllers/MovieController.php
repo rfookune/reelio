@@ -25,8 +25,11 @@ class MovieController extends Controller
     /**
      * Records a view of the Movie unless the request is a partial reload, such as after changing the country,
      * which refreshes the page the visitor is already on. A Removed Movie, including one the refresh in this
-     * request finds removed, is a 410 at any slug and records no view. The props that need the Catalog details are
-     * lazy, so a partial reload that asks for none of them never fetches the details (see `MoviePageDetails`).
+     * request finds removed, is a 410 at any slug and records no view. A Movie without details, as one cleared at
+     * TMDB's cap, is refreshed before its slug is checked, since only the refresh restores the slug; while that
+     * fails, it is a 503 at any slug, partial reloads included, and records no view. Otherwise the props that need
+     * the Catalog details are lazy, so a partial reload that asks for none of them never fetches the details (see
+     * `MoviePageDetails`).
      */
     public function show(Request $request, string $slug, string $id, Catalog $catalog, RecordEvent $recordEvent, Ratings $ratings): Response|RedirectResponse
     {
@@ -35,12 +38,12 @@ class MovieController extends Controller
         $movie = $catalog->find($movieId);
         throw_if($movie->isRemoved(), MovieRemoved::class, $movie, $request->user());
         $referrer = $request->query('referrer');
+        $details = new MoviePageDetails($catalog, $movie, $request->user());
+        $details->restoreIfCleared();
 
         if ($slug !== ($movie->slug ?? 'movie')) {
             return redirect($movie->canonicalUrl(is_string($referrer) ? $referrer : null), 301);
         }
-
-        $details = new MoviePageDetails($catalog, $movie, $request->user());
 
         if (! $request->hasHeader(Header::PARTIAL_COMPONENT)) {
             $details->result();

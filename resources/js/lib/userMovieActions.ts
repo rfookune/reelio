@@ -1,7 +1,7 @@
 import type { Errors, Page, UrlMethodPair } from '@inertiajs/core';
 import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
-import { removedMovieData } from '@/lib/errorPages';
+import { errorPageMovieData } from '@/lib/errorPages';
 import { watched as watchedPage, watchlist as watchlistPage } from '@/routes';
 import { undo as undoRoute } from '@/routes/movies';
 import * as watched from '@/routes/movies/watched';
@@ -50,11 +50,9 @@ function visitUserMovies({
     onSuccess?: (component: string) => void;
 }): void {
     const page = usePage();
-    const removedMovie =
-        page.component === 'Error' ? removedMovieData(page.props) : undefined;
-    const factProps = removedMovie
-        ? ['data', 'exceptionClass']
-        : ['userMovies'];
+    const pageMovie =
+        page.component === 'Error' ? errorPageMovieData(page.props) : undefined;
+    const factProps = pageMovie ? ['data', 'exceptionClass'] : ['userMovies'];
     const failed = (errors?: Errors): false => {
         toast.error(errors?.undo ?? FAILURE_MESSAGE, {
             duration: TOAST_DURATION,
@@ -77,7 +75,7 @@ function visitUserMovies({
         preserveScroll: true,
         preserveState: true,
         optimistic: (props) => {
-            const errorData = removedMovieData(props);
+            const errorData = errorPageMovieData(props);
             const userMovies =
                 errorData?.userMovies ??
                 ((props.userMovies ?? {}) as UserMovies);
@@ -94,14 +92,15 @@ function visitUserMovies({
         onError: failed,
         onHttpException: (response) => {
             const page = response.data as Partial<Page>;
-            // The action returns to the same Removed Movie page, whose successful render still has status 410.
+            // The action returns to the same Movie's error page, whose successful render still has its status: 410
+            // for a Removed Movie, 503 for a Movie without details. A 503 about no Movie carries no Movie data.
             if (
-                response.status === 410 &&
+                (response.status === 410 || response.status === 503) &&
                 response.headers['x-inertia'] &&
-                removedMovie?.tmdbId === tmdbId &&
+                pageMovie?.tmdbId === tmdbId &&
                 page.component === 'Error' &&
-                removedMovieData(page.props ?? {})?.tmdbId ===
-                    removedMovie.tmdbId
+                errorPageMovieData(page.props ?? {})?.tmdbId ===
+                    pageMovie.tmdbId
             ) {
                 return;
             }
@@ -272,7 +271,7 @@ function sendUserMovieAction({
 
     const component = page.component;
     const previous =
-        (removedMovieData(page.props)?.userMovies ??
+        (errorPageMovieData(page.props)?.userMovies ??
             (page.props.userMovies as UserMovies | undefined))?.[tmdbId] ??
         NO_FACTS;
     const restoreFocus = focusRestorer(tmdbId, control);

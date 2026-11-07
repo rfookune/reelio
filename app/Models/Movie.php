@@ -58,6 +58,15 @@ class Movie extends Model
         return $this->removed_at !== null;
     }
 
+    /**
+     * Whether the Movie holds details from the Catalog source. A Removed Movie holds none, and neither does one
+     * cleared at TMDB's 6-month cap until a refresh restores it.
+     */
+    public function hasSourceDetails(): bool
+    {
+        return $this->synced_at !== null;
+    }
+
     public function canonicalUrl(?string $referrer = null): string
     {
         return route('movies.show', ['slug' => $this->slug ?? 'movie', 'id' => $this->id, 'referrer' => $referrer]);

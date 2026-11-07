@@ -12,3 +12,7 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 - [ ] It runs and is served only while the indexing flag is on; off means no sitemap
 - [ ] `robots.txt` references the sitemap when the flag is on
 - [ ] Feature tests cover inclusion, exclusion and the flag
+
+## Note from ticket 27 (2026-11-07)
+
+"Has details" is `Movie::hasSourceDetails()` (`synced_at` not null): Removed Movies and cap-cleared Movies both have `synced_at` cleared, so selecting `whereNotNull('synced_at')` excludes both. The daily `CleanUpCatalog` job clears Movies at 170 days without a sync, and `catalog:purge` clears every row, so a sitemap built after either drops those Movies. Add the sitemap job to the `Schedule::...->group()` in `routes/console.php`. The lists and the picker test `title` not null instead; the two agree except for a synced Movie TMDB gives no title, which the sitemap would list but the lists show as unavailable, so pick one rule for both if that matters.

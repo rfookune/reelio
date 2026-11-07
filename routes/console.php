@@ -3,6 +3,7 @@
 use App\Jobs\BuildDiscover;
 use App\Jobs\CheckOverdueRefreshes;
 use App\Jobs\CheckRatingDatasetFreshness;
+use App\Jobs\CleanUpCatalog;
 use App\Jobs\PlanMovieRefreshes;
 use App\Jobs\RefreshGenres;
 use App\Jobs\SyncRatingDataset;
@@ -31,6 +32,7 @@ Schedule::dailyAt('05:00')->timezone('UTC')->onOneServer()->group(function (): v
     Schedule::job((new CheckRatingDatasetFreshness)->delay(CarbonInterval::minutes(10)));
     Schedule::job(new BuildDiscover);
     Schedule::job(new PlanMovieRefreshes);
+    Schedule::job(new CleanUpCatalog);
     Schedule::job((new CheckOverdueRefreshes)->delay(CarbonInterval::minutes(15)));
     Schedule::job(new RefreshGenres)->mondays();
 });

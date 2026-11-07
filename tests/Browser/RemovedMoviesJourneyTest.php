@@ -4,6 +4,8 @@ use App\Http\Exceptions\ErrorPageException;
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
+use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\FakeCatalogSource;
 use Illuminate\Support\Facades\Route;
 
 it('removes and undoes a Removed Movie from each list without losing its date', function (string $list, string $label, string $date, string $action, string $toast, string $column) {
@@ -81,4 +83,28 @@ it('shows Removed Movie controls only for the MovieRemoved exception class', fun
     visitWithCsp('/another-error')->assertSee('Another error')->assertSee('Another description')
         ->assertDontSee("It's still in your lists")->assertMissing('[data-slot="remove-watchlist"]')
         ->assertMissing('[data-slot="clear-watched"]')->assertNoJavaScriptErrors();
+});
+
+it('offers Remove and Clear with Undo on a cap-cleared Movie\'s 503 page while its refresh fails', function () {
+    $facts = UserMovie::factory()->for(Movie::factory()->capCleared())->create([
+        'watchlisted_at' => '2026-10-02 12:00:00', 'watched_at' => '2026-10-01 12:00:00',
+    ]);
+    app()->instance(CatalogSource::class, new FakeCatalogSource(failing: true));
+    $this->actingAs($facts->user);
+
+    $page = visitWithCsp('/watchlist');
+    $page->assertSee('Details temporarily unavailable')->click('[data-slot="poster-card"] > a')
+        ->assertSee("We can't reach our movie data source right now.")->assertSee("It's still in your lists")
+        ->click('[data-slot="remove-watchlist"]')->assertDontSee('On your Watchlist')->assertSee('Removed from your Watchlist');
+    $this->assertDatabaseHas('user_movies', ['id' => $facts->id, 'watchlisted_at' => null, 'watched_at' => '2026-10-01 12:00:00']);
+    $page->click('Undo')->assertSee('On your Watchlist')->assertNoJavaScriptErrors();
+    $this->assertDatabaseHas('user_movies', ['id' => $facts->id, 'watchlisted_at' => '2026-10-02 12:00:00']);
+});
+
+it('shows no list controls on a 503 page that carries no Movie', function () {
+    $this->actingAs(User::factory()->create());
+    app()->instance(CatalogSource::class, new FakeCatalogSource(failing: true));
+
+    visitWithCsp('/movies/tmdb/157336')->assertSee('Details temporarily unavailable')
+        ->assertDontSee("It's still in your lists")->assertDontSee('Your Watchlist')->assertNoJavaScriptErrors();
 });

@@ -13,6 +13,7 @@ use App\Services\Catalog\Sources\SearchResults;
 use App\Services\Catalog\Sources\SourceUnavailable;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
+use Carbon\CarbonInterface;
 use Closure;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\Eloquent\Builder;
@@ -298,6 +299,67 @@ class Catalog
         ];
     }
 
+    /**
+     * One run of the daily cleanup, each step taking at most `cleanup.batch_size` rows:
+     *
+     * - a Movie whose last successful sync is more than `cap.after_days` old has everything from the Catalog source
+     *   cleared, as a Removed Movie does, but isn't marked removed: its next successful refresh restores it;
+     * - TMDB ratings older than that are deleted, whether or not a Movie exists for them;
+     * - Movies nobody holds and nobody has viewed for `purge_unviewed.after_days` are deleted, while that purge is
+     *   switched on;
+     * - Streaming services no Availability references any more are deleted.
+     *
+     * Returns whether any step filled its batch, so another run should follow.
+     */
+    public function cleanUp(): bool
+    {
+        $batchSize = config('catalog.cleanup.batch_size');
+        $capCutoff = now()->subDays(config('catalog.cap.after_days'));
+        $batchCounts = [
+            $this->clearPastCap($capCutoff, $batchSize),
+            $this->ratings->forgetOlderThan(RatingSourceName::Tmdb, $capCutoff, $batchSize),
+            $this->purgeUnviewed($batchSize),
+            $this->availability->deleteUnreferencedServices($batchSize, now()->subSeconds(config('catalog.cleanup.unreferenced_service_grace_seconds'))),
+        ];
+
+        return in_array($batchSize, $batchCounts, true);
+    }
+
+    /**
+     * For when the licence to TMDB's data ends: deletes every TMDB rating, applies the cap's clearing to every Movie
+     * that holds details from the Catalog source, then deletes the genres and Streaming services nothing references
+     * any more, and the Discover payload. Users' facts survive. Movies are taken once each, in id order, so a refresh running
+     * meanwhile can't keep it going; one that runs afterwards fetches the Movie again, so the source's token should
+     * be removed first. A refresh running meanwhile can also lose its genre links, which cascade when a genre is
+     * deleted, or fail. Cached search pages aren't listed anywhere, so they are left to expire within
+     * `search.stale_seconds`. Returns how many Movies were cleared and how many ratings deleted.
+     *
+     * @return array{movies: int, ratings: int}
+     */
+    public function purgeSourceData(): array
+    {
+        $ratings = $this->ratings->forgetSource(RatingSourceName::Tmdb);
+        $withDetails = fn (Builder $query): Builder => $query->whereNotNull('synced_at');
+        $cleared = 0;
+        $afterId = 0;
+
+        do {
+            $movieIds = $this->movieIds($withDetails(Movie::query())->where('id', '>', $afterId)->orderBy('id')->limit(config('catalog.cleanup.batch_size')));
+            $cleared += $this->clearEach($movieIds, $withDetails);
+            $afterId = $movieIds === [] ? $afterId : $movieIds[array_key_last($movieIds)];
+        } while ($movieIds !== []);
+
+        Genre::query()->whereDoesntHave('movies')->delete();
+        $batchSize = config('catalog.cleanup.batch_size');
+
+        while ($this->availability->deleteUnreferencedServices($batchSize) === $batchSize) {
+        }
+
+        Cache::forget($this->discover->key(new CatalogContext(config('catalog.language'))));
+
+        return ['movies' => $cleared, 'ratings' => $ratings];
+    }
+
     public function recordView(Movie $movie): void
     {
         $movie->update(['last_viewed_at' => now()]);
@@ -348,13 +410,112 @@ class Catalog
     }
 
     /**
-     * Keeps the row, so users' facts about the Movie survive, and clears everything taken from the Catalog source:
-     * the TMDB-derived columns, genre links, Availability, the detail cache and the TMDB rating. Runs inside the
-     * refresh's transaction, under the Movie's row lock.
+     * Clears up to `$limit` Movies last synced before `$cutoff`, and returns how many it considered. Each is locked
+     * and checked again first, so a Movie a refresh has just restored is left alone.
+     */
+    private function clearPastCap(CarbonInterface $cutoff, int $limit): int
+    {
+        $pastCap = fn (Builder $query): Builder => $query->whereNull('removed_at')->where('synced_at', '<', $cutoff);
+        $candidateIds = $this->movieIds($pastCap(Movie::query())->orderBy('id')->limit($limit));
+        $this->clearEach($candidateIds, $pastCap);
+
+        return count($candidateIds);
+    }
+
+    /**
+     * Clears each of the Movies that still matches `$condition` once its row is locked, so a Movie a refresh has just
+     * changed is judged as it stands now. Returns how many were cleared.
+     *
+     * @param  list<int>  $movieIds
+     * @param  Closure(Builder<Movie>): Builder<Movie>  $condition
+     */
+    private function clearEach(array $movieIds, Closure $condition): int
+    {
+        $context = new CatalogContext(config('catalog.language'));
+        $cleared = 0;
+
+        foreach ($movieIds as $movieId) {
+            DB::transaction(function () use ($movieId, $condition, $context, &$cleared): void {
+                $movie = $condition(Movie::query()->whereKey($movieId))->lockForUpdate()->first();
+
+                if ($movie !== null) {
+                    $this->clearSourceData($movie, $context);
+                    $cleared++;
+                }
+            });
+        }
+
+        return $cleared;
+    }
+
+    /**
+     * Deletes up to `$limit` Movies nobody holds and nobody has viewed for `purge_unviewed.after_days`, with their
+     * genre links, Availability (both cascade), detail cache and TMDB rating, and returns how many it considered. The
+     * candidates are locked, then checked again for facts, because saving a Movie needs a lock that conflicts with
+     * ours: a fact saved before the lock is seen by the check, and none can be saved after it until the delete. Two
+     * races inside the delete's transaction are accepted: a save that loaded the row just before fails once, and
+     * trying again re-creates the row from its catalog id; a page view that loaded it renders, or is a 404 if it
+     * needed a refresh, and its URL stays a 404 like any purged Movie's.
+     */
+    private function purgeUnviewed(int $limit): int
+    {
+        if (! config('catalog.purge_unviewed.enabled')) {
+            return 0;
+        }
+
+        $candidateIds = $this->movieIds($this->unviewedAndUnheld(Movie::query())->orderBy('id')->limit($limit));
+
+        if ($candidateIds === []) {
+            return 0;
+        }
+
+        $purged = DB::transaction(function () use ($candidateIds): array {
+            Movie::query()->whereKey($candidateIds)->orderBy('id')->lockForUpdate()->get(['id']);
+            $movies = $this->unviewedAndUnheld(Movie::query()->whereKey($candidateIds))->get(['id', 'tmdb_id']);
+            Movie::query()->whereKey($movies->modelKeys())->delete();
+            $tmdbIds = array_values($movies->map(fn (Movie $movie): int => $movie->tmdb_id)->all());
+            $this->ratings->forgetMany(RatingSourceName::Tmdb, array_map(strval(...), $tmdbIds));
+
+            return $tmdbIds;
+        });
+
+        $context = new CatalogContext(config('catalog.language'));
+
+        foreach ($purged as $tmdbId) {
+            Cache::forget($this->detailsKey($tmdbId, $context));
+        }
+
+        return count($candidateIds);
+    }
+
+    /**
+     * Clears everything taken from the Catalog source and marks the Movie removed, so it is never fetched again. Runs
+     * inside the refresh's transaction, under the Movie's row lock.
      */
     private function markRemoved(Movie $movie, CatalogContext $context): void
     {
-        $movie->update([...$this->clearedSourceAttributes($movie), 'removed_at' => now()]);
+        $this->clearSourceData($movie, $context, ['removed_at' => now()]);
+    }
+
+    /**
+     * @param  Builder<Movie>  $query
+     * @return Builder<Movie>
+     */
+    private function unviewedAndUnheld(Builder $query): Builder
+    {
+        return $query->where('last_viewed_at', '<', now()->subDays(config('catalog.purge_unviewed.after_days')))->whereDoesntHave('userMovies');
+    }
+
+    /**
+     * Keeps the row, so users' facts about the Movie survive, and clears everything taken from the Catalog source:
+     * the TMDB-derived columns, genre links, Availability, the detail cache and the TMDB rating. Runs under the
+     * Movie's row lock.
+     *
+     * @param  array<string, mixed>  $extraAttributes  other columns to set with the clearing
+     */
+    private function clearSourceData(Movie $movie, CatalogContext $context, array $extraAttributes = []): void
+    {
+        $movie->update([...$this->clearedSourceAttributes($movie), ...$extraAttributes]);
         $movie->genres()->detach();
         $movie->availabilities()->delete();
         $this->ratings->forget(RatingSourceName::Tmdb, (string) $movie->tmdb_id);

@@ -2,7 +2,6 @@
 
 namespace App\Http\Exceptions;
 
-use App\Http\Support\UserMovies;
 use App\Models\Movie;
 use App\Models\User;
 
@@ -18,10 +17,7 @@ class MovieRemoved extends ErrorPageException
             'This movie is no longer available.',
             'Our data source, TMDB, has removed this movie, so we can\'t show its details any more.',
             ['X-Robots-Tag' => 'noindex'],
-            data: $movie === null ? null : [
-                'tmdbId' => $movie->tmdb_id,
-                'userMovies' => fn (): array => UserMovies::for($user, [$movie]),
-            ],
+            data: self::movieData($movie, $user),
         );
     }
 }

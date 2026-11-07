@@ -27,6 +27,35 @@ return [
         'hard_lifetime_days' => 30,
     ],
 
+    /*
+     * The daily cleanup deletes a Movie nobody holds once it has gone unviewed for more than `after_days`, with its
+     * genre links, Availability, detail cache and TMDB rating. Undo by catalog id re-creates the row.
+     */
+    'purge_unviewed' => [
+        'enabled' => (bool) env('CATALOG_PURGE_UNVIEWED', true),
+        'after_days' => 30,
+    ],
+
+    /*
+     * TMDB's terms allow keeping its data for six months. The daily cleanup clears everything taken from TMDB off a
+     * Movie whose last successful sync is more than `after_days` old, keeping users' facts, and deletes TMDB ratings
+     * older than that. This runs whether or not the unviewed purge is switched on.
+     */
+    'cap' => [
+        'after_days' => 170,
+    ],
+
+    /*
+     * Each cleanup run handles at most `batch_size` Movies, ratings or Streaming services per step, then hands the
+     * rest to its next run, so each stays short. A Streaming service no Availability references is deleted only once
+     * it was last fetched more than `unreferenced_service_grace_seconds` ago, so a refresh that has just stored it
+     * keeps it.
+     */
+    'cleanup' => [
+        'batch_size' => 500,
+        'unreferenced_service_grace_seconds' => 3600,
+    ],
+
     'movie_page' => [
         /*
          * How many top-billed cast members the Movie page shows; the rest are on its full cast page.

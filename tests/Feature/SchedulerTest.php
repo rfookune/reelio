@@ -3,6 +3,7 @@
 use App\Jobs\BuildDiscover;
 use App\Jobs\CheckOverdueRefreshes;
 use App\Jobs\CheckRatingDatasetFreshness;
+use App\Jobs\CleanUpCatalog;
 use App\Jobs\PlanMovieRefreshes;
 use App\Jobs\RefreshGenres;
 use App\Jobs\SyncRatingDataset;
@@ -20,7 +21,7 @@ function delayedWithinLimit(?DateInterval $delay): bool
     return $minutes >= 1 && $minutes <= 15;
 }
 
-test('at 05:00 UTC the scheduler dispatches each Rating dataset sync, a delayed freshness check, the Discover build, the refresh planner and a delayed overdue check', function () {
+test('at 05:00 UTC the scheduler dispatches each Rating dataset sync, a delayed freshness check, the Discover build, the refresh planner, the catalog cleanup and a delayed overdue check', function () {
     $this->travelTo('2026-11-06 05:00:00');
     Queue::fake();
 
@@ -30,6 +31,7 @@ test('at 05:00 UTC the scheduler dispatches each Rating dataset sync, a delayed 
     Queue::assertPushed(CheckRatingDatasetFreshness::class, fn (CheckRatingDatasetFreshness $job) => delayedWithinLimit($job->delay));
     Queue::assertPushed(BuildDiscover::class);
     Queue::assertPushed(PlanMovieRefreshes::class, fn (PlanMovieRefreshes $job) => $job->afterId === 0);
+    Queue::assertPushed(CleanUpCatalog::class);
     Queue::assertPushed(CheckOverdueRefreshes::class, fn (CheckOverdueRefreshes $job) => delayedWithinLimit($job->delay));
     Queue::assertNotPushed(RefreshGenres::class);
 });
