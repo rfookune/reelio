@@ -12,18 +12,22 @@ class RatingDatasets
     /** @param iterable<RatingDataset> $datasets */
     public function __construct(private iterable $datasets) {}
 
+    /** @return list<RatingDataset> every registered dataset, its source switched on or off */
+    public function all(): array
+    {
+        $all = [];
+
+        foreach ($this->datasets as $dataset) {
+            $all[] = $dataset;
+        }
+
+        return $all;
+    }
+
     /** @return list<RatingDataset> the datasets whose source is switched on */
     public function enabled(): array
     {
-        $enabled = [];
-
-        foreach ($this->datasets as $dataset) {
-            if ($dataset->source()->isEnabled()) {
-                $enabled[] = $dataset;
-            }
-        }
-
-        return $enabled;
+        return array_values(array_filter($this->all(), fn (RatingDataset $dataset): bool => $dataset->source()->isEnabled()));
     }
 
     public function for(RatingSourceName $source): ?RatingDataset

@@ -7,6 +7,7 @@ use App\Jobs\PlanMovieRefreshes;
 use App\Jobs\RefreshGenres;
 use App\Jobs\SyncRatingDataset;
 use App\Services\Ratings\Sync\Datasets\RatingDatasets;
+use Carbon\CarbonInterval;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -16,21 +17,20 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 /*
- * The one daily slot. Every scheduled task runs from here and only dispatches jobs, so the app wakes once a day;
- * weekly tasks run in it on Mondays. The freshness and overdue checks are delayed so that they read what's stored
- * after the day's syncs and refreshes have had time to finish, within the 15-minute limit on a job's delay.
+ * The one daily slot, 05:00 UTC. Every scheduled task runs in it and only dispatches a queued job, so the app wakes
+ * once a day; weekly tasks run in it on Mondays. The freshness and overdue checks are delayed so that they read
+ * what's stored after the day's syncs and refreshes have had time to finish, within the 15-minute limit on a job's
+ * delay. A switched-off Rating source isn't synced. Each task has its own name, which `onOneServer()` locks on.
  */
-Schedule::call(function (RatingDatasets $datasets): void {
-    foreach ($datasets->enabled() as $dataset) {
-        SyncRatingDataset::dispatch($dataset->source());
+Schedule::dailyAt('05:00')->timezone('UTC')->onOneServer()->group(function (): void {
+    foreach (app(RatingDatasets::class)->all() as $dataset) {
+        $source = $dataset->source();
+        Schedule::job(new SyncRatingDataset($source))->name(SyncRatingDataset::class.":{$source->value}")->when(fn (): bool => $source->isEnabled());
     }
 
-    CheckRatingDatasetFreshness::dispatch()->delay(now()->addMinutes(10));
-    BuildDiscover::dispatch();
-    PlanMovieRefreshes::dispatch();
-    CheckOverdueRefreshes::dispatch()->delay(now()->addMinutes(15));
-
-    if (now('UTC')->isMonday()) {
-        RefreshGenres::dispatch();
-    }
-})->name('daily-slot')->dailyAt('05:00')->timezone('UTC')->onOneServer();
+    Schedule::job((new CheckRatingDatasetFreshness)->delay(CarbonInterval::minutes(10)));
+    Schedule::job(new BuildDiscover);
+    Schedule::job(new PlanMovieRefreshes);
+    Schedule::job((new CheckOverdueRefreshes)->delay(CarbonInterval::minutes(15)));
+    Schedule::job(new RefreshGenres)->mondays();
+});
