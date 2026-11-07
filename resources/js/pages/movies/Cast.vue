@@ -1,10 +1,22 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { ArrowLeft } from '@lucide/vue';
-import CastGrid from '@/components/movie/CastGrid.vue';
+import { computed, ref } from 'vue';
+import CastFilter from '@/components/movie/CastFilter.vue';
 import type { CastMember } from '@/components/movie/CastGrid.vue';
+import CastMatches from '@/components/movie/CastMatches.vue';
+import CastTiers from '@/components/movie/CastTiers.vue';
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+import { castMatching } from '@/lib/cast';
+import { home } from '@/routes';
 
-defineProps<{
+const props = defineProps<{
     canonicalUrl: string;
     movieUrl: string;
     imageBaseUrl: string;
@@ -15,6 +27,14 @@ defineProps<{
         detailsUnavailable: boolean;
     };
 }>();
+
+/** The filter's text. Filtering replaces the tiers with the list of matches. */
+const filter = ref('');
+const hasCast = computed(
+    () => !props.movie.detailsUnavailable && props.movie.cast.length > 0,
+);
+const filtering = computed(() => filter.value.trim() !== '');
+const matches = computed(() => castMatching(props.movie.cast, filter.value));
 </script>
 
 <template>
@@ -23,22 +43,45 @@ defineProps<{
             <link rel="canonical" :href="canonicalUrl" />
         </Head>
 
-        <div class="flex flex-col gap-3">
-            <Link
-                :href="movieUrl"
-                data-slot="back-to-movie"
-                class="inline-flex items-center gap-1.5 self-start rounded-lg text-sm text-accent underline-offset-4 hover:underline"
-            >
-                <ArrowLeft class="size-4" aria-hidden="true" />
-                {{ movie.title ?? 'Movie'
-                }}<template v-if="movie.year"> ({{ movie.year }})</template>
-            </Link>
-            <h1 class="text-3xl font-semibold tracking-tight tabular-nums">
-                Full cast
-                <span v-if="movie.cast.length > 0" class="text-muted"
-                    >· {{ movie.cast.length }}</span
-                >
-            </h1>
+        <div
+            class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between"
+        >
+            <div class="flex flex-col gap-3">
+                <Breadcrumb>
+                    <BreadcrumbList>
+                        <BreadcrumbItem>
+                            <BreadcrumbLink as-child>
+                                <Link :href="home()">Discover</Link>
+                            </BreadcrumbLink>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                            <BreadcrumbLink as-child>
+                                <Link
+                                    :href="movieUrl"
+                                    data-slot="back-to-movie"
+                                >
+                                    {{ movie.title ?? 'Movie'
+                                    }}<template v-if="movie.year">
+                                        ({{ movie.year }})</template
+                                    >
+                                </Link>
+                            </BreadcrumbLink>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                            <BreadcrumbPage>Full cast</BreadcrumbPage>
+                        </BreadcrumbItem>
+                    </BreadcrumbList>
+                </Breadcrumb>
+                <h1 class="text-3xl font-semibold tracking-tight tabular-nums">
+                    Full cast
+                    <span v-if="movie.cast.length > 0" class="text-muted"
+                        >· {{ movie.cast.length }}</span
+                    >
+                </h1>
+            </div>
+            <CastFilter v-if="hasCast" v-model="filter" />
         </div>
 
         <p
@@ -55,6 +98,12 @@ defineProps<{
         >
             No cast is listed for this movie.
         </p>
-        <CastGrid v-else :image-base-url="imageBaseUrl" :cast="movie.cast" />
+        <CastMatches
+            v-else-if="filtering"
+            :image-base-url="imageBaseUrl"
+            :matches="matches"
+            :query="filter"
+        />
+        <CastTiers v-else :image-base-url="imageBaseUrl" :cast="movie.cast" />
     </div>
 </template>

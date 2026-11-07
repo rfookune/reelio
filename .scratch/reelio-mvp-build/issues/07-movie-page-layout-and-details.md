@@ -15,3 +15,11 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 - [x] Cast: the top 12 billed in a 3/4/6-column grid with name and character, lazy `w185` photos and a person tile fallback
 - [x] The adapter returns Director(s), Writers, cast, US certification and US release date (type 3, else earliest type 2); these live in a per-Movie detail cache (30-day hard lifetime, fetched in the request if missing); `tagline` is a nullable `movies` column
 - [x] The page arrives in one response with no deferred props; sparse states render (blurred-poster hero, no tagline, short cast)
+
+## Note from the full cast page prototype (2026-11-07)
+
+The full cast page (`/movies/{slug}-{id}/casts`, added after this ticket) was redesigned from the plain photo grid. The alternatives are kept as a primary source on the throwaway branch `prototype/full-cast-page` (three rounds: a filterable list, billing tiers with three Starring and three filtered-list layouts, then the back button and filter toggle each drawn three ways). The chosen design is on main:
+
+- **Billing tiers:** the first 6 billed are Starring, on the same profile cards as the Movie page; the next 24 are Supporting, as small round photos; everyone else is Also appearing, as plain text. A long cast loads about 30 photos, not all of them. The tier sizes are `STARRING_COUNT` and `SUPPORTING_COUNT` in `resources/js/lib/cast.ts`.
+- **Filter:** hidden behind a "Filter" button with a "/" key hint, at the right of the title on desktop. `/` opens it, Escape or the ✕ closes it and clears it, returning focus to the button. While it has text, the tiers are replaced by one list of the matches in billing order, each with its tier and the match marked, and "N matches" announced.
+- **Back to the movie:** a breadcrumb, "Discover › {title} ({year}) › Full cast".
