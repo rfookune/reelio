@@ -68,6 +68,9 @@ const meta = computed(() =>
                 decoding="async"
                 class="size-full scale-125 object-cover blur-2xl"
             />
+            <div
+                class="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/30 md:bg-gradient-to-r md:from-background md:via-background/70 md:to-transparent"
+            ></div>
         </div>
 
         <div
