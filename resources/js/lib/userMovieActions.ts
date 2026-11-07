@@ -1,6 +1,7 @@
 import type { Errors, UrlMethodPair } from '@inertiajs/core';
 import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
+import { watchlist as watchlistPage } from '@/routes';
 import { undo as undoRoute } from '@/routes/movies';
 import * as watched from '@/routes/movies/watched';
 import * as watchlist from '@/routes/movies/watchlist';
@@ -62,7 +63,10 @@ function visitUserMovies({
     router.visit(route, {
         data,
         async: true,
-        only: ['userMovies'],
+        only:
+            usePage().component === 'Watchlist'
+                ? ['userMovies', 'trending']
+                : ['userMovies'],
         preserveScroll: true,
         preserveState: true,
         optimistic: (props) => {
@@ -151,9 +155,38 @@ function undo(
         route: undoRoute(tmdbId),
         data: { action },
         produce: () => restored,
+        onSuccess: (component) => {
+            const movies = usePage().props.movies as
+                | { data: { tmdbId: number }[] }
+                | undefined;
+            if (
+                component === 'Watchlist' &&
+                restored.watchlisted &&
+                !movies?.data.some((movie) => movie.tmdbId === tmdbId)
+            ) {
+                revealWatchlistCard(tmdbId, restoreFocus);
+            }
+        },
     });
 
     restoreFocus();
+}
+
+/** Reload the cursor around a saved or restored Movie when the current merged pages don't hold its card. */
+function revealWatchlistCard(tmdbId: number, restoreFocus: () => void): void {
+    const sort = usePage().props.sort as string;
+    router.get(
+        watchlistPage.url(),
+        { restore: tmdbId, ...(sort === 'recently-added' ? {} : { sort }) },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            reset: ['movies'],
+            only: ['movies', 'userMovies', 'trending'],
+            onSuccess: restoreFocus,
+        },
+    );
 }
 
 /** Shows an action's success toast, whose Undo restores `previous`, the facts the Movie had before it. */
@@ -220,6 +253,10 @@ function sendUserMovieAction({
             }
 
             showSuccessToast(tmdbId, action, previous, restoreFocus);
+
+            if (component === 'Watchlist' && action === 'add_to_watchlist') {
+                revealWatchlistCard(tmdbId, restoreFocus);
+            }
         },
     });
 }

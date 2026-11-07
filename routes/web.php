@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', DiscoverController::class)->name('home');
 
 Route::get('search', SearchController::class)->middleware('throttle:search')->name('search');
+Route::get('watchlist', [WatchlistController::class, 'index'])->middleware('auth')->name('watchlist');
 
 Route::get('movies/tmdb/{tmdbId}', MovieEntryController::class)->whereNumber('tmdbId')->name('movies.entry');
 

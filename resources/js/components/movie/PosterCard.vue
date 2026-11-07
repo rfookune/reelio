@@ -61,6 +61,7 @@ const title = computed(() => props.movie.title ?? 'Movie');
                     variant="floating"
                 />
             </div>
+            <slot name="controls" />
         </div>
         <Link
             :href="movie.href"
@@ -73,6 +74,7 @@ const title = computed(() => props.movie.title ?? 'Movie');
                 {{ movie.year }}
             </span>
             <ExternalRatings :ratings="movie.ratings" variant="single" />
+            <slot name="date" />
         </div>
     </article>
 </template>
