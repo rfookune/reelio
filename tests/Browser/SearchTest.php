@@ -213,6 +213,8 @@ it('shows a card\'s TMDB rating as a placeholder while its IMDb rating is looked
         ->wait(2)
         ->assertSeeIn('[data-tmdb-id="1"] [data-slot="external-rating"]', 'IMDb')
         ->assertSeeIn('[data-tmdb-id="1"] [data-slot="external-rating"]', '8.1')
+        ->assertSeeIn('[data-tmdb-id="1"] [data-slot="imdb-credit"]', 'Information courtesy of IMDb. Used with permission.')
+        ->assertDontSeeIn('[data-tmdb-id="1"] [data-slot="imdb-credit"]', 'https://www.imdb.com')
         ->assertMissing('[data-tmdb-id="1"] [data-slot="ratings-pending"]')
         ->assertSeeIn('[data-tmdb-id="2"] [data-slot="external-rating"]', 'TMDB')
         ->assertSeeIn('[data-tmdb-id="2"] [data-slot="external-rating"]', '6.5')

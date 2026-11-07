@@ -79,6 +79,7 @@ const title = computed(() => props.movie.title ?? 'Movie');
             <ExternalRatings
                 :ratings="movie.ratings"
                 variant="single"
+                compact
                 :pending="ratingPending"
             />
             <slot name="date" />
