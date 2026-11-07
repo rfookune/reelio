@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
-import CastFilter from '@/components/movie/CastFilter.vue';
-import type { CastMember } from '@/components/movie/CastGrid.vue';
-import CastMatches from '@/components/movie/CastMatches.vue';
-import CastTiers from '@/components/movie/CastTiers.vue';
+import { Head, Link } from "@inertiajs/vue3";
+import { computed, ref } from "vue";
+import CastFilter from "@/components/movie/CastFilter.vue";
+import type { CastMember } from "@/components/movie/CastGrid.vue";
+import CastMatches from "@/components/movie/CastMatches.vue";
+import CastTiers from "@/components/movie/CastTiers.vue";
+import CrewGroups from "@/components/movie/CrewGroups.vue";
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -12,9 +13,10 @@ import {
     BreadcrumbList,
     BreadcrumbPage,
     BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
-import { castMatching } from '@/lib/cast';
-import { home } from '@/routes';
+} from "@/components/ui/breadcrumb";
+import { castMatching } from "@/lib/cast";
+import type { CrewMember } from "@/lib/crew";
+import { home } from "@/routes";
 
 const props = defineProps<{
     canonicalUrl: string;
@@ -24,16 +26,17 @@ const props = defineProps<{
         title: string | null;
         year: number | null;
         cast: CastMember[];
+        crew: CrewMember[];
         detailsUnavailable: boolean;
     };
 }>();
 
 /** The filter's text. Filtering replaces the tiers with the list of matches. */
-const filter = ref('');
+const filter = ref("");
 const hasCast = computed(
     () => !props.movie.detailsUnavailable && props.movie.cast.length > 0,
 );
-const filtering = computed(() => filter.value.trim() !== '');
+const filtering = computed(() => filter.value.trim() !== "");
 const matches = computed(() => castMatching(props.movie.cast, filter.value));
 </script>
 
@@ -61,7 +64,7 @@ const matches = computed(() => castMatching(props.movie.cast, filter.value));
                                     :href="movieUrl"
                                     data-slot="back-to-movie"
                                 >
-                                    {{ movie.title ?? 'Movie'
+                                    {{ movie.title ?? "Movie"
                                     }}<template v-if="movie.year">
                                         ({{ movie.year }})</template
                                     >
@@ -105,5 +108,10 @@ const matches = computed(() => castMatching(props.movie.cast, filter.value));
             :query="filter"
         />
         <CastTiers v-else :image-base-url="imageBaseUrl" :cast="movie.cast" />
+
+        <CrewGroups
+            v-if="!filtering && !movie.detailsUnavailable"
+            :crew="movie.crew"
+        />
     </div>
 </template>

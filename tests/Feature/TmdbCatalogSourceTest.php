@@ -3,6 +3,7 @@
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Enums\SectionKind;
+use App\Services\Catalog\Sources\MovieDetails;
 use App\Services\Catalog\Sources\MovieListing;
 use App\Services\Catalog\Sources\SectionQuery;
 use App\Services\Catalog\Sources\SourceMisconfigured;
@@ -92,6 +93,9 @@ test('the catalog source reads credits and US release details from the recorded 
         ->and($movie->certification)->toBe('PG-13')
         ->and($movie->usReleaseDate)->toBe('2014-11-07')
         ->and($movie->cast)->toHaveCount(37)
+        ->and($movie->crew[0])->toBe(['id' => 525, 'name' => 'Christopher Nolan', 'job' => 'Director'])
+        ->and(collect($movie->crew)->pluck('job')->unique()->values()->all())->each->toBeIn(MovieDetails::CREW_JOBS)
+        ->and(collect($movie->crew)->map(fn (array $member): string => $member['id'].$member['job'])->duplicates())->toBeEmpty()
         ->and($movie->cast[0])->toBe(['id' => 10297, 'name' => 'Matthew McConaughey', 'character' => 'Cooper', 'profilePath' => '/lCySuYjhXix3FzQdS4oceDDrXKI.jpg']);
 });
 

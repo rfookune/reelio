@@ -10,7 +10,11 @@ function visitFullCast(int $width = 1280, int $height = 900)
 {
     $movie = Movie::factory()->create(['title' => 'Avengers: Doomsday', 'slug' => 'avengers-doomsday', 'release_date' => '2026-12-18']);
     $cast = array_map(fn (int $i): array => ['id' => $i, 'name' => "Actor {$i}", 'character' => "Role {$i}", 'profilePath' => null], range(1, 40));
-    fakeCatalogKnowing(sourceDetailsFor($movie, cast: $cast));
+    fakeCatalogKnowing(sourceDetailsFor($movie, cast: $cast, crew: [
+        ['id' => 901, 'name' => 'Jane Director', 'job' => 'Director'],
+        ['id' => 902, 'name' => 'Sam Writer', 'job' => 'Screenplay'],
+        ['id' => 901, 'name' => 'Jane Director', 'job' => 'Producer'],
+    ]));
 
     return visitWithCsp(route('movies.cast', ['slug' => 'avengers-doomsday', 'id' => $movie->id]), $width, $height);
 }
@@ -24,6 +28,9 @@ it('lists the billed cast in tiers, behind a breadcrumb back to the movie', func
         ->assertSeeIn('[data-slot="breadcrumb-page"]', 'Full cast')
         ->assertSeeIn('#cast-starring', 'Starring')->assertSee('Supporting')->assertSee('Also appearing · 10')
         ->assertSee('Actor 6')->assertSee('Actor 40')
+        ->assertSeeIn('[data-slot="crew-directing"]', 'Jane Director · Director')
+        ->assertSeeIn('[data-slot="crew-writing"]', 'Sam Writer · Screenplay')
+        ->assertSeeIn('[data-slot="crew-producing"]', 'Jane Director · Producer')
         ->assertSeeIn('[aria-controls="cast-filter"]', 'Filter')->assertMissing('#cast-filter')
         ->assertNoJavaScriptErrors()->assertNoAccessibilityIssues(level: 1);
 });

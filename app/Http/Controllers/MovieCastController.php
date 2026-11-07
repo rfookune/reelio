@@ -42,6 +42,7 @@ class MovieCastController extends Controller
                 'title' => $movie->title,
                 'year' => $movie->release_date?->year,
                 'cast' => $result->value->cast ?? [],
+                'crew' => $result->value->crew ?? [],
                 'detailsUnavailable' => $result->isUnavailable(),
             ],
         ]);

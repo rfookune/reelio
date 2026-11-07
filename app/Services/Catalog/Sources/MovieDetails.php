@@ -4,11 +4,15 @@ namespace App\Services\Catalog\Sources;
 
 readonly class MovieDetails
 {
+    /** The crew jobs kept for the Full Cast page, in the order they are listed. */
+    public const CREW_JOBS = ['Director', 'Writer', 'Screenplay', 'Story', 'Novel', 'Producer', 'Executive Producer'];
+
     /**
      * @param  list<array{id: int, name: string}>  $genres
      * @param  list<string>  $directors
      * @param  list<string>  $writers
      * @param  list<array{id: int, name: string, character: ?string, profilePath: ?string}>  $cast
+     * @param  list<array{id: int, name: string, job: string}>  $crew  The directors, writers and producers, one entry per person and job, in the order of CREW_JOBS.
      * @param  array{key: string, name: string, type: string}|null  $trailer
      * @param  list<array{serviceId: int, serviceName: string, logoPath: ?string, country: string, offerType: string, displayPriority: int}>  $availability
      */
@@ -30,6 +34,7 @@ readonly class MovieDetails
         public array $directors = [],
         public array $writers = [],
         public array $cast = [],
+        public array $crew = [],
         public ?string $certification = null,
         public ?string $usReleaseDate = null,
         public ?string $usDigitalReleaseDate = null,

@@ -22,6 +22,7 @@ test('the full cast page lists the whole billed cast without recording a view', 
             ->where('movie.title', 'Avengers: Doomsday')
             ->where('movie.year', 2026)
             ->where('movie.cast', $cast)
+            ->where('movie.crew', [])
             ->where('movie.detailsUnavailable', false));
 
     $this->assertDatabaseHas('movies', ['id' => $movie->id, 'last_viewed_at' => '2026-11-01 00:00:00']);
@@ -54,5 +55,18 @@ test('with no cached details and the source down, the full cast is flagged unava
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('movie.detailsUnavailable', true)
-            ->where('movie.cast', []));
+            ->where('movie.cast', [])
+            ->where('movie.crew', []));
+});
+
+test('the full cast page carries the directors, writers and producers', function () {
+    $movie = Movie::factory()->create();
+    $crew = [
+        ['id' => 525, 'name' => 'Christopher Nolan', 'job' => 'Director'],
+        ['id' => 525, 'name' => 'Christopher Nolan', 'job' => 'Producer'],
+    ];
+    fakeCatalogKnowing(sourceDetailsFor($movie, crew: $crew));
+
+    $this->get(route('movies.cast', ['slug' => $movie->slug, 'id' => $movie->id]))
+        ->assertInertia(fn (Assert $page) => $page->where('movie.crew', $crew));
 });
