@@ -61,15 +61,47 @@ it('matches on the character too, and says when no one matches', function () {
     $page->clear('#cast-filter')->type('#cast-filter', 'nobody')->assertSee('No one matches "nobody".')->assertNoJavaScriptErrors();
 });
 
-it('opens the filter with / unless the visitor is typing', function () {
-    $page = visitFullCast();
+/**
+ * Dispatches a "/" keydown on `body`, where a real one would land (the harness can't press a key there), with the
+ * Command key, the Control key or neither held, and says whether the page is on a Mac, whose shortcut is Command.
+ */
+function pressSlash($page, string $modifier): void
+{
+    $page->script(sprintf('document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "/", metaKey: %s, ctrlKey: %s, bubbles: true, cancelable: true }))', $modifier === 'meta' ? 'true' : 'false', $modifier === 'ctrl' ? 'true' : 'false'));
+}
 
-    // The harness can't press a key on `body`, so the keydown is dispatched there, where a real one would land.
-    $page->script('document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "/", bubbles: true, cancelable: true }))');
+function pageIsOnAMac($page): bool
+{
+    return $page->script('/Mac|iPhone|iPad|iPod/.test(navigator.platform)');
+}
+
+it('opens the filter with Command + / on a Mac and Control + / elsewhere', function () {
+    $page = visitFullCast();
+    $mac = pageIsOnAMac($page);
+
+    pressSlash($page, $mac ? 'meta' : 'ctrl');
+
     $page->assertPresent('#cast-filter');
     expect($page->script('document.activeElement.id'))->toBe('cast-filter');
 
     $page->type('#cast-filter', 'a/b')->assertSee('No one matches "a/b".')->assertNoJavaScriptErrors();
+});
+
+it('does not open the filter for a bare /, or for the other platform\'s modifier', function () {
+    $page = visitFullCast();
+    $mac = pageIsOnAMac($page);
+
+    pressSlash($page, 'none');
+    pressSlash($page, $mac ? 'ctrl' : 'meta');
+
+    $page->assertMissing('#cast-filter')->assertPresent('#cast-starring')->assertNoJavaScriptErrors();
+});
+
+it('names the platform\'s shortcut on the Filter button', function () {
+    $page = visitFullCast();
+    $mac = pageIsOnAMac($page);
+
+    $page->assertSeeIn('[aria-controls="cast-filter"] kbd', $mac ? '⌘' : 'Ctrl');
 });
 
 it('closes the filter with its button, clearing the text', function () {

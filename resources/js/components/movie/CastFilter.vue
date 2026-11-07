@@ -3,15 +3,18 @@ import { Search, X } from '@lucide/vue';
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { onApplePlatform } from '@/lib/platform';
 
 /**
- * The cast filter. It starts as a "Filter" button, which "/" also presses, and becomes a text input that takes
- * focus; Escape or the ✕ clears it and puts focus back on the button, so keyboard users never lose their place.
+ * The cast filter. It starts as a "Filter" button, which ⌘/ (Ctrl+/ off a Mac) also presses, and becomes a text
+ * input that takes focus; Escape or the ✕ clears it and puts focus back on the button, so keyboard users never lose
+ * their place. The shortcut's keys are only known once the page is in the browser, so its hint appears then.
  */
 const filter = defineModel<string>({ required: true });
 const open = ref(filter.value !== '');
 const button = ref<InstanceType<typeof Button> | null>(null);
 const input = ref<InstanceType<typeof Input> | null>(null);
+const onApple = ref<boolean | null>(null);
 
 async function show(): Promise<void> {
     open.value = true;
@@ -26,28 +29,30 @@ async function hide(): Promise<void> {
     (button.value?.$el as HTMLButtonElement | undefined)?.focus();
 }
 
-/** "/" opens the filter, unless the visitor is typing somewhere or means another shortcut. */
-function onSlash(event: KeyboardEvent): void {
-    const target = event.target;
-
+/** The shortcut: Command + / on a Mac, Control + / elsewhere. Pressed with the filter open, it refocuses it. */
+function onShortcut(event: KeyboardEvent): void {
     if (
         event.key !== '/' ||
-        open.value ||
-        event.ctrlKey ||
-        event.metaKey ||
         event.altKey ||
-        (target instanceof Element &&
-            target.closest('input, textarea, select, [contenteditable]'))
+        !(onApplePlatform() ? event.metaKey : event.ctrlKey)
     ) {
         return;
     }
 
     event.preventDefault();
-    void show();
+
+    if (open.value) {
+        (input.value?.$el as HTMLInputElement | undefined)?.focus();
+    } else {
+        void show();
+    }
 }
 
-onMounted(() => window.addEventListener('keydown', onSlash));
-onBeforeUnmount(() => window.removeEventListener('keydown', onSlash));
+onMounted(() => {
+    onApple.value = onApplePlatform();
+    window.addEventListener('keydown', onShortcut);
+});
+onBeforeUnmount(() => window.removeEventListener('keydown', onShortcut));
 </script>
 
 <template>
@@ -59,14 +64,18 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onSlash));
             variant="outline"
             aria-controls="cast-filter"
             aria-expanded="false"
+            :aria-keyshortcuts="
+                onApple === null ? undefined : onApple ? 'Meta+/' : 'Control+/'
+            "
             @click="show"
         >
             <Search aria-hidden="true" />
             Filter
             <kbd
+                v-if="onApple !== null"
                 aria-hidden="true"
                 class="hidden rounded border border-line bg-raised px-1.5 text-xs text-muted md:inline"
-                >/</kbd
+                >{{ onApple ? '⌘' : 'Ctrl' }} /</kbd
             >
         </Button>
         <div v-else class="relative w-full md:w-80">
