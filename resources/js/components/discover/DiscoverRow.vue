@@ -84,7 +84,7 @@ const meta = computed(() =>
             <p v-if="meta" class="text-sm text-muted tabular-nums">
                 {{ meta }}
             </p>
-            <ExternalRatings :ratings="movie.ratings" />
+            <ExternalRatings :ratings="movie.ratings" compact />
         </div>
         <BookmarkToggle
             :tmdb-id="movie.tmdbId"

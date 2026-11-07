@@ -17,8 +17,10 @@ const props = withDefaults(
         variant?: 'all' | 'single';
         /** The ratings are still being looked up: a placeholder shows in place of them. */
         pending?: boolean;
+        /** Sets the IMDb credit smaller, for dense cards. Its wording and colour are unchanged. */
+        compact?: boolean;
     }>(),
-    { variant: 'all', pending: false },
+    { variant: 'all', pending: false, compact: false },
 );
 
 const shown = computed(() =>
@@ -72,7 +74,11 @@ const sourceClass = {
         <p
             v-if="showsImdb && !pending"
             data-slot="imdb-credit"
-            class="text-xs text-muted"
+            :class="
+                compact
+                    ? 'text-[0.6875rem] leading-snug text-muted'
+                    : 'text-xs text-muted'
+            "
         >
             Information courtesy of IMDb (<a
                 href="https://www.imdb.com"
