@@ -4,6 +4,7 @@ namespace App\Http\Support;
 
 use App\Http\Exceptions\MovieRemoved;
 use App\Models\Movie;
+use App\Models\User;
 use App\Services\Catalog\Catalog;
 use App\Services\Catalog\CatalogResult;
 use App\Services\Catalog\Sources\MovieDetails;
@@ -18,13 +19,13 @@ class MoviePageDetails
     /** @var CatalogResult<MovieDetails>|null */
     private ?CatalogResult $result = null;
 
-    public function __construct(private Catalog $catalog, private Movie $movie) {}
+    public function __construct(private Catalog $catalog, private Movie $movie, private ?User $user = null) {}
 
     /** @return CatalogResult<MovieDetails> */
     public function result(): CatalogResult
     {
         $this->result ??= $this->catalog->details($this->movie);
-        throw_if($this->result->isRemoved(), MovieRemoved::class, $this->movie);
+        throw_if($this->result->isRemoved(), MovieRemoved::class, $this->movie, $this->user);
 
         return $this->result;
     }

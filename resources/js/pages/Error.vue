@@ -3,18 +3,21 @@ import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import { useShortDate } from '@/composables/useShortDate';
+import { removedMovieData } from '@/lib/errorPages';
 import { clearWatched, setWatchlist } from '@/lib/userMovieActions';
 import { home, watchlist } from '@/routes';
-import type { UserMovies } from '@/types';
 
 const props = defineProps<{
     status: number;
     title: string;
     message: string;
-    removedMovieId?: number;
-    userMovies?: UserMovies;
+    exceptionClass: string;
+    data?: Record<string, unknown>;
 }>();
-const facts = computed(() => props.userMovies?.[props.removedMovieId ?? '']);
+const removedMovie = computed(() => removedMovieData(props));
+const facts = computed(
+    () => removedMovie.value?.userMovies[removedMovie.value.tmdbId],
+);
 const formatShortDate = useShortDate({ localized: true });
 </script>
 
@@ -27,8 +30,8 @@ const formatShortDate = useShortDate({ localized: true });
         <h1 class="text-3xl font-semibold tracking-tight">{{ title }}</h1>
         <p class="max-w-prose text-muted">{{ message }}</p>
         <section
-            v-if="removedMovieId && (facts?.watchlisted || facts?.watched)"
-            :data-tmdb-id="removedMovieId"
+            v-if="removedMovie && (facts?.watchlisted || facts?.watched)"
+            :data-tmdb-id="removedMovie.tmdbId"
             aria-labelledby="removed-lists-heading"
             class="flex flex-col gap-4 rounded-xl border border-line bg-surface p-5"
         >
@@ -45,7 +48,7 @@ const formatShortDate = useShortDate({ localized: true });
                     data-slot="remove-watchlist"
                     @click="
                         setWatchlist(
-                            removedMovieId,
+                            removedMovie.tmdbId,
                             false,
                             'movie',
                             $event.currentTarget as HTMLElement,
@@ -66,7 +69,7 @@ const formatShortDate = useShortDate({ localized: true });
                     data-slot="clear-watched"
                     @click="
                         clearWatched(
-                            removedMovieId,
+                            removedMovie.tmdbId,
                             'movie',
                             $event.currentTarget as HTMLElement,
                         )
@@ -76,7 +79,7 @@ const formatShortDate = useShortDate({ localized: true });
             </div>
         </section>
         <Link
-            v-if="removedMovieId && $page.props.auth.user"
+            v-if="removedMovie && $page.props.auth.user"
             :href="watchlist()"
             class="rounded-lg text-accent underline-offset-4 hover:underline"
             >Your Watchlist</Link

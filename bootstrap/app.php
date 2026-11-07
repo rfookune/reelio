@@ -1,12 +1,10 @@
 <?php
 
 use App\Http\Exceptions\ErrorPageException;
-use App\Http\Exceptions\MovieRemoved;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RecordGuestPage;
 use App\Http\Middleware\SecurityHeaders;
-use App\Http\Support\UserMovies;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -45,12 +43,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
             $response = Inertia::render('Error', [
                 'status' => $exception->getStatusCode(),
+                'exceptionClass' => $exception::class,
                 'title' => $exception->getMessage(),
                 'message' => $exception->description,
-                ...($exception instanceof MovieRemoved && $exception->movie !== null ? [
-                    'removedMovieId' => $exception->movie->tmdb_id,
-                    'userMovies' => fn (): array => UserMovies::for($request->user(), [$exception->movie]),
-                ] : []),
+                ...($exception->data === null ? [] : ['data' => $exception->data]),
             ])->toResponse($request)->setStatusCode($exception->getStatusCode());
             $response->headers->add($exception->getHeaders());
 

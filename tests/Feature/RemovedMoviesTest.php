@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Exceptions\MovieRemoved;
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
@@ -42,8 +43,9 @@ test('the 410 page includes only the signed-in viewers facts and no Movie detail
 
     $this->actingAs($user)->get($movie->canonicalUrl())->assertGone()->assertHeader('X-Robots-Tag', 'noindex')
         ->assertInertia(fn (Assert $page) => $page->component('Error')
-            ->where('removedMovieId', $movie->tmdb_id)
-            ->where('userMovies', [$movie->tmdb_id => ['watchlisted' => true, 'watched' => true, 'watchedDate' => '2026-10-01T00:00:00.000000Z']])
+            ->where('exceptionClass', MovieRemoved::class)
+            ->where('data.tmdbId', $movie->tmdb_id)
+            ->where('data.userMovies', [$movie->tmdb_id => ['watchlisted' => true, 'watched' => true, 'watchedDate' => '2026-10-01T00:00:00.000000Z']])
             ->missing('movie'));
 });
 
@@ -55,7 +57,7 @@ test('the 410 page never exposes another users facts', function (bool $signedIn)
     }
 
     $this->get($movie->canonicalUrl())->assertGone()->assertInertia(fn (Assert $page) => $page
-        ->where('userMovies.'.$movie->tmdb_id, ['watchlisted' => false, 'watched' => false, 'watchedDate' => null]));
+        ->where('data.userMovies.'.$movie->tmdb_id, ['watchlisted' => false, 'watched' => false, 'watchedDate' => null]));
 })->with(['guest' => false, 'another user' => true]);
 
 test('clearing a Removed Movie hides it from that list and Undo restores its original date', function (string $list, string $action, string $expectedDate) {

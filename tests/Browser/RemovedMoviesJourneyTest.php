@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Exceptions\ErrorPageException;
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
+use Illuminate\Support\Facades\Route;
 
 it('removes and undoes a Removed Movie from each list without losing its date', function (string $list, string $label, string $date, string $action, string $toast, string $column) {
     $facts = UserMovie::factory()->for(Movie::factory()->removed())->create([
@@ -69,4 +71,14 @@ it('keeps keyboard focus on the remaining Removed Movie when the last available 
 
     expect($page->script('document.activeElement.closest("[data-tmdb-id]")?.dataset.tmdbId'))->toBe('1');
     expect($page->script('document.activeElement.dataset.slot'))->toBe('movie-menu');
+});
+
+it('shows Removed Movie controls only for the MovieRemoved exception class', function () {
+    $user = User::factory()->create();
+    Route::middleware('web')->get('/another-error', fn () => throw new class(410, 'Another error', 'Another description', data: ['tmdbId' => 1, 'userMovies' => [1 => ['watchlisted' => true, 'watched' => true, 'watchedDate' => '2026-10-01T12:00:00.000000Z']]]) extends ErrorPageException {});
+    $this->actingAs($user);
+
+    visitWithCsp('/another-error')->assertSee('Another error')->assertSee('Another description')
+        ->assertDontSee("It's still in your lists")->assertMissing('[data-slot="remove-watchlist"]')
+        ->assertMissing('[data-slot="clear-watched"]')->assertNoJavaScriptErrors();
 });

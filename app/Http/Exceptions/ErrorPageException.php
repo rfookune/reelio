@@ -10,8 +10,11 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 abstract class ErrorPageException extends HttpException
 {
-    /** @param  array<string, string>  $headers */
-    public function __construct(int $statusCode, string $title, public readonly string $description, array $headers = [])
+    /**
+     * @param  array<string, string>  $headers
+     * @param  array<string, mixed>|null  $data
+     */
+    public function __construct(int $statusCode, string $title, public readonly string $description, array $headers = [], public readonly ?array $data = null)
     {
         parent::__construct($statusCode, $title, headers: $headers);
     }

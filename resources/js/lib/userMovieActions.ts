@@ -1,6 +1,7 @@
 import type { Errors, Page, UrlMethodPair } from '@inertiajs/core';
 import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
+import { removedMovieData } from '@/lib/errorPages';
 import { watched as watchedPage, watchlist as watchlistPage } from '@/routes';
 import { undo as undoRoute } from '@/routes/movies';
 import * as watched from '@/routes/movies/watched';
@@ -28,7 +29,7 @@ const SUCCESS_MESSAGES: Record<UserMovieAction, string> = {
 };
 
 /**
- * Sends a visit that changes one Movie's facts, by catalog id, and reloads only `userMovies`.
+ * Sends a visit that changes one Movie's facts, by catalog id, and reloads `userMovies` (inside `data` on errors).
  *
  * The visit is `async`, so a second one never cancels one in flight. The page's `userMovies` entry shows `produce`'s
  * facts until the server answers, and on any failure Inertia rolls the entry back while an error toast explains: Undo's
@@ -48,41 +49,46 @@ function visitUserMovies({
     produce: (facts: UserMovieFacts) => UserMovieFacts;
     onSuccess?: (component: string) => void;
 }): void {
+    const page = usePage();
+    const removedMovie =
+        page.component === 'Error' ? removedMovieData(page.props) : undefined;
+    const factProps = removedMovie
+        ? ['data', 'exceptionClass']
+        : ['userMovies'];
     const failed = (errors?: Errors): false => {
         toast.error(errors?.undo ?? FAILURE_MESSAGE, {
             duration: TOAST_DURATION,
         });
 
         if (errors?.undo) {
-            router.reload({ only: ['userMovies'], async: true });
+            router.reload({ only: factProps, async: true });
         }
 
         return false;
     };
-    const removedMovieId =
-        usePage().component === 'Error'
-            ? usePage().props.removedMovieId
-            : undefined;
 
     router.visit(route, {
         data,
         async: true,
-        only: removedMovieId
-            ? ['userMovies', 'removedMovieId']
-            : usePage().component === 'Watchlist'
-              ? ['userMovies', 'trending']
-              : ['userMovies'],
+        only:
+            page.component === 'Watchlist'
+                ? [...factProps, 'trending']
+                : factProps,
         preserveScroll: true,
         preserveState: true,
         optimistic: (props) => {
-            const userMovies = (props.userMovies ?? {}) as UserMovies;
-
-            return {
-                userMovies: {
-                    ...userMovies,
-                    [tmdbId]: produce(userMovies[tmdbId] ?? NO_FACTS),
-                },
+            const errorData = removedMovieData(props);
+            const userMovies =
+                errorData?.userMovies ??
+                ((props.userMovies ?? {}) as UserMovies);
+            const updated = {
+                ...userMovies,
+                [tmdbId]: produce(userMovies[tmdbId] ?? NO_FACTS),
             };
+
+            return errorData
+                ? { data: { ...errorData, userMovies: updated } }
+                : { userMovies: updated };
         },
         onSuccess: (response) => onSuccess?.(response.component),
         onError: failed,
@@ -92,9 +98,10 @@ function visitUserMovies({
             if (
                 response.status === 410 &&
                 response.headers['x-inertia'] &&
-                removedMovieId === tmdbId &&
+                removedMovie?.tmdbId === tmdbId &&
                 page.component === 'Error' &&
-                page.props?.removedMovieId === removedMovieId
+                removedMovieData(page.props ?? {})?.tmdbId ===
+                    removedMovie.tmdbId
             ) {
                 return;
             }
@@ -265,7 +272,9 @@ function sendUserMovieAction({
 
     const component = page.component;
     const previous =
-        (page.props.userMovies as UserMovies | undefined)?.[tmdbId] ?? NO_FACTS;
+        (removedMovieData(page.props)?.userMovies ??
+            (page.props.userMovies as UserMovies | undefined))?.[tmdbId] ??
+        NO_FACTS;
     const restoreFocus = focusRestorer(tmdbId, control);
 
     visitUserMovies({
