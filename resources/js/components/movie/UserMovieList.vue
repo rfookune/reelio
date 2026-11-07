@@ -7,6 +7,7 @@ import PosterCard from '@/components/movie/PosterCard.vue';
 import PosterCardSkeleton from '@/components/movie/PosterCardSkeleton.vue';
 import UserMovieCardMenu from '@/components/movie/UserMovieCardMenu.vue';
 import { Button } from '@/components/ui/button';
+import { NativeSelect } from '@/components/ui/native-select';
 import { useShortDate } from '@/composables/useShortDate';
 import { watched, watchlist } from '@/routes';
 import type { UserMovieList, UserMovieListPageProps } from '@/types';
@@ -205,10 +206,11 @@ const showMoreParams = {
                 <label :for="`${collection}-sort`" class="text-sm text-muted"
                     >Sort by</label
                 >
-                <select
+                <NativeSelect
                     :id="`${collection}-sort`"
                     :value="sort"
-                    class="h-11 rounded-lg border border-control bg-surface px-3 text-sm"
+                    touch
+                    class="w-auto"
                     @change="
                         changeSort(($event.target as HTMLSelectElement).value)
                     "
@@ -220,7 +222,7 @@ const showMoreParams = {
                     >
                         {{ label }}
                     </option>
-                </select>
+                </NativeSelect>
             </div>
         </div>
         <section v-if="count === 0" class="flex flex-col gap-2">

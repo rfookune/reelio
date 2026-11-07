@@ -278,7 +278,7 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
                     enterkeyhint="search"
                     :maxlength="maximumQueryLength"
                     placeholder="Search by title"
-                    class="h-12 w-full rounded-xl border border-control bg-surface pr-4 pl-12 text-base outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/40"
+                    class="h-11 w-full rounded-xl border border-control bg-surface pr-4 pl-12 text-base outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/40 md:h-9"
                 />
             </div>
         </form>

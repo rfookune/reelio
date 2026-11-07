@@ -9,6 +9,7 @@ import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { send } from '@/routes/verification';
 import type { CountryChoice, User } from '@/types';
 
@@ -72,10 +73,10 @@ const user = computed(() => page.props.auth.user as User);
                 <Label for="preferred_country"
                     >Country for where to watch</Label
                 >
-                <select
+                <NativeSelect
                     id="preferred_country"
                     name="preferred_country"
-                    class="mt-1 block h-9 w-full rounded-md border border-input bg-surface px-3 py-1 text-base shadow-xs outline-none aria-invalid:border-destructive md:text-sm"
+                    class="mt-1"
                     :aria-invalid="errors.preferred_country ? true : undefined"
                     aria-describedby="preferred_country_hint"
                 >
@@ -90,7 +91,7 @@ const user = computed(() => page.props.auth.user as User);
                     >
                         {{ country.name }}
                     </option>
-                </select>
+                </NativeSelect>
                 <p id="preferred_country_hint" class="text-sm text-muted">
                     Streaming availability is shown for this country.
                 </p>
