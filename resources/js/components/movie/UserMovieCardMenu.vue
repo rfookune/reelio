@@ -7,15 +7,24 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { markAsWatched } from '@/lib/userMovieActions';
+import { clearWatched, markAsWatched } from '@/lib/userMovieActions';
+import type { UserMovieList } from '@/types';
 
-const props = defineProps<{ tmdbId: number; title: string | null }>();
+const props = defineProps<{
+    tmdbId: number;
+    title: string | null;
+    collection: UserMovieList;
+}>();
 const emit = defineEmits<{ removing: [] }>();
 const trigger = ref<HTMLButtonElement | null>(null);
 
-function mark(): void {
+function apply(): void {
     emit('removing');
-    markAsWatched(props.tmdbId, 'watchlist', trigger.value);
+    if (props.collection === 'watchlist') {
+        markAsWatched(props.tmdbId, props.collection, trigger.value);
+    } else {
+        clearWatched(props.tmdbId, props.collection, trigger.value);
+    }
 }
 </script>
 
@@ -40,7 +49,9 @@ function mark(): void {
                 }
             "
         >
-            <DropdownMenuItem @select="mark">Mark as watched</DropdownMenuItem>
+            <DropdownMenuItem @select="apply">{{
+                collection === 'watchlist' ? 'Mark as watched' : 'Clear Watched'
+            }}</DropdownMenuItem>
         </DropdownMenuContent>
     </DropdownMenu>
 </template>

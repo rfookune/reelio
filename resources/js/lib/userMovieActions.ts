@@ -1,7 +1,7 @@
 import type { Errors, UrlMethodPair } from '@inertiajs/core';
 import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
-import { watchlist as watchlistPage } from '@/routes';
+import { watched as watchedPage, watchlist as watchlistPage } from '@/routes';
 import { undo as undoRoute } from '@/routes/movies';
 import * as watched from '@/routes/movies/watched';
 import * as watchlist from '@/routes/movies/watchlist';
@@ -160,11 +160,11 @@ function undo(
                 | { data: { tmdbId: number }[] }
                 | undefined;
             if (
-                component === 'Watchlist' &&
-                restored.watchlisted &&
+                ((component === 'Watchlist' && restored.watchlisted) ||
+                    (component === 'Watched' && restored.watched)) &&
                 !movies?.data.some((movie) => movie.tmdbId === tmdbId)
             ) {
-                revealWatchlistCard(tmdbId, restoreFocus);
+                revealUserMovieCard(tmdbId, restoreFocus);
             }
         },
     });
@@ -173,11 +173,14 @@ function undo(
 }
 
 /** Reload the cursor around a saved or restored Movie when the current merged pages don't hold its card. */
-function revealWatchlistCard(tmdbId: number, restoreFocus: () => void): void {
+function revealUserMovieCard(tmdbId: number, restoreFocus: () => void): void {
+    const isWatched = usePage().component === 'Watched';
+    const route = isWatched ? watchedPage : watchlistPage;
+    const defaultSort = isWatched ? 'recently-watched' : 'recently-added';
     const sort = usePage().props.sort as string;
     router.get(
-        watchlistPage.url(),
-        { restore: tmdbId, ...(sort === 'recently-added' ? {} : { sort }) },
+        route.url(),
+        { restore: tmdbId, ...(sort === defaultSort ? {} : { sort }) },
         {
             preserveState: true,
             preserveScroll: true,
@@ -255,7 +258,7 @@ function sendUserMovieAction({
             showSuccessToast(tmdbId, action, previous, restoreFocus);
 
             if (component === 'Watchlist' && action === 'add_to_watchlist') {
-                revealWatchlistCard(tmdbId, restoreFocus);
+                revealUserMovieCard(tmdbId, restoreFocus);
             }
         },
     });

@@ -1,3 +1,15 @@
+import type { PosterCardMovie } from '@/components/movie/PosterCard.vue';
+
+export type UserMovieList = 'watchlist' | 'watched';
+
+export type UserMovieListPageProps = {
+    imageBaseUrl: string;
+    sort: string;
+    movies: { data: PosterCardMovie[] };
+    trending: PosterCardMovie[];
+    userMovies: UserMovies;
+};
+
 /** The viewer's facts about one Movie. */
 export type UserMovieFacts = {
     watchlisted: boolean;

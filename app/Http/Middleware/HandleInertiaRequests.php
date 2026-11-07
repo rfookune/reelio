@@ -24,6 +24,7 @@ class HandleInertiaRequests extends Middleware
     protected $withoutSsr = [
         'search',
         'watchlist',
+        'watched',
     ];
 
     /**

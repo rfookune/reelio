@@ -2,6 +2,7 @@
 
 namespace App\Http\Support;
 
+use App\Enums\UserMovieList;
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
@@ -15,18 +16,18 @@ use Illuminate\Pagination\CursorPaginator;
 use Inertia\ScrollMetadata;
 
 /**
- * Stored Watchlist cards and a stable cursor. No Movie is refreshed while listing it.
+ * Stored Watchlist or Watched cards and a stable cursor. No Movie is refreshed while listing it.
  *
  * @phpstan-import-type Card from SearchPage
  */
-class WatchlistPage
+class UserMovieListPage
 {
     /** @var CursorPaginator<int, UserMovie>|null */
     private ?CursorPaginator $movies = null;
 
     private ?int $count = null;
 
-    public function __construct(private User $user, private string $sort, private Catalog $catalog, private Ratings $ratings) {}
+    public function __construct(private User $user, private UserMovieList $list, private string $sort, private Catalog $catalog, private Ratings $ratings) {}
 
     private function count(): int
     {
@@ -51,7 +52,7 @@ class WatchlistPage
     public function restoredMovieUrl(int $tmdbId): string
     {
         $facts = $this->orderedFacts()->where('movies.tmdb_id', $tmdbId)->first();
-        $parameters = $this->sort === 'recently-added' ? [] : ['sort' => $this->sort];
+        $parameters = $this->sort === $this->list->defaultSort() ? [] : ['sort' => $this->sort];
 
         if ($facts !== null) {
             $parameters['cursor'] = (new Cursor([
@@ -60,13 +61,13 @@ class WatchlistPage
             ]))->encode();
         }
 
-        return route('watchlist', $parameters);
+        return route($this->list->value, $parameters);
     }
 
     /** @return list<Card> */
     public function trending(): array
     {
-        $movies = $this->count() === 0 ? $this->catalog->storedTrending() : [];
+        $movies = $this->list === UserMovieList::Watchlist && $this->count() === 0 ? $this->catalog->storedTrending() : [];
         if ($movies === []) {
             return [];
         }
@@ -102,7 +103,7 @@ class WatchlistPage
     /** @return Builder<UserMovie> */
     private function facts(): Builder
     {
-        return UserMovie::query()->whereBelongsTo($this->user)->whereNotNull('watchlisted_at');
+        return UserMovie::query()->whereBelongsTo($this->user)->whereNotNull($this->list->dateColumn());
     }
 
     /** @return CursorPaginator<int, UserMovie> */
@@ -113,13 +114,13 @@ class WatchlistPage
         }
 
         return $this->movies = $this->orderedFacts()->with('movie')
-            ->cursorPaginate(48)->appends($this->sort === 'recently-added' ? [] : ['sort' => $this->sort]);
+            ->cursorPaginate(48)->appends($this->sort === $this->list->defaultSort() ? [] : ['sort' => $this->sort]);
     }
 
     /** @return 'asc'|'desc' */
     private function direction(): string
     {
-        return in_array($this->sort, ['recently-added', 'newest-release'], true) ? 'desc' : 'asc';
+        return in_array($this->sort, [$this->list->defaultSort(), 'newest-release'], true) ? 'desc' : 'asc';
     }
 
     /** @return Builder<UserMovie> */
@@ -129,7 +130,7 @@ class WatchlistPage
             'title' => '(movies.title COLLATE movie_title)',
             'newest-release' => "COALESCE(movies.release_date, '-infinity'::date)",
             'oldest-release' => "COALESCE(movies.release_date, 'infinity'::date)",
-            default => 'user_movies.watchlisted_at',
+            default => 'user_movies.'.$this->list->dateColumn(),
         };
 
         return $this->facts()->join('movies', 'movies.id', '=', 'user_movies.movie_id')
@@ -149,7 +150,7 @@ class WatchlistPage
             'year' => $movie->release_date?->year,
             'posterPath' => $movie->poster_path,
             'ratings' => array_map(fn (ExternalRating $rating): array => $rating->toArray(), $ratings),
-            'href' => $movie->canonicalUrl('watchlist'),
+            'href' => $movie->canonicalUrl($this->list->value),
         ];
     }
 }

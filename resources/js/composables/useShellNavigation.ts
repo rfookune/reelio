@@ -15,6 +15,7 @@ import {
     register,
     search as searchRoute,
     watchlist as watchlistRoute,
+    watched as watchedRoute,
 } from '@/routes';
 import { edit as editProfile } from '@/routes/profile';
 import type { NavItem } from '@/types';
@@ -32,9 +33,6 @@ export type UseShellNavigationReturn = {
     isActive: (item: ShellNavItem) => boolean;
 };
 
-/*
- * Watched's path is fixed by the spec and moves to Wayfinder when that page lands.
- */
 const discover: ShellNavItem = {
     title: 'Discover',
     href: home(),
@@ -58,7 +56,7 @@ const watchlist: ShellNavItem = {
 
 const watched: ShellNavItem = {
     title: 'Watched',
-    href: '/watched',
+    href: watchedRoute(),
     icon: CircleCheckBig,
     activePaths: ['/watched'],
 };

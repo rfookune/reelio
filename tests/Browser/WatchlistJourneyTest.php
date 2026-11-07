@@ -17,7 +17,7 @@ it('removes cards with Undo, moves focus to the next and previous controls, and 
 
     $page = visitWithCsp('/watchlist?sort=title', width: $width);
 
-    $page->assertSee('Watchlist · 3')->assertSee('Last watched 12 Mar 2026')
+    $page->assertSee('Watchlist · 3')->assertSee('Last watched Mar 12, 2026')
         ->click('[data-tmdb-id="2"] [data-slot="bookmark-toggle"]')
         ->assertNotPresent('[data-slot="watchlist-grid"] [data-tmdb-id="2"]')
         ->assertSee('Watchlist · 2')->assertSee('Removed from your Watchlist');
