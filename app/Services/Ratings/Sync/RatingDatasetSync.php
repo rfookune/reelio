@@ -4,6 +4,7 @@ namespace App\Services\Ratings\Sync;
 
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\Exceptions\RatingReplacementRefused;
+use App\Services\Ratings\RatingRow;
 use App\Services\Ratings\RatingStore;
 use App\Services\Ratings\Sync\Datasets\RatingDataset;
 use App\Services\Ratings\Sync\Enums\RatingSyncOutcome;
@@ -21,7 +22,7 @@ class RatingDatasetSync
 {
     public function __construct(private RatingStore $store) {}
 
-    public function sync(RatingDataset $dataset): RatingSyncResult
+    public function sync(RatingDataset $dataset, ?RatingSyncProgress $progress = null): RatingSyncResult
     {
         $source = $dataset->source();
         $path = tempnam(sys_get_temp_dir(), "rating-dataset-{$source->value}-");
@@ -31,6 +32,7 @@ class RatingDatasetSync
         }
 
         try {
+            $progress?->downloading();
             $validators = $this->download($dataset, $path);
 
             if ($validators === null) {
@@ -39,8 +41,10 @@ class RatingDatasetSync
                 return new RatingSyncResult(RatingSyncOutcome::Unchanged);
             }
 
+            $rows = $progress === null ? $dataset->rows($path) : $this->reportingRows($dataset->rows($path), $progress);
+
             try {
-                ['imported' => $imported, 'skipped' => $skipped] = $this->store->replaceSource($source, $dataset->rows($path));
+                ['imported' => $imported, 'skipped' => $skipped] = $this->store->replaceSource($source, $rows);
             } catch (RatingReplacementRefused $exception) {
                 throw new RatingSyncFailed($exception->getMessage(), previous: $exception);
             }
@@ -102,6 +106,34 @@ class RatingDatasetSync
             'etag' => $response->header('ETag') ?: null,
             'last_modified' => $response->header('Last-Modified') ?: null,
         ];
+    }
+
+    /**
+     * Passes the rows through unchanged, reporting how many have been read every `ratings.sync.progress_every_rows`
+     * rows and at the end, when the total isn't already reported. Replacing is reported only once every row has
+     * been read, so a file that fails partway through never reports it.
+     *
+     * @param  iterable<RatingRow|null>  $rows
+     * @return iterable<RatingRow|null>
+     */
+    private function reportingRows(iterable $rows, RatingSyncProgress $progress): iterable
+    {
+        $interval = config('ratings.sync.progress_every_rows');
+        $read = 0;
+
+        foreach ($rows as $row) {
+            yield $row;
+
+            if (++$read % $interval === 0) {
+                $progress->readRows($read);
+            }
+        }
+
+        if ($read === 0 || $read % $interval !== 0) {
+            $progress->readRows($read);
+        }
+
+        $progress->replacing();
     }
 
     private function recordSuccess(RatingSourceName $source): void

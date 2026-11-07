@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Support\RatingSyncProgressBar;
 use App\Jobs\SyncRatingDataset;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\Sync\Datasets\RatingDatasets;
@@ -55,13 +56,17 @@ class SyncRatingDatasetCommand extends Command
             return self::FAILURE;
         }
 
+        $progress = new RatingSyncProgressBar($this->output, $source);
+
         try {
-            $result = $sync->sync($dataset);
+            $result = $sync->sync($dataset, $progress);
         } catch (RatingSyncFailed $exception) {
+            $progress->finish();
             $this->components->error("The {$source->label()} sync failed; the live rows are unchanged. {$exception->getMessage()}");
 
             return self::FAILURE;
         } finally {
+            $progress->finish();
             $lock->release($job);
         }
 

@@ -27,6 +27,20 @@ test('the command syncs IMDb by default and reports the counts', function () {
         ->toBe(['tt0111161', 'tt0816692']);
 });
 
+test('the command shows the sync\'s progress', function () {
+    Http::fake(['https://datasets.example.test/title.ratings.tsv.gz' => Http::response(
+        file_get_contents(base_path('tests/Fixtures/imdb/title.ratings.tsv.gz')),
+        200,
+        ['ETag' => '"v1"'],
+    )]);
+
+    $this->artisan('ratings:sync imdb')
+        ->expectsOutputToContain('Downloading the IMDb dataset…')
+        ->expectsOutputToContain('4 rows read')
+        ->expectsOutputToContain('Replacing the live IMDb rows…')
+        ->assertSuccessful();
+});
+
 test('the command says when the dataset is unchanged since the last sync', function () {
     Http::fake(['https://datasets.example.test/title.ratings.tsv.gz' => fn (Request $request) => $request->hasHeader('If-None-Match', '"v1"')
         ? Http::response('', 304)

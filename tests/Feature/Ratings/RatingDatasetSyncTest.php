@@ -8,6 +8,7 @@ use App\Services\Ratings\Sync\Datasets\ImdbRatingDataset;
 use App\Services\Ratings\Sync\Enums\RatingSyncOutcome;
 use App\Services\Ratings\Sync\RatingDatasetSync;
 use App\Services\Ratings\Sync\RatingSyncFailed;
+use App\Services\Ratings\Sync\RatingSyncProgress;
 use App\Services\Ratings\Sync\RatingSyncResult;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Http\Client\Request;
@@ -51,6 +52,30 @@ function seedImdbRatings(int $count): void
 function syncImdb(): RatingSyncResult
 {
     return app(RatingDatasetSync::class)->sync(app(ImdbRatingDataset::class));
+}
+
+function recordingSyncProgress(): RatingSyncProgress
+{
+    return new class implements RatingSyncProgress
+    {
+        /** @var list<string> */
+        public array $events = [];
+
+        public function downloading(): void
+        {
+            $this->events[] = 'downloading';
+        }
+
+        public function readRows(int $rowsRead): void
+        {
+            $this->events[] = "read {$rowsRead}";
+        }
+
+        public function replacing(): void
+        {
+            $this->events[] = 'replacing';
+        }
+    };
 }
 
 function imdbRows(): array
@@ -166,6 +191,47 @@ test('a source with no rows always downloads, even with remembered validators', 
     Http::assertSentCount(2);
     Http::assertNotSent(fn (Request $request) => $request->hasHeader('If-None-Match'));
     expect(imdbRows())->toHaveCount(2);
+});
+
+test('a sync reports the download, the rows read and the replacement, in order', function () {
+    config(['ratings.sync.progress_every_rows' => 2]);
+    fakeDataset(datasetFixture());
+    $progress = recordingSyncProgress();
+
+    app(RatingDatasetSync::class)->sync(app(ImdbRatingDataset::class), $progress);
+
+    expect($progress->events)->toBe(['downloading', 'read 2', 'read 4', 'replacing']);
+});
+
+test('a sync reports the final row count when it falls between intervals', function () {
+    config(['ratings.sync.progress_every_rows' => 3]);
+    fakeDataset(datasetFixture());
+    $progress = recordingSyncProgress();
+
+    app(RatingDatasetSync::class)->sync(app(ImdbRatingDataset::class), $progress);
+
+    expect($progress->events)->toBe(['downloading', 'read 3', 'read 4', 'replacing']);
+});
+
+test('an unchanged file reports only the download', function () {
+    Http::fake([imdbDatasetUrl() => fn (Request $request) => $request->hasHeader('If-None-Match', '"v1"')
+        ? Http::response('', 304)
+        : Http::response(datasetFixture(), 200, ['ETag' => '"v1"'])]);
+    syncImdb();
+    $progress = recordingSyncProgress();
+
+    app(RatingDatasetSync::class)->sync(app(ImdbRatingDataset::class), $progress);
+
+    expect($progress->events)->toBe(['downloading']);
+});
+
+test('a file that fails partway through never reports the replacement', function () {
+    fakeDataset(substr(gzippedDataset(array_map(fn (int $i) => "tt1{$i}\t7.0\t100", range(1, 20))), 0, 40));
+    $progress = recordingSyncProgress();
+
+    expect(fn () => app(RatingDatasetSync::class)->sync(app(ImdbRatingDataset::class), $progress))->toThrow(RatingSyncFailed::class);
+
+    expect($progress->events)->not->toContain('replacing');
 });
 
 test('the sync job runs on the imports queue, unique per source, with a timeout under the local retry_after', function () {
