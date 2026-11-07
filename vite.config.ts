@@ -33,6 +33,8 @@ export default defineConfig({
         }),
     ]),
     server: {
+        // A named host, so the dev server's origin isn't an IPv6 literal like http://[::1]:5173: CSP host-sources can't express one, and the browser would block every dev-server asset.
+        host: 'localhost',
         watch: {
             ignored: [
                 '**/.agents/**',
