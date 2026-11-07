@@ -5,6 +5,8 @@ use App\Models\User;
 use App\Services\Catalog\Catalog;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Sources\MovieDetails;
+use App\Services\Ratings\Enums\RatingSourceName;
+use App\Services\Ratings\RatingStore;
 
 /**
  * Builds Discover from a fake source on 6 Nov 2026: Movie 1 is the hero, with a trailer; Movie 31 opens on 21 Nov;
@@ -95,4 +97,17 @@ it('says when no movie data can be reached, with Retry and Search', function () 
         ->assertPresent('[data-slot="discover-unavailable"] a[href="/search"]')
         ->assertNoJavaScriptErrors()
         ->assertNoAccessibilityIssues(level: 1);
+});
+
+it('credits IMDb in short on a Discover card, linking IMDb itself', function () {
+    config(['ratings.sources.imdb.enabled' => true, 'catalog.image_base_url' => '/test-images/']);
+    app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000002', 8.1, 5000);
+    fakeDiscoverSource(['trending' => [movieListings(1, 6)]], [new MovieDetails(tmdbId: 2, title: 'Movie 2', imdbId: 'tt0000002')]);
+    app(Catalog::class)->buildDiscover(CatalogProfile::Background);
+
+    visitWithCsp('/')
+        ->assertSeeIn('[data-slot="discover-row"][data-tmdb-id="2"] [data-slot="imdb-credit"]', 'Information courtesy of IMDb. Used with permission.')
+        ->assertDontSeeIn('[data-slot="discover-row"][data-tmdb-id="2"] [data-slot="imdb-credit"]', 'https://www.imdb.com')
+        ->assertAttribute('[data-tmdb-id="2"] [data-slot="imdb-credit"] a', 'href', 'https://www.imdb.com')
+        ->assertNoJavaScriptErrors();
 });

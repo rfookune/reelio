@@ -17,7 +17,7 @@ const props = withDefaults(
         variant?: 'all' | 'single';
         /** The ratings are still being looked up: a placeholder shows in place of them. */
         pending?: boolean;
-        /** Sets the IMDb credit smaller, for dense cards. Its wording and colour are unchanged. */
+        /** Credits IMDb in short and smaller, for dense cards, without the URL it otherwise spells out. */
         compact?: boolean;
     }>(),
     { variant: 'all', pending: false, compact: false },
@@ -72,13 +72,23 @@ const sourceClass = {
             <span v-else>Not yet rated</span>
         </p>
         <p
-            v-if="showsImdb && !pending"
+            v-if="showsImdb && !pending && compact"
             data-slot="imdb-credit"
-            :class="
-                compact
-                    ? 'text-[0.6875rem] leading-snug text-muted'
-                    : 'text-xs text-muted'
-            "
+            class="text-[0.6875rem] leading-snug text-muted"
+        >
+            Information courtesy of
+            <a
+                href="https://www.imdb.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="underline-offset-4 hover:underline"
+                >IMDb</a
+            >. Used with permission.
+        </p>
+        <p
+            v-else-if="showsImdb && !pending"
+            data-slot="imdb-credit"
+            class="text-xs text-muted"
         >
             Information courtesy of IMDb (<a
                 href="https://www.imdb.com"
