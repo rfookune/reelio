@@ -130,17 +130,14 @@ class DiscoverPage
     }
 
     /**
-     * Each Movie's External ratings, keyed by catalog id. The batch lookup is keyed by Movie id, so every Movie,
-     * with a row or not, goes in as a stand-in whose id is its catalog id, keeping the two id spaces apart.
+     * Each Movie's External ratings, keyed by catalog id.
      *
      * @return array<int, list<ExternalRating>>
      */
     private function ratings(): array
     {
-        return $this->ratings ??= $this->ratingSources->ratingsFor(collect($this->discover()->movies())->map(fn (DiscoverMovie $movie): Movie => (new Movie)->forceFill([
-            'id' => $movie->tmdbId,
-            'tmdb_id' => $movie->tmdbId,
-            'imdb_id' => $movie->imdbId ?? $this->rows()->get($movie->tmdbId)?->imdb_id,
-        ])));
+        return $this->ratings ??= RatingsByCatalogId::for($this->ratingSources, collect($this->discover()->movies())->mapWithKeys(fn (DiscoverMovie $movie): array => [
+            $movie->tmdbId => $movie->imdbId ?? $this->rows()->get($movie->tmdbId)?->imdb_id,
+        ])->all());
     }
 }

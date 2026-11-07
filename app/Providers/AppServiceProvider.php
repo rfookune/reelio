@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Http\Support\RateLimitKey;
+use App\Http\Support\SearchPage;
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\GuardedCatalogSource;
@@ -50,13 +51,21 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Configure the application's rate limiters. Watchlist and Watched actions and Undo share one budget.
+     * Configure the application's rate limiters. Search has its own budget; Watchlist and Watched actions and Undo share one.
      */
     protected function configureRateLimiting(): void
     {
         RateLimiter::for('csp-reports', fn (Request $request): Limit => Limit::perMinute(10)
             ->by((string) $request->ip())
             ->response(fn () => response()->noContent()));
+
+        /*
+         * Reloading Search's `userMovies` after a Watchlist action reads only the cache, and the action has its own
+         * budget, so it doesn't count against search's.
+         */
+        RateLimiter::for('search', fn (Request $request): Limit => SearchPage::reloadsUserMoviesOnly($request)
+            ? Limit::none()
+            : Limit::perMinute(60)->by(RateLimitKey::for($request)));
 
         RateLimiter::for('user-movie-actions', fn (Request $request): Limit => Limit::perMinute(60)->by(RateLimitKey::for($request)));
     }

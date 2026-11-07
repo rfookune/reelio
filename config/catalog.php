@@ -34,6 +34,21 @@ return [
         'on_view_after_seconds' => 86400,
     ],
 
+    'search' => [
+        /*
+         * A search page is read from the cache for `fresh_seconds`, then read again. While the source fails, the
+         * cached page is served as stale until `stale_seconds` after it was read, then the search is unavailable.
+         */
+        'fresh_seconds' => 3600,
+        'stale_seconds' => 86400,
+
+        /*
+         * Shorter queries show Trending instead of searching; longer ones are cut.
+         */
+        'minimum_query_length' => 2,
+        'maximum_query_length' => 100,
+    ],
+
     'discover' => [
         'movies_per_section' => 10,
 

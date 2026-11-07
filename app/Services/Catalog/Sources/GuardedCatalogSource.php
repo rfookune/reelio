@@ -27,6 +27,11 @@ class GuardedCatalogSource implements CatalogSource
         return $this->guard($context, fn (): SectionPage => $this->inner->section($query, $page, $context));
     }
 
+    public function search(string $query, int $page, CatalogContext $context): SearchResults
+    {
+        return $this->guard($context, fn (): SearchResults => $this->inner->search($query, $page, $context));
+    }
+
     /**
      * Makes an interactive call through the circuit breaker and the live throttle; a background call goes
      * straight through.

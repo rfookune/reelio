@@ -7,6 +7,7 @@ use App\Http\Controllers\CspReportController;
 use App\Http\Controllers\DiscoverController;
 use App\Http\Controllers\MovieController;
 use App\Http\Controllers\MovieEntryController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\UndoController;
 use App\Http\Controllers\WatchedController;
 use App\Http\Controllers\WatchlistController;
@@ -15,6 +16,8 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', DiscoverController::class)->name('home');
+
+Route::get('search', SearchController::class)->middleware('throttle:search')->name('search');
 
 Route::get('movies/tmdb/{tmdbId}', MovieEntryController::class)->whereNumber('tmdbId')->name('movies.entry');
 

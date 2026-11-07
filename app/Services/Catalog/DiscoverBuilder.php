@@ -20,9 +20,6 @@ use Illuminate\Support\Facades\Cache;
  */
 class DiscoverBuilder
 {
-    /** TMDB serves no list page past this one. */
-    private const LAST_SOURCE_PAGE = 500;
-
     /** When the build in progress stops asking the source, as a timestamp. */
     private int $deadline = 0;
 
@@ -315,7 +312,7 @@ class DiscoverBuilder
         $wanted = config('catalog.discover.movies_per_section');
         $collected = [];
         $considered = [];
-        $lastPage = min(config('catalog.discover.max_pages_per_section'), self::LAST_SOURCE_PAGE);
+        $lastPage = min(config('catalog.discover.max_pages_per_section'), Catalog::LAST_SOURCE_PAGE);
 
         for ($page = 1; $page <= $lastPage && count($collected) < $wanted && ! ($isDone !== null && $isDone()); $page++) {
             $this->ensureTimeLeft();

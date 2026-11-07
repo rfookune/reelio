@@ -5,9 +5,11 @@ namespace App\Services\Catalog;
 use App\Models\Genre;
 use App\Models\Movie;
 use App\Services\Catalog\Enums\CatalogProfile;
+use App\Services\Catalog\Enums\SectionKind;
 use App\Services\Catalog\Exceptions\CreationLimited;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\MovieDetails;
+use App\Services\Catalog\Sources\SearchResults;
 use App\Services\Catalog\Sources\SourceUnavailable;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
@@ -19,6 +21,9 @@ use Illuminate\Support\Str;
 
 class Catalog
 {
+    /** The source serves no list or search page past this one. */
+    public const LAST_SOURCE_PAGE = 500;
+
     public function __construct(
         private CatalogSource $source,
         private CacheKey $keys,
@@ -92,6 +97,60 @@ class Catalog
         }
 
         return $this->discover->stored($context);
+    }
+
+    /**
+     * One page of a title search. A page read within `search.fresh_seconds` is served from the cache; an older or
+     * missing one is read from the source, and each result's TMDB score recorded. When the source fails, the cached
+     * page is served as stale for up to `search.stale_seconds` after it was read; otherwise the search is
+     * unavailable. The cache key holds a hash of the query, never its text.
+     *
+     * @return CatalogResult<SearchResults>
+     */
+    public function search(string $query, int $page): CatalogResult
+    {
+        $context = new CatalogContext(config('catalog.language'));
+        $key = $this->searchKey($query, $page, $context);
+        $cached = $this->cachedSearchEntry($key);
+
+        if ($cached !== null && $cached['fetchedAt'] > now()->subSeconds(config('catalog.search.fresh_seconds'))->getTimestamp()) {
+            return CatalogResult::fresh($cached['results']);
+        }
+
+        try {
+            $results = $this->source->search($query, $page, $context);
+        } catch (SourceUnavailable $exception) {
+            $this->misconfiguration->reportIfMisconfigured($exception, $context);
+
+            return $cached === null ? CatalogResult::unavailable() : CatalogResult::stale($cached['results']);
+        }
+
+        foreach ($results->listings as $listing) {
+            $this->ratings->record(RatingSourceName::Tmdb, (string) $listing->tmdbId, $listing->voteAverage, $listing->voteCount);
+        }
+
+        Cache::put($key, ['fetchedAt' => now()->getTimestamp(), 'results' => $results->toArray()], now()->addSeconds(config('catalog.search.stale_seconds')));
+
+        return CatalogResult::fresh($results);
+    }
+
+    /** A search page from the cache alone, fresh or stale, without asking the source; null when there is none. */
+    public function cachedSearch(string $query, int $page): ?SearchResults
+    {
+        return $this->cachedSearchEntry($this->searchKey($query, $page, new CatalogContext(config('catalog.language'))))['results'] ?? null;
+    }
+
+    /**
+     * Discover's stored Trending Movies, in rank order, without building the payload or asking the source: none
+     * when nothing fresh enough is stored.
+     *
+     * @return list<DiscoverMovie>
+     */
+    public function storedTrending(): array
+    {
+        $trending = array_find($this->discover->stored(new CatalogContext(config('catalog.language')))->sections, fn (DiscoverSection $section): bool => $section->kind === SectionKind::Trending);
+
+        return $trending->movies ?? [];
     }
 
     /** Rebuilds the Discover payload; see `DiscoverBuilder::build()`. */
@@ -259,6 +318,30 @@ class Catalog
 
         $movie->genres()->sync(array_column($details->genres, 'id'));
         $this->availability->replace($movie, $details->availability);
+    }
+
+    private function searchKey(string $query, int $page, CatalogContext $context): string
+    {
+        return $this->keys->build('search', ['query' => $query, 'page' => $page], $context);
+    }
+
+    /**
+     * The cached search page and when it was read, while it is young enough to serve, stale or not.
+     *
+     * @return array{fetchedAt: int, results: SearchResults}|null
+     */
+    private function cachedSearchEntry(string $key): ?array
+    {
+        $cached = Cache::get($key);
+        $fetchedAt = is_array($cached) && is_int($cached['fetchedAt'] ?? null) ? $cached['fetchedAt'] : null;
+
+        if ($fetchedAt === null || $fetchedAt < now()->subSeconds(config('catalog.search.stale_seconds'))->getTimestamp()) {
+            return null;
+        }
+
+        $results = SearchResults::fromArray($cached['results'] ?? null);
+
+        return $results === null ? null : ['fetchedAt' => $fetchedAt, 'results' => $results];
     }
 
     private function detailsKey(int $tmdbId, CatalogContext $context): string

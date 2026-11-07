@@ -4,6 +4,8 @@ use App\Actions\AddToWatchlist;
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
+use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\FakeCatalogSource;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -83,6 +85,16 @@ test('sign-in returns to the page last loaded by an Inertia visit, whatever page
     $this->put("/movies/tmdb/{$movie->tmdb_id}/watchlist", ['source' => 'movie', 'redirect' => $other->canonicalUrl()], ['Referer' => $other->canonicalUrl()]);
 
     logInThroughForm(User::factory()->create())->assertRedirect($movie->canonicalUrl());
+});
+
+test('a guest who saves from Search returns to Search after signing in, without their search text', function () {
+    $movie = Movie::factory()->create();
+    app()->instance(CatalogSource::class, new FakeCatalogSource(searches: ['inter' => [[movieListing($movie->tmdb_id)]]]));
+
+    $this->get(route('search', ['q' => 'inter']))->assertOk();
+    $this->put("/movies/tmdb/{$movie->tmdb_id}/watchlist", ['source' => 'search'])->assertRedirect(route('login'));
+
+    logInThroughForm(User::factory()->create())->assertRedirect('/search');
 });
 
 test('a guest who has loaded no page returns to Discover', function () {

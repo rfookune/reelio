@@ -432,6 +432,37 @@ test('a genre collection reads TMDB\'s discover list for the genre by popularity
     ]);
 });
 
+test('a search page is translated from the recorded fixture, in TMDB\'s order with poster-less Movies kept', function () {
+    config(['catalog.tmdb.token' => 'test-read-token']);
+    Http::fake(['https://api.themoviedb.org/3/search/movie?*' => Http::response(json_decode(file_get_contents(base_path('tests/Fixtures/tmdb/search_inter.json')), true, flags: JSON_THROW_ON_ERROR))]);
+
+    $results = app(TmdbCatalogSource::class)->search('inter', 1, new CatalogContext('en-US'));
+
+    expect($results->totalPages)->toBe(208)
+        ->and($results->totalResults)->toBe(4141)
+        ->and($results->listings)->toHaveCount(20)
+        ->and($results->listings[0])->toMatchArray(['tmdbId' => 529462, 'title' => 'Inter View', 'releaseDate' => '2011-01-26', 'voteAverage' => 1.0, 'voteCount' => 1])
+        ->and(collect($results->listings)->whereNull('posterPath'))->toHaveCount(3);
+    Http::assertSentCount(1);
+    Http::assertSent(fn (Request $request) => $request->hasHeader('Authorization', 'Bearer test-read-token') && queryOf($request) === [
+        'query' => 'inter',
+        'page' => '1',
+        'language' => 'en-US',
+        'include_adult' => 'false',
+    ]);
+});
+
+test('a search fails explicitly on unsuccessful or malformed responses', function (array $body, int $status) {
+    Http::fake(['https://api.themoviedb.org/3/search/movie?*' => Http::response($body, $status)]);
+
+    expect(fn () => app(TmdbCatalogSource::class)->search('inter', 1, new CatalogContext))->toThrow(SourceUnavailable::class);
+})->with([
+    'not found' => [[], 404],
+    'server error' => [[], 500],
+    'no results' => [['page' => 1, 'total_pages' => 1, 'total_results' => 0], 200],
+    'no result count' => [['page' => 1, 'total_pages' => 1, 'results' => []], 200],
+]);
+
 test('adult, malformed and duplicate listings are dropped, and unsafe image paths are cleared', function () {
     Http::fake(['https://api.themoviedb.org/3/movie/popular?*' => Http::response(['page' => 1, 'total_pages' => 3, 'results' => [
         ['id' => 1, 'title' => 'Kept', 'poster_path' => '/kept.jpg', 'backdrop_path' => 'javascript:alert(1)', 'release_date' => ''],

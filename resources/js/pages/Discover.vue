@@ -7,6 +7,7 @@ import type { DiscoverHeroMovie } from '@/components/discover/DiscoverHero.vue';
 import DiscoverSection from '@/components/discover/DiscoverSection.vue';
 import type { DiscoverSection as Section } from '@/components/discover/DiscoverSection.vue';
 import { Button } from '@/components/ui/button';
+import { search } from '@/routes';
 import type { UserMovies } from '@/types';
 
 defineProps<{
@@ -69,7 +70,7 @@ function retry(): void {
                     Retry
                 </Button>
                 <Button as-child variant="outline">
-                    <Link href="/search">Search</Link>
+                    <Link :href="search()">Search</Link>
                 </Button>
             </div>
         </section>

@@ -9,7 +9,7 @@ import {
 import type { ComputedRef } from 'vue';
 import { computed } from 'vue';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
-import { home, login, register } from '@/routes';
+import { home, login, register, search as searchRoute } from '@/routes';
 import { edit as editProfile } from '@/routes/profile';
 import type { NavItem } from '@/types';
 
@@ -27,8 +27,8 @@ export type UseShellNavigationReturn = {
 };
 
 /*
- * Search, Watchlist and Watched have no routes yet; their paths are fixed by
- * the spec and move to Wayfinder routes when those pages land.
+ * Watchlist and Watched have no routes yet; their paths are fixed by the spec
+ * and move to Wayfinder routes when those pages land.
  */
 const discover: ShellNavItem = {
     title: 'Discover',
@@ -39,7 +39,7 @@ const discover: ShellNavItem = {
 
 const search: ShellNavItem = {
     title: 'Search',
-    href: '/search',
+    href: searchRoute(),
     icon: Search,
     activePaths: ['/search'],
 };

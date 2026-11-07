@@ -12,8 +12,12 @@ const props = withDefaults(
         alt: string;
         widths?: ImageWidth[];
         sizes: string;
+        /** `eager` for images above the fold. */
+        loading?: 'lazy' | 'eager';
+        /** The missing-poster tile's title, when the alt text is empty. */
+        placeholder?: string;
     }>(),
-    { widths: () => [185, 342, 500] },
+    { widths: () => [185, 342, 500], loading: 'lazy', placeholder: undefined },
 );
 
 const failed = ref(false);
@@ -42,11 +46,11 @@ watch(
             :alt="alt"
             width="342"
             height="513"
-            loading="lazy"
+            :loading="loading"
             decoding="async"
             class="size-full object-cover"
             @error="failed = true"
         />
-        <MissingPoster v-else :title="alt" />
+        <MissingPoster v-else :title="placeholder ?? alt" />
     </div>
 </template>

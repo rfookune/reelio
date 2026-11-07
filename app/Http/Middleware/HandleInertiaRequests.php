@@ -17,6 +17,15 @@ class HandleInertiaRequests extends Middleware
     protected $rootView = 'app';
 
     /**
+     * Pages rendered on the client only: they aren't public pages a crawler indexes.
+     *
+     * @var array<int, string>
+     */
+    protected $withoutSsr = [
+        'search',
+    ];
+
+    /**
      * Determines the current asset version.
      *
      * @see https://inertiajs.com/asset-versioning

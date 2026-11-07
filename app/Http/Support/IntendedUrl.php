@@ -12,10 +12,13 @@ class IntendedUrl
 {
     private const LAST_PAGE_KEY = 'guest.last_page';
 
-    /** Records the page a guest just loaded, as its path and query. */
+    /**
+     * Records the page a guest just loaded, as its path and query; Search as its path alone, because search text
+     * is never stored.
+     */
     public static function recordPage(Request $request): void
     {
-        $request->session()->put(self::LAST_PAGE_KEY, $request->getRequestUri());
+        $request->session()->put(self::LAST_PAGE_KEY, $request->routeIs('search') ? $request->getPathInfo() : $request->getRequestUri());
     }
 
     /** Sets the intended URL, which sign-in and registration redirect to, to the page last recorded. */

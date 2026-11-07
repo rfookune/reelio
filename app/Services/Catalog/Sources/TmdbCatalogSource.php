@@ -135,7 +135,36 @@ class TmdbCatalogSource implements CatalogSource
         };
         $response = $this->get($path, ['language' => $context->language, 'include_adult' => 'false', 'page' => $page, ...$filters], $context)
             ?? throw new SourceUnavailable('The Catalog source has no such list page.');
+        $data = $this->listPage($response);
 
+        return new SectionPage($this->listings($data['results']), $data['total_pages']);
+    }
+
+    /**
+     * One page of a title search, in TMDB's order, Movies without a poster included. Adult listings, listings that
+     * aren't well formed and repeats within the page are dropped; an unsafe image path is cleared.
+     */
+    public function search(string $query, int $page, CatalogContext $context): SearchResults
+    {
+        $response = $this->get('search/movie', ['query' => $query, 'page' => $page, 'language' => $context->language, 'include_adult' => 'false'], $context)
+            ?? throw new SourceUnavailable('The Catalog source has no such search page.');
+        $data = $this->listPage($response);
+        $totalResults = $response->json('total_results');
+
+        if (! is_int($totalResults) || $totalResults < 0) {
+            throw new SourceUnavailable('The Catalog source returned an invalid result count.');
+        }
+
+        return new SearchResults($this->listings($data['results']), $data['total_pages'], $totalResults);
+    }
+
+    /**
+     * A list page's body: its results and page count.
+     *
+     * @return array{results: array<mixed>, total_pages: int}
+     */
+    private function listPage(Response $response): array
+    {
         try {
             $data = Validator::make((array) $response->json(), [
                 'total_pages' => ['required', 'integer', 'min:0'],
@@ -145,9 +174,20 @@ class TmdbCatalogSource implements CatalogSource
             throw new SourceUnavailable('The Catalog source returned an invalid list.', previous: $exception);
         }
 
+        return ['results' => (array) $data['results'], 'total_pages' => (int) $data['total_pages']];
+    }
+
+    /**
+     * The page's well-formed, non-adult listings, each once.
+     *
+     * @param  array<mixed>  $results
+     * @return list<MovieListing>
+     */
+    private function listings(array $results): array
+    {
         $listings = [];
 
-        foreach ($data['results'] as $result) {
+        foreach ($results as $result) {
             $listing = is_array($result) ? $this->listing($result) : null;
 
             if ($listing !== null && ! isset($listings[$listing->tmdbId])) {
@@ -155,7 +195,7 @@ class TmdbCatalogSource implements CatalogSource
             }
         }
 
-        return new SectionPage(array_values($listings), (int) $data['total_pages']);
+        return array_values($listings);
     }
 
     /**
