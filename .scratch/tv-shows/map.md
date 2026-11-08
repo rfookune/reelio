@@ -34,7 +34,6 @@ A buildable spec at `.scratch/tv-shows/spec.md` for adding TV Shows to Reelio, w
 
 ## Not yet specified
 
-- Test strategy: browser journeys and the accessibility sweep for the new pages.
 
 ## Out of scope
 
