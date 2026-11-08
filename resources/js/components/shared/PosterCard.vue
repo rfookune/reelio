@@ -3,7 +3,7 @@ import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import ExternalRatings from '@/components/ExternalRatings.vue';
 import type { ExternalRating } from '@/components/ExternalRatings.vue';
-import BookmarkToggle from '@/components/movie/BookmarkToggle.vue';
+import BookmarkToggle from '@/components/shared/BookmarkToggle.vue';
 import TmdbImage from '@/components/TmdbImage.vue';
 import { tvBadgeLabel } from '@/lib/searchKinds';
 import type { CardKind } from '@/lib/searchKinds';

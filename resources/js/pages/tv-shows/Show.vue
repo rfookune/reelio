@@ -8,15 +8,15 @@ import TvShowMarkDialog from '@/components/tv-show/TvShowMarkDialog.vue';
 import { useTvShowActions } from '@/composables/useTvShowActions';
 import type { WatchedProgress } from '@/composables/useTvShowActions';
 import type { ExternalRating } from '@/components/ExternalRatings.vue';
-import WhereToWatch from '@/components/movie/WhereToWatch.vue';
-import type { WhereToWatchBlock } from '@/components/movie/WhereToWatch.vue';
+import WhereToWatch from '@/components/shared/WhereToWatch.vue';
+import type { WhereToWatchBlock } from '@/components/shared/WhereToWatch.vue';
 import { watch as watchPage } from '@/routes/tv-shows';
 import SeoHead from '@/components/SeoHead.vue';
-import MovieHero from '@/components/movie/MovieHero.vue';
-import MovieCast from '@/components/movie/MovieCast.vue';
-import type { CastMember } from '@/components/movie/MovieCast.vue';
-import TrailerPlayer from '@/components/movie/TrailerPlayer.vue';
-import type { Trailer } from '@/components/movie/TrailerPlayer.vue';
+import TitleHero from '@/components/shared/TitleHero.vue';
+import TitleCast from '@/components/casts/TitleCast.vue';
+import type { CastMember } from '@/components/casts/TitleCast.vue';
+import TrailerPlayer from '@/components/shared/TrailerPlayer.vue';
+import type { Trailer } from '@/components/shared/TrailerPlayer.vue';
 import TvShowDetailsCard from '@/components/tv-show/TvShowDetailsCard.vue';
 import { describeMovie, shareImage } from '@/lib/seo';
 import { tvShowJsonLd, tvShowTitle, tvShowYearRange } from '@/lib/tvShows';
@@ -126,7 +126,7 @@ const jsonLd = computed(() =>
             type="video.tv_show"
             :json-ld="jsonLd"
         />
-        <MovieHero
+        <TitleHero
             :image-base-url="imageBaseUrl"
             :title="tvShow.title ?? 'TV show'"
             :original-title="tvShow.originalTitle"
@@ -223,7 +223,7 @@ const jsonLd = computed(() =>
                     />
                 </div>
             </template>
-        </MovieHero>
+        </TitleHero>
         <div
             data-slot="tv-show-body"
             class="relative -mt-28 grid gap-x-12 gap-y-10 md:-mt-40 lg:grid-cols-[minmax(0,1fr)_20rem]"
@@ -310,7 +310,7 @@ const jsonLd = computed(() =>
                 @mark-season="markSeason"
                 @clear-season="clearSeason"
             />
-            <MovieCast
+            <TitleCast
                 :image-base-url="imageBaseUrl"
                 :cast="tvShow.cast"
                 :unavailable="tvShow.detailsUnavailable"

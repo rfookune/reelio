@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import CastGrid from '@/components/movie/CastGrid.vue';
-import type { CastMember } from '@/components/movie/CastGrid.vue';
+import CastGrid from '@/components/casts/CastGrid.vue';
+import type { CastMember } from '@/components/casts/CastGrid.vue';
 
 export type { CastMember };
 

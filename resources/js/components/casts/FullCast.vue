@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import CastFilter from '@/components/movie/CastFilter.vue';
-import type { CastMember } from '@/components/movie/CastGrid.vue';
-import CastMatches from '@/components/movie/CastMatches.vue';
-import CastTiers from '@/components/movie/CastTiers.vue';
-import CrewGroups from '@/components/movie/CrewGroups.vue';
+import CastFilter from '@/components/casts/CastFilter.vue';
+import type { CastMember } from '@/components/casts/CastGrid.vue';
+import CastMatches from '@/components/casts/CastMatches.vue';
+import CastTiers from '@/components/casts/CastTiers.vue';
+import CrewGroups from '@/components/casts/CrewGroups.vue';
 import {
     Breadcrumb,
     BreadcrumbItem,

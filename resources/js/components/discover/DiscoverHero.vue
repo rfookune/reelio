@@ -4,8 +4,8 @@ import { Play } from '@lucide/vue';
 import { computed } from 'vue';
 import type { DiscoverMovie } from '@/components/discover/DiscoverRow.vue';
 import ExternalRatings from '@/components/ExternalRatings.vue';
-import TrailerPlayer from '@/components/movie/TrailerPlayer.vue';
-import type { Trailer } from '@/components/movie/TrailerPlayer.vue';
+import TrailerPlayer from '@/components/shared/TrailerPlayer.vue';
+import type { Trailer } from '@/components/shared/TrailerPlayer.vue';
 import WatchlistButton from '@/components/movie/WatchlistButton.vue';
 import { Button } from '@/components/ui/button';
 import {

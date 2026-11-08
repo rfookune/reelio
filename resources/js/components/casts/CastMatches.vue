@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { User } from '@lucide/vue';
-import type { CastMember } from '@/components/movie/CastGrid.vue';
-import MatchHighlight from '@/components/movie/MatchHighlight.vue';
+import type { CastMember } from '@/components/casts/CastGrid.vue';
+import MatchHighlight from '@/components/casts/MatchHighlight.vue';
 import { castCaption } from '@/lib/cast';
 import type { CastTier } from '@/lib/cast';
 import { isSafeTmdbPath, tmdbImageUrl } from '@/lib/tmdb';

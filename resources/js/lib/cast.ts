@@ -1,4 +1,4 @@
-import type { CastMember } from '@/components/movie/CastGrid.vue';
+import type { CastMember } from '@/components/casts/CastGrid.vue';
 
 /** How many of the top-billed cast are Starring, and how many after them are Supporting. The rest are "Also appearing". */
 export const STARRING_COUNT = 6;

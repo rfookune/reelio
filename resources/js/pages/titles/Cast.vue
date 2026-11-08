@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { CastMember } from '@/components/movie/CastGrid.vue';
-import FullCast from '@/components/shared/FullCast.vue';
+import type { CastMember } from '@/components/casts/CastGrid.vue';
+import FullCast from '@/components/casts/FullCast.vue';
 import type { CrewMember } from '@/lib/crew';
 
 defineProps<{

@@ -2,9 +2,9 @@
 import { Head, InfiniteScroll, router } from '@inertiajs/vue3';
 import { LoaderCircle, RotateCw, Search as SearchIcon } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
-import PosterCard from '@/components/movie/PosterCard.vue';
-import type { PosterCardMovie } from '@/components/movie/PosterCard.vue';
-import PosterCardSkeleton from '@/components/movie/PosterCardSkeleton.vue';
+import PosterCard from '@/components/shared/PosterCard.vue';
+import type { PosterCardMovie } from '@/components/shared/PosterCard.vue';
+import PosterCardSkeleton from '@/components/shared/PosterCardSkeleton.vue';
 import { Button } from '@/components/ui/button';
 import { announce } from '@/composables/useAnnouncer';
 import { useLookedUpRatings } from '@/composables/useLookedUpRatings';

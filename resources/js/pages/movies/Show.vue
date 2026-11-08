@@ -4,15 +4,15 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import type { ExternalRating } from '@/components/ExternalRatings.vue';
 import { watch as watchPage } from '@/routes/movies';
 import SeoHead from '@/components/SeoHead.vue';
-import MovieCast from '@/components/movie/MovieCast.vue';
-import type { CastMember } from '@/components/movie/MovieCast.vue';
+import TitleCast from '@/components/casts/TitleCast.vue';
+import type { CastMember } from '@/components/casts/TitleCast.vue';
 import MovieDetailsCard from '@/components/movie/MovieDetailsCard.vue';
 import MovieActions from '@/components/movie/MovieActions.vue';
-import MovieHero from '@/components/movie/MovieHero.vue';
-import TrailerPlayer from '@/components/movie/TrailerPlayer.vue';
-import WhereToWatch from '@/components/movie/WhereToWatch.vue';
-import type { WhereToWatchBlock } from '@/components/movie/WhereToWatch.vue';
-import type { Trailer } from '@/components/movie/TrailerPlayer.vue';
+import TitleHero from '@/components/shared/TitleHero.vue';
+import TrailerPlayer from '@/components/shared/TrailerPlayer.vue';
+import WhereToWatch from '@/components/shared/WhereToWatch.vue';
+import type { WhereToWatchBlock } from '@/components/shared/WhereToWatch.vue';
+import type { Trailer } from '@/components/shared/TrailerPlayer.vue';
 import { describeMovie, movieJsonLd, movieTitle, shareImage } from '@/lib/seo';
 import { isSafeTmdbPath, tmdbImageUrl } from '@/lib/tmdb';
 import type { UserMovies } from '@/types';
@@ -136,7 +136,7 @@ onBeforeUnmount(() => {
             :json-ld="jsonLd"
         />
 
-        <MovieHero
+        <TitleHero
             :image-base-url="imageBaseUrl"
             :title="movie.title"
             :original-title="movie.originalTitle"
@@ -155,7 +155,7 @@ onBeforeUnmount(() => {
                     :facts="userMovies[movie.tmdbId]"
                 />
             </template>
-        </MovieHero>
+        </TitleHero>
 
         <div
             data-slot="movie-body"
@@ -248,7 +248,7 @@ onBeforeUnmount(() => {
                 </p>
             </section>
 
-            <MovieCast
+            <TitleCast
                 :image-base-url="imageBaseUrl"
                 :cast="movie.cast"
                 :unavailable="movie.detailsUnavailable"

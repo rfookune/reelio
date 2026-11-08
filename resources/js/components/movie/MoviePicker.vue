@@ -14,7 +14,7 @@ import {
 import { computed, ref } from 'vue';
 import ExternalRatings from '@/components/ExternalRatings.vue';
 import type { ExternalRating } from '@/components/ExternalRatings.vue';
-import StreamingServiceLogo from '@/components/movie/StreamingServiceLogo.vue';
+import StreamingServiceLogo from '@/components/shared/StreamingServiceLogo.vue';
 import ShimmerSkeleton from '@/components/ShimmerSkeleton.vue';
 import TmdbImage from '@/components/TmdbImage.vue';
 import { Button } from '@/components/ui/button';

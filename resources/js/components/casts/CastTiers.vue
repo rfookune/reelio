@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { User } from '@lucide/vue';
 import { computed } from 'vue';
-import CastGrid from '@/components/movie/CastGrid.vue';
-import type { CastMember } from '@/components/movie/CastGrid.vue';
+import CastGrid from '@/components/casts/CastGrid.vue';
+import type { CastMember } from '@/components/casts/CastGrid.vue';
 import { castCaption, STARRING_COUNT, SUPPORTING_COUNT } from '@/lib/cast';
 import { isSafeTmdbPath, tmdbImageUrl } from '@/lib/tmdb';
 

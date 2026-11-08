@@ -1,4 +1,4 @@
-import type { PosterCardMovie } from '@/components/movie/PosterCard.vue';
+import type { PosterCardMovie } from '@/components/shared/PosterCard.vue';
 
 export type UserList = 'watchlist' | 'watched';
 

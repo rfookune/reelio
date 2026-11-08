@@ -11,7 +11,7 @@ import {
     DropdownMenuRadioItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import StreamingServiceLogo from '@/components/movie/StreamingServiceLogo.vue';
+import StreamingServiceLogo from '@/components/shared/StreamingServiceLogo.vue';
 import { update as updateCountry } from '@/routes/country';
 import type { CountryChoice } from '@/types';
 

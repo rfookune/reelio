@@ -2,7 +2,7 @@ import { renderToString } from '@vue/server-renderer';
 import { createSSRApp, h } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import type { ExternalRating } from '@/components/ExternalRatings.vue';
-import type { CastMember } from '@/components/movie/CastGrid.vue';
+import type { CastMember } from '@/components/casts/CastGrid.vue';
 import Show from '@/pages/tv-shows/Show.vue';
 
 vi.mock('@inertiajs/vue3', async (importOriginal) => ({

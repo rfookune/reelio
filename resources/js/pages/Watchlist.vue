@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import UserList from '@/components/movie/UserList.vue';
+import UserList from '@/components/shared/UserList.vue';
 import type { UserListPageProps } from '@/types';
 
 defineProps<UserListPageProps>();
