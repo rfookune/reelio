@@ -6,11 +6,21 @@
 
 **Blocked by:** 08 Mark Episodes as watched, 09 Watchlist for TV Shows
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Refresh cadence follows TMDB status and only applies with user facts
-- [ ] Purge deletes unviewed fact-less TV Shows with their Seasons and Episodes
-- [ ] The cap guard clears TMDB data but keeps rows and Watched facts, and the next refresh restores everything
-- [ ] Vanished Seasons and Episodes are hidden, excluded from counts, keep facts and are restored if they return
-- [ ] `catalog:purge` and the cap guard clear TMDB rating rows of both kinds
-- [ ] With the flag off the purge and cap guard still run and the planner skips TV Shows
+- [x] Refresh cadence follows TMDB status and only applies with user facts
+- [x] Purge deletes unviewed fact-less TV Shows with their Seasons and Episodes
+- [x] The cap guard clears TMDB data but keeps rows and Watched facts, and the next refresh restores everything
+- [x] Vanished Seasons and Episodes are hidden, excluded from counts, keep facts and are restored if they return
+- [x] `catalog:purge` and the cap guard clear TMDB rating rows of both kinds
+- [x] With the flag off the purge and cap guard still run and the planner skips TV Shows
+
+## Comments
+
+### 2026-11-08 — Implemented
+
+- Generalised the shared planner to `PlanTitleRefreshes`, with independent Movie and TV cursors and unique `RefreshTvShow` jobs using the background Catalog profile. TV cadence depends on TMDB status and requires a Watchlist fact or any Watched Episode; the feature flag disables TV planning and fetching.
+- Extended daily cleanup and `catalog:purge` to TV Shows, including Seasons, Episodes, page data and kind-prefixed TMDB ratings. Cap clearing preserves row identities and user facts, and refresh restores the same inventory. Cleanup locks Titles and Episodes before the final facts check to protect concurrent Watched inserts.
+- Covered vanished Seasons and Episodes returning with their original ids and Watched facts. Whole-TV Show marking now refreshes cap-cleared inventory before applying marks and changes no facts if the refresh fails.
+- Standards and spec reviews cleared after fixing the concurrent Watched-insert race and cap-cleared whole-show marking. Regression tests reproduced both defects before the fixes and pass afterwards.
+- Validation passed: 936 unit/feature tests, 176 browser tests, 31 frontend tests, PHPStan, full PHP formatting, TypeScript checks and frontend lint/formatting. Repository-wide `npm run check` reports an unrelated formatting issue in `.scratch/tv-shows/spec.md`, changed separately in `0249f9a`; that file is outside this ticket's changes.

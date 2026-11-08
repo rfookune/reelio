@@ -79,6 +79,12 @@ class Catalog
         return $this->tvShows->tvShowDetails($tvShow);
     }
 
+    /** @return CatalogResult<TvShow> */
+    public function refreshTvShow(TvShow $tvShow, CatalogContext $context): CatalogResult
+    {
+        return $this->tvShows->refresh($tvShow, $context);
+    }
+
     public function tvShowPageData(TvShow $tvShow): ?TvShowPageData
     {
         return $this->tvShows->tvShowPageData($tvShow);

@@ -60,10 +60,10 @@ class ChangeTvShowWatched
         return $this->change->apply($request, $user, $tvShow, $watched, $eligible, clearsAll: true);
     }
 
-    /** A TV Show with no Episodes stored (cap-cleared, or never fetched) is refreshed first; if that fails nothing changes. */
+    /** A cap-cleared TV Show or one with no Episodes stored is refreshed first; if that fails nothing changes. */
     private function ensureEpisodesStored(TvShow $tvShow, User $user): void
     {
-        if ($tvShow->episodes()->exists()) {
+        if ($tvShow->hasSourceDetails() && $tvShow->episodes()->exists()) {
             return;
         }
         $result = $this->catalog->tvShowDetails($tvShow);

@@ -6,7 +6,7 @@ use App\Jobs\CheckOverdueRefreshes;
 use App\Jobs\CheckRatingDatasetFreshness;
 use App\Jobs\CleanUpCatalog;
 use App\Jobs\ClearExpiredPasswordResets;
-use App\Jobs\PlanMovieRefreshes;
+use App\Jobs\PlanTitleRefreshes;
 use App\Jobs\PruneFailedJobs;
 use App\Jobs\PruneUnverifiedAccounts;
 use App\Jobs\RefreshGenres;
@@ -36,7 +36,7 @@ Schedule::dailyAt('05:00')->timezone('UTC')->onOneServer()->group(function (): v
 
     Schedule::job((new CheckRatingDatasetFreshness)->delay(CarbonInterval::minutes(10)));
     Schedule::job(new BuildDiscover);
-    Schedule::job(new PlanMovieRefreshes);
+    Schedule::job(new PlanTitleRefreshes);
     Schedule::job(new CleanUpCatalog);
     Schedule::job(new PruneUnverifiedAccounts);
     Schedule::job(new ClearExpiredPasswordResets);

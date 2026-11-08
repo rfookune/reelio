@@ -1,6 +1,6 @@
 <?php
 
-use App\Jobs\PlanMovieRefreshes;
+use App\Jobs\PlanTitleRefreshes;
 use App\Jobs\RefreshMovie;
 use App\Models\Movie;
 use App\Models\UserMovie;
@@ -15,7 +15,7 @@ function movieSyncedDaysAgo(?int $days, int $minutes = 1): Movie
 /** Runs one planner run in the test, leaving whatever it dispatches on the faked queue. */
 function runPlanner(int $afterId = 0): void
 {
-    app()->call([new PlanMovieRefreshes($afterId), 'handle']);
+    app()->call([new PlanTitleRefreshes($afterId), 'handle']);
 }
 
 /** @return list<int> */
@@ -72,12 +72,12 @@ test('a full page hands the rest to the next run, which stops when it runs out o
     runPlanner();
 
     expect(plannedMovieIds())->toBe($movies->take(2)->pluck('id')->all());
-    $next = Queue::pushed(PlanMovieRefreshes::class)->sole();
+    $next = Queue::pushed(PlanTitleRefreshes::class)->sole();
     expect($next->afterId)->toBe($movies[1]->id);
 
     Queue::fake();
     runPlanner($next->afterId);
 
     expect(plannedMovieIds())->toBe([$movies[2]->id]);
-    Queue::assertNotPushed(PlanMovieRefreshes::class);
+    Queue::assertNotPushed(PlanTitleRefreshes::class);
 });

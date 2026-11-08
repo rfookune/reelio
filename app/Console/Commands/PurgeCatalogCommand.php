@@ -8,7 +8,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
 /**
- * For when the licence to TMDB's data ends, run by hand: see `Catalog::purgeSourceData()`. Every Movie keeps its row
+ * For when the licence to TMDB's data ends, run by hand: see `Catalog::purgeSourceData()`. Every Title keeps its row
  * and users' facts but loses what it holds from TMDB, and every TMDB rating is deleted. IMDb ratings aren't TMDB's,
  * so they stay. Refreshes after it fetch everything again unless the TMDB token has been removed.
  */
@@ -26,6 +26,7 @@ class PurgeCatalogCommand extends Command
 
         $purged = $purge->purgeSourceData();
         $this->components->info("Cleared {$purged['movies']} Movies and deleted {$purged['ratings']} TMDB ratings.");
+        $this->components->info("Cleared {$purged['tvShows']} TV Shows and their Seasons and Episodes.");
 
         return self::SUCCESS;
     }

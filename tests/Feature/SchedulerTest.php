@@ -5,7 +5,7 @@ use App\Jobs\CheckOverdueRefreshes;
 use App\Jobs\CheckRatingDatasetFreshness;
 use App\Jobs\CleanUpCatalog;
 use App\Jobs\ClearExpiredPasswordResets;
-use App\Jobs\PlanMovieRefreshes;
+use App\Jobs\PlanTitleRefreshes;
 use App\Jobs\PruneFailedJobs;
 use App\Jobs\PruneUnverifiedAccounts;
 use App\Jobs\RefreshGenres;
@@ -35,7 +35,7 @@ test('at 05:00 UTC the scheduler dispatches each Rating dataset sync, a delayed 
     Queue::assertPushedOn('imports', SyncRatingDataset::class, fn (SyncRatingDataset $job) => $job->source === RatingSourceName::Imdb);
     Queue::assertPushed(CheckRatingDatasetFreshness::class, fn (CheckRatingDatasetFreshness $job) => delayedWithinLimit($job->delay));
     Queue::assertPushed(BuildDiscover::class);
-    Queue::assertPushed(PlanMovieRefreshes::class, fn (PlanMovieRefreshes $job) => $job->afterId === 0);
+    Queue::assertPushed(PlanTitleRefreshes::class, fn (PlanTitleRefreshes $job) => $job->afterId === 0);
     Queue::assertPushed(CleanUpCatalog::class);
     Queue::assertPushed(RollUpEvents::class);
     Queue::assertPushed(CheckOverdueRefreshes::class, fn (CheckOverdueRefreshes $job) => delayedWithinLimit($job->delay));

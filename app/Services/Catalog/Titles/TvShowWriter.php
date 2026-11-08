@@ -52,10 +52,17 @@ class TvShowWriter
 
     public function markRemoved(TvShow $tvShow): void
     {
+        $this->clearSourceData($tvShow);
+        $tvShow->update(['removed_at' => now()]);
+        $tvShow->seasons()->update(['removed_at' => now()]);
+        $tvShow->episodes()->update(['removed_at' => now()]);
+    }
+
+    public function clearSourceData(TvShow $tvShow): void
+    {
         $empty = new TvShowDetails($tvShow->tmdb_id);
         $tvShow->update([
             ...array_fill_keys(array_keys($this->sourceAttributes($empty)), null),
-            'removed_at' => now(),
         ]);
         $tvShow->details()->update(array_fill_keys(array_keys($this->metadataAttributes($empty)), null));
         $tvShow->genres()->detach();
@@ -63,11 +70,11 @@ class TvShowWriter
         $this->ratings->forget(RatingSourceName::Tmdb, TmdbRatingId::for(TitleKind::TvShow, $tvShow->tmdb_id));
         $tvShow->seasons()->update([
             'season_number' => null, 'name' => null, 'overview' => null, 'poster_path' => null,
-            'air_date' => null, 'episode_count' => null, 'removed_at' => now(),
+            'air_date' => null, 'episode_count' => null,
         ]);
         $tvShow->episodes()->update([
             'season_number' => null, 'episode_number' => null, 'name' => null, 'overview' => null,
-            'air_date' => null, 'runtime' => null, 'episode_type' => null, 'removed_at' => now(),
+            'air_date' => null, 'runtime' => null, 'episode_type' => null,
         ]);
     }
 
