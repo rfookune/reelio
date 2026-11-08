@@ -24,7 +24,7 @@ test('a guest who saves a Movie, then logs in, lands back on its page with it sa
 
     $this->get($movie->canonicalUrl())->assertOk();
     $this->put('/movies/tmdb/157336/watchlist', ['source' => 'movie'])->assertRedirect(route('login'));
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 
     logInThroughForm($user)
         ->assertRedirect($movie->canonicalUrl())
@@ -34,7 +34,7 @@ test('a guest who saves a Movie, then logs in, lands back on its page with it sa
             'previous' => ['watchlisted' => false, 'watched' => false, 'watchedDate' => null],
         ]);
 
-    $this->assertDatabaseHas('user_movies', ['user_id' => $user->id, 'movie_id' => $movie->id, 'watchlisted_at' => '2026-11-06 12:00:00']);
+    $this->assertDatabaseHas('user_titles', ['user_id' => $user->id, 'title_id' => $movie->id, 'watchlisted_at' => '2026-11-06 12:00:00']);
 });
 
 test('a guest who marks a Movie as watched, then registers, has it marked before verifying their email', function () {
@@ -56,7 +56,7 @@ test('a guest who marks a Movie as watched, then registers, has it marked before
 
     $user = User::query()->sole();
     expect($user->hasVerifiedEmail())->toBeFalse();
-    $this->assertDatabaseHas('user_movies', ['user_id' => $user->id, 'movie_id' => $movie->id, 'watched_at' => '2026-11-06 12:00:00']);
+    $this->assertDatabaseHas('user_titles', ['user_id' => $user->id, 'title_id' => $movie->id, 'watched_at' => '2026-11-06 12:00:00']);
 });
 
 test('a guest who takes a Movie off a stale Watchlist page, then logs in, has it taken off', function () {
@@ -127,7 +127,7 @@ test('a pending action waits 30 minutes for sign-in, then expires', function (in
     $this->travel($minutes)->minutes();
     logInThroughForm(User::factory()->create());
 
-    $this->assertDatabaseCount('user_movies', $saved);
+    $this->assertDatabaseCount('user_titles', $saved);
 })->with([
     'at 30 minutes' => [30, 1],
     'after 30 minutes' => [31, 0],
@@ -144,7 +144,7 @@ test('a pending action is applied once', function () {
     auth()->guard('web')->logout();
 
     logInThroughForm($user)->assertInertiaFlashMissing('userMovieAction');
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 });
 
 test('only the latest pending action is applied', function () {
@@ -156,8 +156,8 @@ test('only the latest pending action is applied', function () {
     $this->put("/movies/tmdb/{$latest->tmdb_id}/watched", ['source' => 'movie']);
     logInThroughForm($user);
 
-    $this->assertDatabaseCount('user_movies', 1);
-    $this->assertDatabaseHas('user_movies', ['user_id' => $user->id, 'movie_id' => $latest->id, 'watchlisted_at' => null]);
+    $this->assertDatabaseCount('user_titles', 1);
+    $this->assertDatabaseHas('user_titles', ['user_id' => $user->id, 'title_id' => $latest->id, 'watchlisted_at' => null]);
 });
 
 test('a pending action that cannot be applied still signs the user in, with an error toast', function () {
@@ -172,7 +172,7 @@ test('a pending action that cannot be applied still signs the user in, with an e
         ->assertInertiaFlash('toast', ['type' => 'error', 'message' => "Couldn't save that. Try again."])
         ->assertInertiaFlashMissing('userMovieAction');
     $this->assertAuthenticatedAs($user);
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 });
 
 test('a guest who signs in through the two-factor challenge has their pending action applied', function () {
@@ -183,12 +183,12 @@ test('a guest who signs in through the two-factor challenge has their pending ac
     $this->get($movie->canonicalUrl());
     $this->put("/movies/tmdb/{$movie->tmdb_id}/watchlist", ['source' => 'movie']);
     logInThroughForm($user)->assertRedirect(route('two-factor.login'));
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 
     $this->post(route('two-factor.login.store'), ['recovery_code' => $user->recoveryCodes()[0]])
         ->assertRedirect($movie->canonicalUrl())
         ->assertInertiaFlash('userMovieAction.action', 'add_to_watchlist');
-    $this->assertDatabaseHas('user_movies', ['user_id' => $user->id, 'movie_id' => $movie->id]);
+    $this->assertDatabaseHas('user_titles', ['user_id' => $user->id, 'title_id' => $movie->id]);
 });
 
 test('a sign-in by remember-me cookie on a page load applies nothing, so no GET changes data', function () {
@@ -202,7 +202,7 @@ test('a sign-in by remember-me cookie on a page load applies nothing, so no GET 
         ->assertOk();
 
     $this->assertAuthenticatedAs($user);
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 });
 
 test('a pending action that fails unexpectedly still signs the user in, and the failure is reported', function () {
@@ -224,7 +224,7 @@ test('a guest\'s action needs a known source and stores nothing without one', fu
     $this->put("/movies/tmdb/{$movie->tmdb_id}/watchlist", ['source' => 'homepage'])->assertSessionHasErrors('source');
     logInThroughForm(User::factory()->create())->assertInertiaFlashMissing('userMovieAction');
 
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 });
 
 test('the applied action can be undone from its toast', function () {
@@ -235,7 +235,7 @@ test('the applied action can be undone from its toast', function () {
     logInThroughForm($user);
 
     $this->post("/movies/tmdb/{$movie->tmdb_id}/undo", ['action' => 'add_to_watchlist'])->assertSessionHasNoErrors();
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 });
 
 test('storing a pending action counts in the guest\'s shared action limit', function () {

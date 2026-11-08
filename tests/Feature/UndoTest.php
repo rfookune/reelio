@@ -185,7 +185,7 @@ test('Undo fails without asking the Catalog when the facts and the Movie row hav
 
     $this->post("/movies/tmdb/{$movie->tmdb_id}/undo", ['action' => 'add_to_watchlist'])->assertSessionHasErrors('undo');
 
-    $this->assertDatabaseCount('movies', 0);
+    $this->assertDatabaseCount('titles', 0);
 });
 
 test('Undo restores a Removed Movie\'s facts', function () {
@@ -219,7 +219,7 @@ test('Undo never restores another user\'s action', function () {
     $this->actingAs(User::factory()->create())->put("/movies/tmdb/{$movie->tmdb_id}/watchlist", ['source' => 'movie']);
     $this->actingAs($someoneElse)->post("/movies/tmdb/{$movie->tmdb_id}/undo", ['action' => 'add_to_watchlist'])->assertSessionHasErrors('undo');
 
-    $this->assertDatabaseCount('user_movies', 1);
+    $this->assertDatabaseCount('user_titles', 1);
 });
 
 test('guests are sent to sign in', function () {

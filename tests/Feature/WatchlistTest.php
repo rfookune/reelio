@@ -23,9 +23,9 @@ test('a signed-in user adds a Movie to their Watchlist by catalog id', function 
         ->put('/movies/tmdb/157336/watchlist', ['source' => 'movie'])
         ->assertRedirect($movie->canonicalUrl());
 
-    $this->assertDatabaseHas('user_movies', [
+    $this->assertDatabaseHas('user_titles', [
         'user_id' => $user->id,
-        'movie_id' => $movie->id,
+        'title_id' => $movie->id,
         'watchlisted_at' => '2026-11-06 12:00:00',
         'watched_at' => null,
     ]);
@@ -44,7 +44,7 @@ test('re-adding a Movie keeps its original Date added and records no second even
         ->assertRedirect();
 
     expect($facts->fresh()->watchlisted_at->toDateTimeString())->toBe('2026-10-01 09:00:00');
-    $this->assertDatabaseCount('user_movies', 1);
+    $this->assertDatabaseCount('user_titles', 1);
     Queue::assertNothingPushed();
 });
 
@@ -54,7 +54,7 @@ test('adding a Watched Movie keeps its Watched date', function () {
 
     $this->actingAs($facts->user)->put("/movies/tmdb/{$facts->movie->tmdb_id}/watchlist", ['source' => 'movie']);
 
-    $this->assertDatabaseHas('user_movies', ['id' => $facts->id, 'watchlisted_at' => '2026-11-06 12:00:00', 'watched_at' => '2026-10-01 09:00:00']);
+    $this->assertDatabaseHas('user_titles', ['id' => $facts->id, 'watchlisted_at' => '2026-11-06 12:00:00', 'watched_at' => '2026-10-01 09:00:00']);
 });
 
 test('removing a Movie that is only on the Watchlist deletes its row and records the removal', function () {
@@ -67,7 +67,7 @@ test('removing a Movie that is only on the Watchlist deletes its row and records
         ->delete("/movies/tmdb/{$movie->tmdb_id}/watchlist", ['source' => 'watchlist'])
         ->assertRedirect($movie->canonicalUrl());
 
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
     Queue::assertPushed(RecordAnalyticsEvent::class, fn (RecordAnalyticsEvent $job) => $job->userId === $facts->user_id
         && $job->name === 'movie_unwatchlisted'
         && $job->properties === ['movie_id' => $movie->id, 'source' => 'watchlist']);
@@ -79,7 +79,7 @@ test('removing a Watched Movie from the Watchlist keeps its Watched date', funct
 
     $this->actingAs($facts->user)->delete("/movies/tmdb/{$facts->movie->tmdb_id}/watchlist", ['source' => 'movie']);
 
-    $this->assertDatabaseHas('user_movies', ['id' => $facts->id, 'watchlisted_at' => null, 'watched_at' => '2026-10-01 09:00:00']);
+    $this->assertDatabaseHas('user_titles', ['id' => $facts->id, 'watchlisted_at' => null, 'watched_at' => '2026-10-01 09:00:00']);
 });
 
 test('removing a Movie that is not on the Watchlist changes nothing and records no event', function () {
@@ -88,7 +88,7 @@ test('removing a Movie that is not on the Watchlist changes nothing and records 
 
     $this->actingAs($facts->user)->delete("/movies/tmdb/{$facts->movie->tmdb_id}/watchlist", ['source' => 'movie'])->assertRedirect();
 
-    $this->assertDatabaseHas('user_movies', ['id' => $facts->id, 'watchlisted_at' => null, 'watched_at' => '2026-10-01 09:00:00']);
+    $this->assertDatabaseHas('user_titles', ['id' => $facts->id, 'watchlisted_at' => null, 'watched_at' => '2026-10-01 09:00:00']);
     Queue::assertNothingPushed();
 });
 
@@ -99,7 +99,7 @@ test('removing a catalog id with no Movie row neither asks the source nor create
         ->delete('/movies/tmdb/157336/watchlist', ['source' => 'search'])
         ->assertRedirect();
 
-    $this->assertDatabaseCount('movies', 0);
+    $this->assertDatabaseCount('titles', 0);
 });
 
 test('adding a catalog id with no Movie row creates the Movie through the Catalog, then saves it', function () {
@@ -113,14 +113,14 @@ test('adding a catalog id with no Movie row creates the Movie through the Catalo
     expect($movie->tmdb_id)->toBe(157336)
         ->and($movie->title)->toBe('Interstellar')
         ->and($movie->last_viewed_at->toDateTimeString())->toBe('2026-11-06 12:00:00');
-    $this->assertDatabaseHas('user_movies', ['user_id' => $user->id, 'movie_id' => $movie->id, 'watchlisted_at' => '2026-11-06 12:00:00']);
+    $this->assertDatabaseHas('user_titles', ['user_id' => $user->id, 'title_id' => $movie->id, 'watchlisted_at' => '2026-11-06 12:00:00']);
 });
 
 test('adding a catalog id the source does not know is a 404 that saves nothing', function () {
     $this->actingAs(User::factory()->create())->put('/movies/tmdb/999999/watchlist', ['source' => 'search'])->assertNotFound();
 
-    $this->assertDatabaseCount('movies', 0);
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('titles', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 });
 
 test('adding a catalog id with no row while the source is down is a 503 that saves nothing', function () {
@@ -130,8 +130,8 @@ test('adding a catalog id with no row while the source is down is a 503 that sav
         ->assertServiceUnavailable()
         ->assertHeader('Retry-After', '30');
 
-    $this->assertDatabaseCount('movies', 0);
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('titles', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 });
 
 test('oversized catalog ids are a 404 without contacting the source', function (string $method) {
@@ -147,7 +147,7 @@ test('a Removed Movie cannot be added to the Watchlist', function () {
 
     $this->actingAs(User::factory()->create())->put("/movies/tmdb/{$movie->tmdb_id}/watchlist", ['source' => 'watchlist'])->assertGone();
 
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 });
 
 test('a Removed Movie can still be removed from the Watchlist', function () {
@@ -155,7 +155,7 @@ test('a Removed Movie can still be removed from the Watchlist', function () {
 
     $this->actingAs($facts->user)->delete("/movies/tmdb/{$facts->movie->tmdb_id}/watchlist", ['source' => 'watchlist'])->assertRedirect();
 
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 });
 
 test('guests are sent to sign in and nothing is saved', function (string $method) {
@@ -163,7 +163,7 @@ test('guests are sent to sign in and nothing is saved', function (string $method
 
     $this->{$method}("/movies/tmdb/{$movie->tmdb_id}/watchlist", ['source' => 'movie'])->assertRedirect(route('login'));
 
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 })->with(['put', 'delete']);
 
 test('a user who has not verified their email can still save', function () {
@@ -172,7 +172,7 @@ test('a user who has not verified their email can still save', function () {
 
     $this->actingAs($user)->put("/movies/tmdb/{$movie->tmdb_id}/watchlist", ['source' => 'movie'])->assertRedirect();
 
-    $this->assertDatabaseHas('user_movies', ['user_id' => $user->id, 'movie_id' => $movie->id]);
+    $this->assertDatabaseHas('user_titles', ['user_id' => $user->id, 'title_id' => $movie->id]);
 });
 
 test('removing never touches another user\'s Watchlist', function () {
@@ -194,7 +194,7 @@ test('adding saves to the signed-in user\'s own Watchlist, whatever user the req
         ->assertRedirect();
 
     expect($theirs->fresh()->watchlisted_at->toDateTimeString())->toBe('2026-10-01 09:00:00');
-    $this->assertDatabaseHas('user_movies', ['user_id' => $user->id, 'movie_id' => $theirs->movie_id]);
+    $this->assertDatabaseHas('user_titles', ['user_id' => $user->id, 'title_id' => $theirs->title_id]);
 });
 
 test('an action needs a known source', function (mixed $source) {
@@ -203,7 +203,7 @@ test('an action needs a known source', function (mixed $source) {
 
     $this->actingAs($user)->put("/movies/tmdb/{$movie->tmdb_id}/watchlist", ['source' => $source])->assertSessionHasErrors('source');
 
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 })->with(['missing' => null, 'unknown' => 'homepage']);
 
 test('deleting a user deletes their facts, and a Movie with facts cannot be deleted', function () {
@@ -228,7 +228,7 @@ test('saving a new catalog id shares the entry route\'s creation limit, while st
 
     $this->put('/movies/tmdb/157336/watchlist', ['source' => 'search'])->assertTooManyRequests()->assertHeader('Retry-After', '60');
     $this->put("/movies/tmdb/{$movie->tmdb_id}/watchlist", ['source' => 'search'])->assertRedirect();
-    $this->assertDatabaseCount('movies', 1);
+    $this->assertDatabaseCount('titles', 1);
 });
 
 test('Watchlist actions are limited to sixty a minute per user', function () {
@@ -246,7 +246,7 @@ test('Watchlist actions are limited to sixty a minute per user', function () {
         ->put("/movies/tmdb/{$movie->tmdb_id}/watchlist", ['source' => 'movie'])
         ->assertTooManyRequests()
         ->assertHeader('Retry-After', '60');
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 
     $this->actingAs(User::factory()->create())->put("/movies/tmdb/{$movie->tmdb_id}/watchlist", ['source' => 'movie'])->assertRedirect();
 });

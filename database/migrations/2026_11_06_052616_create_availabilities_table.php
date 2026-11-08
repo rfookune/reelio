@@ -13,14 +13,14 @@ return new class extends Migration
     {
         Schema::create('availabilities', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('movie_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('title_id')->constrained()->cascadeOnDelete();
             $table->foreignId('streaming_service_id')->constrained()->restrictOnDelete();
             $table->char('country', 2);
             $table->string('offer_type', 8);
             $table->unsignedInteger('display_priority');
 
-            $table->unique(['movie_id', 'streaming_service_id', 'country', 'offer_type']);
-            $table->index(['movie_id', 'country']);
+            $table->unique(['title_id', 'streaming_service_id', 'country', 'offer_type']);
+            $table->index(['title_id', 'country']);
         });
     }
 

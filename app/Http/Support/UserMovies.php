@@ -22,9 +22,9 @@ class UserMovies
         $movies = collect($movies);
         $facts = $user === null ? collect() : UserMovie::query()
             ->whereBelongsTo($user)
-            ->whereIn('movie_id', $movies->pluck('id'))
+            ->whereIn('title_id', $movies->pluck('id'))
             ->get()
-            ->keyBy('movie_id');
+            ->keyBy('title_id');
 
         return $movies->mapWithKeys(fn (Movie $movie): array => [$movie->tmdb_id => [
             'watchlisted' => $facts->get($movie->id)?->watchlisted_at !== null,

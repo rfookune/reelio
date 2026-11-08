@@ -82,7 +82,7 @@ test('marking a catalog id with no Movie row as watched creates the Movie throug
 
     $movie = Movie::query()->sole();
     expect($movie->tmdb_id)->toBe(157336);
-    $this->assertDatabaseHas('user_movies', ['user_id' => $user->id, 'movie_id' => $movie->id, 'watchlisted_at' => null, 'watched_at' => '2026-11-06 12:00:00']);
+    $this->assertDatabaseHas('user_titles', ['user_id' => $user->id, 'title_id' => $movie->id, 'watchlisted_at' => null, 'watched_at' => '2026-11-06 12:00:00']);
 });
 
 test('marking a new catalog id as watched shares the entry route\'s creation limit', function () {
@@ -101,7 +101,7 @@ test('clearing Watched on a catalog id with no Movie row neither asks the source
 
     $this->actingAs(User::factory()->create())->delete('/movies/tmdb/157336/watched', ['source' => 'watched'])->assertRedirect();
 
-    $this->assertDatabaseCount('movies', 0);
+    $this->assertDatabaseCount('titles', 0);
 });
 
 test('a Removed Movie cannot be marked as watched', function () {
@@ -109,7 +109,7 @@ test('a Removed Movie cannot be marked as watched', function () {
 
     $this->actingAs(User::factory()->create())->put("/movies/tmdb/{$movie->tmdb_id}/watched", ['source' => 'watched'])->assertGone();
 
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 });
 
 test('a Removed Movie\'s Watched record can still be cleared', function () {
@@ -117,7 +117,7 @@ test('a Removed Movie\'s Watched record can still be cleared', function () {
 
     $this->actingAs($facts->user)->delete("/movies/tmdb/{$facts->movie->tmdb_id}/watched", ['source' => 'watched'])->assertRedirect();
 
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 });
 
 test('guests are sent to sign in and nothing is marked', function (string $method) {
@@ -125,7 +125,7 @@ test('guests are sent to sign in and nothing is marked', function (string $metho
 
     $this->{$method}("/movies/tmdb/{$movie->tmdb_id}/watched", ['source' => 'movie'])->assertRedirect(route('login'));
 
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 })->with(['put', 'delete']);
 
 test('a user who has not verified their email can still mark as watched', function () {
@@ -134,7 +134,7 @@ test('a user who has not verified their email can still mark as watched', functi
 
     $this->actingAs($user)->put("/movies/tmdb/{$movie->tmdb_id}/watched", ['source' => 'movie'])->assertRedirect();
 
-    $this->assertDatabaseHas('user_movies', ['user_id' => $user->id, 'movie_id' => $movie->id]);
+    $this->assertDatabaseHas('user_titles', ['user_id' => $user->id, 'title_id' => $movie->id]);
 });
 
 test('Watchlist and Watched actions share one limit of sixty a minute', function () {
@@ -163,7 +163,7 @@ test('an action on Watched needs a known source', function () {
 
     $this->actingAs(User::factory()->create())->put("/movies/tmdb/{$movie->tmdb_id}/watched", ['source' => 'homepage'])->assertSessionHasErrors('source');
 
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 });
 
 test('clearing Watched never touches another user\'s record', function () {

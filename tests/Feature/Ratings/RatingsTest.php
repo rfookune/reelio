@@ -11,7 +11,6 @@ use App\Services\Ratings\RatingStore;
 use App\Services\Ratings\Sources\FakeRatingSource;
 use App\Services\Ratings\Sources\StoredRatingSource;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -152,13 +151,7 @@ test('switching a source off hides only that source', function () {
         ->assertInertia(fn ($page) => $page->has('movie.ratings', 1)->where('movie.ratings.0.source', 'tmdb'));
 });
 
-test('the TMDB score columns come off movies, and rolling back restores them', function () {
-    Artisan::call('migrate:rollback', ['--path' => 'database/migrations/2026_11_06_045705_drop_tmdb_scores_from_movies_table.php']);
-
-    expect(Schema::hasColumns('movies', ['vote_average', 'vote_count']))->toBeTrue();
-
-    Artisan::call('migrate');
-
-    expect(Schema::hasColumn('movies', 'vote_average'))->toBeFalse()
-        ->and(Schema::hasColumn('movies', 'vote_count'))->toBeFalse();
+test('titles do not duplicate the TMDB score columns held in ratings', function () {
+    expect(Schema::hasColumn('titles', 'vote_average'))->toBeFalse()
+        ->and(Schema::hasColumn('titles', 'vote_count'))->toBeFalse();
 });

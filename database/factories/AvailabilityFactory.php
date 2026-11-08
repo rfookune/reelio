@@ -21,7 +21,7 @@ class AvailabilityFactory extends Factory
     public function definition(): array
     {
         return [
-            'movie_id' => Movie::factory(),
+            'title_id' => Movie::factory(),
             'streaming_service_id' => StreamingService::factory(),
             'country' => 'US',
             'offer_type' => OfferType::Stream,

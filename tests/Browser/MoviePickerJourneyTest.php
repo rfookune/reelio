@@ -48,7 +48,7 @@ it('picks from the Watchlist, narrows by genre, and marks the pick as watched wi
     $page
         ->click('Undo')->assertPresent("[data-slot=\"watchlist-grid\"] [data-tmdb-id=\"{$pickedId}\"]")
         ->assertSee('Watchlist · 3')->assertNotPresent('[role="dialog"]')->assertNoJavaScriptErrors();
-    $this->assertDatabaseHas('user_movies', ['user_id' => $user->id, 'movie_id' => Movie::where('tmdb_id', $pickedId)->value('id'), 'watched_at' => null]);
+    $this->assertDatabaseHas('user_titles', ['user_id' => $user->id, 'title_id' => Movie::where('tmdb_id', $pickedId)->value('id'), 'watched_at' => null]);
 
     $page->click('[data-tmdb-id="1"] [data-slot="movie-menu"]')->click('Mark as watched')->assertSee('Watchlist · 2')
         ->click('[data-slot="pick-for-me"]')->assertSeeIn('[data-slot="picked-movie"] h3', 'Banana')

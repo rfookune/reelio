@@ -5,66 +5,84 @@ namespace App\Models;
 use Carbon\CarbonImmutable;
 use Database\Factories\MovieFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @property CarbonImmutable|null $release_date
- * @property CarbonImmutable|null $synced_at
- * @property CarbonImmutable $last_viewed_at
- * @property CarbonImmutable|null $removed_at
+ * @property int|null $runtime
  */
-#[Fillable(['tmdb_id', 'slug', 'title', 'original_title', 'overview', 'tagline', 'release_date', 'runtime', 'poster_path', 'backdrop_path', 'original_language', 'imdb_id', 'synced_at', 'last_viewed_at', 'removed_at'])]
-class Movie extends Model
+#[Fillable(['kind', 'tmdb_id', 'slug', 'title', 'original_title', 'overview', 'tagline', 'release_date', 'runtime', 'poster_path', 'backdrop_path', 'original_language', 'imdb_id', 'synced_at', 'last_viewed_at', 'removed_at'])]
+class Movie extends Title
 {
     /** @use HasFactory<MovieFactory> */
     use HasFactory;
 
-    /** @return array<string, string> */
-    protected function casts(): array
+    protected $with = ['details'];
+
+    protected static function booted(): void
     {
-        return [
-            'release_date' => 'immutable_date',
-            'synced_at' => 'immutable_datetime',
-            'last_viewed_at' => 'immutable_datetime',
-            'removed_at' => 'immutable_datetime',
-            'runtime' => 'integer',
-        ];
+        static::addGlobalScope('kind', fn (Builder $query) => $query->where($query->qualifyColumn('kind'), 'movie'));
+        static::creating(function (self $title): void {
+            $title->kind = 'movie';
+        });
     }
 
-    /** @return BelongsToMany<Genre, $this> */
-    public function genres(): BelongsToMany
+    /** @return HasOne<MovieDetail, $this> */
+    public function details(): HasOne
     {
-        return $this->belongsToMany(Genre::class);
+        return $this->hasOne(MovieDetail::class, 'title_id')->withDefault();
     }
 
-    /** @return HasMany<Availability, $this> */
-    public function availabilities(): HasMany
+    /** @return Attribute<CarbonImmutable|null, string|CarbonImmutable|null> */
+    protected function releaseDate(): Attribute
     {
-        return $this->hasMany(Availability::class);
+        return Attribute::make(
+            get: fn (): ?CarbonImmutable => $this->details->release_date,
+            set: function (string|CarbonImmutable|null $value): array {
+                $this->details->release_date = $value;
+
+                return [];
+            },
+        );
+    }
+
+    /** @return Attribute<int|null, int|null> */
+    protected function runtime(): Attribute
+    {
+        return Attribute::make(
+            get: fn (): ?int => $this->details->runtime,
+            set: function (?int $value): array {
+                $this->details->runtime = $value;
+
+                return [];
+            },
+        );
+    }
+
+    /** @param array<string, mixed> $options */
+    public function save(array $options = []): bool
+    {
+        return $this->getConnection()->transaction(function () use ($options): bool {
+            if (! parent::save($options)) {
+                return false;
+            }
+
+            if (! $this->details->exists || $this->details->isDirty()) {
+                $this->details()->save($this->details);
+            }
+
+            return true;
+        });
     }
 
     /** @return HasMany<UserMovie, $this> */
     public function userMovies(): HasMany
     {
-        return $this->hasMany(UserMovie::class);
-    }
-
-    /** A Removed Movie: the Catalog source no longer has it, so none of its details are kept. */
-    public function isRemoved(): bool
-    {
-        return $this->removed_at !== null;
-    }
-
-    /**
-     * Whether the Movie holds details from the Catalog source. A Removed Movie holds none, and neither does one
-     * cleared at TMDB's 6-month cap until a refresh restores it.
-     */
-    public function hasSourceDetails(): bool
-    {
-        return $this->synced_at !== null;
+        return $this->hasMany(UserMovie::class, 'title_id');
     }
 
     public function canonicalUrl(?string $referrer = null): string

@@ -8,7 +8,7 @@ return new class extends Migration
 {
     /**
      * Every score from every Rating source, keyed by the identifier that source uses for the title.
-     * There's no foreign key to `movies`: a source scores titles Reelio may have no Movie for.
+     * There's no foreign key to `titles`: a source scores titles Reelio may have no Title for.
      */
     public function up(): void
     {

@@ -21,14 +21,14 @@ it('marks a Movie as watched, finds it in Watched, queues a rewatch, and clears 
         ->assertSee('Cleared from Watched')->assertNoJavaScriptErrors();
 
     expect($page->script('document.activeElement.id'))->toBe('watched-empty-heading');
-    $this->assertDatabaseHas('user_movies', ['id' => $facts->id, 'watched_at' => null]);
+    $this->assertDatabaseHas('user_titles', ['id' => $facts->id, 'watched_at' => null]);
     $page->keys('*:focus', ['Alt+KeyT', 'Enter'])
         ->assertSee('Watched · 1')->assertSee('Last watched Sep 10, 2026')->assertNoJavaScriptErrors();
-    $this->assertDatabaseHas('user_movies', ['id' => $facts->id, 'watched_at' => '2026-09-10 12:00:00']);
+    $this->assertDatabaseHas('user_titles', ['id' => $facts->id, 'watched_at' => '2026-09-10 12:00:00']);
     $page->click('[data-slot="bookmark-toggle"]')->assertAttribute('[data-slot="bookmark-toggle"]', 'aria-pressed', 'false')
         ->assertSee('Watched · 1')->assertSee('Watched Sep 10, 2026')->assertDontSee('Last watched Sep 10, 2026')
         ->assertSee('Removed from your Watchlist')->assertNoJavaScriptErrors();
-    $this->assertDatabaseHas('user_movies', ['id' => $facts->id, 'watchlisted_at' => null, 'watched_at' => '2026-09-10 12:00:00']);
+    $this->assertDatabaseHas('user_titles', ['id' => $facts->id, 'watchlisted_at' => null, 'watched_at' => '2026-09-10 12:00:00']);
     settleToasts($page);
     $page->assertNoAccessibilityIssues();
 })->with(['desktop' => 1440, 'mobile' => 390]);

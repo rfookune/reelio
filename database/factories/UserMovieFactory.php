@@ -21,7 +21,7 @@ class UserMovieFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'movie_id' => Movie::factory(),
+            'title_id' => Movie::factory(),
             'watchlisted_at' => now(),
             'watched_at' => null,
         ];

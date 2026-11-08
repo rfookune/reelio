@@ -34,7 +34,7 @@ class PruneUnverifiedAccounts implements ShouldQueue
             $accounts = User::query()
                 ->whereNull('email_verified_at')
                 ->where('created_at', '<=', now()->subDays(self::RETENTION_DAYS))
-                ->whereNotExists(fn ($facts) => $facts->select(DB::raw(1))->from('user_movies')->whereColumn('user_movies.user_id', 'users.id'));
+                ->whereNotExists(fn ($facts) => $facts->select(DB::raw(1))->from('user_titles')->whereColumn('user_titles.user_id', 'users.id'));
 
             DB::table(config('session.table'))->whereIn('user_id', (clone $accounts)->select('users.id'))->delete();
             $accounts->delete();

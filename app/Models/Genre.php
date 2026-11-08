@@ -16,9 +16,15 @@ class Genre extends Model
 
     public $incrementing = false;
 
+    /** @return BelongsToMany<Title, $this> */
+    public function titles(): BelongsToMany
+    {
+        return $this->belongsToMany(Title::class);
+    }
+
     /** @return BelongsToMany<Movie, $this> */
     public function movies(): BelongsToMany
     {
-        return $this->belongsToMany(Movie::class);
+        return $this->belongsToMany(Movie::class, 'genre_title', 'genre_id', 'title_id');
     }
 }

@@ -34,7 +34,7 @@ it('adds a Movie to the Watchlist from its page and takes it off again', functio
         ->assertAttribute('[data-slot="watchlist-toggle"]', 'aria-pressed', 'true')
         ->assertSee('Added to your Watchlist');
 
-    $this->assertDatabaseHas('user_movies', ['user_id' => $user->id, 'movie_id' => $movie->id]);
+    $this->assertDatabaseHas('user_titles', ['user_id' => $user->id, 'title_id' => $movie->id]);
 
     $page->click('[data-slot="watchlist-toggle"]')
         ->assertSeeIn('[data-slot="watchlist-toggle"]', 'Add to Watchlist')
@@ -42,7 +42,7 @@ it('adds a Movie to the Watchlist from its page and takes it off again', functio
         ->assertSee('Removed from your Watchlist')
         ->assertNoJavaScriptErrors();
 
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
     expect($page->script('document.activeElement.dataset.slot'))->toBe('watchlist-toggle')
         ->and($page->script('window.partialData'))->toBe(['userMovies', 'userMovies']);
 
@@ -87,7 +87,7 @@ it('rolls the toggle back and says so when saving fails', function () {
         ->assertNoJavaScriptErrors();
 
     expect($page->script('window.pressedStates'))->toBe(['true', 'false']);
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 });
 
 it('rolls back a throttled action and shows the 429 toast', function () {
@@ -108,7 +108,7 @@ it('rolls back a throttled action and shows the 429 toast', function () {
         ->assertDontSee('Too many requests')
         ->assertNoJavaScriptErrors();
 
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 });
 
 it('keeps guests on the Movie page with a toast when a pending action is throttled', function () {
@@ -126,7 +126,7 @@ it('keeps guests on the Movie page with a toast when a pending action is throttl
         ->assertPathIs(parse_url($movie->canonicalUrl(), PHP_URL_PATH))
         ->assertNoJavaScriptErrors();
 
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 });
 
 it('sends a guest who uses the toggle to sign in, then saves the Movie and offers Undo back on its page', function () {
@@ -140,7 +140,7 @@ it('sends a guest who uses the toggle to sign in, then saves the Movie and offer
         ->assertPathIs('/login')
         ->assertSee('Log in to your account')
         ->assertNoJavaScriptErrors();
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 
     pasteInto($page, '#email', 'alex@example.com');
     pasteInto($page, '#password', 'password');
@@ -153,5 +153,5 @@ it('sends a guest who uses the toggle to sign in, then saves the Movie and offer
         ->assertSeeIn('[data-slot="watchlist-toggle"]', 'Add to Watchlist')
         ->assertNoJavaScriptErrors();
 
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 });

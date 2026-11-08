@@ -49,7 +49,7 @@ it('opens a Movie from Discover and saves it from its page', function (int $widt
         ->assertNoJavaScriptErrors();
 
     $movie = Movie::query()->where('tmdb_id', 12)->sole();
-    $this->assertDatabaseHas('user_movies', ['user_id' => $user->id, 'movie_id' => $movie->id]);
+    $this->assertDatabaseHas('user_titles', ['user_id' => $user->id, 'title_id' => $movie->id]);
     $this->assertDatabaseHas('events', ['name' => 'movie_viewed', 'properties->referrer' => 'discover']);
 })->with([
     'desktop' => [1440, 900],
@@ -69,7 +69,7 @@ it('saves a Movie from its Discover row and keeps the hero and Trending row in s
         ->assertSeeIn('[data-sonner-toast]', 'Added to your Watchlist')
         ->assertNoJavaScriptErrors();
 
-    $this->assertDatabaseHas('user_movies', ['user_id' => $user->id, 'movie_id' => Movie::query()->where('tmdb_id', 1)->value('id')]);
+    $this->assertDatabaseHas('user_titles', ['user_id' => $user->id, 'title_id' => Movie::query()->where('tmdb_id', 1)->value('id')]);
 });
 
 it('floats the top bar over the hero backdrop as a blurred glow, and opens the trailer player', function () {

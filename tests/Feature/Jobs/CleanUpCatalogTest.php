@@ -36,8 +36,8 @@ test('a Movie nobody holds is purged with its genre links, Availability and TMDB
     CleanUpCatalog::dispatch();
 
     expect(Movie::query()->orderBy('id')->pluck('id')->all())->toBe([$viewedRecently->id, $held->id]);
-    $this->assertDatabaseMissing('genre_movie', ['movie_id' => $unviewed->id]);
-    $this->assertDatabaseMissing('availabilities', ['movie_id' => $unviewed->id]);
+    $this->assertDatabaseMissing('genre_title', ['title_id' => $unviewed->id]);
+    $this->assertDatabaseMissing('availabilities', ['title_id' => $unviewed->id]);
     $this->assertDatabaseMissing('ratings', ['source' => 'tmdb', 'source_id' => (string) $unviewed->tmdb_id]);
     $this->assertDatabaseHas('ratings', ['source' => 'imdb', 'source_id' => 'tt0816692']);
     $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => (string) $held->tmdb_id]);
@@ -62,15 +62,16 @@ test('a Movie not synced for over 170 days has everything from TMDB cleared, kee
 
     CleanUpCatalog::dispatch();
 
-    $this->assertDatabaseHas('movies', [
-        'id' => $stale->id, 'tmdb_id' => $stale->tmdb_id, 'slug' => null, 'title' => null, 'overview' => null, 'release_date' => null,
+    $this->assertDatabaseHas('titles', [
+        'id' => $stale->id, 'tmdb_id' => $stale->tmdb_id, 'slug' => null, 'title' => null, 'overview' => null,
         'poster_path' => null, 'imdb_id' => null, 'synced_at' => null, 'removed_at' => null,
     ]);
-    $this->assertDatabaseMissing('genre_movie', ['movie_id' => $stale->id]);
-    $this->assertDatabaseMissing('availabilities', ['movie_id' => $stale->id]);
+    $this->assertDatabaseHas('movie_details', ['title_id' => $stale->id, 'release_date' => null]);
+    $this->assertDatabaseMissing('genre_title', ['title_id' => $stale->id]);
+    $this->assertDatabaseMissing('availabilities', ['title_id' => $stale->id]);
     $this->assertDatabaseMissing('ratings', ['source' => 'tmdb', 'source_id' => (string) $stale->tmdb_id]);
     $this->assertModelExists($facts);
-    $this->assertDatabaseHas('movies', ['id' => $withinCap->id, 'title' => $withinCap->title]);
+    $this->assertDatabaseHas('titles', ['id' => $withinCap->id, 'title' => $withinCap->title]);
 
     fakeCatalogKnowing(new MovieDetails(tmdbId: $stale->tmdb_id, title: 'Interstellar', posterPath: '/p.jpg', genres: [['id' => 878, 'name' => 'Science Fiction']]));
     RefreshMovie::dispatch($stale->id);
@@ -101,7 +102,7 @@ test('with the purge switched off, the cap guard still clears stale Movies and d
 
     CleanUpCatalog::dispatch();
 
-    $this->assertDatabaseHas('movies', ['id' => $stale->id, 'title' => null, 'synced_at' => null]);
+    $this->assertDatabaseHas('titles', ['id' => $stale->id, 'title' => null, 'synced_at' => null]);
     $this->assertDatabaseMissing('ratings', ['source' => 'tmdb', 'source_id' => '1']);
 });
 

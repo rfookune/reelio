@@ -43,7 +43,7 @@ it('undoes marking as watched from the toast, restoring the Watchlist and focus 
         ->assertNoJavaScriptErrors();
 
     expect(focusedSlotAfterUndo($page))->toBe('mark-as-watched');
-    $this->assertDatabaseHas('user_movies', ['id' => $facts->id, 'watchlisted_at' => '2026-09-01 08:00:00', 'watched_at' => null]);
+    $this->assertDatabaseHas('user_titles', ['id' => $facts->id, 'watchlisted_at' => '2026-09-01 08:00:00', 'watched_at' => null]);
     settleToasts($page);
     $page->assertNoAccessibilityIssues();
 });
@@ -73,7 +73,7 @@ it('reaches Undo by keyboard and restores the previous Watched date of a rewatch
         ->assertNoJavaScriptErrors();
 
     expect(focusedSlotAfterUndo($page))->toBe('clear-last-watched');
-    $this->assertDatabaseHas('user_movies', ['user_id' => $user->id, 'movie_id' => $movie->id, 'watchlisted_at' => '2026-09-01 08:00:00', 'watched_at' => '2026-08-31 20:00:00']);
+    $this->assertDatabaseHas('user_titles', ['user_id' => $user->id, 'title_id' => $movie->id, 'watchlisted_at' => '2026-09-01 08:00:00', 'watched_at' => '2026-08-31 20:00:00']);
 });
 
 it('says so when the action can no longer be undone, then shows the facts as they stand, with focus on the actions', function () {
@@ -97,7 +97,7 @@ it('says so when the action can no longer be undone, then shows the facts as the
         ->assertNoJavaScriptErrors();
 
     expect(focusedSlotAfterUndo($page))->toBe('mark-as-watched');
-    $this->assertDatabaseHas('user_movies', ['id' => $facts->id, 'watchlisted_at' => '2026-09-10 12:00:30', 'watched_at' => '2026-09-10 12:00:00']);
+    $this->assertDatabaseHas('user_titles', ['id' => $facts->id, 'watchlisted_at' => '2026-09-10 12:00:30', 'watched_at' => '2026-09-10 12:00:00']);
 });
 
 it('rolls back a throttled Undo and shows the 429 toast', function () {
@@ -117,5 +117,5 @@ it('rolls back a throttled Undo and shows the 429 toast', function () {
         ->assertDontSee('Too many requests')
         ->assertNoJavaScriptErrors();
 
-    $this->assertDatabaseHas('user_movies', ['id' => $facts->id, 'watchlisted_at' => null, 'watched_at' => now()]);
+    $this->assertDatabaseHas('user_titles', ['id' => $facts->id, 'watchlisted_at' => null, 'watched_at' => now()]);
 });

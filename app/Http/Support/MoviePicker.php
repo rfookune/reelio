@@ -45,7 +45,7 @@ class MoviePicker
     public function genres(): array
     {
         return array_values(Genre::query()
-            ->whereHas('movies', fn (Builder $movies): Builder => $movies->whereIn('movies.id', $this->candidates()->select('movies.id')))
+            ->whereHas('movies', fn (Builder $movies): Builder => $movies->whereIn('titles.id', $this->candidates()->select('titles.id')))
             ->orderBy('name')
             ->get(['id', 'name'])
             ->map(fn (Genre $genre): array => ['id' => $genre->id, 'name' => $genre->name])
@@ -56,7 +56,7 @@ class MoviePicker
     private function candidates(): Builder
     {
         return Movie::query()->whereNotNull('title')->whereIn('id', UserMovie::query()
-            ->select('movie_id')
+            ->select('title_id')
             ->whereBelongsTo($this->user)
             ->whereNotNull(UserMovieList::Watchlist->dateColumn()));
     }

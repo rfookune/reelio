@@ -37,7 +37,7 @@ class AvailabilityWriter
 
             if ($offers !== []) {
                 DB::table('availabilities')->insert(array_map(fn (array $offer): array => [
-                    'movie_id' => $movie->id,
+                    'title_id' => $movie->id,
                     'streaming_service_id' => $offer['serviceId'],
                     'country' => $offer['country'],
                     'offer_type' => OfferType::from($offer['offerType'])->value,

@@ -17,7 +17,7 @@ test('a cap-cleared Movie\'s page refreshes it in the request, restoring its det
 
     $this->get($movie->canonicalUrl())->assertMovedPermanently()->assertRedirect(route('movies.show', ['slug' => 'interstellar', 'id' => $movie->id]));
 
-    $this->assertDatabaseHas('movies', ['id' => $movie->id, 'title' => 'Interstellar', 'slug' => 'interstellar', 'removed_at' => null]);
+    $this->assertDatabaseHas('titles', ['id' => $movie->id, 'title' => 'Interstellar', 'slug' => 'interstellar', 'removed_at' => null]);
 });
 
 test('a cap-cleared Movie whose refresh fails is a 503 with no stored fields and the viewer\'s facts, recording no view, at any slug', function (string $slug) {
@@ -38,7 +38,7 @@ test('a cap-cleared Movie whose refresh fails is a 503 with no stored fields and
             ->where('data.userMovies', [$movie->tmdb_id => ['watchlisted' => true, 'watched' => true, 'watchedDate' => '2026-10-01T00:00:00.000000Z']])
             ->missing('movie'));
 
-    $this->assertDatabaseHas('movies', ['id' => $movie->id, 'last_viewed_at' => '2026-11-01 00:00:00', 'removed_at' => null]);
+    $this->assertDatabaseHas('titles', ['id' => $movie->id, 'last_viewed_at' => '2026-11-01 00:00:00', 'removed_at' => null]);
     Queue::assertNothingPushed();
 })->with(['its canonical slug' => 'movie', 'an old slug' => 'interstellar']);
 

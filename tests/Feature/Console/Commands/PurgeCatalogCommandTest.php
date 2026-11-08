@@ -30,10 +30,10 @@ test('catalog:purge clears everything from TMDB off every Movie and deletes ever
         ->assertSuccessful();
 
     foreach ([$held, $unheld] as $movie) {
-        $this->assertDatabaseHas('movies', ['id' => $movie->id, 'title' => null, 'slug' => null, 'imdb_id' => null, 'synced_at' => null, 'removed_at' => null]);
+        $this->assertDatabaseHas('titles', ['id' => $movie->id, 'title' => null, 'slug' => null, 'imdb_id' => null, 'synced_at' => null, 'removed_at' => null]);
     }
-    $this->assertDatabaseHas('movies', ['id' => $removed->id, 'removed_at' => $removed->removed_at]);
-    $this->assertDatabaseEmpty('genre_movie');
+    $this->assertDatabaseHas('titles', ['id' => $removed->id, 'removed_at' => $removed->removed_at]);
+    $this->assertDatabaseEmpty('genre_title');
     $this->assertDatabaseEmpty('availabilities');
     $this->assertModelExists($facts);
     $this->assertDatabaseMissing('ratings', ['source' => 'tmdb']);
@@ -49,12 +49,12 @@ test('catalog:purge changes nothing unless confirmed, and --force skips the ques
 
     $this->artisan('catalog:purge')->expectsConfirmation(PURGE_QUESTION, 'no')->assertFailed();
 
-    $this->assertDatabaseHas('movies', ['id' => $movie->id, 'title' => $movie->title]);
+    $this->assertDatabaseHas('titles', ['id' => $movie->id, 'title' => $movie->title]);
     $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => '1']);
 
     $this->artisan('catalog:purge --force')->assertSuccessful();
 
-    $this->assertDatabaseHas('movies', ['id' => $movie->id, 'title' => null]);
+    $this->assertDatabaseHas('titles', ['id' => $movie->id, 'title' => null]);
     $this->assertDatabaseMissing('ratings', ['source' => 'tmdb']);
 });
 

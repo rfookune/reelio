@@ -22,7 +22,7 @@ it('marks a Movie on the Watchlist as watched, then clears it, keeping focus on 
         ->assertNoJavaScriptErrors();
 
     expect($page->script('document.activeElement.dataset.slot'))->toBe('clear-watched');
-    $this->assertDatabaseHas('user_movies', ['id' => $facts->id, 'watchlisted_at' => null, 'watched_at' => '2026-09-10 12:00:00']);
+    $this->assertDatabaseHas('user_titles', ['id' => $facts->id, 'watchlisted_at' => null, 'watched_at' => '2026-09-10 12:00:00']);
     settleToasts($page);
     $page->assertNoAccessibilityIssues();
 
@@ -33,7 +33,7 @@ it('marks a Movie on the Watchlist as watched, then clears it, keeping focus on 
         ->assertNoJavaScriptErrors();
 
     expect($page->script('document.activeElement.dataset.slot'))->toBe('mark-as-watched');
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 });
 
 it('shows a queued rewatch with its last Watched date in the viewer\'s time zone, and clears only Watched', function () {
@@ -58,5 +58,5 @@ it('shows a queued rewatch with its last Watched date in the viewer\'s time zone
         ->assertNoJavaScriptErrors();
 
     expect($page->script('document.activeElement.dataset.slot'))->toBe('mark-as-watched');
-    $this->assertDatabaseHas('user_movies', ['user_id' => $user->id, 'movie_id' => $movie->id, 'watched_at' => null]);
+    $this->assertDatabaseHas('user_titles', ['user_id' => $user->id, 'title_id' => $movie->id, 'watched_at' => null]);
 });

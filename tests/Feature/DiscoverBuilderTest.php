@@ -335,7 +335,7 @@ test('every listed Movie\'s TMDB score is recorded, with or without a Movie row'
     $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => '1', 'value' => 8.4, 'vote_count' => 2500]);
     $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => '2', 'value' => 6.1, 'vote_count' => 40]);
     $this->assertDatabaseMissing('ratings', ['source' => 'tmdb', 'source_id' => '3']);
-    $this->assertDatabaseCount('movies', 0);
+    $this->assertDatabaseCount('titles', 0);
 });
 
 test('a Movie whose details fail keeps its listing, and one the source no longer has is left out', function () {

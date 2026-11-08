@@ -12,14 +12,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_movies', function (Blueprint $table) {
+        Schema::create('user_titles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('movie_id')->index()->constrained()->restrictOnDelete();
+            $table->foreignId('title_id')->index()->constrained()->restrictOnDelete();
             $table->timestamp('watchlisted_at')->nullable();
             $table->timestamp('watched_at')->nullable();
 
-            $table->unique(['user_id', 'movie_id']);
+            $table->unique(['user_id', 'title_id']);
         });
     }
 
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_movies');
+        Schema::dropIfExists('user_titles');
     }
 };

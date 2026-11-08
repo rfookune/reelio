@@ -40,7 +40,7 @@ class UserMovieListPage
         $page = $this->page();
         $ratings = $page->isEmpty() ? [] : $this->ratings->ratingsFor($page->getCollection()->map(fn (UserMovie $facts): Movie => $facts->movie));
 
-        return array_replace($page->toArray(), ['data' => $page->getCollection()->map(fn (UserMovie $facts): array => $this->card($facts->movie, $ratings[$facts->movie_id] ?? []))->all()]);
+        return array_replace($page->toArray(), ['data' => $page->getCollection()->map(fn (UserMovie $facts): array => $this->card($facts->movie, $ratings[$facts->title_id] ?? []))->all()]);
     }
 
     public function scrollMetadata(): ScrollMetadata
@@ -62,13 +62,13 @@ class UserMovieListPage
     /** A fresh page starting at the restored Movie, so Undo can reveal it even after a sort reset. */
     public function restoredMovieUrl(int $tmdbId): string
     {
-        $facts = $this->orderedFacts()->where('movies.tmdb_id', $tmdbId)->first();
+        $facts = $this->orderedFacts()->where('titles.tmdb_id', $tmdbId)->first();
         $parameters = $this->sort === $this->list->defaultSort() ? [] : ['sort' => $this->sort];
 
         if ($facts !== null) {
             $parameters['cursor'] = (new Cursor([
                 'sort_key' => $facts->getAttribute('sort_key'),
-                'user_movies.id' => $facts->id + ($this->direction() === 'desc' ? 1 : -1),
+                'user_titles.id' => $facts->id + ($this->direction() === 'desc' ? 1 : -1),
             ]))->encode();
         }
 
@@ -138,15 +138,16 @@ class UserMovieListPage
     private function orderedFacts(): Builder
     {
         $expression = match ($this->sort) {
-            'title' => '(movies.title COLLATE movie_title)',
-            'newest-release' => "COALESCE(movies.release_date, '-infinity'::date)",
-            'oldest-release' => "COALESCE(movies.release_date, 'infinity'::date)",
-            default => 'user_movies.'.$this->list->dateColumn(),
+            'title' => '(titles.title COLLATE movie_title)',
+            'newest-release' => "COALESCE(movie_details.release_date, '-infinity'::date)",
+            'oldest-release' => "COALESCE(movie_details.release_date, 'infinity'::date)",
+            default => 'user_titles.'.$this->list->dateColumn(),
         };
 
-        return $this->facts()->join('movies', 'movies.id', '=', 'user_movies.movie_id')
-            ->whereNotNull('movies.title')->select('user_movies.*')->selectRaw($expression.' as sort_key')
-            ->orderBy('sort_key', $this->direction())->orderBy('user_movies.id', $this->direction());
+        return $this->facts()->join('titles', 'titles.id', '=', 'user_titles.title_id')
+            ->leftJoin('movie_details', 'movie_details.title_id', '=', 'titles.id')
+            ->whereNotNull('titles.title')->select('user_titles.*')->selectRaw($expression.' as sort_key')
+            ->orderBy('sort_key', $this->direction())->orderBy('user_titles.id', $this->direction());
     }
 
     /**

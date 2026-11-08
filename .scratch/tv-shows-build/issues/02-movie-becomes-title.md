@@ -8,9 +8,9 @@
 
 **Status:** ready-for-agent
 
-- [ ] The `titles` base, detail tables and models exist, with `Movie` and `TvShow` scoping to their own kind
-- [ ] Genre, Availability, Streaming service and user-fact tables reference a Title
-- [ ] Factories build either kind with states
-- [ ] The full existing Movie test suite passes with no assertion changes (only table or column names in setup may change)
-- [ ] Every query that means Movies-only goes through the Movie subtype or filters on kind
-- [ ] No TV Show behaviour exists yet and no user-visible change
+- [x] The `titles` base, detail tables and models exist, with `Movie` and `TvShow` scoping to their own kind
+- [x] Genre, Availability, Streaming service and user-fact tables reference a Title
+- [x] Factories build either kind with states
+- [x] The full existing Movie test suite passes with no assertion changes (only table or column names in setup may change)
+- [x] Every query that means Movies-only goes through the Movie subtype or filters on kind
+- [x] No TV Show behaviour exists yet and no user-visible change

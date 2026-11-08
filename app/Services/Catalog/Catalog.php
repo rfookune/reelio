@@ -406,7 +406,7 @@ class Catalog
             $afterId = $movieIds === [] ? $afterId : $movieIds[array_key_last($movieIds)];
         } while ($movieIds !== []);
 
-        Genre::query()->whereDoesntHave('movies')->delete();
+        Genre::query()->whereDoesntHave('titles')->delete();
         $batchSize = config('catalog.cleanup.batch_size');
 
         while ($this->availability->deleteUnreferencedServices($batchSize) === $batchSize) {

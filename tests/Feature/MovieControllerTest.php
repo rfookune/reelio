@@ -69,7 +69,7 @@ test('guest views update the last viewed time without recording analytics', func
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where('canonicalUrl', route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id])));
 
-    $this->assertDatabaseHas('movies', ['id' => $movie->id, 'last_viewed_at' => '2026-11-05 12:00:00']);
+    $this->assertDatabaseHas('titles', ['id' => $movie->id, 'last_viewed_at' => '2026-11-05 12:00:00']);
     Queue::assertNothingPushed();
 });
 
@@ -92,7 +92,7 @@ test('reloading only part of the Movie page records no new view', function () {
         ->assertJsonPath('props.whereToWatch.country', 'US')
         ->assertJsonMissingPath('props.movie');
 
-    $this->assertDatabaseHas('movies', ['id' => $movie->id, 'last_viewed_at' => '2026-11-01 00:00:00']);
+    $this->assertDatabaseHas('titles', ['id' => $movie->id, 'last_viewed_at' => '2026-11-01 00:00:00']);
     Queue::assertNothingPushed();
 });
 

@@ -44,7 +44,7 @@ test('a view more than a day after the last sync refreshes the Movie, its genres
             ->where('whereToWatch.updated', 'Updated today')
             ->where('whereToWatch.outOfDate', false));
 
-    $this->assertDatabaseHas('movies', ['id' => $movie->id, 'slug' => 'interstellar', 'synced_at' => '2026-11-05 12:00:00']);
+    $this->assertDatabaseHas('titles', ['id' => $movie->id, 'slug' => 'interstellar', 'synced_at' => '2026-11-05 12:00:00']);
     $this->assertDatabaseHas('streaming_services', ['id' => 350, 'name' => 'Apple TV']);
     expect(DB::table('ratings')->sole())->toMatchObject(['source' => 'tmdb', 'source_id' => '157336', 'vote_count' => 41832]);
 });
@@ -61,7 +61,7 @@ test('a failed refresh renders the stored Movie and flags Where to watch as poss
             ->where('whereToWatch.updated', 'Updated 2 days ago')
             ->where('whereToWatch.outOfDate', true));
 
-    $this->assertDatabaseHas('movies', ['id' => $movie->id, 'synced_at' => '2026-11-03 12:00:00', 'removed_at' => null]);
+    $this->assertDatabaseHas('titles', ['id' => $movie->id, 'synced_at' => '2026-11-03 12:00:00', 'removed_at' => null]);
 });
 
 test('a 404 on refresh makes it a Removed Movie: the row stays with everything from TMDB cleared, and the page is gone', function () {
@@ -78,12 +78,13 @@ test('a 404 on refresh makes it a Removed Movie: the row stays with everything f
 
     $this->get(route('movies.show', ['slug' => 'interstellar', 'id' => $movie->id]))->assertGone();
 
-    $this->assertDatabaseHas('movies', [
+    $this->assertDatabaseHas('titles', [
         'id' => $movie->id, 'tmdb_id' => 157336, 'slug' => null, 'title' => null, 'original_title' => null, 'overview' => null, 'tagline' => null,
-        'release_date' => null, 'runtime' => null, 'poster_path' => null, 'backdrop_path' => null, 'original_language' => null, 'imdb_id' => null,
+        'poster_path' => null, 'backdrop_path' => null, 'original_language' => null, 'imdb_id' => null,
         'synced_at' => null, 'removed_at' => '2026-11-05 12:00:00',
     ]);
-    $this->assertDatabaseEmpty('genre_movie');
+    $this->assertDatabaseHas('movie_details', ['title_id' => $movie->id, 'release_date' => null, 'runtime' => null]);
+    $this->assertDatabaseEmpty('genre_title');
     $this->assertDatabaseEmpty('availabilities');
     $this->assertDatabaseMissing('ratings', ['source' => 'tmdb']);
     $this->assertDatabaseHas('ratings', ['source' => 'imdb', 'source_id' => 'tt0816692']);
@@ -114,7 +115,7 @@ test('a Removed Movie\'s page is a title-less 410 with noindex at its old slug, 
             ->where('title', 'This movie is no longer available.')
             ->where('message', 'Our data source, TMDB, has removed this movie, so we can\'t show its details any more.'));
 
-    $this->assertDatabaseHas('movies', ['id' => $movie->id, 'title' => null]);
+    $this->assertDatabaseHas('titles', ['id' => $movie->id, 'title' => null]);
 });
 
 test('a signed-in view of a Removed Movie is a 410 that records no view', function () {
@@ -126,7 +127,7 @@ test('a signed-in view of a Removed Movie is a 410 that records no view', functi
         ->get(route('movies.show', ['slug' => 'movie', 'id' => $movie->id]))
         ->assertGone();
 
-    $this->assertDatabaseHas('movies', ['id' => $movie->id, 'last_viewed_at' => '2026-11-01 00:00:00']);
+    $this->assertDatabaseHas('titles', ['id' => $movie->id, 'last_viewed_at' => '2026-11-01 00:00:00']);
     Queue::assertNothingPushed();
 });
 
@@ -137,15 +138,15 @@ test('refreshing a Removed Movie leaves it removed, even if the source has it ag
     $result = app(Catalog::class)->refresh($movie, new CatalogContext);
 
     expect($result->isRemoved())->toBeTrue();
-    $this->assertDatabaseHas('movies', ['id' => $movie->id, 'title' => null, 'synced_at' => null]);
+    $this->assertDatabaseHas('titles', ['id' => $movie->id, 'title' => null, 'synced_at' => null]);
 });
 
 test('a refresh writes every column, even ones another writer changed after the Movie was loaded', function () {
     $movie = Movie::factory()->create(['tmdb_id' => 157336, 'title' => 'Interstellar', 'slug' => 'interstellar']);
     fakeCatalogKnowing(sourceDetailsFor($movie));
-    DB::table('movies')->where('id', $movie->id)->update(['title' => null, 'slug' => null]);
+    DB::table('titles')->where('id', $movie->id)->update(['title' => null, 'slug' => null]);
 
     app(Catalog::class)->refresh($movie, new CatalogContext);
 
-    $this->assertDatabaseHas('movies', ['id' => $movie->id, 'title' => 'Interstellar', 'slug' => 'interstellar']);
+    $this->assertDatabaseHas('titles', ['id' => $movie->id, 'title' => 'Interstellar', 'slug' => 'interstellar']);
 });

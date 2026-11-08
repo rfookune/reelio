@@ -25,7 +25,7 @@ test('the full cast page lists the whole billed cast without recording a view', 
             ->where('movie.crew', [])
             ->where('movie.detailsUnavailable', false));
 
-    $this->assertDatabaseHas('movies', ['id' => $movie->id, 'last_viewed_at' => '2026-11-01 00:00:00']);
+    $this->assertDatabaseHas('titles', ['id' => $movie->id, 'last_viewed_at' => '2026-11-01 00:00:00']);
     Queue::assertNothingPushed();
 });
 

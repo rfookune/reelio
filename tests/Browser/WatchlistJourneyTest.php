@@ -22,7 +22,7 @@ it('removes cards with Undo, moves focus to the next and previous controls, and 
         ->assertNotPresent('[data-slot="watchlist-grid"] [data-tmdb-id="2"]')
         ->assertSee('Watchlist · 2')->assertSee('Removed from your Watchlist');
     expect($page->script('document.activeElement.closest("[data-tmdb-id]").dataset.tmdbId'))->toBe('3');
-    $this->assertDatabaseHas('user_movies', ['user_id' => $user->id, 'movie_id' => Movie::where('tmdb_id', 2)->value('id'), 'watchlisted_at' => null]);
+    $this->assertDatabaseHas('user_titles', ['user_id' => $user->id, 'title_id' => Movie::where('tmdb_id', 2)->value('id'), 'watchlisted_at' => null]);
 
     $page->click('Undo')->assertPresent('[data-slot="watchlist-grid"] [data-tmdb-id="2"]')->assertSee('Watchlist · 3');
     expect($page->script('document.activeElement.closest("[data-tmdb-id]").dataset.tmdbId'))->toBe('2');
@@ -99,7 +99,7 @@ it('saves a cached Trending suggestion from the empty state and returns it with 
         ->click('Undo')->assertSee('Your Watchlist is empty')->assertSee('Watchlist · 0')->assertSee('Trending this week')
         ->assertNoJavaScriptErrors();
 
-    $this->assertDatabaseCount('user_movies', 0);
+    $this->assertDatabaseCount('user_titles', 0);
 });
 
 it('rolls a refused removal back into the grid and restores the count', function () {
@@ -116,7 +116,7 @@ it('rolls a refused removal back into the grid and restores the count', function
         ->assertPresent('[data-slot="watchlist-grid"] [data-slot="poster-card"]')->assertSee('Watchlist · 1')
         ->assertNoJavaScriptErrors();
 
-    $this->assertDatabaseHas('user_movies', ['id' => $facts->id, 'watchlisted_at' => $facts->watchlisted_at]);
+    $this->assertDatabaseHas('user_titles', ['id' => $facts->id, 'watchlisted_at' => $facts->watchlisted_at]);
 });
 
 it('restores and focuses an undone Movie after the sort changes, even beyond the first page', function () {

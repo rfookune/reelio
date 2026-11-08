@@ -10,11 +10,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * A Streaming service offering a Movie in one country, in one way.
+ * A Streaming service offering a Title in one country, in one way.
  *
  * @property OfferType $offer_type
  */
-#[Fillable(['movie_id', 'streaming_service_id', 'country', 'offer_type', 'display_priority'])]
+#[Fillable(['title_id', 'streaming_service_id', 'country', 'offer_type', 'display_priority'])]
 class Availability extends Model
 {
     /** @use HasFactory<AvailabilityFactory> */
@@ -37,6 +37,12 @@ class Availability extends Model
     /** @return BelongsTo<Movie, $this> */
     public function movie(): BelongsTo
     {
-        return $this->belongsTo(Movie::class);
+        return $this->belongsTo(Movie::class, 'title_id');
+    }
+
+    /** @return BelongsTo<Title, $this> */
+    public function title(): BelongsTo
+    {
+        return $this->belongsTo(Title::class);
     }
 }
