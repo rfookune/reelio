@@ -2,6 +2,7 @@
 
 namespace App\Services\Catalog\Maintenance;
 
+use App\Enums\TvShowStatus;
 use App\Models\Movie;
 use App\Models\TvShow;
 use App\Models\UserEpisode;
@@ -10,8 +11,6 @@ use Illuminate\Database\Eloquent\Builder;
 
 class RefreshSchedule
 {
-    private const AIRING_STATUSES = ['Returning Series', 'In Production', 'Pilot'];
-
     /**
      * The ids of up to `$limit` Movies due a scheduled refresh, in id order after `$afterId`, so the planner can
      * page through them while refreshes drop Movies out of the set.
@@ -36,10 +35,10 @@ class RefreshSchedule
                 ->orWhereHas('episodes', fn (Builder $episodes): Builder => $episodes->whereIn('id', UserEpisode::query()->select('episode_id'))))
             ->where(fn (Builder $due): Builder => $due->whereNull('synced_at')
                 ->orWhere(fn (Builder $airing): Builder => $airing
-                    ->whereHas('details', fn (Builder $details): Builder => $details->whereIn('status', self::AIRING_STATUSES))
+                    ->whereHas('details', fn (Builder $details): Builder => $details->whereIn('status', TvShowStatus::airing()))
                     ->where('synced_at', '<', now()->subDays(3)))
                 ->orWhere(fn (Builder $ended): Builder => $ended
-                    ->whereHas('details', fn (Builder $details): Builder => $details->whereNotIn('status', self::AIRING_STATUSES)->orWhereNull('status'))
+                    ->whereHas('details', fn (Builder $details): Builder => $details->whereNotIn('status', TvShowStatus::airing())->orWhereNull('status'))
                     ->where('synced_at', '<', now()->subDays(30))))
             ->orderBy('id')->limit($limit)->get(['id'])->map(fn (TvShow $tvShow): int => $tvShow->id)->all());
     }

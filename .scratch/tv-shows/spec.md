@@ -38,7 +38,7 @@ The whole feature ships behind a config flag that is off until launch.
 15. As a visitor, I want the Episode count to leave out Specials, so that the number matches what counts toward finishing.
 16. As a visitor, I want a click-to-play trailer when one exists, so that I can see what it is like before committing.
 17. As a visitor, I want the top 12 cast with photos, so that I can recognise who is in it.
-17a. As a visitor, I want a Full Cast page for a TV Show listing everyone across the whole run with their roles and Episode counts, so that I can place a face I half-remember. It has no Season or Episode filter.
+    17a. As a visitor, I want a Full Cast page for a TV Show listing everyone across the whole run with their roles and Episode counts, so that I can place a face I half-remember. It has no Season or Episode filter.
 18. As a visitor, I want the TV Show page to load as one page with no loading placeholders, so that it reads like a movie page.
 19. As a visitor, I want the page to still show what is stored when TMDB is down, with "temporarily unavailable" panels for the rest, so that an outage doesn't hide everything.
 20. As a visitor, I want the TV Show page to be shareable with a proper title, description and image, so that links look right when posted.
