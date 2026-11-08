@@ -66,6 +66,6 @@ class ChangeTvShowWatched
         }
         $result = $this->catalog->tvShowDetails($tvShow);
         abort_if($result->isRemoved(), 410);
-        throw_if($result->isUnavailable() || ! $tvShow->episodes()->exists() && $result->status === CatalogStatus::Stale, DetailsUnavailable::class);
+        throw_if($result->isUnavailable() || ($result->status === CatalogStatus::Stale && $tvShow->episodes()->doesntExist()), DetailsUnavailable::class);
     }
 }
