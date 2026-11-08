@@ -19,6 +19,8 @@ A buildable spec at `.scratch/tv-shows/spec.md` for adding TV Shows to Reelio, w
 
 <!-- one line per resolved ticket: [title](link): gist -->
 
+- [What TMDB offers for TV Shows](issues/02-tmdb-tv-data-shape.md): TV Show, Season and Episode details exist; Availability at TV Show and Season level only; about 1 + one request per Season to fetch a whole TV Show; findings are on the throwaway branch `research/tv-shows-tmdb-data-shape`.
+
 ## Not yet specified
 
 - URLs and routes for TV Shows, and how existing Movie routes, canonical URLs and the entry route relate.
