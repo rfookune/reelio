@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TitleKind;
 use Carbon\CarbonImmutable;
 use Database\Factories\MovieFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -25,9 +26,9 @@ class Movie extends Title
 
     protected static function booted(): void
     {
-        static::addGlobalScope('kind', fn (Builder $query) => $query->where($query->qualifyColumn('kind'), 'movie'));
+        static::addGlobalScope('kind', fn (Builder $query) => $query->where($query->qualifyColumn('kind'), TitleKind::Movie));
         static::creating(function (self $title): void {
-            $title->kind = 'movie';
+            $title->kind = TitleKind::Movie;
         });
     }
 

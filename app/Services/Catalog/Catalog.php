@@ -2,6 +2,7 @@
 
 namespace App\Services\Catalog;
 
+use App\Enums\TitleKind;
 use App\Models\Movie;
 use App\Models\Title;
 use App\Models\TvShow;
@@ -23,10 +24,10 @@ class Catalog
             throw (new ModelNotFoundException)->setModel(Title::class, [$id]);
         }
         $title = Title::query()->findOrFail($titleId);
-        if ($title->kind === 'tv' && config('catalog.tv_shows.enabled')) {
+        if ($title->kind === TitleKind::TvShow && config('catalog.tv_shows.enabled')) {
             return (new TvShow)->newFromBuilder($title->getAttributes(), $title->getConnectionName());
         }
-        if ($title->kind === 'movie') {
+        if ($title->kind === TitleKind::Movie) {
             return (new Movie)->newFromBuilder($title->getAttributes(), $title->getConnectionName())->load('details');
         }
 

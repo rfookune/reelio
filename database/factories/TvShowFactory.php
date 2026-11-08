@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\TitleKind;
 use App\Models\TvShow;
 
 /** @extends TitleFactory<TvShow> */
@@ -11,6 +12,6 @@ class TvShowFactory extends TitleFactory
 
     public function definition(): array
     {
-        return array_replace(parent::definition(), ['kind' => 'tv']);
+        return array_replace(parent::definition(), ['kind' => TitleKind::TvShow]);
     }
 }

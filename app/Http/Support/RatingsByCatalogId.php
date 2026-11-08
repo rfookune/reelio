@@ -2,6 +2,7 @@
 
 namespace App\Http\Support;
 
+use App\Enums\TitleKind;
 use App\Models\Movie;
 use App\Services\Ratings\ExternalRating;
 use App\Services\Ratings\Ratings;
@@ -20,7 +21,7 @@ class RatingsByCatalogId
     public static function for(Ratings $ratings, array $imdbIds): array
     {
         return $ratings->ratingsFor(collect($imdbIds)->map(fn (?string $imdbId, int $tmdbId): Movie => (new Movie)->forceFill([
-            'kind' => 'movie',
+            'kind' => TitleKind::Movie,
             'id' => $tmdbId,
             'tmdb_id' => $tmdbId,
             'imdb_id' => $imdbId,

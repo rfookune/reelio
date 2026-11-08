@@ -2,6 +2,7 @@
 
 namespace App\Services\Catalog\Discover;
 
+use App\Enums\TitleKind;
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
@@ -325,7 +326,7 @@ class DiscoverBuilder
             $lastPage = min($lastPage, $sectionPage->totalPages);
 
             foreach ($sectionPage->listings as $listing) {
-                $this->ratings->record(RatingSourceName::Tmdb, TmdbRatingId::for('movie', $listing->tmdbId), $listing->voteAverage, $listing->voteCount);
+                $this->ratings->record(RatingSourceName::Tmdb, TmdbRatingId::for(TitleKind::Movie, $listing->tmdbId), $listing->voteAverage, $listing->voteCount);
 
                 if (count($collected) < $wanted && $listing->posterPath !== null && ! isset($seen[$listing->tmdbId]) && ! isset($considered[$listing->tmdbId])) {
                     $considered[$listing->tmdbId] = true;

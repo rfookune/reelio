@@ -2,6 +2,7 @@
 
 namespace App\Services\Catalog\Titles;
 
+use App\Enums\TitleKind;
 use App\Models\Genre;
 use App\Models\Movie;
 use App\Services\Catalog\CacheKey;
@@ -61,7 +62,7 @@ class MovieCatalog
 
         $this->storeDetails($this->detailsKey($tmdbId, $context), $details);
         $this->imdb->rememberImdbId($details->tmdbId, $details->imdbId, $context);
-        $this->ratings->record(RatingSourceName::Tmdb, TmdbRatingId::for('movie', $details->tmdbId), $details->voteAverage, $details->voteCount);
+        $this->ratings->record(RatingSourceName::Tmdb, TmdbRatingId::for(TitleKind::Movie, $details->tmdbId), $details->voteAverage, $details->voteCount);
 
         return CatalogResult::fresh($movie);
     }
@@ -135,7 +136,7 @@ class MovieCatalog
 
             $movie->update($this->sourceAttributes($details));
             $this->storeRelations($movie, $details);
-            $this->ratings->record(RatingSourceName::Tmdb, TmdbRatingId::for('movie', $movie->tmdb_id), $details->voteAverage, $details->voteCount);
+            $this->ratings->record(RatingSourceName::Tmdb, TmdbRatingId::for(TitleKind::Movie, $movie->tmdb_id), $details->voteAverage, $details->voteCount);
             $this->storeDetails($this->detailsKey($movie->tmdb_id, $context), $details);
             $this->imdb->rememberImdbId($movie->tmdb_id, $details->imdbId, $context);
 
@@ -213,7 +214,7 @@ class MovieCatalog
         $movie->update([...$this->clearedSourceAttributes($movie), ...$extraAttributes]);
         $movie->genres()->detach();
         $movie->availabilities()->delete();
-        $this->ratings->forget(RatingSourceName::Tmdb, TmdbRatingId::for('movie', $movie->tmdb_id));
+        $this->ratings->forget(RatingSourceName::Tmdb, TmdbRatingId::for(TitleKind::Movie, $movie->tmdb_id));
         Cache::forget($this->detailsKey($movie->tmdb_id, $context));
         $this->imdb->forgetImdbId($movie->tmdb_id, $context);
     }

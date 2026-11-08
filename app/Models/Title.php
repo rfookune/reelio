@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TitleKind;
 use Carbon\CarbonImmutable;
 use Database\Factories\TitleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
+ * @property TitleKind $kind
  * @property CarbonImmutable|null $synced_at
  * @property CarbonImmutable $last_viewed_at
  * @property CarbonImmutable|null $removed_at
@@ -28,6 +30,7 @@ class Title extends Model
     protected function casts(): array
     {
         return [
+            'kind' => TitleKind::class,
             'synced_at' => 'immutable_datetime',
             'last_viewed_at' => 'immutable_datetime',
             'removed_at' => 'immutable_datetime',

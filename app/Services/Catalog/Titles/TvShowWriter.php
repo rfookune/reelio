@@ -2,6 +2,7 @@
 
 namespace App\Services\Catalog\Titles;
 
+use App\Enums\TitleKind;
 use App\Models\Genre;
 use App\Models\TvShow;
 use App\Services\Catalog\Sources\Details\TvShowDetails;
@@ -24,7 +25,7 @@ class TvShowWriter
         }
         $tvShow->genres()->sync(array_column($details->genres, 'id'));
         $this->availability->replace($tvShow, $details->availability);
-        $this->ratings->record(RatingSourceName::Tmdb, TmdbRatingId::for('tv', $tvShow->tmdb_id), $details->voteAverage, $details->voteCount);
+        $this->ratings->record(RatingSourceName::Tmdb, TmdbRatingId::for(TitleKind::TvShow, $tvShow->tmdb_id), $details->voteAverage, $details->voteCount);
 
         $seasonIds = [];
         $episodeIds = [];
@@ -59,7 +60,7 @@ class TvShowWriter
         $tvShow->details()->update(array_fill_keys(array_keys($this->metadataAttributes($empty)), null));
         $tvShow->genres()->detach();
         $tvShow->availabilities()->delete();
-        $this->ratings->forget(RatingSourceName::Tmdb, TmdbRatingId::for('tv', $tvShow->tmdb_id));
+        $this->ratings->forget(RatingSourceName::Tmdb, TmdbRatingId::for(TitleKind::TvShow, $tvShow->tmdb_id));
         $tvShow->seasons()->update([
             'season_number' => null, 'name' => null, 'overview' => null, 'poster_path' => null,
             'air_date' => null, 'episode_count' => null, 'removed_at' => now(),

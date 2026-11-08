@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TitleKind;
 use Database\Factories\TvShowFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,9 +15,9 @@ class TvShow extends Title
 
     protected static function booted(): void
     {
-        static::addGlobalScope('kind', fn (Builder $query) => $query->where($query->qualifyColumn('kind'), 'tv'));
+        static::addGlobalScope('kind', fn (Builder $query) => $query->where($query->qualifyColumn('kind'), TitleKind::TvShow));
         static::creating(function (self $title): void {
-            $title->kind = 'tv';
+            $title->kind = TitleKind::TvShow;
         });
         static::created(fn (self $title) => $title->details()->create());
     }

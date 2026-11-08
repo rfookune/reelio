@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\TitleKind;
 use App\Models\Title;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -23,7 +24,7 @@ class TitleFactory extends Factory
         $title = fake()->sentence(3);
 
         return [
-            'kind' => 'movie',
+            'kind' => TitleKind::Movie,
             'tmdb_id' => fake()->unique()->numberBetween(1, 1000000000),
             'slug' => Str::slug($title),
             'title' => $title,
@@ -35,18 +36,18 @@ class TitleFactory extends Factory
 
     public function movie(): static
     {
-        return $this->state(fn (): array => ['kind' => 'movie']);
+        return $this->state(fn (): array => ['kind' => TitleKind::Movie]);
     }
 
     public function tvShow(): static
     {
-        return $this->state(fn (): array => ['kind' => 'tv']);
+        return $this->state(fn (): array => ['kind' => TitleKind::TvShow]);
     }
 
     public function configure(): static
     {
         return $this->afterCreating(function (Title $title): void {
-            $details = $title->kind === 'movie' ? $title->movieDetails() : $title->tvShowDetails();
+            $details = $title->kind === TitleKind::Movie ? $title->movieDetails() : $title->tvShowDetails();
             $details->firstOrCreate();
         });
     }

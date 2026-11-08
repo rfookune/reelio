@@ -2,6 +2,7 @@
 
 namespace App\Services\Catalog\Search;
 
+use App\Enums\TitleKind;
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\CatalogResult;
@@ -45,7 +46,7 @@ class CatalogSearch
         }
 
         foreach ($results->listings as $listing) {
-            $this->ratings->record(RatingSourceName::Tmdb, TmdbRatingId::for('movie', $listing->tmdbId), $listing->voteAverage, $listing->voteCount);
+            $this->ratings->record(RatingSourceName::Tmdb, TmdbRatingId::for(TitleKind::Movie, $listing->tmdbId), $listing->voteAverage, $listing->voteCount);
         }
 
         Cache::put($key, ['fetchedAt' => now()->getTimestamp(), 'results' => $results->toArray()], now()->addSeconds(config('catalog.search.stale_seconds')));

@@ -2,6 +2,7 @@
 
 namespace App\Services\Catalog\Maintenance;
 
+use App\Enums\TitleKind;
 use App\Models\Movie;
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Titles\AvailabilityWriter;
@@ -82,7 +83,7 @@ class CatalogCleanup
             $movies = $this->unviewedAndUnheld(Movie::query()->whereKey($candidateIds))->get(['id', 'tmdb_id']);
             Movie::query()->whereKey($movies->modelKeys())->delete();
             $tmdbIds = array_values($movies->map(fn (Movie $movie): int => $movie->tmdb_id)->all());
-            $this->ratings->forgetMany(RatingSourceName::Tmdb, array_map(fn (int $tmdbId): string => TmdbRatingId::for('movie', $tmdbId), $tmdbIds));
+            $this->ratings->forgetMany(RatingSourceName::Tmdb, array_map(fn (int $tmdbId): string => TmdbRatingId::for(TitleKind::Movie, $tmdbId), $tmdbIds));
 
             return $tmdbIds;
         });
