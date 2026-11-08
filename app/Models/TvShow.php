@@ -27,6 +27,11 @@ class TvShow extends Title
         return $this->hasOne(TvShowDetail::class, 'title_id');
     }
 
+    public function isWatchlistedBy(?User $user): bool
+    {
+        return $user !== null && $this->userTitles()->whereBelongsTo($user)->whereNotNull('watchlisted_at')->exists();
+    }
+
     public function canonicalUrl(): string
     {
         return route('tv-shows.show', ['slug' => $this->slug ?? 'tv-show', 'id' => $this->id]);

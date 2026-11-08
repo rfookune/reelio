@@ -50,6 +50,7 @@ class TvShowController extends Controller
 
         return Inertia::render('tv-shows/Show', [
             'whereToWatch' => fn (): array => WhereToWatch::for($tvShow, VisitorCountry::resolve($request), $result->status === CatalogStatus::Stale),
+            'watchlisted' => $tvShow->isWatchlistedBy($request->user()),
             'progress' => $progress->for($tvShow, $request->user()),
             'canonicalUrl' => $tvShow->canonicalUrl(),
             'imageBaseUrl' => config('catalog.image_base_url'),

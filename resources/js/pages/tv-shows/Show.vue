@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { BookmarkCheck, BookmarkPlus } from '@lucide/vue';
+import { Button } from '@/components/ui/button';
 import SeasonAccordion from '@/components/tv-show/SeasonAccordion.vue';
-import { useEpisodeProgress } from '@/composables/useEpisodeProgress';
-import type { WatchedProgress } from '@/composables/useEpisodeProgress';
+import { useTvShowActions } from '@/composables/useTvShowActions';
+import type { WatchedProgress } from '@/composables/useTvShowActions';
 import type { ExternalRating } from '@/components/ExternalRatings.vue';
 import WhereToWatch from '@/components/movie/WhereToWatch.vue';
 import type { WhereToWatchBlock } from '@/components/movie/WhereToWatch.vue';
@@ -19,6 +21,7 @@ import { describeMovie, shareImage } from '@/lib/seo';
 import { tvShowJsonLd, tvShowTitle, tvShowYearRange } from '@/lib/tvShows';
 const props = defineProps<{
     progress: WatchedProgress;
+    watchlisted: boolean;
     canonicalUrl: string;
     whereToWatch: WhereToWatchBlock;
     imageBaseUrl: string;
@@ -49,10 +52,12 @@ const props = defineProps<{
     };
 }>();
 const page = usePage();
-const { progress, busy, toggle } = useEpisodeProgress(
-    () => props.progress,
-    () => props.tvShow,
-);
+const { progress, watchlisted, busy, toggle, toggleWatchlist } =
+    useTvShowActions(
+        () => props.progress,
+        () => props.watchlisted,
+        () => props.tvShow,
+    );
 const yearRange = computed(() =>
     tvShowYearRange(
         props.tvShow.firstAirDate,
@@ -119,12 +124,47 @@ const jsonLd = computed(() =>
             :ratings="tvShow.ratings"
         >
             <template #actions>
+                <Button
+                    type="button"
+                    size="lg"
+                    data-slot="watchlist-toggle"
+                    :aria-pressed="watchlisted"
+                    :disabled="busy"
+                    :variant="
+                        watchlisted || progress.state === 'Not started'
+                            ? 'default'
+                            : 'outline'
+                    "
+                    @click="toggleWatchlist"
+                >
+                    <BookmarkCheck
+                        v-if="watchlisted"
+                        class="fill-current"
+                        aria-hidden="true"
+                    />
+                    <BookmarkPlus v-else aria-hidden="true" />
+                    {{ watchlisted ? 'On your Watchlist' : 'Add to Watchlist' }}
+                </Button>
                 <div
                     data-slot="tv-show-progress"
                     class="flex flex-col gap-2"
                     aria-live="polite"
                 >
-                    <p class="font-semibold">{{ progress.state }}</p>
+                    <p
+                        :data-slot="
+                            progress.state === 'Completed'
+                                ? 'completed-chip'
+                                : undefined
+                        "
+                        class="font-semibold"
+                        :class="
+                            progress.state === 'Completed'
+                                ? 'w-fit rounded-full bg-raised px-3 py-1 text-sm'
+                                : ''
+                        "
+                    >
+                        {{ progress.state }}
+                    </p>
                     <p class="text-sm text-muted">
                         {{ progress.watched }} of {{ progress.total }} Episodes
                         watched

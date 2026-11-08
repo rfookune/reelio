@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Actions\ChangeEpisodeWatched;
+use App\Actions\ChangeTvShowWatchlist;
 use App\Http\Support\PendingGuestAction;
 use App\Http\Support\UserMovieActionByCatalogId;
 use App\Models\Episode;
@@ -24,7 +25,7 @@ class ApplyPendingGuestAction
 {
     private const FAILURE_MESSAGE = "Couldn't save that. Try again.";
 
-    public function __construct(private Request $request, private UserMovieActionByCatalogId $actions, private ChangeEpisodeWatched $episodes) {}
+    public function __construct(private Request $request, private UserMovieActionByCatalogId $actions, private ChangeEpisodeWatched $episodes, private ChangeTvShowWatchlist $tvWatchlist) {}
 
     public function handle(Login $event): void
     {
@@ -39,6 +40,12 @@ class ApplyPendingGuestAction
         }
 
         try {
+            if (isset($pending['tv_show_tmdb_id'])) {
+                $result = $this->tvWatchlist->handle($this->request, $event->user, (string) $pending['tv_show_tmdb_id'], $pending['watchlisted']);
+                Inertia::flash('tvWatchlistAction', ['tmdbId' => $pending['tv_show_tmdb_id'], 'undoToken' => $result['undoToken'], 'watchlisted' => $result['watchlisted']]);
+
+                return;
+            }
             if (isset($pending['episode_id'])) {
                 $episode = Episode::query()->findOrFail($pending['episode_id']);
                 $tvShow = TvShow::query()->findOrFail($episode->title_id);

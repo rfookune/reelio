@@ -18,6 +18,7 @@ use App\Http\Controllers\TvShowAvailabilityLinkController;
 use App\Http\Controllers\TvShowController;
 use App\Http\Controllers\TvShowEntryController;
 use App\Http\Controllers\TvShowUndoController;
+use App\Http\Controllers\TvShowWatchlistController;
 use App\Http\Controllers\UndoController;
 use App\Http\Controllers\UserMovieListController;
 use App\Http\Controllers\WatchedController;
@@ -43,6 +44,8 @@ Route::get('watched', UserMovieListController::class)->middleware(['auth', Encry
 Route::get('watchlist/pick', MoviePickerController::class)->middleware(['auth', EncryptHistory::class, 'throttle:movie-picker'])->name('watchlist.pick');
 
 Route::scopeBindings()->middleware('throttle:user-movie-actions')->group(function () {
+    Route::put('tv-shows/tmdb/{tmdbId}/watchlist', [TvShowWatchlistController::class, 'update'])->whereNumber('tmdbId')->name('tv-shows.watchlist.update');
+    Route::delete('tv-shows/tmdb/{tmdbId}/watchlist', [TvShowWatchlistController::class, 'destroy'])->whereNumber('tmdbId')->name('tv-shows.watchlist.destroy');
     Route::put('tv-shows/{tvShow}/seasons/{season}/episodes/{episode}/watched', [EpisodeWatchedController::class, 'update'])->name('tv-shows.episodes.watched.update');
     Route::delete('tv-shows/{tvShow}/seasons/{season}/episodes/{episode}/watched', [EpisodeWatchedController::class, 'destroy'])->name('tv-shows.episodes.watched.destroy');
     Route::post('tv-shows/tmdb/{tmdbId}/undo', TvShowUndoController::class)->middleware('auth')->whereNumber('tmdbId')->name('tv-shows.undo');

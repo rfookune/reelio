@@ -3,7 +3,7 @@ import type {
     Episode,
     Season,
     WatchedProgress,
-} from '@/composables/useEpisodeProgress';
+} from '@/composables/useTvShowActions';
 defineProps<{ progress: WatchedProgress; busy: boolean }>();
 defineEmits<{ toggle: [season: Season, episode: Episode] }>();
 </script>

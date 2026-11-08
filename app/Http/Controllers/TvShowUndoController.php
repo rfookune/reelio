@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Actions\ChangeEpisodeWatched;
-use App\Models\TvShow;
+use App\Http\Support\LatestTvShowAction;
+use App\Http\Support\TvShowByCatalogId;
 use App\Services\TvShows\WatchedProgress;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,15 +11,17 @@ use Illuminate\Validation\ValidationException;
 
 class TvShowUndoController extends Controller
 {
-    public function __invoke(Request $request, string $tmdbId, ChangeEpisodeWatched $action, WatchedProgress $progress): JsonResponse
+    public function __invoke(Request $request, string $tmdbId, LatestTvShowAction $action, WatchedProgress $progress, TvShowByCatalogId $tvShows): JsonResponse
     {
         abort_unless(config('catalog.tv_shows.enabled'), 404);
         $validated = $request->validate(['token' => ['required', 'string', 'uuid']]);
-        $tvShow = TvShow::query()->where('tmdb_id', $tmdbId)->firstOrFail();
-        if (! $action->undo($request, $request->user(), $tvShow, $validated['token'])) {
+        $catalogId = $tvShows->catalogId($tmdbId);
+        if (! $action->undo($request, $request->user(), $catalogId, $validated['token'])) {
             throw ValidationException::withMessages(['undo' => "That can't be undone any more"]);
         }
 
-        return response()->json(['progress' => $progress->for($tvShow, $request->user())]);
+        $tvShow = $tvShows->find($tmdbId);
+
+        return response()->json(['progress' => $tvShow === null ? null : $progress->for($tvShow, $request->user()), 'watchlisted' => $tvShow?->isWatchlistedBy($request->user()) ?? false]);
     }
 }

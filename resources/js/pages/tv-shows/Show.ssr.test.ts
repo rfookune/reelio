@@ -17,6 +17,7 @@ async function renderTvShow(ratings: ExternalRating[] = []): Promise<string> {
         createSSRApp({
             render: () =>
                 h(Show, {
+                    watchlisted: false,
                     progress: {
                         state: 'Not started',
                         total: 0,

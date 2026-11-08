@@ -16,7 +16,6 @@
 - [x] Undo restores exactly and refuses when state has changed
 - [x] Browser tests cover the optimistic toggle with rollback on a failing endpoint
 
-
 ## Comments
 
 ### 2026-11-08 — Implemented

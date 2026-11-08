@@ -5,6 +5,10 @@ import {
     update,
     destroy,
 } from '@/actions/App/Http/Controllers/EpisodeWatchedController';
+import {
+    update as addToWatchlist,
+    destroy as removeFromWatchlist,
+} from '@/actions/App/Http/Controllers/TvShowWatchlistController';
 import undoRoute from '@/actions/App/Http/Controllers/TvShowUndoController';
 
 export type Episode = {
@@ -33,18 +37,24 @@ export type WatchedProgress = {
     seasons: Season[];
 };
 type Result = {
-    progress: WatchedProgress;
+    progress: WatchedProgress | null;
+    watchlisted: boolean;
     undoToken?: string;
     redirect?: string;
 };
 
-export function useEpisodeProgress(
+export function useTvShowActions(
     initial: () => WatchedProgress,
+    initiallyWatchlisted: () => boolean,
     tvShow: () => { id: number; tmdbId: number },
 ) {
     const page = usePage();
     const progress = ref(initial());
     const busy = ref(false);
+    const watchlisted = ref(initiallyWatchlisted());
+    const watchlistHttp = useHttp<{ source: string }, Result>({
+        source: 'tv-show',
+    });
     const http = useHttp<Record<string, never>, Result>({});
     const undoHttp = useHttp<{ token: string; undo: string }, Result>({
         token: '',
@@ -53,6 +63,24 @@ export function useEpisodeProgress(
     watch(initial, (value) => {
         progress.value = value;
     });
+
+    watch(initiallyWatchlisted, (value) => {
+        watchlisted.value = value;
+    });
+
+    function apply(result: Result) {
+        if (result.progress) progress.value = result.progress;
+        watchlisted.value = result.watchlisted;
+        router.replace({
+            props: (current) => ({
+                ...current,
+                watchlisted: result.watchlisted,
+                ...(result.progress ? { progress: result.progress } : {}),
+            }),
+            preserveScroll: true,
+            preserveState: true,
+        });
+    }
 
     function offerUndo(token: string, message: string) {
         toast.success(message, {
@@ -73,13 +101,13 @@ export function useEpisodeProgress(
             const result = await undoHttp.post(
                 undoRoute.url({ tmdbId: tvShow().tmdbId }),
             );
-            progress.value = result.progress;
+            apply(result);
             toast.success('Action undone');
         } catch {
             toast.error(
                 undoHttp.errors.undo ?? "Couldn't undo that. Try again.",
             );
-            router.reload({ only: ['progress'] });
+            router.reload({ only: ['progress', 'watchlisted'] });
         } finally {
             busy.value = false;
         }
@@ -89,6 +117,7 @@ export function useEpisodeProgress(
         if (busy.value || !episode.markable) return;
         busy.value = true;
         const before = progress.value;
+        const previouslyWatchlisted = watchlisted.value;
         const watched = episode.watchedDate === null;
         if (page.props.auth.user) {
             const seasons = before.seasons
@@ -126,6 +155,13 @@ export function useEpisodeProgress(
                           : 'In progress',
             };
         }
+        if (
+            page.props.auth.user &&
+            before.state !== 'Completed' &&
+            progress.value.state === 'Completed'
+        ) {
+            watchlisted.value = false;
+        }
         try {
             const args = {
                 tvShow: tvShow().id,
@@ -139,7 +175,7 @@ export function useEpisodeProgress(
                 router.visit(result.redirect);
                 return;
             }
-            progress.value = result.progress;
+            apply(result);
             if (result.undoToken)
                 offerUndo(
                     result.undoToken,
@@ -147,6 +183,38 @@ export function useEpisodeProgress(
                 );
         } catch {
             progress.value = before;
+            watchlisted.value = previouslyWatchlisted;
+            toast.error("Couldn't save that. Try again.");
+        } finally {
+            busy.value = false;
+        }
+    }
+
+    async function toggleWatchlist() {
+        if (busy.value) return;
+        busy.value = true;
+        const before = watchlisted.value;
+        const adding = !before;
+        if (page.props.auth.user) watchlisted.value = adding;
+        try {
+            const args = { tmdbId: tvShow().tmdbId };
+            const result = adding
+                ? await watchlistHttp.put(addToWatchlist.url(args))
+                : await watchlistHttp.delete(removeFromWatchlist.url(args));
+            if (result.redirect) {
+                router.visit(result.redirect);
+                return;
+            }
+            apply(result);
+            if (result.undoToken)
+                offerUndo(
+                    result.undoToken,
+                    adding
+                        ? 'Added to your Watchlist'
+                        : 'Removed from your Watchlist',
+                );
+        } catch {
+            watchlisted.value = before;
             toast.error("Couldn't save that. Try again.");
         } finally {
             busy.value = false;
@@ -154,11 +222,21 @@ export function useEpisodeProgress(
     }
 
     onMounted(() => {
+        const watchlistFlash = page.flash.tvWatchlistAction as
+            | { tmdbId: number; undoToken: string; watchlisted: boolean }
+            | undefined;
+        if (watchlistFlash?.tmdbId === tvShow().tmdbId)
+            offerUndo(
+                watchlistFlash.undoToken,
+                watchlistFlash.watchlisted
+                    ? 'Added to your Watchlist'
+                    : 'Removed from your Watchlist',
+            );
         const flash = page.flash.episodeAction as
             | { tmdbId: number; undoToken: string }
             | undefined;
         if (flash?.tmdbId === tvShow().tmdbId)
             offerUndo(flash.undoToken, 'Episode updated');
     });
-    return { progress, busy, toggle };
+    return { progress, watchlisted, busy, toggle, toggleWatchlist };
 }
