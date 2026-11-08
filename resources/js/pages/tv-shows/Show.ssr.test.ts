@@ -17,6 +17,13 @@ async function renderTvShow(ratings: ExternalRating[] = []): Promise<string> {
         createSSRApp({
             render: () =>
                 h(Show, {
+                    progress: {
+                        state: 'Not started',
+                        total: 0,
+                        watched: 0,
+                        defaultOpenSeasonId: null,
+                        seasons: [],
+                    },
                     canonicalUrl: 'https://reelio.test/tv-shows/chernobyl-1',
                     imageBaseUrl: 'https://image.tmdb.org/t/p',
                     catalogStatus: 'fresh',

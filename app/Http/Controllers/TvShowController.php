@@ -10,6 +10,7 @@ use App\Services\Catalog\Catalog;
 use App\Services\Catalog\Enums\CatalogStatus;
 use App\Services\Ratings\ExternalRating;
 use App\Services\Ratings\Ratings;
+use App\Services\TvShows\WatchedProgress;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,7 +20,7 @@ use Inertia\Support\Header;
 
 class TvShowController extends Controller
 {
-    public function show(Request $request, string $slug, string $id, Catalog $catalog, Ratings $ratings): Response|RedirectResponse
+    public function show(Request $request, string $slug, string $id, Catalog $catalog, Ratings $ratings, WatchedProgress $progress): Response|RedirectResponse
     {
         abort_unless(config('catalog.tv_shows.enabled'), 404);
         $title = $catalog->findTitle($id);
@@ -49,6 +50,7 @@ class TvShowController extends Controller
 
         return Inertia::render('tv-shows/Show', [
             'whereToWatch' => fn (): array => WhereToWatch::for($tvShow, VisitorCountry::resolve($request), $result->status === CatalogStatus::Stale),
+            'progress' => $progress->for($tvShow, $request->user()),
             'canonicalUrl' => $tvShow->canonicalUrl(),
             'imageBaseUrl' => config('catalog.image_base_url'),
             'catalogStatus' => $result->status->value,

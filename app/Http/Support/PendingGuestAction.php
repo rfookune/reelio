@@ -26,10 +26,15 @@ class PendingGuestAction
         ]);
     }
 
+    public static function storeEpisode(Request $request, int $episodeId, bool $watched): void
+    {
+        $request->session()->put(self::SESSION_KEY, ['episode_id' => $episodeId, 'watched' => $watched, 'stored_at' => now()->timestamp]);
+    }
+
     /**
      * Takes the pending action out of the session, so it is applied at most once, if it has not expired.
      *
-     * @return array{tmdb_id: int, action: UserMovieAction, source: string}|null
+     * @return array{tmdb_id: int, action: UserMovieAction, source: string}|array{episode_id: int, watched: bool}|null
      */
     public static function pull(Request $request): ?array
     {
@@ -37,6 +42,10 @@ class PendingGuestAction
 
         if (! is_array($pending) || now()->getTimestamp() - $pending['stored_at'] > self::PENDING_FOR) {
             return null;
+        }
+
+        if (isset($pending['episode_id'])) {
+            return ['episode_id' => $pending['episode_id'], 'watched' => $pending['watched']];
         }
 
         return [

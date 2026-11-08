@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import SeasonAccordion from '@/components/tv-show/SeasonAccordion.vue';
+import { useEpisodeProgress } from '@/composables/useEpisodeProgress';
+import type { WatchedProgress } from '@/composables/useEpisodeProgress';
 import type { ExternalRating } from '@/components/ExternalRatings.vue';
 import WhereToWatch from '@/components/movie/WhereToWatch.vue';
 import type { WhereToWatchBlock } from '@/components/movie/WhereToWatch.vue';
@@ -15,6 +18,7 @@ import TvShowDetailsCard from '@/components/tv-show/TvShowDetailsCard.vue';
 import { describeMovie, shareImage } from '@/lib/seo';
 import { tvShowJsonLd, tvShowTitle, tvShowYearRange } from '@/lib/tvShows';
 const props = defineProps<{
+    progress: WatchedProgress;
     canonicalUrl: string;
     whereToWatch: WhereToWatchBlock;
     imageBaseUrl: string;
@@ -45,6 +49,10 @@ const props = defineProps<{
     };
 }>();
 const page = usePage();
+const { progress, busy, toggle } = useEpisodeProgress(
+    () => props.progress,
+    () => props.tvShow,
+);
 const yearRange = computed(() =>
     tvShowYearRange(
         props.tvShow.firstAirDate,
@@ -109,7 +117,27 @@ const jsonLd = computed(() =>
             :poster-path="tvShow.posterPath"
             :backdrop-path="tvShow.backdropPath"
             :ratings="tvShow.ratings"
-        />
+        >
+            <template #actions>
+                <div
+                    data-slot="tv-show-progress"
+                    class="flex flex-col gap-2"
+                    aria-live="polite"
+                >
+                    <p class="font-semibold">{{ progress.state }}</p>
+                    <p class="text-sm text-muted">
+                        {{ progress.watched }} of {{ progress.total }} Episodes
+                        watched
+                    </p>
+                    <progress
+                        :value="progress.watched"
+                        :max="Math.max(1, progress.total)"
+                        aria-label="Episodes watched"
+                        class="h-2 w-full max-w-sm accent-primary"
+                    />
+                </div>
+            </template>
+        </MovieHero>
         <div
             data-slot="tv-show-body"
             class="relative -mt-28 grid gap-x-12 gap-y-10 md:-mt-40 lg:grid-cols-[minmax(0,1fr)_20rem]"
@@ -188,6 +216,12 @@ const jsonLd = computed(() =>
                     The trailer is temporarily unavailable.
                 </p>
             </section>
+            <SeasonAccordion
+                :progress="progress"
+                :busy="busy"
+                class="order-5 lg:col-start-1"
+                @toggle="toggle"
+            />
             <MovieCast
                 :image-base-url="imageBaseUrl"
                 :cast="tvShow.cast"

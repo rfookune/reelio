@@ -2,8 +2,11 @@
 
 namespace App\Listeners;
 
+use App\Actions\ChangeEpisodeWatched;
 use App\Http\Support\PendingGuestAction;
 use App\Http\Support\UserMovieActionByCatalogId;
+use App\Models\Episode;
+use App\Models\TvShow;
 use App\Models\User;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Request;
@@ -21,7 +24,7 @@ class ApplyPendingGuestAction
 {
     private const FAILURE_MESSAGE = "Couldn't save that. Try again.";
 
-    public function __construct(private Request $request, private UserMovieActionByCatalogId $actions) {}
+    public function __construct(private Request $request, private UserMovieActionByCatalogId $actions, private ChangeEpisodeWatched $episodes) {}
 
     public function handle(Login $event): void
     {
@@ -36,6 +39,14 @@ class ApplyPendingGuestAction
         }
 
         try {
+            if (isset($pending['episode_id'])) {
+                $episode = Episode::query()->findOrFail($pending['episode_id']);
+                $tvShow = TvShow::query()->findOrFail($episode->title_id);
+                $result = $this->episodes->handle($this->request, $event->user, $tvShow, $episode, $pending['watched']);
+                Inertia::flash('episodeAction', ['tmdbId' => $tvShow->tmdb_id, 'undoToken' => $result['undoToken']]);
+
+                return;
+            }
             $facts = $this->actions->apply($this->request, $event->user, (string) $pending['tmdb_id'], $pending['action'], $pending['source']);
         } catch (Throwable $exception) {
             if (! $exception instanceof HttpExceptionInterface) {

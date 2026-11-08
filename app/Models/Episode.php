@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Database\Factories\EpisodeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/** @property CarbonImmutable|null $air_date */
 #[Fillable(['title_id', 'season_id', 'tmdb_id', 'season_number', 'episode_number', 'name', 'overview', 'air_date', 'runtime', 'episode_type', 'removed_at'])]
 class Episode extends Model
 {

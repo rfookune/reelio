@@ -5,6 +5,7 @@ use App\Http\Controllers\AvailabilityLinkController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\CspReportController;
 use App\Http\Controllers\DiscoverController;
+use App\Http\Controllers\EpisodeWatchedController;
 use App\Http\Controllers\MovieCastController;
 use App\Http\Controllers\MovieController;
 use App\Http\Controllers\MovieEntryController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\TvShowAvailabilityLinkController;
 use App\Http\Controllers\TvShowController;
 use App\Http\Controllers\TvShowEntryController;
+use App\Http\Controllers\TvShowUndoController;
 use App\Http\Controllers\UndoController;
 use App\Http\Controllers\UserMovieListController;
 use App\Http\Controllers\WatchedController;
@@ -39,6 +41,12 @@ Route::get('search/ratings', SearchRatingsController::class)->middleware('thrott
 Route::get('watchlist', UserMovieListController::class)->middleware(['auth', EncryptHistory::class])->name('watchlist');
 Route::get('watched', UserMovieListController::class)->middleware(['auth', EncryptHistory::class])->name('watched');
 Route::get('watchlist/pick', MoviePickerController::class)->middleware(['auth', EncryptHistory::class, 'throttle:movie-picker'])->name('watchlist.pick');
+
+Route::scopeBindings()->middleware('throttle:user-movie-actions')->group(function () {
+    Route::put('tv-shows/{tvShow}/seasons/{season}/episodes/{episode}/watched', [EpisodeWatchedController::class, 'update'])->name('tv-shows.episodes.watched.update');
+    Route::delete('tv-shows/{tvShow}/seasons/{season}/episodes/{episode}/watched', [EpisodeWatchedController::class, 'destroy'])->name('tv-shows.episodes.watched.destroy');
+    Route::post('tv-shows/tmdb/{tmdbId}/undo', TvShowUndoController::class)->middleware('auth')->whereNumber('tmdbId')->name('tv-shows.undo');
+});
 
 Route::get('tv-shows/tmdb/{tmdbId}/watch', TvShowAvailabilityLinkController::class)->whereNumber('tmdbId')->name('tv-shows.watch');
 Route::get('tv-shows/tmdb/{tmdbId}', TvShowEntryController::class)->whereNumber('tmdbId')->name('tv-shows.entry');
