@@ -18,14 +18,15 @@ use App\Http\Controllers\WatchlistController;
 use App\Http\Middleware\StorePendingGuestAction;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Facades\Route;
+use Inertia\Middleware\EncryptHistory;
 
 Route::get('/', DiscoverController::class)->name('home');
 
 Route::get('search', SearchController::class)->middleware('throttle:search')->name('search');
 Route::get('search/ratings', SearchRatingsController::class)->middleware('throttle:search-ratings')->name('search.ratings');
-Route::get('watchlist', UserMovieListController::class)->middleware('auth')->name('watchlist');
-Route::get('watched', UserMovieListController::class)->middleware('auth')->name('watched');
-Route::get('watchlist/pick', MoviePickerController::class)->middleware(['auth', 'throttle:movie-picker'])->name('watchlist.pick');
+Route::get('watchlist', UserMovieListController::class)->middleware(['auth', EncryptHistory::class])->name('watchlist');
+Route::get('watched', UserMovieListController::class)->middleware(['auth', EncryptHistory::class])->name('watched');
+Route::get('watchlist/pick', MoviePickerController::class)->middleware(['auth', EncryptHistory::class, 'throttle:movie-picker'])->name('watchlist.pick');
 
 Route::get('movies/tmdb/{tmdbId}', MovieEntryController::class)->whereNumber('tmdbId')->name('movies.entry');
 

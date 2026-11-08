@@ -2,6 +2,9 @@
 
 use App\Jobs\RecordAnalyticsEvent;
 use App\Models\User;
+use App\Models\UserMovie;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 test('profile page is displayed', function () {
     $user = User::factory()->create();
@@ -122,4 +125,47 @@ test('preferred country must be a supported country', function () {
         ->assertSessionHasErrors(['preferred_country' => 'The selected preferred country is invalid.']);
 
     expect($user->refresh()->preferred_country)->toBe('CA');
+});
+
+test('deleting an account removes its Watchlist and Watched facts and signs it out everywhere', function () {
+    $user = User::factory()->create();
+    $bystander = User::factory()->create();
+    UserMovie::factory()->for($user)->create();
+    UserMovie::factory()->for($user)->watched()->create();
+    $bystanderFact = UserMovie::factory()->for($bystander)->create();
+    foreach ([[$user->id, 'phone'], [$bystander->id, 'laptop']] as [$userId, $id]) {
+        DB::table('sessions')->insert(['id' => $id, 'user_id' => $userId, 'payload' => '', 'last_activity' => now()->timestamp]);
+    }
+
+    $this->actingAs($user)->delete(route('profile.destroy'), ['password' => 'password']);
+
+    expect(UserMovie::pluck('id')->all())->toBe([$bystanderFact->id])
+        ->and(DB::table('sessions')->where('user_id', $user->id)->exists())->toBeFalse()
+        ->and(DB::table('sessions')->where('id', 'laptop')->exists())->toBeTrue();
+});
+
+test('deleting an account logs account_deleted with only the user id', function () {
+    Log::spy();
+    $user = User::factory()->create(['name' => 'Ada Lovelace', 'email' => 'ada@example.com']);
+
+    $this->actingAs($user)->delete(route('profile.destroy'), ['password' => 'password']);
+
+    Log::shouldHaveReceived('info')->once()->with('account_deleted', ['user_id' => $user->id]);
+});
+
+test('a refused account deletion logs nothing', function () {
+    Log::spy();
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->delete(route('profile.destroy'), ['password' => 'wrong-password']);
+
+    Log::shouldNotHaveReceived('info', ['account_deleted', Mockery::any()]);
+});
+
+test('deleting an account clears the browser history on the next page', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->delete(route('profile.destroy'), ['password' => 'password']);
+
+    expect($this->get(route('home'))->viewData('page')['clearHistory'] ?? false)->toBeTrue();
 });

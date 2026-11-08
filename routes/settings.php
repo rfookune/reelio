@@ -4,8 +4,9 @@ use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
+use Inertia\Middleware\EncryptHistory;
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', EncryptHistory::class])->group(function () {
     Route::redirect('settings', '/settings/profile');
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -14,7 +15,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('profile.update');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', EncryptHistory::class])->group(function () {
     Route::delete('settings/profile', [ProfileController::class, 'destroy'])
         ->middleware('throttle:account-deletion')
         ->name('profile.destroy');
