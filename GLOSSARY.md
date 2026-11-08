@@ -31,11 +31,11 @@ The external service Reelio takes movie metadata, artwork, and Availability from
 _Avoid_: Provider, movie provider, data provider
 
 **Rating source**:
-An organization whose score for a Movie Reelio displays, always shown with its name (e.g. TMDB, IMDb).
+An organization whose score for a Movie or a TV Show Reelio displays, always shown with its name (e.g. TMDB, IMDb).
 _Avoid_: Provider, review site
 
 **External rating**:
-A score for a Movie published by a Rating source, displayed with that source's attribution.
+A score for a Movie or a TV Show published by a Rating source, displayed with that source's attribution.
 _Avoid_: Score, critic rating, primary rating
 
 **Discover**:
@@ -63,7 +63,7 @@ A platform where a Movie can be watched, such as Netflix or Apple TV.
 _Avoid_: Provider, streaming provider, platform
 
 **Availability**:
-A Streaming service offering a Movie in a specific country, as a subscription stream, a free offer, a rental, or a purchase.
+A Streaming service offering a Movie or a TV Show in a specific country, as a subscription stream, a free offer, a rental, or a purchase. A TV Show has Availability as a whole, never per Season or Episode.
 _Avoid_: Watch provider, streaming option
 
 ### A user's Movies

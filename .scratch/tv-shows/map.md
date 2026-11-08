@@ -26,16 +26,19 @@ A buildable spec at `.scratch/tv-shows/spec.md` for adding TV Shows to Reelio, w
 - [How much Episode data to store and when to refresh it](issues/04-episode-data-volume-and-refresh.md): minimal Season and Episode fields matched by TMDB id; one all-or-nothing full fetch per TV Show (details plus every Season, concurrently in-request); scheduled by TMDB status (airing 3 days, ended 30 days); Title-level purge and 170-day cap guard clear Seasons and Episodes but keep rows; vanished Episodes are marked removed, not deleted; `catalog.tv_shows.enabled` flag (default off) hides TV Shows but never stops the licence rules.
 - [How TV Shows sit on the Watchlist](issues/05-watchlist-with-tv-shows.md): one Watchlist grid with an All / Movies / TV Shows filter and counts (same filter on Watched); TV Show cards show their state; whole-TV Show "Mark as watched" needs a confirm dialog everywhere; picker stays Movies-only; Removed TV Shows stay as stubs under the new term Removed Title.
 - [The TV Show page and search results](issues/06-tv-show-page-and-search.md): TV Show page is a Season accordion with Season bulk actions and sticky right panels; whole-TV Show "Mark as watched" opens a modal confirm dialog; search and Watchlist/Watched are a poster grid with All / Movies / TV Shows chips and counts, TV Show posters badged and (on lists) with a progress bar; prototype on `prototype/tv-shows-page`.
+- [Availability and External ratings for TV Shows](issues/07-availability-and-ratings-for-tv-shows.md): Availability at TV Show level only, stored and refreshed with the TV Show; TMDB scores keyed by a kind-prefixed `source_id` in the same `ratings` table; IMDb then TMDB shown as for Movies, none on Seasons or Episodes; IMDb for TV Shows rests on the existing dataset permission, flagged to re-confirm.
 
 ## Not yet specified
 
 - URLs and routes for TV Shows, and how existing Movie routes, canonical URLs and the entry route relate.
 - What a Removed TV Show's own page shows for users (the Watchlist stub and the glossary term Removed Title are settled; the shared `removed_at` on Title makes it a Removed Title question; the refresh rule is settled in the Episode data ticket).
 - Events and analytics for TV Show actions, and how the metrics report treats them.
+- What the rest of the TV Show page shows beside the Season accordion: overview, Details panel (creators, network, status, first and last air date, content rating), trailer and cast, and what the first view of a TV Show looks like while it is being fetched.
 - Test strategy: browser journeys and the accessibility sweep for the new pages.
 
 ## Out of scope
 
 - Discover sections for TV Shows, the Movie picker for TV Shows, and sitemap and SEO for TV Shows: follow-ups once the core model is settled.
+- Season-level Availability (TMDB offers it, at one extra provider call per Season; the TV Show-level block covers the need): see [Availability and External ratings for TV Shows](issues/07-availability-and-ratings-for-tv-shows.md).
 - Playback, social features, "up next" and new-episode notifications, an airing calendar, per-Episode or per-Season ratings, importing history from other services.
 - Local ratings, like/dislike and the Discover filters: separate efforts that wait on the model decision.
