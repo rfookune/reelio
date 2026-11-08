@@ -21,4 +21,12 @@ return [
      */
     'indexable_routes' => ['home', 'movies.show', 'about', 'privacy', 'terms', 'accessibility'],
 
+    /*
+     * The sitemap: built daily while the indexing flag is on, one file per `sitemap_page_size` Movies (the protocol
+     * allows 50,000 URLs a file) plus an index, on the disk below so every web server serves the same build.
+     */
+    'sitemap_disk' => env('SEO_SITEMAP_DISK', env('FILESYSTEM_DISK', 'local')),
+
+    'sitemap_page_size' => 50000,
+
 ];

@@ -58,7 +58,7 @@ test('with the flag on, robots.txt allows crawling and only Discover and Movie p
     $movie = Movie::factory()->create();
     fakeCatalogKnowing($movie);
 
-    expect(trim($this->get('/robots.txt')->getContent()))->toBe("User-agent: *\nDisallow:");
+    expect(trim($this->get('/robots.txt')->getContent()))->toStartWith("User-agent: *\nDisallow:\n");
 
     foreach ([route('home'), $movie->canonicalUrl()] as $url) {
         $this->get($url)->assertOk();

@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\BuildDiscover;
+use App\Jobs\BuildSitemap;
 use App\Jobs\CheckOverdueRefreshes;
 use App\Jobs\CheckRatingDatasetFreshness;
 use App\Jobs\CleanUpCatalog;
@@ -22,7 +23,7 @@ Artisan::command('inspire', function () {
 
 /*
  * The one daily slot, 05:00 UTC. Every scheduled task runs in it and only dispatches a queued job, so the app wakes
- * once a day; weekly tasks run in it on Mondays. The freshness and overdue checks are delayed so that they read
+ * once a day; weekly tasks run in it on Mondays. The freshness and overdue checks and the sitemap build are delayed so that they read
  * what's stored after the day's syncs and refreshes have had time to finish, within the 15-minute limit on a job's
  * delay. A switched-off Rating source isn't synced. Each task has its own name, which `onOneServer()` locks on.
  */
@@ -39,6 +40,7 @@ Schedule::dailyAt('05:00')->timezone('UTC')->onOneServer()->group(function (): v
     Schedule::job(new PruneUnverifiedAccounts);
     Schedule::job(new ClearExpiredPasswordResets);
     Schedule::job(new PruneFailedJobs);
+    Schedule::job((new BuildSitemap)->delay(CarbonInterval::minutes(10)));
     Schedule::job((new CheckOverdueRefreshes)->delay(CarbonInterval::minutes(15)));
     Schedule::job(new RefreshGenres)->mondays();
 });
