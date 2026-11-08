@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
+use App\Enums\AnalyticsEvent;
 use App\Enums\Surface;
 use App\Http\Requests\MoviePickerRequest;
 use App\Http\Support\MoviePicker;
@@ -26,7 +27,7 @@ class MoviePickerController extends Controller
     {
         $picker = new MoviePicker($request->user());
         ['movie' => $movie, 'poolSize' => $poolSize] = $picker->pick($request->criteria());
-        $recordEvent->handle($request->user(), 'movie_picker_used', ['pool_size' => $poolSize]);
+        $recordEvent->handle($request->user(), AnalyticsEvent::MoviePickerUsed, ['pool_size' => $poolSize]);
 
         return response()->json([
             'poolSize' => $poolSize,

@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\AnalyticsEvent;
 use App\Enums\Surface;
 use App\Models\Movie;
 use App\Models\User;
@@ -25,7 +26,7 @@ class ClearWatched
         });
 
         if ($facts['before'] !== $facts['after']) {
-            $this->recordEvent->handle($user, 'movie_unmarked_watched', [
+            $this->recordEvent->handle($user, AnalyticsEvent::MovieUnmarkedWatched, [
                 'movie_id' => $movie->id,
                 'source' => $source->value,
                 'was_on_watchlist' => $facts['after']['watchlisted_at'] !== null,

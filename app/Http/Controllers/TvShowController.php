@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
+use App\Enums\AnalyticsEvent;
 use App\Enums\Surface;
 use App\Http\Exceptions\DetailsUnavailable;
 use App\Http\Exceptions\TitleRemoved;
@@ -44,7 +45,7 @@ class TvShowController extends Controller
         }
         if (! $request->hasHeader(Header::PARTIAL_COMPONENT)) {
             $tvShow->update(['last_viewed_at' => now()]);
-            $recordEvent->handle($request->user(), 'tv_show_viewed', ['tv_show_id' => $tvShow->id, 'referrer' => ($referrer ?? Surface::Direct)->value]);
+            $recordEvent->handle($request->user(), AnalyticsEvent::TvShowViewed, ['tv_show_id' => $tvShow->id, 'referrer' => ($referrer ?? Surface::Direct)->value]);
         }
 
         $pageData = $catalog->tvShowPageData($tvShow);

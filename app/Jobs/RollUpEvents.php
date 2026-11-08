@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\AnalyticsEvent;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -36,7 +37,7 @@ class RollUpEvents implements ShouldQueue
             )
             insert into event_daily_counts (day, name, count, pool_size_total)
             select occurred_at::date, name, count(*),
-                case when name = 'movie_picker_used' then coalesce(sum(
+                case when name = ? then coalesce(sum(
                     case when properties->>'pool_size' ~ '^[0-9]{1,15}$' then (properties->>'pool_size')::bigint end
                 ), 0) end
             from moved
@@ -47,6 +48,9 @@ class RollUpEvents implements ShouldQueue
                     when excluded.pool_size_total is null then event_daily_counts.pool_size_total
                     else coalesce(event_daily_counts.pool_size_total, 0) + excluded.pool_size_total
                 end
-            SQL, [$cutoff]);
+            SQL, [
+            $cutoff,
+            AnalyticsEvent::MoviePickerUsed->value,
+        ]);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services\Analytics;
 
+use App\Enums\AnalyticsEvent;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use stdClass;
@@ -32,9 +33,14 @@ class Metrics
                     select 1 from events as recent where recent.user_id = activated.user_id and recent.occurred_at >= ?
                 )) as returning
             from (
-                select distinct user_id from events where name in ('movie_watchlisted', 'tv_show_watchlisted') and occurred_at < ?
+                select distinct user_id from events where name in (?, ?) and occurred_at < ?
             ) as activated
-            SQL, [$weekStart, $weekStart]);
+            SQL, [
+            $weekStart,
+            AnalyticsEvent::MovieWatchlisted->value,
+            AnalyticsEvent::TvShowWatchlisted->value,
+            $weekStart,
+        ]);
 
         return ['activated' => (int) $row->activated, 'returning' => (int) $row->returning, 'rate' => $this->rate((int) $row->returning, (int) $row->activated)];
     }
@@ -53,11 +59,18 @@ class Metrics
             select count(distinct viewed.user_id) as viewers,
                 count(distinct viewed.user_id) filter (where exists (
                     select 1 from events as saved
-                    where saved.user_id = viewed.user_id and saved.name in ('movie_watchlisted', 'tv_show_watchlisted') and saved.occurred_at >= ?
+                    where saved.user_id = viewed.user_id and saved.name in (?, ?) and saved.occurred_at >= ?
                 )) as converted
             from events as viewed
-            where viewed.name in ('movie_viewed', 'tv_show_viewed') and viewed.occurred_at >= ?
-            SQL, [$start, $start]);
+            where viewed.name in (?, ?) and viewed.occurred_at >= ?
+            SQL, [
+            AnalyticsEvent::MovieWatchlisted->value,
+            AnalyticsEvent::TvShowWatchlisted->value,
+            $start,
+            AnalyticsEvent::MovieViewed->value,
+            AnalyticsEvent::TvShowViewed->value,
+            $start,
+        ]);
 
         return ['viewers' => (int) $row->viewers, 'converted' => (int) $row->converted, 'rate' => $this->rate((int) $row->converted, (int) $row->viewers)];
     }
@@ -71,10 +84,13 @@ class Metrics
     {
         $row = DB::selectOne(<<<'SQL'
             select count(distinct user_id) as active,
-                count(distinct user_id) filter (where name = 'movie_picker_used') as pickers
+                count(distinct user_id) filter (where name = ?) as pickers
             from events
             where occurred_at >= ?
-            SQL, [$this->windowStart($now, self::WEEK_DAYS)]);
+            SQL, [
+            AnalyticsEvent::MoviePickerUsed->value,
+            $this->windowStart($now, self::WEEK_DAYS),
+        ]);
 
         return ['active' => (int) $row->active, 'pickers' => (int) $row->pickers, 'rate' => $this->rate((int) $row->pickers, (int) $row->active)];
     }
@@ -95,21 +111,28 @@ class Metrics
                 sum(pool_size_total) as pool_size_total
             from (
                 select occurred_at::date as day,
-                    count(distinct user_id) filter (where name = 'title_searched') as searching_users,
-                    count(*) filter (where name = 'movie_picker_used') as picker_uses,
-                    sum(case when properties->>'pool_size' ~ '^[0-9]{1,15}$' then (properties->>'pool_size')::bigint end) filter (where name = 'movie_picker_used') as pool_size_total
+                    count(distinct user_id) filter (where name = ?) as searching_users,
+                    count(*) filter (where name = ?) as picker_uses,
+                    sum(case when properties->>'pool_size' ~ '^[0-9]{1,15}$' then (properties->>'pool_size')::bigint end) filter (where name = ?) as pool_size_total
                 from events
                 where occurred_at >= ?
                 group by occurred_at::date
                 union all
-                select day, null, coalesce(sum(count) filter (where name = 'movie_picker_used'), 0), sum(pool_size_total)
+                select day, null, coalesce(sum(count) filter (where name = ?), 0), sum(pool_size_total)
                 from event_daily_counts
                 where day >= ?::date
                 group by day
             ) as days
             group by day
             order by day desc
-            SQL, [$start, $start]);
+            SQL, [
+            AnalyticsEvent::TitleSearched->value,
+            AnalyticsEvent::MoviePickerUsed->value,
+            AnalyticsEvent::MoviePickerUsed->value,
+            $start,
+            AnalyticsEvent::MoviePickerUsed->value,
+            $start,
+        ]);
 
         return array_values(array_map(fn (stdClass $row): array => [
             'day' => $row->day,
@@ -133,18 +156,18 @@ class Metrics
         $row = DB::selectOne(<<<'SQL'
             with recent as (
                 select user_id, name,
-                    case when name = 'episode_marked_watched' then 1
-                        when name in ('season_marked_watched', 'tv_show_marked_watched')
+                    case when name = ? then 1
+                        when name in (?, ?)
                             and properties->>'episode_count' ~ '^[0-9]{1,15}$'
                         then (properties->>'episode_count')::bigint else 0 end as episode_marks
                 from events where occurred_at >= ?
             ), counts as (
-                select count(*) filter (where name = 'tv_show_watchlisted') as watchlisted,
-                    count(*) filter (where name = 'tv_show_completed') as completed
+                select count(*) filter (where name = ?) as watchlisted,
+                    count(*) filter (where name = ?) as completed
                 from recent
                 union all
-                select coalesce(sum(count) filter (where name = 'tv_show_watchlisted'), 0),
-                    coalesce(sum(count) filter (where name = 'tv_show_completed'), 0)
+                select coalesce(sum(count) filter (where name = ?), 0),
+                    coalesce(sum(count) filter (where name = ?), 0)
                 from event_daily_counts where day >= ?::date
             )
             select (select sum(watchlisted) from counts) as watchlisted,
@@ -152,7 +175,17 @@ class Metrics
                 count(distinct user_id) filter (where episode_marks > 0) as marking_users,
                 coalesce(sum(episode_marks), 0) as episode_marks
             from recent
-            SQL, [$start, $start]);
+            SQL, [
+            AnalyticsEvent::EpisodeMarkedWatched->value,
+            AnalyticsEvent::SeasonMarkedWatched->value,
+            AnalyticsEvent::TvShowMarkedWatched->value,
+            $start,
+            AnalyticsEvent::TvShowWatchlisted->value,
+            AnalyticsEvent::TvShowCompleted->value,
+            AnalyticsEvent::TvShowWatchlisted->value,
+            AnalyticsEvent::TvShowCompleted->value,
+            $start,
+        ]);
 
         return [
             'watchlisted' => (int) $row->watchlisted,

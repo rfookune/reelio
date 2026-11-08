@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
+use App\Enums\AnalyticsEvent;
 use App\Enums\TitleKind;
 use App\Http\Exceptions\DetailsUnavailable;
 use App\Http\Support\RateLimitKey;
@@ -31,7 +32,7 @@ class TvShowAvailabilityLinkController extends Controller
         abort_if($result->value === null, 404);
         $tvShow = $result->value;
 
-        $recordEvent->handle($request->user(), 'availability_link_clicked', ['title_id' => $tvShow->id, 'kind' => TitleKind::TvShow->value, 'country' => $country]);
+        $recordEvent->handle($request->user(), AnalyticsEvent::AvailabilityLinkClicked, ['title_id' => $tvShow->id, 'kind' => TitleKind::TvShow->value, 'country' => $country]);
 
         return redirect()->away(sprintf('https://www.themoviedb.org/tv/%d/watch?locale=%s', $tvShow->tmdb_id, $country))
             ->header('X-Robots-Tag', 'noindex, nofollow');

@@ -3,10 +3,10 @@
 namespace App\Enums;
 
 /**
- * The Watchlist and Watched actions a user can take on a Movie, and so undo; the value names the action in the
- * Undo request and its analytics event.
+ * The Watchlist and Watched actions a user can take on a Movie, TV Show, Season or Episode.
+ * The value names the action in Undo requests, session snapshots and analytics properties.
  */
-enum UserMovieAction: string
+enum UserTitleAction: string
 {
     case AddToWatchlist = 'add_to_watchlist';
     case RemoveFromWatchlist = 'remove_from_watchlist';

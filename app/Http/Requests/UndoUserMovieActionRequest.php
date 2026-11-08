@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\UserMovieAction;
+use App\Enums\UserTitleAction;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -21,12 +21,12 @@ class UndoUserMovieActionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'action' => ['required', 'string', Rule::enum(UserMovieAction::class)],
+            'action' => ['required', 'string', Rule::enum(UserTitleAction::class)],
         ];
     }
 
-    public function action(): UserMovieAction
+    public function action(): UserTitleAction
     {
-        return UserMovieAction::from($this->validated('action'));
+        return UserTitleAction::from($this->validated('action'));
     }
 }

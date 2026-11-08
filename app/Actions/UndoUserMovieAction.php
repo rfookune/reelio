@@ -2,7 +2,8 @@
 
 namespace App\Actions;
 
-use App\Enums\UserMovieAction;
+use App\Enums\AnalyticsEvent;
+use App\Enums\UserTitleAction;
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
@@ -20,7 +21,7 @@ class UndoUserMovieAction
      *
      * @param  array{before: array{watchlisted_at: ?string, watched_at: ?string}, after: array{watchlisted_at: ?string, watched_at: ?string}}  $facts
      */
-    public function handle(User $user, ?Movie $movie, UserMovieAction $action, array $facts): bool
+    public function handle(User $user, ?Movie $movie, UserTitleAction $action, array $facts): bool
     {
         if ($movie === null) {
             return $facts['after'] === UserMovie::NO_FACTS;
@@ -29,7 +30,7 @@ class UndoUserMovieAction
         $unchangedSinceAction = UserMovie::restore($user, $movie, expected: $facts['after'], restored: $facts['before']);
 
         if ($unchangedSinceAction && $facts['before'] !== $facts['after']) {
-            $this->recordEvent->handle($user, 'user_movie_action_undone', ['movie_id' => $movie->id, 'action' => $action->value]);
+            $this->recordEvent->handle($user, AnalyticsEvent::UserMovieActionUndone, ['movie_id' => $movie->id, 'action' => $action->value]);
         }
 
         return $unchangedSinceAction;

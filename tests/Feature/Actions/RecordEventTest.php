@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\RecordEvent;
+use App\Enums\AnalyticsEvent;
 use App\Jobs\RecordAnalyticsEvent;
 use App\Models\User;
 use Illuminate\Support\Facades\Exceptions;
@@ -11,7 +12,7 @@ test('signed-in events are queued on default only after the response', function 
     Queue::fake([RecordAnalyticsEvent::class]);
     $this->travelTo('2026-11-05 12:00:00');
 
-    app(RecordEvent::class)->handle($user, 'movie_viewed', ['movie_id' => 42, 'referrer' => 'discover']);
+    app(RecordEvent::class)->handle($user, AnalyticsEvent::MovieViewed, ['movie_id' => 42, 'referrer' => 'discover']);
 
     Queue::assertNothingPushed();
 
@@ -33,7 +34,7 @@ test('signed-in events are queued on default only after the response', function 
 test('anonymous visitors are not recorded', function () {
     Queue::fake([RecordAnalyticsEvent::class]);
 
-    app(RecordEvent::class)->handle(null, 'movie_viewed', ['movie_id' => 42]);
+    app(RecordEvent::class)->handle(null, AnalyticsEvent::MovieViewed, ['movie_id' => 42]);
     app()->terminate();
 
     Queue::assertNothingPushed();
@@ -44,7 +45,7 @@ test('an enqueue failure is swallowed and reported', function () {
     Exceptions::fake();
     config(['queue.default' => 'unavailable']);
 
-    app(RecordEvent::class)->handle($user, 'movie_viewed', ['movie_id' => 42]);
+    app(RecordEvent::class)->handle($user, AnalyticsEvent::MovieViewed, ['movie_id' => 42]);
     app()->terminate();
 
     Exceptions::assertReported(fn (InvalidArgumentException $exception) => $exception->getMessage() === 'The [unavailable] queue connection has not been configured.');
@@ -53,7 +54,7 @@ test('an enqueue failure is swallowed and reported', function () {
 test('an event is queued once, however many times the app terminates afterwards', function () {
     Queue::fake([RecordAnalyticsEvent::class]);
 
-    app(RecordEvent::class)->handle(User::factory()->create(), 'movie_viewed', ['movie_id' => 42]);
+    app(RecordEvent::class)->handle(User::factory()->create(), AnalyticsEvent::MovieViewed, ['movie_id' => 42]);
     app()->terminate();
     app()->terminate();
 

@@ -3,6 +3,8 @@
 namespace App\Http\Support;
 
 use App\Actions\RecordEvent;
+use App\Enums\AnalyticsEvent;
+use App\Enums\UserTitleAction;
 use App\Models\TvShow;
 use App\Models\User;
 use App\Models\UserEpisode;
@@ -26,18 +28,18 @@ class LatestTvShowAction
 
     /**
      * @param  Closure(): void  $apply
-     * @param  array{action: string, season_id?: int, episode_id?: int}  $action
+     * @param  array{season_id?: int, episode_id?: int}  $scope
      */
-    public function change(Request $request, User $user, ?TvShow $tvShow, int $tmdbId, Closure $apply, array $action): string
+    public function change(Request $request, User $user, ?TvShow $tvShow, int $tmdbId, Closure $apply, UserTitleAction $action, array $scope = []): string
     {
-        return DB::transaction(function () use ($request, $user, $tvShow, $tmdbId, $apply, $action): string {
+        return DB::transaction(function () use ($request, $user, $tvShow, $tmdbId, $apply, $action, $scope): string {
             User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
             $before = $this->snapshot($user, $tvShow);
             $apply();
             $token = (string) Str::uuid();
             $request->session()->put(self::SESSION_KEY, [
                 'user_id' => $user->id, 'tmdb_id' => $tmdbId, 'token' => $token, 'stored_at' => now()->timestamp,
-                'action' => $action, 'before' => $before, 'after' => $this->snapshot($user, $tvShow),
+                'action' => ['action' => $action->value, ...$scope], 'before' => $before, 'after' => $this->snapshot($user, $tvShow),
             ]);
 
             return $token;
@@ -92,7 +94,7 @@ class LatestTvShowAction
                 $row->watched_at = $latest['before']['watched_at'];
             });
 
-            $this->recordEvent->handle($user, 'tv_show_action_undone', ['tv_show_id' => $tvShow->id, ...$latest['action']]);
+            $this->recordEvent->handle($user, AnalyticsEvent::TvShowActionUndone, ['tv_show_id' => $tvShow->id, ...$latest['action']]);
 
             return true;
         });

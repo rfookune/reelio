@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
+use App\Enums\AnalyticsEvent;
 use App\Enums\Surface;
 use App\Http\Exceptions\TitleRemoved;
 use App\Http\Support\MoviePageDetails;
@@ -51,7 +52,7 @@ class MovieController extends Controller
         if (! $request->hasHeader(Header::PARTIAL_COMPONENT)) {
             $details->result();
             $catalog->recordView($movie);
-            $recordEvent->handle($request->user(), 'movie_viewed', ['movie_id' => $movie->id, 'referrer' => ($referrer ?? Surface::Direct)->value]);
+            $recordEvent->handle($request->user(), AnalyticsEvent::MovieViewed, ['movie_id' => $movie->id, 'referrer' => ($referrer ?? Surface::Direct)->value]);
         }
 
         return Inertia::render('movies/Show', [

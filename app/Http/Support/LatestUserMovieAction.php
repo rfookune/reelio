@@ -2,7 +2,7 @@
 
 namespace App\Http\Support;
 
-use App\Enums\UserMovieAction;
+use App\Enums\UserTitleAction;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -20,7 +20,7 @@ class LatestUserMovieAction
     private const UNDOABLE_FOR = 30 * 60;
 
     /** @param  array{before: array{watchlisted_at: ?string, watched_at: ?string}, after: array{watchlisted_at: ?string, watched_at: ?string}}  $facts */
-    public static function remember(Request $request, User $user, int $tmdbId, UserMovieAction $action, array $facts): void
+    public static function remember(Request $request, User $user, int $tmdbId, UserTitleAction $action, array $facts): void
     {
         $request->session()->put(self::SESSION_KEY, [
             'user_id' => $user->id,
@@ -38,7 +38,7 @@ class LatestUserMovieAction
      *
      * @return array{before: array{watchlisted_at: ?string, watched_at: ?string}, after: array{watchlisted_at: ?string, watched_at: ?string}}|null
      */
-    public static function find(Request $request, int $tmdbId, UserMovieAction $action): ?array
+    public static function find(Request $request, int $tmdbId, UserTitleAction $action): ?array
     {
         $latest = $request->session()->get(self::SESSION_KEY);
 

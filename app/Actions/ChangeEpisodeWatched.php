@@ -2,7 +2,9 @@
 
 namespace App\Actions;
 
+use App\Enums\AnalyticsEvent;
 use App\Enums\ProgressState;
+use App\Enums\UserTitleAction;
 use App\Http\Exceptions\TitleRemoved;
 use App\Http\Support\LatestTvShowAction;
 use App\Models\Episode;
@@ -36,7 +38,7 @@ class ChangeEpisodeWatched
             } else {
                 UserEpisode::query()->where('user_id', $user->id)->where('episode_id', $episode->id)->delete();
             }
-            $this->recordEvent->handle($user, $watched ? 'episode_marked_watched' : 'episode_unmarked_watched', [
+            $this->recordEvent->handle($user, $watched ? AnalyticsEvent::EpisodeMarkedWatched : AnalyticsEvent::EpisodeUnmarkedWatched, [
                 'tv_show_id' => $tvShow->id, 'season_id' => $episode->season_id, 'episode_id' => $episode->id,
                 'source' => 'tv-show', 'was_on_watchlist' => $wasOnWatchlist,
             ]);
@@ -45,9 +47,9 @@ class ChangeEpisodeWatched
                 UserTitle::change($user, $tvShow, function (UserTitle $row): void {
                     $row->watchlisted_at = null;
                 });
-                $this->recordEvent->handle($user, 'tv_show_completed', ['tv_show_id' => $tvShow->id]);
+                $this->recordEvent->handle($user, AnalyticsEvent::TvShowCompleted, ['tv_show_id' => $tvShow->id]);
             }
-        }, ['action' => $watched ? 'mark_as_watched' : 'clear_watched', 'episode_id' => $episode->id]);
+        }, $watched ? UserTitleAction::MarkAsWatched : UserTitleAction::ClearWatched, ['episode_id' => $episode->id]);
 
         return ['progress' => $this->progress->for($tvShow, $user), 'undoToken' => $token, 'watchlisted' => $tvShow->isWatchlistedBy($user)];
     }

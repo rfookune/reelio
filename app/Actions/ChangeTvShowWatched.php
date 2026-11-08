@@ -3,6 +3,7 @@
 namespace App\Actions;
 
 use App\Enums\Surface;
+use App\Enums\UserTitleAction;
 use App\Http\Exceptions\DetailsUnavailable;
 use App\Http\Exceptions\TitleRemoved;
 use App\Http\Support\BulkWatchedChange;
@@ -50,7 +51,7 @@ class ChangeTvShowWatched
         $tvShow = $watched ? $this->tvShows->findOrCreate($request, $tmdbId) : $this->tvShows->find($tmdbId);
         throw_if($watched && $tvShow?->isRemoved(), TitleRemoved::class, $tvShow, $user);
         if ($tvShow === null) {
-            return ['progress' => null, 'undoToken' => $this->latest->change($request, $user, null, $catalogId, fn () => null, ['action' => 'clear_watched']), 'watchlisted' => false];
+            return ['progress' => null, 'undoToken' => $this->latest->change($request, $user, null, $catalogId, fn () => null, UserTitleAction::ClearWatched), 'watchlisted' => false];
         }
         if ($watched) {
             $this->ensureEpisodesStored($tvShow, $user);

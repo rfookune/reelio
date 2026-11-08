@@ -3,7 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\Surface;
-use App\Enums\UserMovieAction;
+use App\Enums\UserTitleAction;
 use App\Http\Requests\UserMovieActionRequest;
 use App\Http\Support\IntendedUrl;
 use App\Http\Support\MovieByCatalogId;
@@ -22,7 +22,7 @@ class StorePendingGuestAction
     public function __construct(private MovieByCatalogId $movies) {}
 
     /** The middleware for a route taking `$action`. */
-    public static function for(UserMovieAction $action): string
+    public static function for(UserTitleAction $action): string
     {
         return self::class.':'.$action->value;
     }
@@ -39,7 +39,7 @@ class StorePendingGuestAction
         }
 
         $validated = $request->validate((new UserMovieActionRequest)->rules());
-        PendingGuestAction::store($request, $this->movies->catalogId($request->route('tmdbId')), UserMovieAction::from($action), Surface::from($validated['source']));
+        PendingGuestAction::store($request, $this->movies->catalogId($request->route('tmdbId')), UserTitleAction::from($action), Surface::from($validated['source']));
         IntendedUrl::setToLastPage($request);
 
         return redirect()->route('login');

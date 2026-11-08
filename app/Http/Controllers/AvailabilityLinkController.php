@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
+use App\Enums\AnalyticsEvent;
 use App\Http\Support\VisitorCountry;
 use App\Models\Movie;
 use App\Services\Catalog\Catalog;
@@ -25,7 +26,7 @@ class AvailabilityLinkController extends Controller
         $country = $request->query('country');
         abort_unless(VisitorCountry::isSupported($country), 404);
 
-        $recordEvent->handle($request->user(), 'availability_link_clicked', ['title_id' => $movie->id, 'kind' => $movie->kind->value, 'country' => $country]);
+        $recordEvent->handle($request->user(), AnalyticsEvent::AvailabilityLinkClicked, ['title_id' => $movie->id, 'kind' => $movie->kind->value, 'country' => $country]);
 
         return redirect()->away(sprintf(self::TMDB_WATCH_PAGE, $movie->tmdb_id, $country))->header('X-Robots-Tag', 'noindex');
     }

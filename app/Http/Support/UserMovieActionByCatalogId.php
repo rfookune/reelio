@@ -7,7 +7,7 @@ use App\Actions\ClearWatched;
 use App\Actions\MarkAsWatched;
 use App\Actions\RemoveFromWatchlist;
 use App\Enums\Surface;
-use App\Enums\UserMovieAction;
+use App\Enums\UserTitleAction;
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
@@ -34,13 +34,13 @@ class UserMovieActionByCatalogId
      *
      * @return array{before: array{watchlisted_at: ?string, watched_at: ?string}, after: array{watchlisted_at: ?string, watched_at: ?string}}
      */
-    public function apply(Request $request, User $user, string $tmdbId, UserMovieAction $action, Surface $source): array
+    public function apply(Request $request, User $user, string $tmdbId, UserTitleAction $action, Surface $source): array
     {
         $facts = match ($action) {
-            UserMovieAction::AddToWatchlist => $this->addToWatchlist->handle($user, $this->movies->findOrCreateUnremoved($request, $tmdbId), $source),
-            UserMovieAction::MarkAsWatched => $this->markAsWatched->handle($user, $this->movies->findOrCreateUnremoved($request, $tmdbId), $source),
-            UserMovieAction::RemoveFromWatchlist => $this->clear($tmdbId, fn (Movie $movie): array => $this->removeFromWatchlist->handle($user, $movie, $source)),
-            UserMovieAction::ClearWatched => $this->clear($tmdbId, fn (Movie $movie): array => $this->clearWatched->handle($user, $movie, $source)),
+            UserTitleAction::AddToWatchlist => $this->addToWatchlist->handle($user, $this->movies->findOrCreateUnremoved($request, $tmdbId), $source),
+            UserTitleAction::MarkAsWatched => $this->markAsWatched->handle($user, $this->movies->findOrCreateUnremoved($request, $tmdbId), $source),
+            UserTitleAction::RemoveFromWatchlist => $this->clear($tmdbId, fn (Movie $movie): array => $this->removeFromWatchlist->handle($user, $movie, $source)),
+            UserTitleAction::ClearWatched => $this->clear($tmdbId, fn (Movie $movie): array => $this->clearWatched->handle($user, $movie, $source)),
         };
 
         LatestUserMovieAction::remember($request, $user, $this->movies->catalogId($tmdbId), $action, $facts);

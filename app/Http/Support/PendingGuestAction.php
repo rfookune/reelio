@@ -3,7 +3,7 @@
 namespace App\Http\Support;
 
 use App\Enums\Surface;
-use App\Enums\UserMovieAction;
+use App\Enums\UserTitleAction;
 use Illuminate\Http\Request;
 
 /**
@@ -17,7 +17,7 @@ class PendingGuestAction
     /** How long, in seconds, a pending action waits for sign-in: the spec's retention for it. */
     private const PENDING_FOR = 30 * 60;
 
-    public static function store(Request $request, int $tmdbId, UserMovieAction $action, Surface $source): void
+    public static function store(Request $request, int $tmdbId, UserTitleAction $action, Surface $source): void
     {
         $request->session()->put(self::SESSION_KEY, [
             'tmdb_id' => $tmdbId,
@@ -50,7 +50,7 @@ class PendingGuestAction
     /**
      * Takes the pending action out of the session, so it is applied at most once, if it has not expired.
      *
-     * @return array{tmdb_id: int, action: UserMovieAction, source: Surface}|array{episode_id: int, watched: bool}|array{season_id: int, watched: bool}|array{bulk_tv_show_tmdb_id: int, watched: bool, source: Surface}|array{tv_show_tmdb_id: int, watchlisted: bool, source: Surface}|null
+     * @return array{tmdb_id: int, action: UserTitleAction, source: Surface}|array{episode_id: int, watched: bool}|array{season_id: int, watched: bool}|array{bulk_tv_show_tmdb_id: int, watched: bool, source: Surface}|array{tv_show_tmdb_id: int, watchlisted: bool, source: Surface}|null
      */
     public static function pull(Request $request): ?array
     {
@@ -78,7 +78,7 @@ class PendingGuestAction
 
         return [
             'tmdb_id' => $pending['tmdb_id'],
-            'action' => UserMovieAction::from($pending['action']),
+            'action' => UserTitleAction::from($pending['action']),
             'source' => Surface::from($pending['source']),
         ];
     }

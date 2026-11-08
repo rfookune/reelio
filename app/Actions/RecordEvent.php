@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\AnalyticsEvent;
 use App\Jobs\RecordAnalyticsEvent;
 use App\Models\User;
 use Illuminate\Support\Facades\Bus;
@@ -16,7 +17,7 @@ class RecordEvent
      *
      * @param  array<string, bool|int|string|null>  $properties
      */
-    public function handle(?User $user, string $name, array $properties = []): void
+    public function handle(?User $user, AnalyticsEvent $name, array $properties = []): void
     {
         if ($user === null) {
             return;
@@ -25,7 +26,7 @@ class RecordEvent
         $job = new RecordAnalyticsEvent(
             uuid: (string) Str::uuid(),
             userId: $user->id,
-            name: $name,
+            name: $name->value,
             properties: $properties,
             occurredAt: now()->toDateTimeString(),
         );

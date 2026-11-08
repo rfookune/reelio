@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\AnalyticsEvent;
 use App\Enums\Surface;
 use App\Models\Movie;
 use App\Models\User;
@@ -25,7 +26,7 @@ class AddToWatchlist
         });
 
         if ($facts['before'] !== $facts['after']) {
-            $this->recordEvent->handle($user, 'movie_watchlisted', ['movie_id' => $movie->id, 'source' => $source->value]);
+            $this->recordEvent->handle($user, AnalyticsEvent::MovieWatchlisted, ['movie_id' => $movie->id, 'source' => $source->value]);
         }
 
         return $facts;

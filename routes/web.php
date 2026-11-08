@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\UserMovieAction;
+use App\Enums\UserTitleAction;
 use App\Http\Controllers\AvailabilityLinkController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\CspReportController;
@@ -64,10 +64,10 @@ Route::get('tv-shows/{slug}-{id}', [TvShowController::class, 'show'])->where('sl
 Route::get('movies/tmdb/{tmdbId}', MovieEntryController::class)->whereNumber('tmdbId')->name('movies.entry');
 
 Route::middleware('throttle:user-movie-actions')->group(function () {
-    Route::put('movies/tmdb/{tmdbId}/watchlist', [WatchlistController::class, 'update'])->middleware(StorePendingGuestAction::for(UserMovieAction::AddToWatchlist))->whereNumber('tmdbId')->name('movies.watchlist.update');
-    Route::delete('movies/tmdb/{tmdbId}/watchlist', [WatchlistController::class, 'destroy'])->middleware(StorePendingGuestAction::for(UserMovieAction::RemoveFromWatchlist))->whereNumber('tmdbId')->name('movies.watchlist.destroy');
-    Route::put('movies/tmdb/{tmdbId}/watched', [WatchedController::class, 'update'])->middleware(StorePendingGuestAction::for(UserMovieAction::MarkAsWatched))->whereNumber('tmdbId')->name('movies.watched.update');
-    Route::delete('movies/tmdb/{tmdbId}/watched', [WatchedController::class, 'destroy'])->middleware(StorePendingGuestAction::for(UserMovieAction::ClearWatched))->whereNumber('tmdbId')->name('movies.watched.destroy');
+    Route::put('movies/tmdb/{tmdbId}/watchlist', [WatchlistController::class, 'update'])->middleware(StorePendingGuestAction::for(UserTitleAction::AddToWatchlist))->whereNumber('tmdbId')->name('movies.watchlist.update');
+    Route::delete('movies/tmdb/{tmdbId}/watchlist', [WatchlistController::class, 'destroy'])->middleware(StorePendingGuestAction::for(UserTitleAction::RemoveFromWatchlist))->whereNumber('tmdbId')->name('movies.watchlist.destroy');
+    Route::put('movies/tmdb/{tmdbId}/watched', [WatchedController::class, 'update'])->middleware(StorePendingGuestAction::for(UserTitleAction::MarkAsWatched))->whereNumber('tmdbId')->name('movies.watched.update');
+    Route::delete('movies/tmdb/{tmdbId}/watched', [WatchedController::class, 'destroy'])->middleware(StorePendingGuestAction::for(UserTitleAction::ClearWatched))->whereNumber('tmdbId')->name('movies.watched.destroy');
     Route::post('movies/tmdb/{tmdbId}/undo', UndoController::class)->middleware('auth')->whereNumber('tmdbId')->name('movies.undo');
 });
 Route::get('movies/{id}/watch', AvailabilityLinkController::class)->whereNumber('id')->name('movies.watch');

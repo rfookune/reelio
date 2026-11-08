@@ -3,6 +3,7 @@
 namespace App\Http\Support;
 
 use App\Actions\RecordEvent;
+use App\Enums\AnalyticsEvent;
 use App\Enums\Surface;
 use App\Enums\TitleKind;
 use App\Models\Movie;
@@ -137,7 +138,7 @@ class SearchPage
         $results = $this->search()?->value;
 
         if ($results !== null && $this->page === 1) {
-            $this->recordEvent->handle($this->user, 'title_searched', ['query_length' => mb_strlen($this->query), 'result_count' => count($this->listings())]);
+            $this->recordEvent->handle($this->user, AnalyticsEvent::TitleSearched, ['query_length' => mb_strlen($this->query), 'result_count' => count($this->listings())]);
         }
 
         return ['data' => array_map(fn (MovieListing $listing): array => [...$this->card($listing->kind, $listing->tmdbId, $listing->title, $listing->releaseDate, $listing->posterPath), 'page' => $this->page], $this->listings())];

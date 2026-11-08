@@ -2,7 +2,9 @@
 
 namespace App\Actions;
 
+use App\Enums\AnalyticsEvent;
 use App\Enums\Surface;
+use App\Enums\UserTitleAction;
 use App\Http\Exceptions\TitleRemoved;
 use App\Http\Support\LatestTvShowAction;
 use App\Http\Support\TvShowByCatalogId;
@@ -28,10 +30,10 @@ class ChangeTvShowWatchlist
                     $row->watchlisted_at = $watchlisted ? ($row->watchlisted_at ?? now()) : null;
                 });
                 if ($facts['before'] !== $facts['after']) {
-                    $this->recordEvent->handle($user, $watchlisted ? 'tv_show_watchlisted' : 'tv_show_unwatchlisted', ['tv_show_id' => $tvShow->id, 'source' => $source->value]);
+                    $this->recordEvent->handle($user, $watchlisted ? AnalyticsEvent::TvShowWatchlisted : AnalyticsEvent::TvShowUnwatchlisted, ['tv_show_id' => $tvShow->id, 'source' => $source->value]);
                 }
             }
-        }, ['action' => $watchlisted ? 'add_to_watchlist' : 'remove_from_watchlist']);
+        }, $watchlisted ? UserTitleAction::AddToWatchlist : UserTitleAction::RemoveFromWatchlist);
 
         return ['watchlisted' => $watchlisted, 'progress' => $tvShow === null ? null : $this->progress->for($tvShow, $user), 'undoToken' => $token];
     }

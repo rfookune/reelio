@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\UserMovieAction;
+use App\Enums\UserTitleAction;
 use App\Http\Requests\UserMovieActionRequest;
 use App\Http\Support\UserMovieActionByCatalogId;
 use Illuminate\Http\RedirectResponse;
@@ -16,7 +16,7 @@ class WatchedController extends Controller
     /** A Removed Movie's Watched record can only be cleared, never set. */
     public function update(UserMovieActionRequest $request, string $tmdbId, UserMovieActionByCatalogId $actions): RedirectResponse
     {
-        $actions->apply($request, $request->user(), $tmdbId, UserMovieAction::MarkAsWatched, $request->source());
+        $actions->apply($request, $request->user(), $tmdbId, UserTitleAction::MarkAsWatched, $request->source());
 
         return back();
     }
@@ -24,7 +24,7 @@ class WatchedController extends Controller
     /** A catalog id with no Movie row holds no facts, so there is nothing to clear and no row is created. */
     public function destroy(UserMovieActionRequest $request, string $tmdbId, UserMovieActionByCatalogId $actions): RedirectResponse
     {
-        $actions->apply($request, $request->user(), $tmdbId, UserMovieAction::ClearWatched, $request->source());
+        $actions->apply($request, $request->user(), $tmdbId, UserTitleAction::ClearWatched, $request->source());
 
         return back();
     }

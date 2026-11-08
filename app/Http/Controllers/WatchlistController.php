@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\UserMovieAction;
+use App\Enums\UserTitleAction;
 use App\Http\Requests\UserMovieActionRequest;
 use App\Http\Support\UserMovieActionByCatalogId;
 use Illuminate\Http\RedirectResponse;
@@ -16,7 +16,7 @@ class WatchlistController extends Controller
     /** A Removed Movie can only be taken off the Watchlist, never put on it. */
     public function update(UserMovieActionRequest $request, string $tmdbId, UserMovieActionByCatalogId $actions): RedirectResponse
     {
-        $actions->apply($request, $request->user(), $tmdbId, UserMovieAction::AddToWatchlist, $request->source());
+        $actions->apply($request, $request->user(), $tmdbId, UserTitleAction::AddToWatchlist, $request->source());
 
         return back();
     }
@@ -24,7 +24,7 @@ class WatchlistController extends Controller
     /** A catalog id with no Movie row holds no facts, so there is nothing to remove and no row is created. */
     public function destroy(UserMovieActionRequest $request, string $tmdbId, UserMovieActionByCatalogId $actions): RedirectResponse
     {
-        $actions->apply($request, $request->user(), $tmdbId, UserMovieAction::RemoveFromWatchlist, $request->source());
+        $actions->apply($request, $request->user(), $tmdbId, UserTitleAction::RemoveFromWatchlist, $request->source());
 
         return back();
     }
