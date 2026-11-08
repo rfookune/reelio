@@ -2,48 +2,66 @@
 
 namespace App\Http\Support;
 
+use App\Enums\ListFilter;
 use App\Enums\MovieListSort;
+use App\Enums\ProgressState;
 use App\Enums\SortDirection;
 use App\Enums\Surface;
+use App\Enums\TitleKind;
 use App\Enums\UserMovieList;
 use App\Models\Movie;
+use App\Models\Title;
+use App\Models\TvShow;
 use App\Models\User;
 use App\Models\UserMovie;
 use App\Services\Catalog\Discover\DiscoverBuilder;
 use App\Services\Catalog\Discover\DiscoverMovie;
 use App\Services\Ratings\ExternalRating;
 use App\Services\Ratings\Ratings;
+use App\Services\TvShows\ProgressSummaries;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Pagination\Cursor;
 use Illuminate\Pagination\CursorPaginator;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Inertia\ScrollMetadata;
 
 /**
- * Stored Watchlist or Watched cards and a stable cursor. No Movie is refreshed while listing it.
+ * Stored Watchlist or Watched cards and a stable cursor, Movies and TV Shows in one keyset-paged query. The
+ * Watchlist holds the Titles with a Watchlist fact. Watched holds the Movies with a Watched date and the TV Shows
+ * with at least one Episode watched, dated by the latest, a TV Show having no Watched fact of its own. TV Shows are
+ * left out while they are switched off, and a TV Show without details is left to the Removed Title work. No Title is
+ * refreshed while listing it.
  *
  * @phpstan-import-type Card from SearchPage
+ * @phpstan-import-type SearchCard from SearchPage
+ *
+ * @phpstan-type TvShowFacts array{watchlisted: bool, watched: bool, watchedDate: ?string, state: string, watchedCount: int, total: int}
  */
 class UserMovieListPage
 {
-    /** @var CursorPaginator<int, UserMovie>|null */
-    private ?CursorPaginator $movies = null;
+    /** @var CursorPaginator<int, Title>|null */
+    private ?CursorPaginator $titles = null;
 
     private ?int $count = null;
 
-    public function __construct(private User $user, private UserMovieList $list, private MovieListSort $sort, private DiscoverBuilder $discover, private Ratings $ratings) {}
+    public function __construct(private User $user, private UserMovieList $list, private MovieListSort $sort, private ListFilter $filter, private DiscoverBuilder $discover, private Ratings $ratings, private ProgressSummaries $progress) {}
 
+    /** The whole list's size, whatever the filter, Removed Movies included. */
     private function count(): int
     {
-        return $this->count ??= $this->facts()->count();
+        return $this->count ??= DB::query()->fromSub($this->entries($this->shownKinds(ListFilter::All)), 'entries')->count();
     }
 
     /** @return array<string, mixed> */
     public function movies(): array
     {
         $page = $this->page();
-        $ratings = $page->isEmpty() ? [] : $this->ratings->ratingsFor($page->getCollection()->map(fn (UserMovie $facts): Movie => $facts->movie));
+        $titles = $this->typed($page->getCollection());
+        $ratings = $titles->isEmpty() ? [] : $this->ratings->ratingsFor($titles->values());
 
-        return array_replace($page->toArray(), ['data' => $page->getCollection()->map(fn (UserMovie $facts): array => $this->card($facts->movie, $ratings[$facts->title_id] ?? []))->all()]);
+        return array_replace($page->toArray(), ['data' => $titles->map(fn (Title $title): array => $this->card($title, $ratings[$title->id] ?? []))->values()->all()]);
     }
 
     public function scrollMetadata(): ScrollMetadata
@@ -54,10 +72,18 @@ class UserMovieListPage
     /** @return list<array{tmdbId: int, title: string, year: ?int, posterPath: ?string, ratings: array{}, href: string, date: string}> */
     public function unavailableMovies(): array
     {
-        return array_values($this->facts()->whereHas('movie', fn (Builder $query): Builder => $query->whereNull('title'))
+        if (! in_array(TitleKind::Movie, $this->shownKinds($this->filter), true)) {
+            return [];
+        }
+
+        return array_values($this->movieFacts()->whereHas('movie', fn (Builder $query): Builder => $query->whereNull('title'))
             ->with('movie')->orderBy('id')->get()->map(fn (UserMovie $facts): array => [
-                ...$this->card($facts->movie, []),
+                'tmdbId' => $facts->movie->tmdb_id,
                 'title' => $facts->movie->isRemoved() ? 'Removed movie' : 'Details temporarily unavailable',
+                'year' => null,
+                'posterPath' => $facts->movie->poster_path,
+                'ratings' => [],
+                'href' => $facts->movie->canonicalUrl($this->list->surface()),
                 'date' => $facts->getAttribute($this->list->dateColumn())->toJSON(),
             ])->all());
     }
@@ -65,13 +91,13 @@ class UserMovieListPage
     /** A fresh page starting at the restored Movie, so Undo can reveal it even after a sort reset. */
     public function restoredMovieUrl(int $tmdbId): string
     {
-        $facts = $this->orderedFacts()->where('titles.tmdb_id', $tmdbId)->first();
-        $parameters = $this->sort === $this->list->defaultSort() ? [] : ['sort' => $this->sort->value];
+        $entry = $this->orderedTitles([TitleKind::Movie])->where('titles.tmdb_id', $tmdbId)->first();
+        $parameters = $this->parameters();
 
-        if ($facts !== null) {
+        if ($entry !== null) {
             $parameters['cursor'] = (new Cursor([
-                'sort_key' => $facts->getAttribute('sort_key'),
-                'user_titles.id' => $facts->id + ($this->sort->direction() === SortDirection::Desc ? 1 : -1),
+                'sort_key' => $entry->getAttribute('sort_key'),
+                'titles.id' => $entry->id + ($this->sort->direction() === SortDirection::Desc ? 1 : -1),
             ]))->encode();
         }
 
@@ -114,52 +140,165 @@ class UserMovieListPage
             ]])->all();
     }
 
+    /**
+     * The user's facts about every TV Show with details they hold one about, keyed by catalog id, replaced on every
+     * reload like `userMovies`: on the Watchlist, with its derived state and counts, and watched once an Episode is.
+     * The lists' counts and which cards show come from these.
+     *
+     * @return array<int, TvShowFacts>
+     */
+    public function userTvShows(): array
+    {
+        if (! config('catalog.tv_shows.enabled')) {
+            return [];
+        }
+
+        $watchlisted = DB::table('user_titles')->where('user_id', $this->user->id)->whereNotNull('watchlisted_at')->pluck('watchlisted_at', 'title_id');
+        $marked = DB::table('user_episodes')->join('episodes', 'episodes.id', '=', 'user_episodes.episode_id')->where('user_episodes.user_id', $this->user->id)->distinct()->pluck('episodes.title_id');
+        $ids = array_values(array_unique([...array_map(intval(...), $watchlisted->keys()->all()), ...array_map(intval(...), $marked->all())]));
+        $summaries = $this->progress->for($this->user, $ids);
+
+        return TvShow::query()->whereIn('id', $ids)->whereNotNull('title')->get(['id', 'tmdb_id'])
+            ->mapWithKeys(function (TvShow $tvShow) use ($watchlisted, $summaries): array {
+                $summary = $summaries[$tvShow->id] ?? null;
+
+                return [$tvShow->tmdb_id => [
+                    'watchlisted' => $watchlisted->has($tvShow->id),
+                    'watched' => ($summary['marked'] ?? 0) > 0,
+                    'watchedDate' => $summary['latestWatchedAt'] ?? null,
+                    'state' => ($summary['state'] ?? ProgressState::NotStarted)->value,
+                    'watchedCount' => $summary['watched'] ?? 0,
+                    'total' => $summary['total'] ?? 0,
+                ]];
+            })->all();
+    }
+
     /** @return Builder<UserMovie> */
-    private function facts(): Builder
+    private function movieFacts(): Builder
     {
         return UserMovie::query()->whereBelongsTo($this->user)->whereNotNull($this->list->dateColumn());
     }
 
-    /** @return CursorPaginator<int, UserMovie> */
+    /** @return CursorPaginator<int, Title> */
     private function page(): CursorPaginator
     {
-        if ($this->movies !== null) {
-            return $this->movies;
+        if ($this->titles !== null) {
+            return $this->titles;
         }
 
-        return $this->movies = $this->orderedFacts()->with('movie')
-            ->cursorPaginate(48)->appends($this->sort === $this->list->defaultSort() ? [] : ['sort' => $this->sort->value]);
+        return $this->titles = $this->orderedTitles($this->shownKinds($this->filter))
+            ->cursorPaginate(48)->appends($this->parameters());
     }
 
-    /** @return Builder<UserMovie> */
-    private function orderedFacts(): Builder
+    /**
+     * The query string a page of this list keeps: its sort and filter, each left out at its default.
+     *
+     * @return array<string, string>
+     */
+    private function parameters(): array
+    {
+        return [
+            ...($this->sort === $this->list->defaultSort() ? [] : ['sort' => $this->sort->value]),
+            ...($this->filter === ListFilter::All ? [] : ['filter' => $this->filter->value]),
+        ];
+    }
+
+    /**
+     * The kinds a filter shows: its own, or both for `All`; TV Shows only while they are switched on.
+     *
+     * @return list<TitleKind>
+     */
+    private function shownKinds(ListFilter $filter): array
+    {
+        $kinds = $filter->kind() === null ? [TitleKind::Movie, TitleKind::TvShow] : [$filter->kind()];
+
+        return array_values(array_filter($kinds, fn (TitleKind $kind): bool => $kind === TitleKind::Movie || config('catalog.tv_shows.enabled')));
+    }
+
+    /**
+     * One row for each Title of the kinds the user has a fact about on this list, with the date of it: the
+     * Watchlist's Date added or Watched date, or for a TV Show on Watched its latest Episode's Watched date. A TV Show
+     * without details is left out, as from `userTvShows()`, so the sizes agree.
+     *
+     * @param  list<TitleKind>  $kinds
+     */
+    private function entries(array $kinds): QueryBuilder
+    {
+        $column = $this->list->dateColumn();
+        $facts = fn (TitleKind $kind): QueryBuilder => DB::table('user_titles')
+            ->join('titles', 'titles.id', '=', 'user_titles.title_id')
+            ->where('user_titles.user_id', $this->user->id)->where('titles.kind', $kind->value)->whereNotNull('user_titles.'.$column)
+            ->when($kind === TitleKind::TvShow, fn (QueryBuilder $query): QueryBuilder => $query->whereNotNull('titles.title'))
+            ->select('user_titles.title_id')->selectRaw('user_titles.'.$column.' as entry_date');
+        $episodes = fn (): QueryBuilder => DB::table('user_episodes')
+            ->join('episodes', 'episodes.id', '=', 'user_episodes.episode_id')
+            ->join('titles', 'titles.id', '=', 'episodes.title_id')
+            ->where('user_episodes.user_id', $this->user->id)->whereNotNull('titles.title')
+            ->groupBy('episodes.title_id')->select('episodes.title_id')->selectRaw('max(user_episodes.watched_at) as entry_date');
+
+        $parts = array_map(fn (TitleKind $kind): QueryBuilder => $kind === TitleKind::TvShow && $this->list === UserMovieList::Watched ? $episodes() : $facts($kind), $kinds);
+        $entries = array_shift($parts) ?? DB::table('user_titles')->whereRaw('false')->select('title_id')->selectRaw('user_titles.'.$column.' as entry_date');
+
+        foreach ($parts as $part) {
+            $entries->unionAll($part);
+        }
+
+        return $entries;
+    }
+
+    /**
+     * The Titles with details in the entries of the kinds, in the sort's order, a Title's id breaking ties.
+     *
+     * @param  list<TitleKind>  $kinds
+     * @return Builder<Title>
+     */
+    private function orderedTitles(array $kinds): Builder
     {
         $expression = match ($this->sort) {
             MovieListSort::Title => '(titles.title COLLATE movie_title)',
-            MovieListSort::NewestRelease => "COALESCE(movie_details.release_date, '-infinity'::date)",
-            MovieListSort::OldestRelease => "COALESCE(movie_details.release_date, 'infinity'::date)",
-            default => 'user_titles.'.$this->list->dateColumn(),
+            MovieListSort::NewestRelease => "COALESCE(movie_details.release_date, tv_show_details.first_air_date, '-infinity'::date)",
+            MovieListSort::OldestRelease => "COALESCE(movie_details.release_date, tv_show_details.first_air_date, 'infinity'::date)",
+            default => 'entries.entry_date',
         };
 
-        return $this->facts()->join('titles', 'titles.id', '=', 'user_titles.title_id')
+        return Title::query()->joinSub($this->entries($kinds), 'entries', 'entries.title_id', '=', 'titles.id')
             ->leftJoin('movie_details', 'movie_details.title_id', '=', 'titles.id')
-            ->whereNotNull('titles.title')->select('user_titles.*')->selectRaw($expression.' as sort_key')
-            ->orderBy('sort_key', $this->sort->direction()->value)->orderBy('user_titles.id', $this->sort->direction()->value);
+            ->leftJoin('tv_show_details', 'tv_show_details.title_id', '=', 'titles.id')
+            ->whereNotNull('titles.title')->select('titles.*')->selectRaw($expression.' as sort_key')
+            ->orderBy('sort_key', $this->sort->direction()->value)->orderBy('titles.id', $this->sort->direction()->value);
+    }
+
+    /**
+     * The page's Titles as their own kind, in the page's order.
+     *
+     * @param  Collection<int, Title>  $titles
+     * @return Collection<int, Movie|TvShow>
+     */
+    private function typed(Collection $titles): Collection
+    {
+        $movies = Movie::query()->whereIn('id', $titles->where('kind', TitleKind::Movie)->pluck('id'))->get()->keyBy('id');
+        $tvShows = TvShow::query()->with('details')->whereIn('id', $titles->where('kind', TitleKind::TvShow)->pluck('id'))->get()->keyBy('id');
+
+        return $titles->map(fn (Title $title): Movie|TvShow => $title->kind === TitleKind::TvShow ? $tvShows->get($title->id) : $movies->get($title->id));
     }
 
     /**
      * @param  list<ExternalRating>  $ratings
-     * @return Card
+     * @return SearchCard
      */
-    private function card(Movie $movie, array $ratings): array
+    private function card(Movie|TvShow $title, array $ratings): array
     {
+        $isTvShow = $title instanceof TvShow;
+
         return [
-            'tmdbId' => $movie->tmdb_id,
-            'title' => $movie->title,
-            'year' => $movie->release_date?->year,
-            'posterPath' => $movie->poster_path,
+            'kind' => $title->kind->value,
+            'key' => $isTvShow ? "tv:{$title->tmdb_id}" : (string) $title->tmdb_id,
+            'tmdbId' => $title->tmdb_id,
+            'title' => $title->title,
+            'year' => ($isTvShow ? $title->details->first_air_date : $title->release_date)?->year,
+            'posterPath' => $title->poster_path,
             'ratings' => array_map(fn (ExternalRating $rating): array => $rating->toArray(), $ratings),
-            'href' => $movie->canonicalUrl($this->list->surface()),
+            'href' => $isTvShow ? $title->canonicalUrl() : $title->canonicalUrl($this->list->surface()),
         ];
     }
 }

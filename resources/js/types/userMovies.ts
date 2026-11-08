@@ -6,13 +6,20 @@ interface UnavailableMovie extends PosterCardMovie {
     date: string;
 }
 
+/** Which kinds a Watchlist or Watched page shows; `filter` in the URL, left out for `all`. */
+export type ListFilter = 'all' | 'movies' | 'tv-shows';
+
 export type UserMovieListPageProps = {
     imageBaseUrl: string;
     sort: string;
+    filter: ListFilter;
+    /** Whether TV Shows are on the lists, so the page offers the kind filter. */
+    includesTvShows: boolean;
     movies: { data: PosterCardMovie[] };
     unavailableMovies: UnavailableMovie[];
     trending: PosterCardMovie[];
     userMovies: UserMovies;
+    userTvShows: UserTvShows;
 };
 
 /** The viewer's facts about one Movie. */
@@ -25,6 +32,23 @@ export type UserMovieFacts = {
 
 /** The `userMovies` page prop: facts for each Movie on the page, keyed by catalog id. */
 export type UserMovies = Record<string, UserMovieFacts>;
+
+/**
+ * The viewer's facts about one TV Show: on the Watchlist, with the latest Episode Watched date and whether any
+ * Episode is watched, and where its Watched progress stands.
+ */
+export type UserTvShowFacts = {
+    watchlisted: boolean;
+    watched: boolean;
+    watchedDate: string | null;
+    state: 'Not started' | 'In progress' | 'Completed';
+    /** The aired Episodes of the numbered Seasons watched, and how many there are. */
+    watchedCount: number;
+    total: number;
+};
+
+/** The `userTvShows` page prop: facts for each TV Show the viewer holds one about, keyed by catalog id. */
+export type UserTvShows = Record<string, UserTvShowFacts>;
 
 /** A Watchlist or Watched action, as the Undo request names it. */
 export type UserMovieAction =

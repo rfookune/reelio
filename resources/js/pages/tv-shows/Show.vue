@@ -3,15 +3,8 @@ import { usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import { BookmarkCheck, BookmarkPlus } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import SeasonAccordion from '@/components/tv-show/SeasonAccordion.vue';
+import TvShowMarkDialog from '@/components/tv-show/TvShowMarkDialog.vue';
 import { useTvShowActions } from '@/composables/useTvShowActions';
 import type { WatchedProgress } from '@/composables/useTvShowActions';
 import type { ExternalRating } from '@/components/ExternalRatings.vue';
@@ -316,38 +309,11 @@ const jsonLd = computed(() =>
                 class="order-4 lg:col-start-1"
             />
         </div>
-        <Dialog v-model:open="confirmingMark">
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Mark as watched?</DialogTitle>
-                    <DialogDescription>
-                        {{
-                            progress.total === 0
-                                ? 'This marks every aired Episode as watched.'
-                                : `This marks all ${progress.total} aired ${progress.total === 1 ? 'Episode' : 'Episodes'} as watched.`
-                        }}
-                        You can undo it right after.
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        data-slot="tv-show-mark-cancel"
-                        @click="confirmingMark = false"
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        type="button"
-                        data-slot="tv-show-mark-confirm"
-                        :disabled="busy"
-                        @click="confirmMark"
-                    >
-                        Mark as watched
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <TvShowMarkDialog
+            v-model:open="confirmingMark"
+            :total="progress.total"
+            :busy="busy"
+            @confirm="confirmMark"
+        />
     </div>
 </template>

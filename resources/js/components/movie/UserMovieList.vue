@@ -5,12 +5,20 @@ import { computed, nextTick, ref, watch } from 'vue';
 import MoviePicker from '@/components/movie/MoviePicker.vue';
 import PosterCard from '@/components/movie/PosterCard.vue';
 import PosterCardSkeleton from '@/components/movie/PosterCardSkeleton.vue';
+import type { PosterCardMovie } from '@/components/movie/PosterCard.vue';
 import UserMovieCardMenu from '@/components/movie/UserMovieCardMenu.vue';
+import TvShowMarkDialog from '@/components/tv-show/TvShowMarkDialog.vue';
 import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
 import { useShortDate } from '@/composables/useShortDate';
-import { watched, watchlist } from '@/routes';
-import type { UserMovieList, UserMovieListPageProps } from '@/types';
+import { useTvShowListActions } from '@/composables/useTvShowListActions';
+import { search, watched, watchlist } from '@/routes';
+import type {
+    ListFilter,
+    UserMovieList,
+    UserMovieListPageProps,
+    UserTvShowFacts,
+} from '@/types';
 
 const props = defineProps<
     UserMovieListPageProps & { collection: UserMovieList }
@@ -45,39 +53,100 @@ const list = ref<HTMLElement | null>(null);
 const container = ref<HTMLElement | null>(null);
 const emptyHeading = ref<HTMLElement | null>(null);
 const heading = ref<HTMLElement | null>(null);
-const count = computed(
+/** The whole list's size for each kind, from the facts, so it follows every action and includes Removed Movies. */
+const counts = computed(() => {
+    const movie = Object.values(props.userMovies).filter(
+        (facts) => facts[fact.value],
+    ).length;
+    const tv = Object.values(props.userTvShows).filter(
+        (facts) => facts[fact.value],
+    ).length;
+
+    return { all: movie + tv, movie, tv };
+});
+const count = computed(() => counts.value.all);
+const FILTERS: { value: ListFilter; label: string }[] = [
+    { value: 'all', label: 'All' },
+    { value: 'movies', label: 'Movies' },
+    { value: 'tv-shows', label: 'TV Shows' },
+];
+const filterCount = computed(
     () =>
-        Object.values(props.userMovies).filter((facts) => facts[fact.value])
-            .length,
+        ({
+            all: counts.value.all,
+            movies: counts.value.movie,
+            'tv-shows': counts.value.tv,
+        })[props.filter],
 );
+
+/** A TV Show card's facts; every other card is a Movie. */
+function tvFacts(card: PosterCardMovie): UserTvShowFacts | undefined {
+    return card.kind === 'tv' ? props.userTvShows[card.tmdbId] : undefined;
+}
+
+function cardFacts(card: PosterCardMovie) {
+    return card.kind === 'tv' ? tvFacts(card) : props.userMovies[card.tmdbId];
+}
+
+function cardKey(card: PosterCardMovie): string {
+    return card.key ?? String(card.tmdbId);
+}
+
 const cards = computed(() =>
-    props.movies.data.filter(
-        (movie) => props.userMovies[movie.tmdbId]?.[fact.value],
-    ),
+    props.movies.data.filter((card) => cardFacts(card)?.[fact.value]),
 );
+const { busy: tvBusy, markAsWatched, clearWatched } = useTvShowListActions();
+const markingTvShow = ref<PosterCardMovie | null>(null);
+const confirmingMark = computed({
+    get: () => markingTvShow.value !== null,
+    set: (open: boolean) => {
+        if (!open) {
+            markingTvShow.value = null;
+        }
+    },
+});
+
+/** Clears a TV Show's Watched Episodes; if that fails the card stays, so no focus is left waiting for it to go. */
+async function clearTvShow(card: PosterCardMovie): Promise<void> {
+    if (!(await clearWatched(card.tmdbId))) {
+        menuRemoval = null;
+    }
+}
+
+async function confirmMark(): Promise<void> {
+    const card = markingTvShow.value;
+
+    if (card === null) {
+        return;
+    }
+
+    menuRemoval = cardKey(card);
+    const marked = await markAsWatched(card.tmdbId);
+
+    if (!marked) {
+        menuRemoval = null;
+    }
+
+    markingTvShow.value = null;
+}
 const unavailableCards = computed(() =>
     props.unavailableMovies.filter(
         (movie) => props.userMovies[movie.tmdbId]?.[fact.value],
     ),
 );
-/** Watchlist Movies the picker can choose: every one but those in the "No longer available" group. */
+/** Watchlist Movies the picker can choose, whatever the filter: every one but those in the "No longer available" group. */
 const pickerCandidates = computed(() =>
-    isWatchlist.value ? count.value - unavailableCards.value.length : 0,
+    isWatchlist.value ? counts.value.movie - unavailableCards.value.length : 0,
 );
-let menuRemoval: number | null = null;
+let menuRemoval: string | null = null;
 
 /** Keep hidden cards in the merged pages so failure and Undo restore them in their original position. */
 watch(
-    () =>
-        [...unavailableCards.value, ...cards.value].map(
-            (movie) => movie.tmdbId,
-        ),
+    () => [...unavailableCards.value, ...cards.value].map(cardKey),
     async (current, previous) => {
         const control = document.activeElement as HTMLElement | null;
-        const focusedMovie = control?.closest<HTMLElement>('[data-tmdb-id]');
-        const tmdbId =
-            menuRemoval ??
-            (focusedMovie ? Number(focusedMovie.dataset.tmdbId) : null);
+        const focusedMovie = control?.closest<HTMLElement>('[data-card-key]');
+        const tmdbId = menuRemoval ?? focusedMovie?.dataset.cardKey ?? null;
         if (
             tmdbId === null ||
             current.includes(tmdbId) ||
@@ -100,7 +169,7 @@ watch(
             (emptyHeading.value ?? heading.value)?.focus();
         } else {
             const card = container.value?.querySelector<HTMLElement>(
-                `[data-tmdb-id="${next}"]`,
+                `[data-card-key="${next}"]`,
             );
             (
                 card?.querySelector<HTMLElement>(`[data-slot="${slot}"]`) ??
@@ -111,20 +180,26 @@ watch(
     },
 );
 
-function changeSort(sort: string): void {
+/** Shows the list as the sort and filter name it, replacing the history entry and starting its cards afresh. */
+function visitList(sort: string, filter: ListFilter): void {
     router.get(
         pageRoute.value.url(),
-        sort === defaultSort.value ? {} : { sort },
+        {
+            ...(sort === defaultSort.value ? {} : { sort }),
+            ...(filter === 'all' ? {} : { filter }),
+        },
         {
             replace: true,
             preserveState: true,
             reset: ['movies'],
             only: [
                 'sort',
+                'filter',
                 'movies',
                 'unavailableMovies',
                 'trending',
                 'userMovies',
+                'userTvShows',
             ],
             onStart: () => {
                 pending.value = true;
@@ -139,6 +214,16 @@ function changeSort(sort: string): void {
             },
         },
     );
+}
+
+function changeSort(sort: string): void {
+    visitList(sort, props.filter);
+}
+
+function changeFilter(filter: ListFilter): void {
+    if (filter !== props.filter) {
+        visitList(props.sort, filter);
+    }
 }
 
 const showMoreParams = {
@@ -225,6 +310,33 @@ const showMoreParams = {
                 </NativeSelect>
             </div>
         </div>
+        <div
+            v-if="includesTvShows"
+            role="group"
+            aria-label="Filter by kind"
+            class="flex flex-wrap gap-2"
+        >
+            <Button
+                v-for="chip in FILTERS"
+                :key="chip.value"
+                type="button"
+                size="sm"
+                :variant="filter === chip.value ? 'default' : 'outline'"
+                :aria-pressed="filter === chip.value"
+                :data-filter-chip="chip.value"
+                :disabled="pending"
+                @click="changeFilter(chip.value)"
+            >
+                {{ chip.label }}
+                <span class="tabular-nums">{{
+                    {
+                        all: counts.all,
+                        movies: counts.movie,
+                        'tv-shows': counts.tv,
+                    }[chip.value]
+                }}</span>
+            </Button>
+        </div>
         <section v-if="count === 0" class="flex flex-col gap-2">
             <h2
                 :id="`${collection}-empty-heading`"
@@ -253,6 +365,22 @@ const showMoreParams = {
             >
         </section>
         <section
+            v-if="count > 0 && filterCount === 0"
+            data-slot="list-filter-empty"
+            class="flex flex-col gap-2"
+        >
+            <h2 class="text-xl font-semibold">
+                No {{ filter === 'tv-shows' ? 'TV shows' : 'movies' }} on your
+                {{ title }}
+            </h2>
+            <Link
+                :href="search()"
+                class="self-start text-sm underline underline-offset-4"
+                >Search for
+                {{ filter === 'tv-shows' ? 'a TV show' : 'a movie' }}</Link
+            >
+        </section>
+        <section
             v-if="unavailableCards.length > 0"
             aria-labelledby="unavailable-heading"
             class="flex flex-col gap-4"
@@ -278,7 +406,7 @@ const showMoreParams = {
                                 :title="movie.title"
                                 :collection="collection"
                                 unavailable
-                                @removing="menuRemoval = movie.tmdbId"
+                                @removing="menuRemoval = String(movie.tmdbId)"
                             />
                         </template>
                         <template #date>
@@ -312,38 +440,67 @@ const showMoreParams = {
                 </div>
             </template>
             <ul ref="list" :data-slot="`${collection}-grid`" :class="GRID">
-                <li v-for="(movie, index) in cards" :key="movie.tmdbId">
+                <li v-for="(movie, index) in cards" :key="cardKey(movie)">
                     <PosterCard
                         :image-base-url="imageBaseUrl"
                         :movie="movie"
-                        :facts="userMovies[movie.tmdbId]"
+                        :facts="
+                            movie.kind === 'tv'
+                                ? undefined
+                                : userMovies[movie.tmdbId]
+                        "
                         :source="collection"
                         :eager="index < 6"
                     >
-                        <template #controls
-                            ><UserMovieCardMenu
+                        <template #controls>
+                            <div
+                                v-if="tvFacts(movie)"
+                                data-slot="tv-progress"
+                                aria-hidden="true"
+                                class="absolute inset-x-0 bottom-0 h-1 bg-black/50"
+                            >
+                                <div
+                                    class="h-full bg-accent"
+                                    :style="{
+                                        width: `${tvFacts(movie)!.total === 0 ? 0 : Math.round((tvFacts(movie)!.watchedCount / tvFacts(movie)!.total) * 100)}%`,
+                                    }"
+                                />
+                            </div>
+                            <UserMovieCardMenu
                                 :tmdb-id="movie.tmdbId"
                                 :title="movie.title"
                                 :collection="collection"
-                                @removing="menuRemoval = movie.tmdbId"
-                        /></template>
-                        <template #date
-                            ><span
-                                v-if="userMovies[movie.tmdbId]?.watchedDate"
+                                :tv-show="movie.kind === 'tv'"
+                                @removing="menuRemoval = cardKey(movie)"
+                                @mark-tv-show="markingTvShow = movie"
+                                @clear-tv-show="clearTvShow(movie)"
+                            />
+                        </template>
+                        <template #date>
+                            <span
+                                v-if="tvFacts(movie)"
+                                data-slot="tv-state"
+                                class="text-muted tabular-nums"
+                                >{{ tvFacts(movie)!.state }} ·
+                                {{ tvFacts(movie)!.watchedCount }}/{{
+                                    tvFacts(movie)!.total
+                                }}</span
+                            >
+                            <span
+                                v-if="cardFacts(movie)?.watchedDate"
                                 class="text-muted tabular-nums"
                                 >{{
-                                    isWatchlist ||
-                                    userMovies[movie.tmdbId]?.watchlisted
+                                    isWatchlist || cardFacts(movie)?.watchlisted
                                         ? 'Last watched'
                                         : 'Watched'
                                 }}
                                 {{
                                     formatShortDate(
-                                        userMovies[movie.tmdbId].watchedDate!,
+                                        cardFacts(movie)!.watchedDate!,
                                     )
                                 }}</span
-                            ></template
-                        >
+                            >
+                        </template>
                     </PosterCard>
                 </li>
             </ul>
@@ -390,5 +547,11 @@ const showMoreParams = {
                 </li>
             </ul>
         </section>
+        <TvShowMarkDialog
+            v-model:open="confirmingMark"
+            :total="markingTvShow ? (tvFacts(markingTvShow)?.total ?? 0) : 0"
+            :busy="tvBusy"
+            @confirm="confirmMark"
+        />
     </div>
 </template>

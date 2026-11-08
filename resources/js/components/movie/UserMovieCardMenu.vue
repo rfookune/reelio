@@ -19,11 +19,28 @@ const props = defineProps<{
     title: string | null;
     collection: UserMovieList;
     unavailable?: boolean;
+    /** A TV Show's menu leaves its actions to the page, which confirms a mark and sends them as TV Show ones. */
+    tvShow?: boolean;
 }>();
-const emit = defineEmits<{ removing: [] }>();
+const emit = defineEmits<{
+    removing: [];
+    markTvShow: [];
+    clearTvShow: [];
+}>();
 const trigger = ref<HTMLButtonElement | null>(null);
 
 function apply(): void {
+    if (props.tvShow) {
+        if (props.collection === 'watchlist') {
+            emit('markTvShow');
+        } else {
+            emit('removing');
+            emit('clearTvShow');
+        }
+
+        return;
+    }
+
     emit('removing');
     if (props.collection === 'watchlist') {
         if (props.unavailable) {

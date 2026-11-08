@@ -1,6 +1,12 @@
 <?php
 
+use App\Models\Episode;
 use App\Models\Movie;
+use App\Models\Season;
+use App\Models\TvShow;
+use App\Models\User;
+use App\Models\UserEpisode;
+use App\Models\UserTitle;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\FakeCatalogSource;
@@ -195,4 +201,31 @@ function fakeDiscoverSource(array $sections, array $movies = [], array $failingS
     app()->instance(CatalogSource::class, $source);
 
     return $source;
+}
+
+/** A TV Show with the given Name and first-air date, on the user's Watchlist since the given date when one is given. */
+function listedTvShow(User $user, int $tmdbId, string $title, ?string $firstAirDate, ?string $watchlistedAt = null): TvShow
+{
+    $tvShow = TvShow::factory()->create(['tmdb_id' => $tmdbId, 'title' => $title]);
+    $tvShow->details->update(['first_air_date' => $firstAirDate]);
+
+    if ($watchlistedAt !== null) {
+        UserTitle::query()->create(['user_id' => $user->id, 'title_id' => $tvShow->id, 'watchlisted_at' => $watchlistedAt]);
+    }
+
+    return $tvShow;
+}
+
+/** An Episode of the TV Show's Season (a new one when none is given), marked as watched by the user on the given date when one is given. */
+function episodeOf(TvShow $tvShow, ?User $user = null, ?string $watchedAt = null, int $seasonNumber = 1, string $airDate = '2025-01-01', ?Season $season = null): Episode
+{
+    $season ??= Season::query()->where('title_id', $tvShow->id)->where('season_number', $seasonNumber)->first()
+        ?? Season::factory()->create(['title_id' => $tvShow->id, 'season_number' => $seasonNumber]);
+    $episode = Episode::factory()->create(['season_id' => $season->id, 'air_date' => $airDate, 'episode_number' => Episode::query()->where('season_id', $season->id)->count() + 1]);
+
+    if ($user !== null && $watchedAt !== null) {
+        UserEpisode::factory()->create(['user_id' => $user->id, 'episode_id' => $episode->id, 'watched_at' => $watchedAt]);
+    }
+
+    return $episode;
 }

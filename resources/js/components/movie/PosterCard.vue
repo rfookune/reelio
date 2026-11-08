@@ -16,6 +16,8 @@ import type { UserMovieActionSource, UserMovieFacts } from '@/types';
 export type PosterCardMovie = {
     /** A card without a kind is a Movie. */
     kind?: CardKind;
+    /** The catalog id for a Movie, and `tv:` and it for a TV Show, when a Movie and a TV Show may share a page. */
+    key?: string;
     /** How many Seasons a TV Show has, when known. */
     seasonCount?: number | null;
     tmdbId: number;
@@ -54,7 +56,11 @@ const title = computed(
 </script>
 
 <template>
-    <article data-slot="poster-card" :data-tmdb-id="movie.tmdbId">
+    <article
+        data-slot="poster-card"
+        :data-tmdb-id="movie.tmdbId"
+        :data-card-key="movie.key ?? movie.tmdbId"
+    >
         <div class="relative overflow-hidden rounded-lg ring-1 ring-line">
             <Link :href="movie.href" tabindex="-1" aria-hidden="true">
                 <TmdbImage
