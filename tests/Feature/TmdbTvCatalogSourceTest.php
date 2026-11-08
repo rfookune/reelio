@@ -2,6 +2,7 @@
 
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
+use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\SourceMisconfigured;
 use App\Services\Catalog\Sources\SourceUnavailable;
 use App\Services\Catalog\Sources\Tmdb\TmdbCatalogSource;
@@ -39,7 +40,9 @@ test('returns an ended TV Show with neutral metadata and every Episode', functio
         'status' => 'Ended', 'imdbId' => 'tt7366338', 'certification' => 'TV-MA',
         'creators' => ['Craig Mazin'], 'networks' => ['HBO'],
     ]);
-    expect($tvShow->cast)->not->toBeEmpty();
+    expect($tvShow->cast[0])->toBe(['id' => 15440, 'name' => 'Jared Harris', 'character' => 'Valery Legasov', 'profilePath' => '/r9nIq0jPz1oBm4WwtlZhqlsX8p0.jpg', 'episodeCount' => 5]);
+    expect($tvShow->crew)->not->toBeEmpty()->each->toHaveKeys(['id', 'name', 'job']);
+    expect(collect($tvShow->crew)->pluck('job')->unique()->diff(MovieDetails::CREW_JOBS))->toBeEmpty();
     expect($tvShow->seasons)->toHaveCount(1);
     expect($tvShow->seasons[0])->toMatchArray(['tmdbId' => 119454, 'number' => 1, 'episodeCount' => 5]);
     expect($tvShow->seasons[0]->episodes)->toHaveCount(5);
@@ -51,7 +54,7 @@ test('returns an ended TV Show with neutral metadata and every Episode', functio
     Http::assertSentCount(2);
     Http::assertSent(fn (Request $request) => $request->hasHeader('Authorization', 'Bearer tv-token')
         && $request['language'] === 'en-US'
-        && ($request['append_to_response'] ?? null) === 'external_ids,content_ratings,videos,credits,watch/providers');
+        && ($request['append_to_response'] ?? null) === 'external_ids,content_ratings,videos,aggregate_credits,watch/providers');
 });
 
 test('keeps Specials and upcoming Episodes and translates TV Availability', function () {
@@ -199,7 +202,7 @@ test('rejects missing or failed appended resources instead of returning partial 
 
     expect(fn () => app(TmdbCatalogSource::class)->tvShow(87108, new CatalogContext('en-US')))->toThrow(SourceUnavailable::class);
     Http::assertSentCount(1);
-})->with(['external_ids', 'content_ratings', 'videos', 'credits', 'watch/providers'])->with([false, true]);
+})->with(['external_ids', 'content_ratings', 'videos', 'aggregate_credits', 'watch/providers'])->with([false, true]);
 
 test('rejects an incomplete numbered Season inventory', function () {
     Http::preventStrayRequests();
@@ -239,4 +242,32 @@ test('background TV fetch recovers from a transient pooled Season failure', func
 
     expect($tvShow->seasons[0]->episodes)->toHaveCount(5);
     Http::assertSentCount(3);
+});
+
+test('a series-wide cast entry carries every role the actor played and the total Episode count', function () {
+    Http::preventStrayRequests();
+    $details = tvFixture('tv_87108');
+    $details['aggregate_credits'] = ['cast' => [
+        ['id' => 2, 'name' => 'Second Billed', 'profile_path' => null, 'order' => 1, 'total_episode_count' => 1, 'roles' => [['character' => 'Guard', 'episode_count' => 1]]],
+        ['id' => 1, 'name' => 'First Billed', 'profile_path' => null, 'order' => 0, 'total_episode_count' => 42, 'roles' => [
+            ['character' => 'Dr. Smith', 'episode_count' => 40], ['character' => '', 'episode_count' => 1], ['character' => 'Twin', 'episode_count' => 2],
+        ]],
+    ], 'crew' => [
+        ['id' => 9, 'name' => 'Pat Producer', 'profile_path' => null, 'total_episode_count' => 9, 'jobs' => [['job' => 'Executive Producer', 'episode_count' => 5], ['job' => 'Gaffer', 'episode_count' => 4], ['job' => 'Director', 'episode_count' => 1]]],
+    ]];
+    Http::fake([
+        'https://api.themoviedb.org/3/tv/87108?*' => Http::response($details),
+        'https://api.themoviedb.org/3/tv/87108/season/1?*' => Http::response(tvFixture('tv_87108_season_1')),
+    ]);
+
+    $tvShow = app(TmdbCatalogSource::class)->tvShow(87108, new CatalogContext('en-US'));
+
+    expect($tvShow->cast)->toBe([
+        ['id' => 1, 'name' => 'First Billed', 'character' => 'Dr. Smith, Twin', 'profilePath' => null, 'episodeCount' => 42],
+        ['id' => 2, 'name' => 'Second Billed', 'character' => 'Guard', 'profilePath' => null, 'episodeCount' => 1],
+    ]);
+    expect($tvShow->crew)->toBe([
+        ['id' => 9, 'name' => 'Pat Producer', 'job' => 'Director'],
+        ['id' => 9, 'name' => 'Pat Producer', 'job' => 'Executive Producer'],
+    ]);
 });

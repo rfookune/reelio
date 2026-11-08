@@ -111,6 +111,17 @@ function accessibilitySweepUrl(string $scenario): string
 
             return $scenario === 'watchlist-tv' ? '/watchlist' : '/watched';
         })(),
+        'tv-full-cast' => (function (): string {
+            $cast = array_map(fn (int $i): array => ['id' => $i, 'name' => "Actor {$i}", 'character' => "Role {$i}", 'profilePath' => null, 'episodeCount' => $i], range(1, 40));
+            $crew = [['id' => 900, 'name' => 'Craig Mazin', 'job' => 'Writer'], ['id' => 900, 'name' => 'Craig Mazin', 'job' => 'Executive Producer']];
+            app()->instance(CatalogSource::class, new FakeCatalogSource(tvShows: [new TvShowDetails(
+                87108, title: 'Chernobyl', firstAirDate: '2019-05-06', cast: $cast, crew: $crew, seasons: [new SeasonDetails(100, 1)],
+            )]));
+            $tvShow = app(Catalog::class)->findOrCreateTvShow(87108, 'sweep')->value;
+            app(Catalog::class)->tvShowDetails($tvShow);
+
+            return route('tv-shows.cast', ['slug' => $tvShow->slug, 'id' => $tvShow->id], false);
+        })(),
         'removed-tv' => (function () use ($user): string {
             $member = $user();
             $show = TvShow::factory()->removed()->create();
@@ -196,7 +207,7 @@ it('has no level 1 accessibility issues on :scenario at :width px in the :appear
 
     $page = visitWithAppearance($url, $appearance, $width, $width > 700 ? 900 : 844);
 
-    if (str_starts_with($scenario, 'tv-')) {
+    if (preg_match('/^tv-(not-started|in-progress|completed)-(open|closed)$/', $scenario) === 1) {
         $state = match (true) {
             str_contains($scenario, 'not-started') => 'Not started',
             str_contains($scenario, 'in-progress') => 'In progress',
@@ -213,6 +224,10 @@ it('has no level 1 accessibility issues on :scenario at :width px in the :appear
     if (in_array($scenario, ['watchlist-tv', 'watched-tv'], true)) {
         $page->assertPresent('[data-card-key="tv:87108"]')
             ->assertSee('Removed TV show')->assertPresent('[data-slot="tv-state"]');
+    }
+    if ($scenario === 'tv-full-cast') {
+        $page->assertSee('Role 1 · 1 episode')->assertSee('Role 40 · 40 episodes')->assertSee('Craig Mazin')
+            ->assertNotPresent('[data-slot="season-filter"]');
     }
     if ($scenario === 'search-tv-results') {
         $page->assertPresent('[data-slot="search-results"] [data-slot="tv-badge"]');
@@ -233,7 +248,7 @@ it('has no level 1 accessibility issues on :scenario at :width px in the :appear
     $scenarios = [
         'discover', 'search-empty', 'search-results', 'search-no-results', 'movie', 'removed-movie',
         'tv-not-started-open', 'tv-not-started-closed', 'tv-in-progress-open', 'tv-in-progress-closed', 'tv-completed-open', 'tv-completed-closed',
-        'search-tv-results', 'watchlist-tv', 'watched-tv', 'removed-tv',
+        'tv-full-cast', 'search-tv-results', 'watchlist-tv', 'watched-tv', 'removed-tv',
         'watchlist-empty', 'watchlist-full', 'watched', 'picker', 'login', 'register', 'forgot-password',
         'settings-profile', 'settings-security', 'settings-appearance', '404', '429', '500',
     ];

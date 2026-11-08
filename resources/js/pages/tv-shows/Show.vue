@@ -24,6 +24,7 @@ const props = defineProps<{
     progress: WatchedProgress;
     watchlisted: boolean;
     canonicalUrl: string;
+    castUrl: string;
     whereToWatch: WhereToWatchBlock;
     imageBaseUrl: string;
     catalogStatus: 'fresh' | 'stale';
@@ -48,6 +49,7 @@ const props = defineProps<{
         genres: string[];
         certification: string | null;
         cast: CastMember[];
+        castCount: number;
         trailer: Trailer | null;
         detailsUnavailable: boolean;
     };
@@ -312,6 +314,7 @@ const jsonLd = computed(() =>
                 :image-base-url="imageBaseUrl"
                 :cast="tvShow.cast"
                 :unavailable="tvShow.detailsUnavailable"
+                :full-cast="{ href: castUrl, count: tvShow.castCount }"
                 class="order-4 lg:col-start-1"
             />
         </div>

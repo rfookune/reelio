@@ -3,6 +3,7 @@
 namespace App\Services\Catalog\Sources\Tmdb;
 
 use App\Services\Catalog\Enums\OfferType;
+use App\Services\Catalog\Sources\Details\MovieDetails;
 
 class AppendedDataParser
 {
@@ -36,6 +37,60 @@ class AppendedDataParser
             'character' => ($member['character'] ?? '') !== '' ? $member['character'] : null,
             'profilePath' => $member['profile_path'] ?? null,
         ], $members);
+    }
+
+    /**
+     * A TV Show's series-wide cast from TMDB's `aggregate_credits`, in billing order. An entry's `character` joins
+     * every role the actor played, the most-played first, and `episodeCount` is their total Episode count.
+     *
+     * @param  array<string, mixed>  $credits
+     * @return list<array{id: int, name: string, character: ?string, profilePath: ?string, episodeCount: ?int}>
+     */
+    public function aggregateCast(array $credits): array
+    {
+        $members = array_filter((array) ($credits['cast'] ?? []), fn (mixed $member): bool => is_array($member) && is_int($member['id'] ?? null) && is_string($member['name'] ?? null));
+        usort($members, fn (array $a, array $b): int => ($a['order'] ?? PHP_INT_MAX) <=> ($b['order'] ?? PHP_INT_MAX));
+
+        return array_map(function (array $member): array {
+            $roles = array_filter((array) ($member['roles'] ?? []), fn (mixed $role): bool => is_array($role) && is_string($role['character'] ?? null) && $role['character'] !== '');
+            usort($roles, fn (array $a, array $b): int => ($b['episode_count'] ?? 0) <=> ($a['episode_count'] ?? 0));
+
+            return [
+                'id' => $member['id'],
+                'name' => $member['name'],
+                'character' => $roles === [] ? null : implode(', ', array_unique(array_column($roles, 'character'))),
+                'profilePath' => $this->safeImagePath($member['profile_path'] ?? null),
+                'episodeCount' => is_int($member['total_episode_count'] ?? null) ? $member['total_episode_count'] : null,
+            ];
+        }, $members);
+    }
+
+    /**
+     * A TV Show's series-wide crew from `aggregate_credits`: the directors, writers and producers, one entry per
+     * person and job, ordered by MovieDetails::CREW_JOBS and then by TMDB's own order.
+     *
+     * @param  array<string, mixed>  $credits
+     * @return list<array{id: int, name: string, job: string}>
+     */
+    public function aggregateCrew(array $credits): array
+    {
+        $crew = [];
+
+        foreach ((array) ($credits['crew'] ?? []) as $member) {
+            if (! is_array($member) || ! is_int($member['id'] ?? null) || ! is_string($member['name'] ?? null)) {
+                continue;
+            }
+
+            foreach ((array) ($member['jobs'] ?? []) as $job) {
+                if (is_array($job) && in_array($job['job'] ?? null, MovieDetails::CREW_JOBS, true)) {
+                    $crew["{$member['id']}:{$job['job']}"] ??= ['id' => $member['id'], 'name' => $member['name'], 'job' => $job['job']];
+                }
+            }
+        }
+
+        $order = array_flip(MovieDetails::CREW_JOBS);
+
+        return array_values(collect($crew)->sortBy(fn (array $member): int => $order[$member['job']])->all());
     }
 
     /**

@@ -2,6 +2,7 @@ import { renderToString } from '@vue/server-renderer';
 import { createSSRApp, h } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import type { ExternalRating } from '@/components/ExternalRatings.vue';
+import type { CastMember } from '@/components/movie/CastGrid.vue';
 import Show from '@/pages/tv-shows/Show.vue';
 
 vi.mock('@inertiajs/vue3', async (importOriginal) => ({
@@ -12,7 +13,11 @@ vi.mock('@inertiajs/vue3', async (importOriginal) => ({
     Head: { render: () => null },
 }));
 
-async function renderTvShow(ratings: ExternalRating[] = []): Promise<string> {
+async function renderTvShow(
+    ratings: ExternalRating[] = [],
+    cast: CastMember[] = [],
+    castCount = cast.length,
+): Promise<string> {
     return renderToString(
         createSSRApp({
             render: () =>
@@ -26,6 +31,7 @@ async function renderTvShow(ratings: ExternalRating[] = []): Promise<string> {
                         seasons: [],
                     },
                     canonicalUrl: 'https://reelio.test/tv-shows/chernobyl-1',
+                    castUrl: 'https://reelio.test/tv-shows/chernobyl-1/casts',
                     imageBaseUrl: 'https://image.tmdb.org/t/p',
                     catalogStatus: 'fresh',
                     whereToWatch: {
@@ -56,7 +62,8 @@ async function renderTvShow(ratings: ExternalRating[] = []): Promise<string> {
                         networks: [],
                         genres: [],
                         certification: null,
-                        cast: [],
+                        cast,
+                        castCount,
                         trailer: null,
                         detailsUnavailable: false,
                         ratings,
@@ -92,5 +99,32 @@ describe('TV Show ratings and Availability rendered on the server', () => {
         expect(html).toContain('TMDB');
         expect(html).toContain('Information courtesy of IMDb');
         expect(html).toContain('Used with permission.');
+    });
+});
+
+describe('TV Show cast rendered on the server', () => {
+    const member = (id: number, episodeCount: number): CastMember => ({
+        id,
+        name: `Actor ${id}`,
+        character: `Role ${id}`,
+        profilePath: null,
+        episodeCount,
+    });
+
+    it('shows each role with the total Episode count and links the full cast only when more are billed', async () => {
+        const twelve = Array.from({ length: 12 }, (_, i) => member(i + 1, 1));
+        twelve[1] = member(2, 42);
+
+        const exact = await renderTvShow([], twelve, 12);
+        expect(exact).toContain('Role 1 · 1 episode<');
+        expect(exact).toContain('Role 2 · 42 episodes');
+        expect(exact).not.toContain('data-slot="full-cast-link"');
+
+        const more = await renderTvShow([], twelve, 13);
+        expect(more).toContain('data-slot="full-cast-link"');
+        expect(more).toContain('Full cast (13)');
+        expect(more).toContain(
+            'href="https://reelio.test/tv-shows/chernobyl-1/casts"',
+        );
     });
 });

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { User } from '@lucide/vue';
+import { castCaption } from '@/lib/cast';
 import { isSafeTmdbPath, tmdbImageUrl } from '@/lib/tmdb';
 
 export type CastMember = {
@@ -7,6 +8,8 @@ export type CastMember = {
     name: string;
     character: string | null;
     profilePath: string | null;
+    /** A TV Show cast member's total Episode count across the whole run. */
+    episodeCount?: number | null;
 };
 
 defineProps<{
@@ -43,8 +46,8 @@ defineProps<{
             <p class="mt-2 text-sm leading-tight font-medium">
                 {{ member.name }}
             </p>
-            <p v-if="member.character" class="text-xs text-muted">
-                {{ member.character }}
+            <p v-if="castCaption(member)" class="text-xs text-muted">
+                {{ castCaption(member) }}
             </p>
         </li>
     </ul>

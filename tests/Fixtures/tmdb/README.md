@@ -8,7 +8,7 @@ Real TMDB responses, recorded with `language=en-US` and saved pretty-printed. Te
 
 ## TV Shows (recorded 2026-11-08)
 
-Details were fetched with `append_to_response=external_ids,content_ratings,videos,credits,watch/providers` and `include_video_language=en,null`. Season responses are plain `tv/{id}/season/{n}`.
+Details were fetched with `append_to_response=external_ids,content_ratings,videos,aggregate_credits,watch/providers` and `include_video_language=en,null`. Season responses are plain `tv/{id}/season/{n}`.
 
 | Fixture                                       | What it is                      | Why it is here                                                                                       |
 | --------------------------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -22,3 +22,5 @@ The dates inside the Tulsa King fixture are as of the recording date: Season 4 e
 No recorded Episode has a null `air_date`. A test for an undated Episode builds one by nulling the date in a copy of a recorded Season.
 
 Findings from recording: a Season request accepts `append_to_response` (`external_ids,watch/providers` returned 200 with both keys), so Season-level appends work.
+
+Re-record needed: the three TV Show details fixtures were recorded with `credits` and then converted offline to the `aggregate_credits` shape (each cast entry gets `roles` and `total_episode_count`, each crew entry `jobs`), because the adapter now appends `aggregate_credits`. The people and billing order are real, but every `episode_count` is the show's total Episode count, not TMDB's per-actor figure. Re-record these three with `aggregate_credits` to replace the derived counts.

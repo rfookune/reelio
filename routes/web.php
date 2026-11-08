@@ -16,6 +16,7 @@ use App\Http\Controllers\SearchRatingsController;
 use App\Http\Controllers\SeasonWatchedController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\TvShowAvailabilityLinkController;
+use App\Http\Controllers\TvShowCastController;
 use App\Http\Controllers\TvShowController;
 use App\Http\Controllers\TvShowEntryController;
 use App\Http\Controllers\TvShowUndoController;
@@ -60,6 +61,7 @@ Route::scopeBindings()->middleware('throttle:user-movie-actions')->group(functio
 Route::get('tv-shows/tmdb/{tmdbId}/watch', TvShowAvailabilityLinkController::class)->whereNumber('tmdbId')->name('tv-shows.watch');
 Route::get('tv-shows/tmdb/{tmdbId}', TvShowEntryController::class)->whereNumber('tmdbId')->name('tv-shows.entry');
 Route::get('tv-shows/{slug}-{id}', [TvShowController::class, 'show'])->where('slug', '[^/]+')->whereNumber('id')->name('tv-shows.show');
+Route::get('tv-shows/{slug}-{id}/casts', TvShowCastController::class)->where('slug', '[^/]+')->whereNumber('id')->name('tv-shows.cast');
 
 Route::get('movies/tmdb/{tmdbId}', MovieEntryController::class)->whereNumber('tmdbId')->name('movies.entry');
 

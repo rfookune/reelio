@@ -10,20 +10,22 @@ readonly class TvShowPageData
     /**
      * @param  list<string>  $creators
      * @param  list<string>  $networks
-     * @param  list<array{id: int, name: string, character: ?string, profilePath: ?string}>  $cast
+     * @param  list<array{id: int, name: string, character: ?string, profilePath: ?string, episodeCount?: ?int}>  $cast
+     * @param  list<array{id: int, name: string, job: string}>  $crew
      * @param  array{key: string, name: string, type: string}|null  $trailer
      */
     public function __construct(
         public array $creators = [],
         public array $networks = [],
         public array $cast = [],
+        public array $crew = [],
         public ?string $certification = null,
         public ?array $trailer = null,
     ) {}
 
     public static function fromDetails(TvShowDetails $details): self
     {
-        return new self($details->creators, $details->networks, $details->cast, $details->certification, $details->trailer);
+        return new self($details->creators, $details->networks, $details->cast, $details->crew, $details->certification, $details->trailer);
     }
 
     /** @return array<string, mixed> */

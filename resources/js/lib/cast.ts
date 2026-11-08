@@ -17,6 +17,20 @@ export function castTier(index: number): CastTier {
         : 'Also appearing';
 }
 
+/**
+ * The line under a cast member's name: their role, and for a TV Show cast member their total Episode count, as
+ * "Dr. Smith · 42 episodes". Null when there is neither.
+ */
+export function castCaption(member: CastMember): string | null {
+    const count = member.episodeCount;
+    const episodes =
+        count == null
+            ? null
+            : `${count} ${count === 1 ? 'episode' : 'episodes'}`;
+
+    return [member.character, episodes].filter(Boolean).join(' · ') || null;
+}
+
 /** The cast members whose name or character contains the text, in billing order, each with their tier. */
 export function castMatching(
     cast: CastMember[],

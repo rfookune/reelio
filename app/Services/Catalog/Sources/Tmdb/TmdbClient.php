@@ -65,7 +65,7 @@ class TmdbClient
             $response = $this->tvRequest(Http::createPendingRequest(), $context, $deadline)->get("tv/{$tmdbId}", [
                 'language' => $context->language,
                 'include_video_language' => explode('-', $context->language)[0].',null',
-                'append_to_response' => 'external_ids,content_ratings,videos,credits,watch/providers',
+                'append_to_response' => 'external_ids,content_ratings,videos,aggregate_credits,watch/providers',
             ]);
         } catch (ConnectionException $exception) {
             throw new SourceUnavailable('The Catalog source is unavailable.', previous: $exception);

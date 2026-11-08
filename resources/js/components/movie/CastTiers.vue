@@ -3,7 +3,7 @@ import { User } from '@lucide/vue';
 import { computed } from 'vue';
 import CastGrid from '@/components/movie/CastGrid.vue';
 import type { CastMember } from '@/components/movie/CastGrid.vue';
-import { STARRING_COUNT, SUPPORTING_COUNT } from '@/lib/cast';
+import { castCaption, STARRING_COUNT, SUPPORTING_COUNT } from '@/lib/cast';
 import { isSafeTmdbPath, tmdbImageUrl } from '@/lib/tmdb';
 
 /**
@@ -81,10 +81,10 @@ const others = computed(() =>
                         {{ member.name }}
                     </p>
                     <p
-                        v-if="member.character"
+                        v-if="castCaption(member)"
                         class="truncate text-center text-xs text-muted"
                     >
-                        {{ member.character }}
+                        {{ castCaption(member) }}
                     </p>
                 </li>
             </ul>
@@ -104,8 +104,8 @@ const others = computed(() =>
                     class="break-inside-avoid py-0.5"
                 >
                     <span class="font-medium">{{ member.name }}</span>
-                    <span v-if="member.character" class="text-muted">
-                        · {{ member.character }}</span
+                    <span v-if="castCaption(member)" class="text-muted">
+                        · {{ castCaption(member) }}</span
                     >
                 </li>
             </ul>

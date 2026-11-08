@@ -346,7 +346,7 @@
             }
         ]
     },
-    "credits": {
+    "aggregate_credits": {
         "cast": [
             {
                 "adult": false,
@@ -357,9 +357,15 @@
                 "original_name": "Jared Harris",
                 "popularity": 2.9754,
                 "profile_path": "/r9nIq0jPz1oBm4WwtlZhqlsX8p0.jpg",
-                "character": "Valery Legasov",
-                "credit_id": "5c73c35ec3a3685a3518e63e",
-                "order": 0
+                "order": 0,
+                "roles": [
+                    {
+                        "credit_id": "5c73c35ec3a3685a3518e63e",
+                        "character": "Valery Legasov",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -370,9 +376,15 @@
                 "original_name": "Stellan Skarsgård",
                 "popularity": 3.7105,
                 "profile_path": "/mW7xmtGV4y79kQGn0zkKVGDMAmw.jpg",
-                "character": "Boris Shcherbina",
-                "credit_id": "5c73c54492514119e1b0e213",
-                "order": 1
+                "order": 1,
+                "roles": [
+                    {
+                        "credit_id": "5c73c54492514119e1b0e213",
+                        "character": "Boris Shcherbina",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -383,9 +395,15 @@
                 "original_name": "Emily Watson",
                 "popularity": 3.3598,
                 "profile_path": "/bd0qiJXHoLNpkCqABsh67AKRtjC.jpg",
-                "character": "Ulana Khomyuk",
-                "credit_id": "5c73c567c3a3685a3518e99b",
-                "order": 2
+                "order": 2,
+                "roles": [
+                    {
+                        "credit_id": "5c73c567c3a3685a3518e99b",
+                        "character": "Ulana Khomyuk",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -396,9 +414,15 @@
                 "original_name": "Paul Ritter",
                 "popularity": 0.9934,
                 "profile_path": "/hYRSjC5vxrIFZ5sx1rM6V4ZEI8G.jpg",
-                "character": "Anatoly Dyatlov",
-                "credit_id": "5c9d494d0e0a260a2ad94aa0",
-                "order": 3
+                "order": 3,
+                "roles": [
+                    {
+                        "credit_id": "5c9d494d0e0a260a2ad94aa0",
+                        "character": "Anatoly Dyatlov",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -409,9 +433,15 @@
                 "original_name": "Jessie Buckley",
                 "popularity": 4.2253,
                 "profile_path": "/qbz9175DERSqsCQeYWGJWwqb38z.jpg",
-                "character": "Lyudmilla Ignatenko",
-                "credit_id": "5c9d49b00e0a260a1dd9485b",
-                "order": 4
+                "order": 4,
+                "roles": [
+                    {
+                        "credit_id": "5c9d49b00e0a260a1dd9485b",
+                        "character": "Lyudmilla Ignatenko",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -422,9 +452,15 @@
                 "original_name": "Adam Nagaitis",
                 "popularity": 0.9249,
                 "profile_path": "/e05YxtScfLCI723ZFU6WOzLiJ6u.jpg",
-                "character": "Vasily Ignatenko",
-                "credit_id": "5cf69ccd9251413c86b94b71",
-                "order": 5
+                "order": 5,
+                "roles": [
+                    {
+                        "credit_id": "5cf69ccd9251413c86b94b71",
+                        "character": "Vasily Ignatenko",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -435,9 +471,15 @@
                 "original_name": "Sam Troughton",
                 "popularity": 0.5693,
                 "profile_path": "/daT0NIIeYxCsxjJ0200wAfJGfEE.jpg",
-                "character": "Alexandr Akimov",
-                "credit_id": "5d051689c3a3680a571f45cd",
-                "order": 6
+                "order": 6,
+                "roles": [
+                    {
+                        "credit_id": "5d051689c3a3680a571f45cd",
+                        "character": "Alexandr Akimov",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -448,9 +490,15 @@
                 "original_name": "Robert Emms",
                 "popularity": 0.6736,
                 "profile_path": "/gAUB9R1MnGBgg2UbI2LOYWikCyr.jpg",
-                "character": "Leonid Toptunov",
-                "credit_id": "5d05169e92514163d1bd83df",
-                "order": 7
+                "order": 7,
+                "roles": [
+                    {
+                        "credit_id": "5d05169e92514163d1bd83df",
+                        "character": "Leonid Toptunov",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -461,9 +509,15 @@
                 "original_name": "Con O'Neill",
                 "popularity": 1.2876,
                 "profile_path": "/7Fnj1dB9kStTuy29eEVK4IuOxWO.jpg",
-                "character": "Viktor Bryukhanov",
-                "credit_id": "5d05165a9251413ec5bb3a75",
-                "order": 8
+                "order": 8,
+                "roles": [
+                    {
+                        "credit_id": "5d05165a9251413ec5bb3a75",
+                        "character": "Viktor Bryukhanov",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -474,9 +528,15 @@
                 "original_name": "Adrian Rawlins",
                 "popularity": 1.6011,
                 "profile_path": "/G0PGZqTjenuVTAQiib4ScU7vAI.jpg",
-                "character": "Nikolai Fomin",
-                "credit_id": "5d051671925141131bb98f41",
-                "order": 9
+                "order": 9,
+                "roles": [
+                    {
+                        "credit_id": "5d051671925141131bb98f41",
+                        "character": "Nikolai Fomin",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -487,9 +547,15 @@
                 "original_name": "Alan Williams",
                 "popularity": 0.5411,
                 "profile_path": "/hvfjcPUtKkbBewvJdJ6uGutwS51.jpg",
-                "character": "KGB Chairman Charkov",
-                "credit_id": "5d0516d00e0a261fbbd5e063",
-                "order": 10
+                "order": 10,
+                "roles": [
+                    {
+                        "credit_id": "5d0516d00e0a261fbbd5e063",
+                        "character": "KGB Chairman Charkov",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -500,9 +566,15 @@
                 "original_name": "David Dencik",
                 "popularity": 1.9254,
                 "profile_path": "/q5wLADc6yYd3owxSEG8VKbf7YWV.jpg",
-                "character": "Mikhail Gorbachev",
-                "credit_id": "5cfbab93925141749ab92bb3",
-                "order": 11
+                "order": 11,
+                "roles": [
+                    {
+                        "credit_id": "5cfbab93925141749ab92bb3",
+                        "character": "Mikhail Gorbachev",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -513,9 +585,15 @@
                 "original_name": "Mark Lewis Jones",
                 "popularity": 0.8914,
                 "profile_path": "/5SAmzx40A0C3VOgzYPlcOmwqdL6.jpg",
-                "character": "General Pikalov",
-                "credit_id": "5d0516b99251411a82c9ae4b",
-                "order": 12
+                "order": 12,
+                "roles": [
+                    {
+                        "credit_id": "5d0516b99251411a82c9ae4b",
+                        "character": "General Pikalov",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -526,9 +604,15 @@
                 "original_name": "Ralph Ineson",
                 "popularity": 2.2011,
                 "profile_path": "/sn3ONJw2pJxMHiCqPwvkaiWr5mc.jpg",
-                "character": "General Tarakanov",
-                "credit_id": "5d0517060e0a261fbbd5e09a",
-                "order": 13
+                "order": 13,
+                "roles": [
+                    {
+                        "credit_id": "5d0517060e0a261fbbd5e09a",
+                        "character": "General Tarakanov",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -539,9 +623,15 @@
                 "original_name": "Barry Keoghan",
                 "popularity": 3.475,
                 "profile_path": "/ngoitknM6hw8fffLywyvjzy6Iti.jpg",
-                "character": "Pavel",
-                "credit_id": "5d05171c925141131bb98fff",
-                "order": 14
+                "order": 14,
+                "roles": [
+                    {
+                        "credit_id": "5d05171c925141131bb98fff",
+                        "character": "Pavel",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -552,9 +642,15 @@
                 "original_name": "Alex Ferns",
                 "popularity": 1.2937,
                 "profile_path": "/3V3L7MJGURXU6lVaqai80zFT4Wa.jpg",
-                "character": "Glukhov",
-                "credit_id": "5d0516ea9251416876be3aa4",
-                "order": 15
+                "order": 15,
+                "roles": [
+                    {
+                        "credit_id": "5d0516ea9251416876be3aa4",
+                        "character": "Glukhov",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -565,9 +661,15 @@
                 "original_name": "Fares Fares",
                 "popularity": 2.5211,
                 "profile_path": "/rLk2uAENs1cNyWFy039fErxNpLj.jpg",
-                "character": "Bacho",
-                "credit_id": "5d05172dc3a368445b2ad755",
-                "order": 16
+                "order": 16,
+                "roles": [
+                    {
+                        "credit_id": "5d05172dc3a368445b2ad755",
+                        "character": "Bacho",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -578,9 +680,15 @@
                 "original_name": "Michael McElhatton",
                 "popularity": 1.1229,
                 "profile_path": "/aPjuV6N10zAJMr55lAIvnpdsNgE.jpg",
-                "character": "Prosecutor Andrei Stepashin",
-                "credit_id": "5d05174892514117b4bd89f6",
-                "order": 17
+                "order": 17,
+                "roles": [
+                    {
+                        "credit_id": "5d05174892514117b4bd89f6",
+                        "character": "Prosecutor Andrei Stepashin",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             }
         ],
         "crew": [
@@ -593,9 +701,15 @@
                 "original_name": "Jane Featherstone",
                 "popularity": 0.5154,
                 "profile_path": "/jYdEOebFggHs4sxg36BpXNAaAMb.jpg",
-                "credit_id": "5c73c37b0e0a262c1880ec62",
                 "department": "Production",
-                "job": "Executive Producer"
+                "jobs": [
+                    {
+                        "credit_id": "5c73c37b0e0a262c1880ec62",
+                        "job": "Executive Producer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -606,9 +720,15 @@
                 "original_name": "Chris Fry",
                 "popularity": 0.3754,
                 "profile_path": null,
-                "credit_id": "5c73c3d1c3a3685a3218863b",
                 "department": "Production",
-                "job": "Co-Executive Producer"
+                "jobs": [
+                    {
+                        "credit_id": "5c73c3d1c3a3685a3218863b",
+                        "job": "Co-Executive Producer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -619,9 +739,15 @@
                 "original_name": "Carolyn Strauss",
                 "popularity": 0.4072,
                 "profile_path": "/o88ISZv7ILrPMHutX1XVr7trmkF.jpg",
-                "credit_id": "5c73c38bc3a3685a4018d0dc",
                 "department": "Production",
-                "job": "Executive Producer"
+                "jobs": [
+                    {
+                        "credit_id": "5c73c38bc3a3685a4018d0dc",
+                        "job": "Executive Producer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -632,9 +758,15 @@
                 "original_name": "Johan Renck",
                 "popularity": 0.4709,
                 "profile_path": "/pkPO6RhVFcKDiEUtbHjTkq4JjYi.jpg",
-                "credit_id": "5c73c3aac3a3685a4018d10d",
                 "department": "Production",
-                "job": "Co-Executive Producer"
+                "jobs": [
+                    {
+                        "credit_id": "5c73c3aac3a3685a4018d10d",
+                        "job": "Co-Executive Producer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -645,9 +777,15 @@
                 "original_name": "Craig Mazin",
                 "popularity": 0.9885,
                 "profile_path": "/uEhna6qcMuyU5TP7irpTUZ2ZsZc.jpg",
-                "credit_id": "5c73c3999251415ee2b5fb12",
                 "department": "Production",
-                "job": "Executive Producer"
+                "jobs": [
+                    {
+                        "credit_id": "5c73c3999251415ee2b5fb12",
+                        "job": "Executive Producer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -658,9 +796,15 @@
                 "original_name": "Sanne Wohlenberg",
                 "popularity": 0.4168,
                 "profile_path": "/eHwHwjxS6xH8lPiZ1h0fko5lMZq.jpg",
-                "credit_id": "5c73c4dc9251415ee8b61c55",
                 "department": "Production",
-                "job": "Producer"
+                "jobs": [
+                    {
+                        "credit_id": "5c73c4dc9251415ee8b61c55",
+                        "job": "Producer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -671,9 +815,15 @@
                 "original_name": "Jakob Ihre",
                 "popularity": 0.1888,
                 "profile_path": "/uTeNKJ0GZO2P8XDp4giSFvEV9dU.jpg",
-                "credit_id": "5cf5e287c3a3684eb91dda9d",
                 "department": "Camera",
-                "job": "Director of Photography"
+                "jobs": [
+                    {
+                        "credit_id": "5cf5e287c3a3684eb91dda9d",
+                        "job": "Director of Photography",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -684,9 +834,15 @@
                 "original_name": "Luke Hull",
                 "popularity": 0.2841,
                 "profile_path": "/xe3PPk6oE3e0St7r4g4sYky1GTJ.jpg",
-                "credit_id": "5cf69c299251411882c2cf06",
                 "department": "Art",
-                "job": "Production Design"
+                "jobs": [
+                    {
+                        "credit_id": "5cf69c299251411882c2cf06",
+                        "job": "Production Design",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -697,9 +853,15 @@
                 "original_name": "Odile Dicks-Mireaux",
                 "popularity": 0.5041,
                 "profile_path": "/bRaSyTCnU4BNTvjN7Z9yM0FjX9b.jpg",
-                "credit_id": "5cf69c8992514146dcb93a0c",
                 "department": "Costume & Make-Up",
-                "job": "Costume Design"
+                "jobs": [
+                    {
+                        "credit_id": "5cf69c8992514146dcb93a0c",
+                        "job": "Costume Design",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -710,9 +872,15 @@
                 "original_name": "Gavin Fitch",
                 "popularity": 0.1747,
                 "profile_path": null,
-                "credit_id": "5cf69c350e0a2619d3d0fc63",
                 "department": "Art",
-                "job": "Art Direction"
+                "jobs": [
+                    {
+                        "credit_id": "5cf69c350e0a2619d3d0fc63",
+                        "job": "Art Direction",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -723,9 +891,15 @@
                 "original_name": "Claire Levinson-Gendler",
                 "popularity": 0.1801,
                 "profile_path": null,
-                "credit_id": "5cf69c7b9251411882c2cfb2",
                 "department": "Art",
-                "job": "Set Decoration"
+                "jobs": [
+                    {
+                        "credit_id": "5cf69c7b9251411882c2cfb2",
+                        "job": "Set Decoration",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -736,9 +910,15 @@
                 "original_name": "Hildur Guðnadóttir",
                 "popularity": 0.5913,
                 "profile_path": "/xkJTSLeYZkOqouzflrUNgLSC1lL.jpg",
-                "credit_id": "5cf69bf39251411882c2cec5",
                 "department": "Sound",
-                "job": "Original Music Composer"
+                "jobs": [
+                    {
+                        "credit_id": "5cf69bf39251411882c2cec5",
+                        "job": "Original Music Composer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -749,9 +929,15 @@
                 "original_name": "Nina Gold",
                 "popularity": 1.3162,
                 "profile_path": "/emeKuabMDN3C8x8ibby7FNtjRgu.jpg",
-                "credit_id": "5cf69c090e0a2665bdcadf84",
                 "department": "Production",
-                "job": "Casting"
+                "jobs": [
+                    {
+                        "credit_id": "5cf69c090e0a2665bdcadf84",
+                        "job": "Casting",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -762,9 +948,15 @@
                 "original_name": "Robert Sterne",
                 "popularity": 0.4751,
                 "profile_path": "/mV9p5hU0N2MlcuKWnsuXbnbITdv.jpg",
-                "credit_id": "5cf69c1bc3a3684eb91eff89",
                 "department": "Production",
-                "job": "Casting"
+                "jobs": [
+                    {
+                        "credit_id": "5cf69c1bc3a3684eb91eff89",
+                        "job": "Casting",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -775,9 +967,15 @@
                 "original_name": "Max Klaentschi",
                 "popularity": 0.0986,
                 "profile_path": null,
-                "credit_id": "5cf69c609251411882c2cf91",
                 "department": "Art",
-                "job": "Art Direction"
+                "jobs": [
+                    {
+                        "credit_id": "5cf69c609251411882c2cf91",
+                        "job": "Art Direction",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -788,9 +986,15 @@
                 "original_name": "Paulius Dascioras",
                 "popularity": 0.0848,
                 "profile_path": null,
-                "credit_id": "5cf69c6e9251416737b94f0f",
                 "department": "Art",
-                "job": "Art Direction"
+                "jobs": [
+                    {
+                        "credit_id": "5cf69c6e9251416737b94f0f",
+                        "job": "Art Direction",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -801,9 +1005,15 @@
                 "original_name": "Donatas Bakanas",
                 "popularity": 0.063,
                 "profile_path": null,
-                "credit_id": "5d09239ac3a3683dd81f1982",
                 "department": "Production",
-                "job": "Unit Manager"
+                "jobs": [
+                    {
+                        "credit_id": "5d09239ac3a3683dd81f1982",
+                        "job": "Unit Manager",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -814,9 +1024,15 @@
                 "original_name": "Justinas Breimelis",
                 "popularity": 0.055,
                 "profile_path": null,
-                "credit_id": "5d0923a50e0a26317acae36d",
                 "department": "Production",
-                "job": "Assistant Unit Manager"
+                "jobs": [
+                    {
+                        "credit_id": "5d0923a50e0a26317acae36d",
+                        "job": "Assistant Unit Manager",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -827,9 +1043,15 @@
                 "original_name": "Renuaras Krivelis",
                 "popularity": 0.0487,
                 "profile_path": null,
-                "credit_id": "5d0925aa925141170cb98680",
                 "department": "Art",
-                "job": "Construction Manager"
+                "jobs": [
+                    {
+                        "credit_id": "5d0925aa925141170cb98680",
+                        "job": "Construction Manager",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -840,9 +1062,15 @@
                 "original_name": "Justinas Petravicius",
                 "popularity": 0.0687,
                 "profile_path": null,
-                "credit_id": "5d0928c10e0a2628abcae56f",
                 "department": "Camera",
-                "job": "Data Wrangler"
+                "jobs": [
+                    {
+                        "credit_id": "5d0928c10e0a2628abcae56f",
+                        "job": "Data Wrangler",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -853,9 +1081,15 @@
                 "original_name": "Vincent Piponnier",
                 "popularity": 0.1762,
                 "profile_path": null,
-                "credit_id": "5d0929690e0a267fe0cb0820",
                 "department": "Sound",
-                "job": "Sound Recordist"
+                "jobs": [
+                    {
+                        "credit_id": "5d0929690e0a267fe0cb0820",
+                        "job": "Sound Recordist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -866,9 +1100,15 @@
                 "original_name": "Chloe Muton-Philips",
                 "popularity": 0.0781,
                 "profile_path": null,
-                "credit_id": "5d092d7092514163bab98666",
                 "department": "Costume & Make-Up",
-                "job": "Prosthetic Makeup Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d092d7092514163bab98666",
+                        "job": "Prosthetic Makeup Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -879,9 +1119,15 @@
                 "original_name": "Liyana Mansor",
                 "popularity": 0.2501,
                 "profile_path": null,
-                "credit_id": "5d092f480e0a2630d0cae841",
                 "department": "Crew",
-                "job": "Visual Effects Editor"
+                "jobs": [
+                    {
+                        "credit_id": "5d092f480e0a2630d0cae841",
+                        "job": "Visual Effects Editor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -892,9 +1138,15 @@
                 "original_name": "Lukas Kudapcenka",
                 "popularity": 0.0835,
                 "profile_path": null,
-                "credit_id": "5d09226b925141170cb97984",
                 "department": "Directing",
-                "job": "Third Assistant Director"
+                "jobs": [
+                    {
+                        "credit_id": "5d09226b925141170cb97984",
+                        "job": "Third Assistant Director",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -905,9 +1157,15 @@
                 "original_name": "Evaldas Dabašinskas",
                 "popularity": 0.1084,
                 "profile_path": null,
-                "credit_id": "5d0923c192514163bab9746a",
                 "department": "Crew",
-                "job": "Transportation Coordinator"
+                "jobs": [
+                    {
+                        "credit_id": "5d0923c192514163bab9746a",
+                        "job": "Transportation Coordinator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -918,9 +1176,15 @@
                 "original_name": "Karen Wakefield",
                 "popularity": 0.1649,
                 "profile_path": null,
-                "credit_id": "5d0923ffc3a36871861f5c22",
                 "department": "Art",
-                "job": "Supervising Art Director"
+                "jobs": [
+                    {
+                        "credit_id": "5d0923ffc3a36871861f5c22",
+                        "job": "Supervising Art Director",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -931,9 +1195,15 @@
                 "original_name": "Nancy Connor",
                 "popularity": 0.0488,
                 "profile_path": null,
-                "credit_id": "5d0925040e0a266f99cafc6f",
                 "department": "Crew",
-                "job": "Scenic Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d0925040e0a266f99cafc6f",
+                        "job": "Scenic Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -944,9 +1214,15 @@
                 "original_name": "Grigory Kutsenko",
                 "popularity": 0.0813,
                 "profile_path": null,
-                "credit_id": "5d0926789251411dbab96223",
                 "department": "Art",
-                "job": "Set Dresser"
+                "jobs": [
+                    {
+                        "credit_id": "5d0926789251411dbab96223",
+                        "job": "Set Dresser",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -957,9 +1233,15 @@
                 "original_name": "Vytas Gudlevicius",
                 "popularity": 0.0666,
                 "profile_path": null,
-                "credit_id": "5d0928dc0e0a26317acaedf5",
                 "department": "Camera",
-                "job": "Key Grip"
+                "jobs": [
+                    {
+                        "credit_id": "5d0928dc0e0a26317acaedf5",
+                        "job": "Key Grip",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -970,9 +1252,15 @@
                 "original_name": "Henrikas Gudlevičius",
                 "popularity": 0.0792,
                 "profile_path": null,
-                "credit_id": "5d0928e692514101b2b986ae",
                 "department": "Camera",
-                "job": "Best Boy Grip"
+                "jobs": [
+                    {
+                        "credit_id": "5d0928e692514101b2b986ae",
+                        "job": "Best Boy Grip",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -983,9 +1271,15 @@
                 "original_name": "Bozena Maisejenko",
                 "popularity": 0.0581,
                 "profile_path": null,
-                "credit_id": "5d092bd1c3a3685fdf1f1dc9",
                 "department": "Costume & Make-Up",
-                "job": "Makeup Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d092bd1c3a3685fdf1f1dc9",
+                        "job": "Makeup Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -996,9 +1290,15 @@
                 "original_name": "Fay Hancocks",
                 "popularity": 0.0823,
                 "profile_path": null,
-                "credit_id": "5d092f8fc3a3685fdf1f22b3",
                 "department": "Visual Effects",
-                "job": "Visual Effects Production Manager"
+                "jobs": [
+                    {
+                        "credit_id": "5d092f8fc3a3685fdf1f22b3",
+                        "job": "Visual Effects Production Manager",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1009,9 +1309,15 @@
                 "original_name": "Pete Baxter",
                 "popularity": 0.1578,
                 "profile_path": null,
-                "credit_id": "5d09316f0e0a265ca3cb083a",
                 "department": "Visual Effects",
-                "job": "Visual Effects Compositor"
+                "jobs": [
+                    {
+                        "credit_id": "5d09316f0e0a265ca3cb083a",
+                        "job": "Visual Effects Compositor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1022,9 +1328,15 @@
                 "original_name": "Charlotte Laing",
                 "popularity": 0.0623,
                 "profile_path": null,
-                "credit_id": "5d093455c3a3685bfc1f8b23",
                 "department": "Editing",
-                "job": "Digital Intermediate Producer"
+                "jobs": [
+                    {
+                        "credit_id": "5d093455c3a3685bfc1f8b23",
+                        "job": "Digital Intermediate Producer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1035,9 +1347,15 @@
                 "original_name": "Daniel Parker",
                 "popularity": 0.391,
                 "profile_path": "/6R9bendPyhqzwBowOikmuSU6gKH.jpg",
-                "credit_id": "5d092063c3a3683dd81f1585",
                 "department": "Costume & Make-Up",
-                "job": "Makeup Designer"
+                "jobs": [
+                    {
+                        "credit_id": "5d092063c3a3683dd81f1585",
+                        "job": "Makeup Designer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1048,9 +1366,15 @@
                 "original_name": "Robert How",
                 "popularity": 0.1223,
                 "profile_path": null,
-                "credit_id": "5d09208f9251415273b9727d",
                 "department": "Production",
-                "job": "Line Producer"
+                "jobs": [
+                    {
+                        "credit_id": "5d09208f9251415273b9727d",
+                        "job": "Line Producer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1061,9 +1385,15 @@
                 "original_name": "Nicola Morrow",
                 "popularity": 0.0891,
                 "profile_path": null,
-                "credit_id": "5d092117c3a3680efe1f0efb",
                 "department": "Production",
-                "job": "Production Manager"
+                "jobs": [
+                    {
+                        "credit_id": "5d092117c3a3680efe1f0efb",
+                        "job": "Production Manager",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1074,9 +1404,15 @@
                 "original_name": "Vytautas Riabovas",
                 "popularity": 0.0834,
                 "profile_path": null,
-                "credit_id": "5d09238f9251415273b9779d",
                 "department": "Art",
-                "job": "Location Scout"
+                "jobs": [
+                    {
+                        "credit_id": "5d09238f9251415273b9779d",
+                        "job": "Location Scout",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1087,9 +1423,15 @@
                 "original_name": "Andrius Zvaliauskas",
                 "popularity": 0.0776,
                 "profile_path": null,
-                "credit_id": "5d0923b092514135eab96ed3",
                 "department": "Production",
-                "job": "Assistant Unit Manager"
+                "jobs": [
+                    {
+                        "credit_id": "5d0923b092514135eab96ed3",
+                        "job": "Assistant Unit Manager",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1100,9 +1442,15 @@
                 "original_name": "Dominee Reid",
                 "popularity": 0.0711,
                 "profile_path": null,
-                "credit_id": "5d0924fa9251411dbab95d8d",
                 "department": "Crew",
-                "job": "Scenic Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d0924fa9251411dbab95d8d",
+                        "job": "Scenic Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1113,9 +1461,15 @@
                 "original_name": "Ants Martin Vahur",
                 "popularity": 0.1577,
                 "profile_path": "/wTYIFbwlTxUACnC6okkQFAGGx9X.jpg",
-                "credit_id": "5d0927e2925141170cb98adf",
                 "department": "Camera",
-                "job": "Steadicam Operator"
+                "jobs": [
+                    {
+                        "credit_id": "5d0927e2925141170cb98adf",
+                        "job": "Steadicam Operator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1126,9 +1480,15 @@
                 "original_name": "Jonas Burnickis",
                 "popularity": 0.1201,
                 "profile_path": null,
-                "credit_id": "5d0929230e0a266f99cb05fc",
                 "department": "Crew",
-                "job": "Drone Operator"
+                "jobs": [
+                    {
+                        "credit_id": "5d0929230e0a266f99cb05fc",
+                        "job": "Drone Operator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1139,9 +1499,15 @@
                 "original_name": "Matas Jankauskas",
                 "popularity": 0.093,
                 "profile_path": null,
-                "credit_id": "5d09292d0e0a266f99cb0617",
                 "department": "Crew",
-                "job": "Drone Operator"
+                "jobs": [
+                    {
+                        "credit_id": "5d09292d0e0a266f99cb0617",
+                        "job": "Drone Operator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1152,9 +1518,15 @@
                 "original_name": "Hannah Eccleston",
                 "popularity": 0.1846,
                 "profile_path": null,
-                "credit_id": "5d092d4a9251415273b9882a",
                 "department": "Costume & Make-Up",
-                "job": "Prosthetic Makeup Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d092d4a9251415273b9882a",
+                        "job": "Prosthetic Makeup Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1165,9 +1537,15 @@
                 "original_name": "Asta Cancingeriene",
                 "popularity": 0.0717,
                 "profile_path": null,
-                "credit_id": "5d092e44c3a3684c6a1f4f9e",
                 "department": "Crew",
-                "job": "Unit Medic"
+                "jobs": [
+                    {
+                        "credit_id": "5d092e44c3a3684c6a1f4f9e",
+                        "job": "Unit Medic",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1178,9 +1556,15 @@
                 "original_name": "Beth Hart",
                 "popularity": 0.1006,
                 "profile_path": null,
-                "credit_id": "5d09308e9251415273b98c0e",
                 "department": "Visual Effects",
-                "job": "Visual Effects Production Assistant"
+                "jobs": [
+                    {
+                        "credit_id": "5d09308e9251415273b98c0e",
+                        "job": "Visual Effects Production Assistant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1191,9 +1575,15 @@
                 "original_name": "Colin Eade",
                 "popularity": 0.0622,
                 "profile_path": null,
-                "credit_id": "5d09319c0e0a2630d0caeb17",
                 "department": "Visual Effects",
-                "job": "Visual Effects Compositor"
+                "jobs": [
+                    {
+                        "credit_id": "5d09319c0e0a2630d0caeb17",
+                        "job": "Visual Effects Compositor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1204,9 +1594,15 @@
                 "original_name": "Karolis Kasikauskas",
                 "popularity": 0.0997,
                 "profile_path": null,
-                "credit_id": "5d0922760e0a2628abcad983",
                 "department": "Production",
-                "job": "Key Set Production Assistant"
+                "jobs": [
+                    {
+                        "credit_id": "5d0922760e0a2628abcad983",
+                        "job": "Key Set Production Assistant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1217,9 +1613,15 @@
                 "original_name": "Ainis Jankauskas",
                 "popularity": 0.0975,
                 "profile_path": null,
-                "credit_id": "5d0924620e0a2628abcadc73",
                 "department": "Art",
-                "job": "Art Direction"
+                "jobs": [
+                    {
+                        "credit_id": "5d0924620e0a2628abcadc73",
+                        "job": "Art Direction",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1230,9 +1632,15 @@
                 "original_name": "Darius Stelmokas",
                 "popularity": 0.0938,
                 "profile_path": null,
-                "credit_id": "5d092705c3a3680efe1f1bbc",
                 "department": "Art",
-                "job": "Assistant Set Dresser"
+                "jobs": [
+                    {
+                        "credit_id": "5d092705c3a3680efe1f1bbc",
+                        "job": "Assistant Set Dresser",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1243,9 +1651,15 @@
                 "original_name": "Marc-Jason Maier",
                 "popularity": 0.1063,
                 "profile_path": null,
-                "credit_id": "5d09289492514135eab978e5",
                 "department": "Camera",
-                "job": "Digital Imaging Technician"
+                "jobs": [
+                    {
+                        "credit_id": "5d09289492514135eab978e5",
+                        "job": "Digital Imaging Technician",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1256,9 +1670,15 @@
                 "original_name": "Marius Zilenas",
                 "popularity": 0.1084,
                 "profile_path": null,
-                "credit_id": "5d0928f19251417ea0b96254",
                 "department": "Camera",
-                "job": "Grip"
+                "jobs": [
+                    {
+                        "credit_id": "5d0928f19251417ea0b96254",
+                        "job": "Grip",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1269,9 +1689,15 @@
                 "original_name": "Phillip J. Braunschober",
                 "popularity": 0.0933,
                 "profile_path": null,
-                "credit_id": "5d092df50e0a266f99cb12fc",
                 "department": "Crew",
-                "job": "Special Effects Technician"
+                "jobs": [
+                    {
+                        "credit_id": "5d092df50e0a266f99cb12fc",
+                        "job": "Special Effects Technician",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1282,9 +1708,15 @@
                 "original_name": "Craig Ferreira",
                 "popularity": 0.1835,
                 "profile_path": null,
-                "credit_id": "5d092f1e9251415273b98a11",
                 "department": "Editing",
-                "job": "First Assistant Editor"
+                "jobs": [
+                    {
+                        "credit_id": "5d092f1e9251415273b98a11",
+                        "job": "First Assistant Editor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1295,9 +1727,15 @@
                 "original_name": "Alicia Aguilera",
                 "popularity": 0.1623,
                 "profile_path": null,
-                "credit_id": "5d09319192514101b2b9952c",
                 "department": "Visual Effects",
-                "job": "Visual Effects Compositor"
+                "jobs": [
+                    {
+                        "credit_id": "5d09319192514101b2b9952c",
+                        "job": "Visual Effects Compositor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1308,9 +1746,15 @@
                 "original_name": "William Carley",
                 "popularity": 0.0819,
                 "profile_path": null,
-                "credit_id": "5d0932ce92514163bab98f32",
                 "department": "Visual Effects",
-                "job": "3D Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d0932ce92514163bab98f32",
+                        "job": "3D Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1321,9 +1765,15 @@
                 "original_name": "Daniel Parker",
                 "popularity": 0.391,
                 "profile_path": "/6R9bendPyhqzwBowOikmuSU6gKH.jpg",
-                "credit_id": "5d0920739251415273b97256",
                 "department": "Costume & Make-Up",
-                "job": "Prosthetic Designer"
+                "jobs": [
+                    {
+                        "credit_id": "5d0920739251415273b97256",
+                        "job": "Prosthetic Designer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1334,9 +1784,15 @@
                 "original_name": "Cheyenne Conway",
                 "popularity": 0.1112,
                 "profile_path": null,
-                "credit_id": "5d09210392514135eab969dd",
                 "department": "Production",
-                "job": "Production Manager"
+                "jobs": [
+                    {
+                        "credit_id": "5d09210392514135eab969dd",
+                        "job": "Production Manager",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1347,9 +1803,15 @@
                 "original_name": "Polly Jefferies",
                 "popularity": 0.2814,
                 "profile_path": null,
-                "credit_id": "5d09212cc3a368647c1f59d4",
                 "department": "Production",
-                "job": "Production Coordinator"
+                "jobs": [
+                    {
+                        "credit_id": "5d09212cc3a368647c1f59d4",
+                        "job": "Production Coordinator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1360,9 +1822,15 @@
                 "original_name": "Aukse Veitaite",
                 "popularity": 0.0599,
                 "profile_path": null,
-                "credit_id": "5d09217c92514101b2b976f3",
                 "department": "Production",
-                "job": "Production Secretary"
+                "jobs": [
+                    {
+                        "credit_id": "5d09217c92514101b2b976f3",
+                        "job": "Production Secretary",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1373,9 +1841,15 @@
                 "original_name": "Tautvydas Savukaitis",
                 "popularity": 0.0892,
                 "profile_path": null,
-                "credit_id": "5d092243c3a3687c751f403a",
                 "department": "Directing",
-                "job": "Second Second Assistant Director"
+                "jobs": [
+                    {
+                        "credit_id": "5d092243c3a3687c751f403a",
+                        "job": "Second Second Assistant Director",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1386,9 +1860,15 @@
                 "original_name": "Darius Baltusis",
                 "popularity": 0.0823,
                 "profile_path": null,
-                "credit_id": "5d092370c3a3685fdf1f0d20",
                 "department": "Production",
-                "job": "Assistant Location Manager"
+                "jobs": [
+                    {
+                        "credit_id": "5d092370c3a3685fdf1f0d20",
+                        "job": "Assistant Location Manager",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1399,9 +1879,15 @@
                 "original_name": "Vasilij Kazakevic",
                 "popularity": 0.0717,
                 "profile_path": null,
-                "credit_id": "5d0923e3c3a3685fdf1f0dd7",
                 "department": "Crew",
-                "job": "Transportation Captain"
+                "jobs": [
+                    {
+                        "credit_id": "5d0923e3c3a3685fdf1f0dd7",
+                        "job": "Transportation Captain",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1412,9 +1898,15 @@
                 "original_name": "Ieva Buzinskaite",
                 "popularity": 0.0596,
                 "profile_path": null,
-                "credit_id": "5d0924d10e0a2628abcadd64",
                 "department": "Art",
-                "job": "Art Department Coordinator"
+                "jobs": [
+                    {
+                        "credit_id": "5d0924d10e0a2628abcadd64",
+                        "job": "Art Department Coordinator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1425,9 +1917,15 @@
                 "original_name": "James O'Brien",
                 "popularity": 0.083,
                 "profile_path": null,
-                "credit_id": "5d09251d0e0a265ca3caeefc",
                 "department": "Art",
-                "job": "Sculptor"
+                "jobs": [
+                    {
+                        "credit_id": "5d09251d0e0a265ca3caeefc",
+                        "job": "Sculptor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1438,9 +1936,15 @@
                 "original_name": "Martynas Kosas",
                 "popularity": 0.098,
                 "profile_path": null,
-                "credit_id": "5d0926a2c3a3683dd81f1ea0",
                 "department": "Art",
-                "job": "Set Dresser"
+                "jobs": [
+                    {
+                        "credit_id": "5d0926a2c3a3683dd81f1ea0",
+                        "job": "Set Dresser",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1451,9 +1955,15 @@
                 "original_name": "Paulius Dranseika",
                 "popularity": 0.0908,
                 "profile_path": null,
-                "credit_id": "5d09275bc3a368647c1f6c2e",
                 "department": "Art",
-                "job": "Standby Carpenter"
+                "jobs": [
+                    {
+                        "credit_id": "5d09275bc3a368647c1f6c2e",
+                        "job": "Standby Carpenter",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1464,9 +1974,15 @@
                 "original_name": "Feliksas Abrukauskas",
                 "popularity": 0.1351,
                 "profile_path": "/r3Gre3Rvo4W4iOzXRFvBVPYMeQE.jpg",
-                "credit_id": "5d09285cc3a3685fdf1f138e",
                 "department": "Camera",
-                "job": "Additional Camera"
+                "jobs": [
+                    {
+                        "credit_id": "5d09285cc3a3685fdf1f138e",
+                        "job": "Additional Camera",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1477,9 +1993,15 @@
                 "original_name": "Rimvydas Leipus",
                 "popularity": 0.2435,
                 "profile_path": "/8fjhX9rYD5fWcgMfmLJdBqet9Q2.jpg",
-                "credit_id": "5d0928879251411dbab96712",
                 "department": "Camera",
-                "job": "Additional Camera"
+                "jobs": [
+                    {
+                        "credit_id": "5d0928879251411dbab96712",
+                        "job": "Additional Camera",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1490,9 +2012,15 @@
                 "original_name": "Dalia Vizgirdaite",
                 "popularity": 0.1756,
                 "profile_path": null,
-                "credit_id": "5d092b1792514163bab98123",
                 "department": "Costume & Make-Up",
-                "job": "Costume Assistant"
+                "jobs": [
+                    {
+                        "credit_id": "5d092b1792514163bab98123",
+                        "job": "Costume Assistant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1503,9 +2031,15 @@
                 "original_name": "Emma Faulkes",
                 "popularity": 0.161,
                 "profile_path": null,
-                "credit_id": "5d092d560e0a26317acafadc",
                 "department": "Costume & Make-Up",
-                "job": "Prosthetic Makeup Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d092d560e0a26317acafadc",
+                        "job": "Prosthetic Makeup Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1516,9 +2050,15 @@
                 "original_name": "Mac McGeary",
                 "popularity": 0.0975,
                 "profile_path": null,
-                "credit_id": "5d092e350e0a265ca3cb027b",
                 "department": "Crew",
-                "job": "Health and Safety"
+                "jobs": [
+                    {
+                        "credit_id": "5d092e350e0a265ca3cb027b",
+                        "job": "Health and Safety",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1529,9 +2069,15 @@
                 "original_name": "Måns Månsson",
                 "popularity": 0.2636,
                 "profile_path": "/9n1DRjOHfdRycslTDnfbgrebKAI.jpg",
-                "credit_id": "5d092e520e0a2625adcb15be",
                 "department": "Directing",
-                "job": "Second Unit Director"
+                "jobs": [
+                    {
+                        "credit_id": "5d092e520e0a2625adcb15be",
+                        "job": "Second Unit Director",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1542,9 +2088,15 @@
                 "original_name": "Francesc Prat Duten",
                 "popularity": 0.0431,
                 "profile_path": null,
-                "credit_id": "5d092e9ec3a3687c751f53ff",
                 "department": "Directing",
-                "job": "Second Unit First Assistant Director"
+                "jobs": [
+                    {
+                        "credit_id": "5d092e9ec3a3687c751f53ff",
+                        "job": "Second Unit First Assistant Director",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1555,9 +2107,15 @@
                 "original_name": "Paul Jones",
                 "popularity": 0.0873,
                 "profile_path": null,
-                "credit_id": "5d0930120e0a26317acb032d",
                 "department": "Visual Effects",
-                "job": "Visual Effects Producer"
+                "jobs": [
+                    {
+                        "credit_id": "5d0930120e0a26317acb032d",
+                        "job": "Visual Effects Producer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1568,9 +2126,15 @@
                 "original_name": "Howard Truong",
                 "popularity": 0.0643,
                 "profile_path": null,
-                "credit_id": "5d09307e0e0a2628abcaf210",
                 "department": "Visual Effects",
-                "job": "Visual Effects Production Assistant"
+                "jobs": [
+                    {
+                        "credit_id": "5d09307e0e0a2628abcaf210",
+                        "job": "Visual Effects Production Assistant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1581,9 +2145,15 @@
                 "original_name": "Anita Berkhane",
                 "popularity": 0.1656,
                 "profile_path": "/6V4gqwg7KSPEFEZrCMQqwVb1KlU.jpg",
-                "credit_id": "5d0930f60e0a266f99cb16c8",
                 "department": "Crew",
-                "job": "Visual Effects Editor"
+                "jobs": [
+                    {
+                        "credit_id": "5d0930f60e0a266f99cb16c8",
+                        "job": "Visual Effects Editor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1594,9 +2164,15 @@
                 "original_name": "Connor Kitto",
                 "popularity": 0.0602,
                 "profile_path": null,
-                "credit_id": "5d0934000e0a266f99cb1b9e",
                 "department": "Visual Effects",
-                "job": "Matchmove Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d0934000e0a266f99cb1b9e",
+                        "job": "Matchmove Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1607,9 +2183,15 @@
                 "original_name": "Naomi Joy Todd",
                 "popularity": 0.1272,
                 "profile_path": null,
-                "credit_id": "5d092314c3a3684c6a1f36b6",
                 "department": "Crew",
-                "job": "Dialect Coach"
+                "jobs": [
+                    {
+                        "credit_id": "5d092314c3a3684c6a1f36b6",
+                        "job": "Dialect Coach",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1620,9 +2202,15 @@
                 "original_name": "Laura Ng",
                 "popularity": 0.1993,
                 "profile_path": null,
-                "credit_id": "5d09246e92514163bab9759e",
                 "department": "Art",
-                "job": "Standby Art Director"
+                "jobs": [
+                    {
+                        "credit_id": "5d09246e92514163bab9759e",
+                        "job": "Standby Art Director",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1633,9 +2221,15 @@
                 "original_name": "Domantas Jakucionis",
                 "popularity": 0.0629,
                 "profile_path": null,
-                "credit_id": "5d0924ba92514163bab975bb",
                 "department": "Art",
-                "job": "Draughtsman"
+                "jobs": [
+                    {
+                        "credit_id": "5d0924ba92514163bab975bb",
+                        "job": "Draughtsman",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1646,9 +2240,15 @@
                 "original_name": "Arturas But",
                 "popularity": 0.094,
                 "profile_path": null,
-                "credit_id": "5d09268292514135eab974f9",
                 "department": "Art",
-                "job": "Set Dresser"
+                "jobs": [
+                    {
+                        "credit_id": "5d09268292514135eab974f9",
+                        "job": "Set Dresser",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1659,9 +2259,15 @@
                 "original_name": "Ona Kvintaité",
                 "popularity": 0.0979,
                 "profile_path": null,
-                "credit_id": "5d0926b6c3a36871861f609e",
                 "department": "Art",
-                "job": "Set Dresser"
+                "jobs": [
+                    {
+                        "credit_id": "5d0926b6c3a36871861f609e",
+                        "job": "Set Dresser",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1672,9 +2278,15 @@
                 "original_name": "Justinas Baciuska",
                 "popularity": 0.0644,
                 "profile_path": null,
-                "credit_id": "5d0926d60e0a26317acaea50",
                 "department": "Art",
-                "job": "Set Dressing Buyer"
+                "jobs": [
+                    {
+                        "credit_id": "5d0926d60e0a26317acaea50",
+                        "job": "Set Dressing Buyer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1685,9 +2297,15 @@
                 "original_name": "J-P Passi",
                 "popularity": 0.4402,
                 "profile_path": "/onqLlpKOu6JirTzd240GK4mxCAj.jpg",
-                "credit_id": "5d09284fc3a3684c6a1f420f",
                 "department": "Camera",
-                "job": "Additional Camera"
+                "jobs": [
+                    {
+                        "credit_id": "5d09284fc3a3684c6a1f420f",
+                        "job": "Additional Camera",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1698,9 +2316,15 @@
                 "original_name": "Sylvie Ong",
                 "popularity": 0.0745,
                 "profile_path": null,
-                "credit_id": "5d092a9c9251417ea0b96650",
                 "department": "Costume & Make-Up",
-                "job": "Costume Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d092a9c9251417ea0b96650",
+                        "job": "Costume Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1711,9 +2335,15 @@
                 "original_name": "Giedre Matuleviciene",
                 "popularity": 0.0912,
                 "profile_path": null,
-                "credit_id": "5d092b830e0a2628abcaeaa8",
                 "department": "Costume & Make-Up",
-                "job": "Seamstress"
+                "jobs": [
+                    {
+                        "credit_id": "5d092b830e0a2628abcaeaa8",
+                        "job": "Seamstress",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1724,9 +2354,15 @@
                 "original_name": "Ula Pakalniskyte",
                 "popularity": 0.0745,
                 "profile_path": null,
-                "credit_id": "5d092bf7c3a3685fdf1f1df0",
                 "department": "Costume & Make-Up",
-                "job": "Makeup Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d092bf7c3a3685fdf1f1df0",
+                        "job": "Makeup Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1737,9 +2373,15 @@
                 "original_name": "Марта Скальська",
                 "popularity": 0.2934,
                 "profile_path": null,
-                "credit_id": "5d092c32c3a3683dd81f2cd4",
                 "department": "Costume & Make-Up",
-                "job": "Makeup & Hair"
+                "jobs": [
+                    {
+                        "credit_id": "5d092c32c3a3683dd81f2cd4",
+                        "job": "Makeup & Hair",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1750,9 +2392,15 @@
                 "original_name": "Steven Godfrey",
                 "popularity": 0.0869,
                 "profile_path": null,
-                "credit_id": "5d0930260e0a266f99cb15e6",
                 "department": "Visual Effects",
-                "job": "3D Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d0930260e0a266f99cb15e6",
+                        "job": "3D Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1763,9 +2411,15 @@
                 "original_name": "Tom Pegg",
                 "popularity": 0.0649,
                 "profile_path": null,
-                "credit_id": "5d093186c3a3685bfc1f8470",
                 "department": "Visual Effects",
-                "job": "Visual Effects Compositor"
+                "jobs": [
+                    {
+                        "credit_id": "5d093186c3a3685bfc1f8470",
+                        "job": "Visual Effects Compositor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1776,9 +2430,15 @@
                 "original_name": "Eleanor Rogers",
                 "popularity": 0.1334,
                 "profile_path": null,
-                "credit_id": "5d0931aac3a3680efe1f3406",
                 "department": "Visual Effects",
-                "job": "Visual Effects Compositor"
+                "jobs": [
+                    {
+                        "credit_id": "5d0931aac3a3680efe1f3406",
+                        "job": "Visual Effects Compositor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1789,9 +2449,15 @@
                 "original_name": "Vasco Cerqueira",
                 "popularity": 0.1307,
                 "profile_path": null,
-                "credit_id": "5d0931ccc3a3684c6a1f5535",
                 "department": "Visual Effects",
-                "job": "Visual Effects Compositor"
+                "jobs": [
+                    {
+                        "credit_id": "5d0931ccc3a3684c6a1f5535",
+                        "job": "Visual Effects Compositor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1802,9 +2468,15 @@
                 "original_name": "Jay Murray",
                 "popularity": 0.1185,
                 "profile_path": null,
-                "credit_id": "5d0931d7c3a368647c1f7d3c",
                 "department": "Visual Effects",
-                "job": "Visual Effects Compositor"
+                "jobs": [
+                    {
+                        "credit_id": "5d0931d7c3a368647c1f7d3c",
+                        "job": "Visual Effects Compositor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1815,9 +2487,15 @@
                 "original_name": "Paulo Darco",
                 "popularity": 0.0345,
                 "profile_path": null,
-                "credit_id": "5d0931e2c3a3685bfc1f853e",
                 "department": "Visual Effects",
-                "job": "Visual Effects Compositor"
+                "jobs": [
+                    {
+                        "credit_id": "5d0931e2c3a3685bfc1f853e",
+                        "job": "Visual Effects Compositor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1828,9 +2506,15 @@
                 "original_name": "Alistair Darby",
                 "popularity": 0.1301,
                 "profile_path": null,
-                "credit_id": "5d09328b0e0a265ca3cb0bf0",
                 "department": "Visual Effects",
-                "job": "3D Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d09328b0e0a265ca3cb0bf0",
+                        "job": "3D Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1841,9 +2525,15 @@
                 "original_name": "Mark Pascoe",
                 "popularity": 0.1239,
                 "profile_path": null,
-                "credit_id": "5d0932d90e0a266f99cb1a1f",
                 "department": "Visual Effects",
-                "job": "3D Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d0932d90e0a266f99cb1a1f",
+                        "job": "3D Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1854,9 +2544,15 @@
                 "original_name": "Une Liandzbergyte",
                 "popularity": 0.0859,
                 "profile_path": null,
-                "credit_id": "5d09214c92514101b2b976d0",
                 "department": "Production",
-                "job": "Assistant Production Coordinator"
+                "jobs": [
+                    {
+                        "credit_id": "5d09214c92514101b2b976d0",
+                        "job": "Assistant Production Coordinator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1867,9 +2563,15 @@
                 "original_name": "Renata Dobrikiene",
                 "popularity": 0.0522,
                 "profile_path": null,
-                "credit_id": "5d0921e9c3a3685bfc1f5e6d",
                 "department": "Production",
-                "job": "Assistant Accountant"
+                "jobs": [
+                    {
+                        "credit_id": "5d0921e9c3a3685bfc1f5e6d",
+                        "job": "Assistant Accountant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1880,9 +2582,15 @@
                 "original_name": "Jill McCullough",
                 "popularity": 0.2698,
                 "profile_path": null,
-                "credit_id": "5d09232a0e0a2625adcafe2a",
                 "department": "Crew",
-                "job": "Dialect Coach"
+                "jobs": [
+                    {
+                        "credit_id": "5d09232a0e0a2625adcafe2a",
+                        "job": "Dialect Coach",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1893,9 +2601,15 @@
                 "original_name": "Tomas Jankauskas",
                 "popularity": 0.041,
                 "profile_path": null,
-                "credit_id": "5d0924950e0a265ca3caedd0",
                 "department": "Art",
-                "job": "Graphic Designer"
+                "jobs": [
+                    {
+                        "credit_id": "5d0924950e0a265ca3caedd0",
+                        "job": "Graphic Designer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1906,9 +2620,15 @@
                 "original_name": "Saulius Lukoševičius",
                 "popularity": 0.1351,
                 "profile_path": "/eSyvyWRiHRgw25kPPgIVrCZNa0Z.jpg",
-                "credit_id": "5d09286dc3a3683dd81f25ff",
                 "department": "Camera",
-                "job": "Additional Camera"
+                "jobs": [
+                    {
+                        "credit_id": "5d09286dc3a3683dd81f25ff",
+                        "job": "Additional Camera",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1919,9 +2639,15 @@
                 "original_name": "Janne Jannsen",
                 "popularity": 0.0365,
                 "profile_path": null,
-                "credit_id": "5d0929050e0a2630d0cade9c",
                 "department": "Crew",
-                "job": "Drone Operator"
+                "jobs": [
+                    {
+                        "credit_id": "5d0929050e0a2630d0cade9c",
+                        "job": "Drone Operator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1932,9 +2658,15 @@
                 "original_name": "Jonas Balys Paslauskas",
                 "popularity": 0.3054,
                 "profile_path": null,
-                "credit_id": "5d0929bdc3a3684c6a1f4682",
                 "department": "Lighting",
-                "job": "Electrician"
+                "jobs": [
+                    {
+                        "credit_id": "5d0929bdc3a3684c6a1f4682",
+                        "job": "Electrician",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1945,9 +2677,15 @@
                 "original_name": "Žaneta Jasiūnienė",
                 "popularity": 0.0688,
                 "profile_path": null,
-                "credit_id": "5d092c53c3a3687c751f5180",
                 "department": "Costume & Make-Up",
-                "job": "Makeup & Hair"
+                "jobs": [
+                    {
+                        "credit_id": "5d092c53c3a3687c751f5180",
+                        "job": "Makeup & Hair",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1958,9 +2696,15 @@
                 "original_name": "Rūta Padvelskytė",
                 "popularity": 0.1015,
                 "profile_path": null,
-                "credit_id": "5d092ce50e0a2628abcaed5f",
                 "department": "Costume & Make-Up",
-                "job": "Makeup Trainee"
+                "jobs": [
+                    {
+                        "credit_id": "5d092ce50e0a2628abcaed5f",
+                        "job": "Makeup Trainee",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1971,9 +2715,15 @@
                 "original_name": "Nessa Zhang Mingfang",
                 "popularity": 0.0703,
                 "profile_path": null,
-                "credit_id": "5d0932ac92514101b2b99829",
                 "department": "Visual Effects",
-                "job": "3D Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d0932ac92514101b2b99829",
+                        "job": "3D Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1984,9 +2734,15 @@
                 "original_name": "Lindsay McFarlane",
                 "popularity": 0.076,
                 "profile_path": null,
-                "credit_id": "5d0920a29251411dbab95707",
                 "department": "Visual Effects",
-                "job": "Visual Effects Producer"
+                "jobs": [
+                    {
+                        "credit_id": "5d0920a29251411dbab95707",
+                        "job": "Visual Effects Producer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -1997,9 +2753,15 @@
                 "original_name": "Jacqueline Lesko",
                 "popularity": 0.2083,
                 "profile_path": null,
-                "credit_id": "5d0920c292514150c1b9693c",
                 "department": "Production",
-                "job": "Co-Producer"
+                "jobs": [
+                    {
+                        "credit_id": "5d0920c292514150c1b9693c",
+                        "job": "Co-Producer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2010,9 +2772,15 @@
                 "original_name": "Amy Sharman",
                 "popularity": 0.0636,
                 "profile_path": null,
-                "credit_id": "5d0921720e0a2625adcafc5e",
                 "department": "Production",
-                "job": "Production Secretary"
+                "jobs": [
+                    {
+                        "credit_id": "5d0921720e0a2625adcafc5e",
+                        "job": "Production Secretary",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2023,9 +2791,15 @@
                 "original_name": "Chris Roufs",
                 "popularity": 0.2521,
                 "profile_path": null,
-                "credit_id": "5d0922279251417ea0b95649",
                 "department": "Directing",
-                "job": "Script Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d0922279251417ea0b95649",
+                        "job": "Script Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2036,9 +2810,15 @@
                 "original_name": "Vita Survilaite",
                 "popularity": 0.0691,
                 "profile_path": null,
-                "credit_id": "5d0922e8925141170cb97a51",
                 "department": "Production",
-                "job": "Casting Assistant"
+                "jobs": [
+                    {
+                        "credit_id": "5d0922e8925141170cb97a51",
+                        "job": "Casting Assistant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2049,9 +2829,15 @@
                 "original_name": "Justas Paliukaitis",
                 "popularity": 0.1051,
                 "profile_path": null,
-                "credit_id": "5d0924c5925141170cb97d71",
                 "department": "Art",
-                "job": "Draughtsman"
+                "jobs": [
+                    {
+                        "credit_id": "5d0924c5925141170cb97d71",
+                        "job": "Draughtsman",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2062,9 +2848,15 @@
                 "original_name": "Donatas Pirštelis",
                 "popularity": 0.169,
                 "profile_path": null,
-                "credit_id": "5d0925fa0e0a2630d0cad9df",
                 "department": "Art",
-                "job": "Construction Manager"
+                "jobs": [
+                    {
+                        "credit_id": "5d0925fa0e0a2630d0cad9df",
+                        "job": "Construction Manager",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2075,9 +2867,15 @@
                 "original_name": "Ieva Rojūtė",
                 "popularity": 0.1703,
                 "profile_path": "/ctEHjsRwVHch6e1F7jeWz2ZZYHa.jpg",
-                "credit_id": "5d0926ea0e0a267fe0cb0261",
                 "department": "Art",
-                "job": "Set Dressing Buyer"
+                "jobs": [
+                    {
+                        "credit_id": "5d0926ea0e0a267fe0cb0261",
+                        "job": "Set Dressing Buyer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2088,9 +2886,15 @@
                 "original_name": "Holly McLean",
                 "popularity": 0.0726,
                 "profile_path": null,
-                "credit_id": "5d092a87c3a3684c6a1f475c",
                 "department": "Costume & Make-Up",
-                "job": "Assistant Costume Designer"
+                "jobs": [
+                    {
+                        "credit_id": "5d092a87c3a3684c6a1f475c",
+                        "job": "Assistant Costume Designer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2101,9 +2905,15 @@
                 "original_name": "Martina Byrne",
                 "popularity": 0.1403,
                 "profile_path": null,
-                "credit_id": "5d092d320e0a26317acafa9c",
                 "department": "Costume & Make-Up",
-                "job": "Prosthetic Makeup Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d092d320e0a26317acafa9c",
+                        "job": "Prosthetic Makeup Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2114,9 +2924,15 @@
                 "original_name": "Victoria Money",
                 "popularity": 0.1185,
                 "profile_path": null,
-                "credit_id": "5d092d7d0e0a2630d0cae46f",
                 "department": "Costume & Make-Up",
-                "job": "Prosthetic Makeup Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d092d7d0e0a2630d0cae46f",
+                        "job": "Prosthetic Makeup Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2127,9 +2943,15 @@
                 "original_name": "Patrick Dean",
                 "popularity": 0.0519,
                 "profile_path": null,
-                "credit_id": "5d0930730e0a267ffbcb0c74",
                 "department": "Visual Effects",
-                "job": "Visual Effects Production Assistant"
+                "jobs": [
+                    {
+                        "credit_id": "5d0930730e0a267ffbcb0c74",
+                        "job": "Visual Effects Production Assistant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2140,9 +2962,15 @@
                 "original_name": "Alice Locuratolo",
                 "popularity": 0.1169,
                 "profile_path": null,
-                "credit_id": "5d093179c3a3687c751f5fb8",
                 "department": "Visual Effects",
-                "job": "Visual Effects Compositor"
+                "jobs": [
+                    {
+                        "credit_id": "5d093179c3a3687c751f5fb8",
+                        "job": "Visual Effects Compositor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2153,9 +2981,15 @@
                 "original_name": "Pasquale Riefoil",
                 "popularity": 0.0932,
                 "profile_path": null,
-                "credit_id": "5d09325c0e0a267ffbcb0fb9",
                 "department": "Visual Effects",
-                "job": "VFX Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d09325c0e0a267ffbcb0fb9",
+                        "job": "VFX Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2166,9 +3000,15 @@
                 "original_name": "Stafford Lawrence",
                 "popularity": 0.0819,
                 "profile_path": null,
-                "credit_id": "5d09336e92514163bab990a3",
                 "department": "Visual Effects",
-                "job": "Animation Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d09336e92514163bab990a3",
+                        "job": "Animation Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2179,9 +3019,15 @@
                 "original_name": "John Kay",
                 "popularity": 0.133,
                 "profile_path": null,
-                "credit_id": "5d0933960e0a2630d0caefc4",
                 "department": "Visual Effects",
-                "job": "Animation"
+                "jobs": [
+                    {
+                        "credit_id": "5d0933960e0a2630d0caefc4",
+                        "job": "Animation",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2192,9 +3038,15 @@
                 "original_name": "Heidi Elliott",
                 "popularity": 0.1466,
                 "profile_path": null,
-                "credit_id": "5d0933a20e0a266f99cb1b26",
                 "department": "Visual Effects",
-                "job": "Animation"
+                "jobs": [
+                    {
+                        "credit_id": "5d0933a20e0a266f99cb1b26",
+                        "job": "Animation",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2205,9 +3057,15 @@
                 "original_name": "Philip Clements",
                 "popularity": 0.1352,
                 "profile_path": null,
-                "credit_id": "5d0934f29251411dbab97f73",
                 "department": "Sound",
-                "job": "Foley Mixer"
+                "jobs": [
+                    {
+                        "credit_id": "5d0934f29251411dbab97f73",
+                        "job": "Foley Mixer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2218,9 +3076,15 @@
                 "original_name": "Magali Gibert",
                 "popularity": 0.058,
                 "profile_path": null,
-                "credit_id": "5d09351f0e0a2630d0caf25f",
                 "department": "Production",
-                "job": "Head of Production"
+                "jobs": [
+                    {
+                        "credit_id": "5d09351f0e0a2630d0caf25f",
+                        "job": "Head of Production",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2231,9 +3095,15 @@
                 "original_name": "Birute Masaityte-Judickiene",
                 "popularity": 0.0573,
                 "profile_path": null,
-                "credit_id": "5d09214292514163bab96fd9",
                 "department": "Production",
-                "job": "Assistant Production Coordinator"
+                "jobs": [
+                    {
+                        "credit_id": "5d09214292514163bab96fd9",
+                        "job": "Assistant Production Coordinator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2244,9 +3114,15 @@
                 "original_name": "Felicity Hickman",
                 "popularity": 0.145,
                 "profile_path": null,
-                "credit_id": "5d0926420e0a266f99caffe6",
                 "department": "Art",
-                "job": "Set Decoration Buyer"
+                "jobs": [
+                    {
+                        "credit_id": "5d0926420e0a266f99caffe6",
+                        "job": "Set Decoration Buyer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2257,9 +3133,15 @@
                 "original_name": "Jo Vaughan",
                 "popularity": 0.0973,
                 "profile_path": null,
-                "credit_id": "5d09279ec3a36871861f61a8",
                 "department": "Crew",
-                "job": "Animal Wrangler"
+                "jobs": [
+                    {
+                        "credit_id": "5d09279ec3a36871861f61a8",
+                        "job": "Animal Wrangler",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2270,9 +3152,15 @@
                 "original_name": "Egidijus Braziūnas",
                 "popularity": 0.1599,
                 "profile_path": null,
-                "credit_id": "5d09299bc3a36871861f6557",
                 "department": "Lighting",
-                "job": "Rigging Gaffer"
+                "jobs": [
+                    {
+                        "credit_id": "5d09299bc3a36871861f6557",
+                        "job": "Rigging Gaffer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2283,9 +3171,15 @@
                 "original_name": "Ricardas Rutkauskas",
                 "popularity": 0.1038,
                 "profile_path": null,
-                "credit_id": "5d0929db9251417ea0b964b3",
                 "department": "Lighting",
-                "job": "Electrician"
+                "jobs": [
+                    {
+                        "credit_id": "5d0929db9251417ea0b964b3",
+                        "job": "Electrician",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2296,9 +3190,15 @@
                 "original_name": "Anna Munro",
                 "popularity": 0.0781,
                 "profile_path": null,
-                "credit_id": "5d092a919251411dbab96b1e",
                 "department": "Costume & Make-Up",
-                "job": "Costume Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d092a919251411dbab96b1e",
+                        "job": "Costume Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2309,9 +3209,15 @@
                 "original_name": "Jurga Kleizaitè",
                 "popularity": 0.0743,
                 "profile_path": null,
-                "credit_id": "5d092af00e0a265ca3caf9a3",
                 "department": "Costume & Make-Up",
-                "job": "Costume Assistant"
+                "jobs": [
+                    {
+                        "credit_id": "5d092af00e0a265ca3caf9a3",
+                        "job": "Costume Assistant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2322,9 +3228,15 @@
                 "original_name": "Jovana Jovanavic",
                 "popularity": 0.0992,
                 "profile_path": null,
-                "credit_id": "5d092c1fc3a3684c6a1f49b8",
                 "department": "Costume & Make-Up",
-                "job": "Makeup & Hair"
+                "jobs": [
+                    {
+                        "credit_id": "5d092c1fc3a3684c6a1f49b8",
+                        "job": "Makeup & Hair",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2335,9 +3247,15 @@
                 "original_name": "Rūta Miglinaitė",
                 "popularity": 0.2275,
                 "profile_path": null,
-                "credit_id": "5d092cc6c3a368647c1f74ad",
                 "department": "Costume & Make-Up",
-                "job": "Makeup & Hair"
+                "jobs": [
+                    {
+                        "credit_id": "5d092cc6c3a368647c1f74ad",
+                        "job": "Makeup & Hair",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2348,9 +3266,15 @@
                 "original_name": "Robyn Woolley",
                 "popularity": 0.0893,
                 "profile_path": null,
-                "credit_id": "5d09305f92514135eab98410",
                 "department": "Visual Effects",
-                "job": "Visual Effects Production Assistant"
+                "jobs": [
+                    {
+                        "credit_id": "5d09305f92514135eab98410",
+                        "job": "Visual Effects Production Assistant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2361,9 +3285,15 @@
                 "original_name": "Duane Lafayette-Barton",
                 "popularity": 0.0732,
                 "profile_path": null,
-                "credit_id": "5d09310692514101b2b9947b",
                 "department": "Crew",
-                "job": "Visual Effects Editor"
+                "jobs": [
+                    {
+                        "credit_id": "5d09310692514101b2b9947b",
+                        "job": "Visual Effects Editor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2374,9 +3304,15 @@
                 "original_name": "Aiste Borjas",
                 "popularity": 0.0845,
                 "profile_path": null,
-                "credit_id": "5d092157c3a36871861f5770",
                 "department": "Production",
-                "job": "Travel Coordinator"
+                "jobs": [
+                    {
+                        "credit_id": "5d092157c3a36871861f5770",
+                        "job": "Travel Coordinator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2387,9 +3323,15 @@
                 "original_name": "Kristina Valvoliene",
                 "popularity": 0.044,
                 "profile_path": null,
-                "credit_id": "5d0921f3c3a3680efe1f10e4",
                 "department": "Production",
-                "job": "Assistant Accountant"
+                "jobs": [
+                    {
+                        "credit_id": "5d0921f3c3a3680efe1f10e4",
+                        "job": "Assistant Accountant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2400,9 +3342,15 @@
                 "original_name": "Jackie Gilbey",
                 "popularity": 0.1251,
                 "profile_path": null,
-                "credit_id": "5d09220b9251417ea0b9563c",
                 "department": "Production",
-                "job": "Assistant Accountant"
+                "jobs": [
+                    {
+                        "credit_id": "5d09220b9251417ea0b9563c",
+                        "job": "Assistant Accountant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2413,9 +3361,15 @@
                 "original_name": "Dalia Survilaitė",
                 "popularity": 0.0729,
                 "profile_path": "/bfNFQ0iOCimsSwjV0aTPtl2d0bg.jpg",
-                "credit_id": "5d0922dec3a36871861f5a50",
                 "department": "Production",
-                "job": "Local Casting"
+                "jobs": [
+                    {
+                        "credit_id": "5d0922dec3a36871861f5a50",
+                        "job": "Local Casting",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2426,9 +3380,15 @@
                 "original_name": "Goda Gajauskaite",
                 "popularity": 0.0501,
                 "profile_path": null,
-                "credit_id": "5d092385c3a3683dd81f1973",
                 "department": "Production",
-                "job": "Assistant Location Manager"
+                "jobs": [
+                    {
+                        "credit_id": "5d092385c3a3683dd81f1973",
+                        "job": "Assistant Location Manager",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2439,9 +3399,15 @@
                 "original_name": "Andrius Zubkaitis",
                 "popularity": 0.1027,
                 "profile_path": null,
-                "credit_id": "5d09264e92514101b2b982c8",
                 "department": "Art",
-                "job": "Leadman"
+                "jobs": [
+                    {
+                        "credit_id": "5d09264e92514101b2b982c8",
+                        "job": "Leadman",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2452,9 +3418,15 @@
                 "original_name": "Evaldas Simelevicius",
                 "popularity": 0.127,
                 "profile_path": null,
-                "credit_id": "5d0926e0c3a368647c1f6af0",
                 "department": "Art",
-                "job": "Set Dressing Buyer"
+                "jobs": [
+                    {
+                        "credit_id": "5d0926e0c3a368647c1f6af0",
+                        "job": "Set Dressing Buyer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2465,9 +3437,15 @@
                 "original_name": "Sofia Larsson",
                 "popularity": 0.0637,
                 "profile_path": null,
-                "credit_id": "5d0928010e0a265ca3caf43f",
                 "department": "Camera",
-                "job": "First Assistant \"A\" Camera"
+                "jobs": [
+                    {
+                        "credit_id": "5d0928010e0a265ca3caf43f",
+                        "job": "First Assistant \"A\" Camera",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2478,9 +3456,15 @@
                 "original_name": "Gustav Gerdes",
                 "popularity": 0.1092,
                 "profile_path": null,
-                "credit_id": "5d092938c3a3685bfc1f717f",
                 "department": "Crew",
-                "job": "Drone Operator"
+                "jobs": [
+                    {
+                        "credit_id": "5d092938c3a3685bfc1f717f",
+                        "job": "Drone Operator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2491,9 +3475,15 @@
                 "original_name": "Matas Jurginis",
                 "popularity": 0.0723,
                 "profile_path": null,
-                "credit_id": "5d09295fc3a3683dd81f2879",
                 "department": "Crew",
-                "job": "Video Assist Operator"
+                "jobs": [
+                    {
+                        "credit_id": "5d09295fc3a3683dd81f2879",
+                        "job": "Video Assist Operator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2504,9 +3494,15 @@
                 "original_name": "Dmitrij Sinelscikov",
                 "popularity": 0.0379,
                 "profile_path": null,
-                "credit_id": "5d0929d1c3a3687c751f4dc3",
                 "department": "Lighting",
-                "job": "Electrician"
+                "jobs": [
+                    {
+                        "credit_id": "5d0929d1c3a3687c751f4dc3",
+                        "job": "Electrician",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2517,9 +3513,15 @@
                 "original_name": "Gerda Kajeniene",
                 "popularity": 0.1084,
                 "profile_path": null,
-                "credit_id": "5d092aa7c3a3683dd81f2a74",
                 "department": "Costume & Make-Up",
-                "job": "Wardrobe Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d092aa7c3a3683dd81f2a74",
+                        "job": "Wardrobe Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2530,9 +3532,15 @@
                 "original_name": "Natalie Mitchell",
                 "popularity": 0.0961,
                 "profile_path": null,
-                "credit_id": "5d092c3f92514101b2b98c4e",
                 "department": "Costume & Make-Up",
-                "job": "Makeup & Hair"
+                "jobs": [
+                    {
+                        "credit_id": "5d092c3f92514101b2b98c4e",
+                        "job": "Makeup & Hair",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2543,9 +3551,15 @@
                 "original_name": "Kati Hood",
                 "popularity": 0.0661,
                 "profile_path": null,
-                "credit_id": "5d092d64c3a3687c751f529d",
                 "department": "Costume & Make-Up",
-                "job": "Prosthetic Makeup Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d092d64c3a3687c751f529d",
+                        "job": "Prosthetic Makeup Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2556,9 +3570,15 @@
                 "original_name": "J-P Passi",
                 "popularity": 0.4402,
                 "profile_path": "/onqLlpKOu6JirTzd240GK4mxCAj.jpg",
-                "credit_id": "5d092e609251411dbab972ac",
                 "department": "Camera",
-                "job": "Second Unit Director of Photography"
+                "jobs": [
+                    {
+                        "credit_id": "5d092e609251411dbab972ac",
+                        "job": "Second Unit Director of Photography",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2569,9 +3589,15 @@
                 "original_name": "David Meanti",
                 "popularity": 0.3519,
                 "profile_path": null,
-                "credit_id": "5d0920b4c3a3680efe1f0e9f",
                 "department": "Directing",
-                "job": "First Assistant Director"
+                "jobs": [
+                    {
+                        "credit_id": "5d0920b4c3a3680efe1f0e9f",
+                        "job": "First Assistant Director",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2582,9 +3608,15 @@
                 "original_name": "Tadas Ustinavicius",
                 "popularity": 0.0823,
                 "profile_path": null,
-                "credit_id": "5d0927c90e0a267fe0cb04ad",
                 "department": "Crew",
-                "job": "Armorer"
+                "jobs": [
+                    {
+                        "credit_id": "5d0927c90e0a267fe0cb04ad",
+                        "job": "Armorer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2595,9 +3627,15 @@
                 "original_name": "Karin Jakobsson",
                 "popularity": 0.1082,
                 "profile_path": null,
-                "credit_id": "5d09282192514101b2b985ca",
                 "department": "Camera",
-                "job": "Second Assistant \"A\" Camera"
+                "jobs": [
+                    {
+                        "credit_id": "5d09282192514101b2b985ca",
+                        "job": "Second Assistant \"A\" Camera",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2608,9 +3646,15 @@
                 "original_name": "Mantautas Klimas",
                 "popularity": 0.0895,
                 "profile_path": null,
-                "credit_id": "5d09283e92514150c1b9763c",
                 "department": "Camera",
-                "job": "Camera Trainee"
+                "jobs": [
+                    {
+                        "credit_id": "5d09283e92514150c1b9763c",
+                        "job": "Camera Trainee",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2621,9 +3665,15 @@
                 "original_name": "Dovydas Strioga",
                 "popularity": 0.0356,
                 "profile_path": null,
-                "credit_id": "5d0928fb0e0a26317acaee53",
                 "department": "Camera",
-                "job": "Grip"
+                "jobs": [
+                    {
+                        "credit_id": "5d0928fb0e0a26317acaee53",
+                        "job": "Grip",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2634,9 +3684,15 @@
                 "original_name": "Simonas Jakubauskas",
                 "popularity": 0.079,
                 "profile_path": null,
-                "credit_id": "5d0929190e0a267fe0cb077d",
                 "department": "Crew",
-                "job": "Drone Operator"
+                "jobs": [
+                    {
+                        "credit_id": "5d0929190e0a267fe0cb077d",
+                        "job": "Drone Operator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2647,9 +3703,15 @@
                 "original_name": "Tobias Henriksson",
                 "popularity": 0.1535,
                 "profile_path": null,
-                "credit_id": "5d09299192514101b2b98835",
                 "department": "Lighting",
-                "job": "Gaffer"
+                "jobs": [
+                    {
+                        "credit_id": "5d09299192514101b2b98835",
+                        "job": "Gaffer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2660,9 +3722,15 @@
                 "original_name": "Vidmantas Kralikauskas",
                 "popularity": 0.109,
                 "profile_path": null,
-                "credit_id": "5d0929b30e0a2630d0cadf61",
                 "department": "Lighting",
-                "job": "Electrician"
+                "jobs": [
+                    {
+                        "credit_id": "5d0929b30e0a2630d0cadf61",
+                        "job": "Electrician",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2673,9 +3741,15 @@
                 "original_name": "Luke Letkey",
                 "popularity": 0.0767,
                 "profile_path": null,
-                "credit_id": "5d0930339251411dbab975c2",
                 "department": "Visual Effects",
-                "job": "2D Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d0930339251411dbab975c2",
+                        "job": "2D Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2686,9 +3760,15 @@
                 "original_name": "George Butler",
                 "popularity": 0.0863,
                 "profile_path": null,
-                "credit_id": "5d09309b92514163bab98b46",
                 "department": "Visual Effects",
-                "job": "Visual Effects Production Assistant"
+                "jobs": [
+                    {
+                        "credit_id": "5d09309b92514163bab98b46",
+                        "job": "Visual Effects Production Assistant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2699,9 +3779,15 @@
                 "original_name": "Phil Gifford",
                 "popularity": 0.1061,
                 "profile_path": null,
-                "credit_id": "5d0932470e0a26317acb0672",
                 "department": "Visual Effects",
-                "job": "VFX Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d0932470e0a26317acb0672",
+                        "job": "VFX Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2712,9 +3798,15 @@
                 "original_name": "Lukas Niemczyk",
                 "popularity": 0.046,
                 "profile_path": null,
-                "credit_id": "5d093251c3a368647c1f7ef8",
                 "department": "Visual Effects",
-                "job": "VFX Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d093251c3a368647c1f7ef8",
+                        "job": "VFX Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2725,9 +3817,15 @@
                 "original_name": "Karen Walker",
                 "popularity": 0.0337,
                 "profile_path": null,
-                "credit_id": "5d0921d49251411dbab95813",
                 "department": "Production",
-                "job": "Second Assistant Accountant"
+                "jobs": [
+                    {
+                        "credit_id": "5d0921d49251411dbab95813",
+                        "job": "Second Assistant Accountant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2738,9 +3836,15 @@
                 "original_name": "Simonas Šaineris",
                 "popularity": 0.1249,
                 "profile_path": null,
-                "credit_id": "5d0922820e0a2625adcafd7a",
                 "department": "Crew",
-                "job": "Set Production Assistant"
+                "jobs": [
+                    {
+                        "credit_id": "5d0922820e0a2625adcafd7a",
+                        "job": "Set Production Assistant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2751,9 +3855,15 @@
                 "original_name": "Liam Daniel",
                 "popularity": 0.095,
                 "profile_path": null,
-                "credit_id": "5d092303925141170cb97a79",
                 "department": "Camera",
-                "job": "Still Photographer"
+                "jobs": [
+                    {
+                        "credit_id": "5d092303925141170cb97a79",
+                        "job": "Still Photographer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2764,9 +3874,15 @@
                 "original_name": "Julius Karvelis",
                 "popularity": 0.1302,
                 "profile_path": null,
-                "credit_id": "5d09235bc3a3685bfc1f614c",
                 "department": "Production",
-                "job": "Assistant Location Manager"
+                "jobs": [
+                    {
+                        "credit_id": "5d09235bc3a3685bfc1f614c",
+                        "job": "Assistant Location Manager",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2777,9 +3893,15 @@
                 "original_name": "Marius Smailys",
                 "popularity": 0.1205,
                 "profile_path": null,
-                "credit_id": "5d09266e92514135eab974e6",
                 "department": "Art",
-                "job": "Set Dresser"
+                "jobs": [
+                    {
+                        "credit_id": "5d09266e92514135eab974e6",
+                        "job": "Set Dresser",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2790,9 +3912,15 @@
                 "original_name": "Vytautas Ruminas",
                 "popularity": 0.0475,
                 "profile_path": null,
-                "credit_id": "5d0926970e0a2628abcae152",
                 "department": "Art",
-                "job": "Set Dresser"
+                "jobs": [
+                    {
+                        "credit_id": "5d0926970e0a2628abcae152",
+                        "job": "Set Dresser",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2803,9 +3931,15 @@
                 "original_name": "Martynas Baltrusaitis",
                 "popularity": 0.068,
                 "profile_path": null,
-                "credit_id": "5d0926ac92514101b2b9833e",
                 "department": "Art",
-                "job": "Set Dresser"
+                "jobs": [
+                    {
+                        "credit_id": "5d0926ac92514101b2b9833e",
+                        "job": "Set Dresser",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2816,9 +3950,15 @@
                 "original_name": "Ants Martin Vahur",
                 "popularity": 0.1577,
                 "profile_path": "/wTYIFbwlTxUACnC6okkQFAGGx9X.jpg",
-                "credit_id": "5d0927d79251417ea0b96132",
                 "department": "Camera",
-                "job": "\"A\" Camera Operator"
+                "jobs": [
+                    {
+                        "credit_id": "5d0927d79251417ea0b96132",
+                        "job": "\"A\" Camera Operator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2829,9 +3969,15 @@
                 "original_name": "Audrius Budrys",
                 "popularity": 0.1,
                 "profile_path": "/j4POTU2YibHPART25xl9gDktmee.jpg",
-                "credit_id": "5d0928790e0a267ffbcaff3e",
                 "department": "Camera",
-                "job": "Additional Camera"
+                "jobs": [
+                    {
+                        "credit_id": "5d0928790e0a267ffbcaff3e",
+                        "job": "Additional Camera",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2842,9 +3988,15 @@
                 "original_name": "Titas Obelenis",
                 "popularity": 0.0892,
                 "profile_path": null,
-                "credit_id": "5d09289ec3a3680efe1f1fe5",
                 "department": "Camera",
-                "job": "Data Wrangler"
+                "jobs": [
+                    {
+                        "credit_id": "5d09289ec3a3680efe1f1fe5",
+                        "job": "Data Wrangler",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2855,9 +4007,15 @@
                 "original_name": "Giedrius Bukaitis",
                 "popularity": 0.1124,
                 "profile_path": null,
-                "credit_id": "5d0929a90e0a2628abcae7c6",
                 "department": "Lighting",
-                "job": "Best Boy Electrician"
+                "jobs": [
+                    {
+                        "credit_id": "5d0929a90e0a2628abcae7c6",
+                        "job": "Best Boy Electrician",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2868,9 +4026,15 @@
                 "original_name": "Lucy Sibbick",
                 "popularity": 0.1925,
                 "profile_path": null,
-                "credit_id": "5d092d890e0a266f99cb1283",
                 "department": "Costume & Make-Up",
-                "job": "Prosthetic Makeup Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d092d890e0a266f99cb1283",
+                        "job": "Prosthetic Makeup Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2881,9 +4045,15 @@
                 "original_name": "Lucy Pittard",
                 "popularity": 0.0606,
                 "profile_path": null,
-                "credit_id": "5d092d9492514135eab97f9b",
                 "department": "Costume & Make-Up",
-                "job": "Prosthetic Makeup Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d092d9492514135eab97f9b",
+                        "job": "Prosthetic Makeup Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2894,9 +4064,15 @@
                 "original_name": "Jan Hrebicek",
                 "popularity": 0.0604,
                 "profile_path": null,
-                "credit_id": "5d0932a1c3a3683dd81f3da9",
                 "department": "Visual Effects",
-                "job": "3D Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d0932a1c3a3683dd81f3da9",
+                        "job": "3D Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2907,9 +4083,15 @@
                 "original_name": "Andy Potter",
                 "popularity": 0.0756,
                 "profile_path": null,
-                "credit_id": "5d0932b80e0a2625adcb1f92",
                 "department": "Visual Effects",
-                "job": "3D Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d0932b80e0a2625adcb1f92",
+                        "job": "3D Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2920,9 +4102,15 @@
                 "original_name": "Dalia Daugilytė",
                 "popularity": 0.0486,
                 "profile_path": null,
-                "credit_id": "5d0922f30e0a267ffbcaf2f0",
                 "department": "Production",
-                "job": "Casting Assistant"
+                "jobs": [
+                    {
+                        "credit_id": "5d0922f30e0a267ffbcaf2f0",
+                        "job": "Casting Assistant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2933,9 +4121,15 @@
                 "original_name": "Aurelijus Silkinis",
                 "popularity": 0.0782,
                 "profile_path": null,
-                "credit_id": "5d09237a0e0a26317acae34f",
                 "department": "Production",
-                "job": "Assistant Location Manager"
+                "jobs": [
+                    {
+                        "credit_id": "5d09237a0e0a26317acae34f",
+                        "job": "Assistant Location Manager",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2946,9 +4140,15 @@
                 "original_name": "Anita Dhillon",
                 "popularity": 0.1506,
                 "profile_path": null,
-                "credit_id": "5d092481c3a3684c6a1f390b",
                 "department": "Art",
-                "job": "Graphic Designer"
+                "jobs": [
+                    {
+                        "credit_id": "5d092481c3a3684c6a1f390b",
+                        "job": "Graphic Designer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2959,9 +4159,15 @@
                 "original_name": "Martynas Vinciunas",
                 "popularity": 0.0556,
                 "profile_path": null,
-                "credit_id": "5d0926640e0a2630d0cadaa3",
                 "department": "Art",
-                "job": "Set Dresser"
+                "jobs": [
+                    {
+                        "credit_id": "5d0926640e0a2630d0cadaa3",
+                        "job": "Set Dresser",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2972,9 +4178,15 @@
                 "original_name": "Filip Lyman",
                 "popularity": 0.1273,
                 "profile_path": null,
-                "credit_id": "5d0927f00e0a2630d0cadc9d",
                 "department": "Camera",
-                "job": "\"B\" Camera Operator"
+                "jobs": [
+                    {
+                        "credit_id": "5d0927f00e0a2630d0cadc9d",
+                        "job": "\"B\" Camera Operator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2985,9 +4197,15 @@
                 "original_name": "Rolandas Joneliūkštis",
                 "popularity": 0.1228,
                 "profile_path": "/ip5DyPwktpCtsFPvCfqvZgvxTXD.jpg",
-                "credit_id": "5d092812c3a3684c6a1f41d0",
                 "department": "Camera",
-                "job": "First Assistant \"B\" Camera"
+                "jobs": [
+                    {
+                        "credit_id": "5d092812c3a3684c6a1f41d0",
+                        "job": "First Assistant \"B\" Camera",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -2998,9 +4216,15 @@
                 "original_name": "Christian Pellving",
                 "popularity": 0.0736,
                 "profile_path": null,
-                "credit_id": "5d09290f0e0a2630d0cadea8",
                 "department": "Crew",
-                "job": "Drone Operator"
+                "jobs": [
+                    {
+                        "credit_id": "5d09290f0e0a2630d0cadea8",
+                        "job": "Drone Operator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3011,9 +4235,15 @@
                 "original_name": "Nicolas Fejoz",
                 "popularity": 0.1609,
                 "profile_path": null,
-                "credit_id": "5d0929740e0a267ffbcb0189",
                 "department": "Sound",
-                "job": "Boom Operator"
+                "jobs": [
+                    {
+                        "credit_id": "5d0929740e0a267ffbcb0189",
+                        "job": "Boom Operator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3024,9 +4254,15 @@
                 "original_name": "Jonas Cepulis",
                 "popularity": 0.2169,
                 "profile_path": "/4jyL2CdZdopc6ey5jCcgcehEyeJ.jpg",
-                "credit_id": "5d0929e592514150c1b978c3",
                 "department": "Lighting",
-                "job": "Electrician"
+                "jobs": [
+                    {
+                        "credit_id": "5d0929e592514150c1b978c3",
+                        "job": "Electrician",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3037,9 +4273,15 @@
                 "original_name": "Daiva Petrulytė",
                 "popularity": 0.1052,
                 "profile_path": null,
-                "credit_id": "5d092a0cc3a368647c1f7028",
                 "department": "Costume & Make-Up",
-                "job": "Assistant Costume Designer"
+                "jobs": [
+                    {
+                        "credit_id": "5d092a0cc3a368647c1f7028",
+                        "job": "Assistant Costume Designer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3050,9 +4292,15 @@
                 "original_name": "Claudius Rauch",
                 "popularity": 0.1071,
                 "profile_path": null,
-                "credit_id": "5d092dccc3a3680efe1f27e2",
                 "department": "Visual Effects",
-                "job": "Special Effects Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d092dccc3a3680efe1f27e2",
+                        "job": "Special Effects Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3063,9 +4311,15 @@
                 "original_name": "James Cox",
                 "popularity": 0.0703,
                 "profile_path": null,
-                "credit_id": "5d092e2bc3a3680efe1f2881",
                 "department": "Crew",
-                "job": "Health and Safety"
+                "jobs": [
+                    {
+                        "credit_id": "5d092e2bc3a3680efe1f2881",
+                        "job": "Health and Safety",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3076,9 +4330,15 @@
                 "original_name": "Max Dennison",
                 "popularity": 0.2469,
                 "profile_path": null,
-                "credit_id": "5d092fedc3a3680efe1f2e76",
                 "department": "Visual Effects",
-                "job": "Visual Effects Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d092fedc3a3680efe1f2e76",
+                        "job": "Visual Effects Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3089,9 +4349,15 @@
                 "original_name": "James Robson",
                 "popularity": 0.0979,
                 "profile_path": null,
-                "credit_id": "5d0932970e0a26317acb06f1",
                 "department": "Visual Effects",
-                "job": "3D Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d0932970e0a26317acb06f1",
+                        "job": "3D Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3102,9 +4368,15 @@
                 "original_name": "Eliot Speed",
                 "popularity": 0.1197,
                 "profile_path": null,
-                "credit_id": "5d09337d9251411dbab97d1b",
                 "department": "Visual Effects",
-                "job": "Animation"
+                "jobs": [
+                    {
+                        "credit_id": "5d09337d9251411dbab97d1b",
+                        "job": "Animation",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3115,9 +4387,15 @@
                 "original_name": "Anna Wright",
                 "popularity": 0.0603,
                 "profile_path": null,
-                "credit_id": "5d0934e60e0a266f99cb1d62",
                 "department": "Sound",
-                "job": "Foley Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d0934e60e0a266f99cb1d62",
+                        "job": "Foley Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3128,9 +4406,15 @@
                 "original_name": "Arnas Ringaitis",
                 "popularity": 0.0612,
                 "profile_path": null,
-                "credit_id": "5d09210dc3a3687c751f3e32",
                 "department": "Production",
-                "job": "Production Manager"
+                "jobs": [
+                    {
+                        "credit_id": "5d09210dc3a3687c751f3e32",
+                        "job": "Production Manager",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3141,9 +4425,15 @@
                 "original_name": "Rita Struziene",
                 "popularity": 0.0559,
                 "profile_path": null,
-                "credit_id": "5d0921a90e0a266f99caf768",
                 "department": "Production",
-                "job": "Production Accountant"
+                "jobs": [
+                    {
+                        "credit_id": "5d0921a90e0a266f99caf768",
+                        "job": "Production Accountant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3154,9 +4444,15 @@
                 "original_name": "Martin Ware",
                 "popularity": 0.6386,
                 "profile_path": null,
-                "credit_id": "5d0922cf0e0a267fe0cafa62",
                 "department": "Production",
-                "job": "Casting Associate"
+                "jobs": [
+                    {
+                        "credit_id": "5d0922cf0e0a267fe0cafa62",
+                        "job": "Casting Associate",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3167,9 +4463,15 @@
                 "original_name": "Linas Astramskas",
                 "popularity": 0.0489,
                 "profile_path": null,
-                "credit_id": "5d0923660e0a2630d0cad621",
                 "department": "Production",
-                "job": "Assistant Location Manager"
+                "jobs": [
+                    {
+                        "credit_id": "5d0923660e0a2630d0cad621",
+                        "job": "Assistant Location Manager",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3180,9 +4482,15 @@
                 "original_name": "Jurgis Paškevičius",
                 "popularity": 0.0768,
                 "profile_path": null,
-                "credit_id": "5d0926bf0e0a265ca3caf1fa",
                 "department": "Art",
-                "job": "Set Dresser"
+                "jobs": [
+                    {
+                        "credit_id": "5d0926bf0e0a265ca3caf1fa",
+                        "job": "Set Dresser",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3193,9 +4501,15 @@
                 "original_name": "Vitalij Strigunkov",
                 "popularity": 0.1142,
                 "profile_path": null,
-                "credit_id": "5d09276c0e0a2628abcae2de",
                 "department": "Art",
-                "job": "Standby Painter"
+                "jobs": [
+                    {
+                        "credit_id": "5d09276c0e0a2628abcae2de",
+                        "job": "Standby Painter",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3206,9 +4520,15 @@
                 "original_name": "Aleksandr Petrovskij",
                 "popularity": 0.0868,
                 "profile_path": null,
-                "credit_id": "5d09282fc3a368647c1f6d72",
                 "department": "Camera",
-                "job": "Second Assistant \"B\" Camera"
+                "jobs": [
+                    {
+                        "credit_id": "5d09282fc3a368647c1f6d72",
+                        "job": "Second Assistant \"B\" Camera",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3219,9 +4539,15 @@
                 "original_name": "Greta Butrimaviciute",
                 "popularity": 0.0446,
                 "profile_path": null,
-                "credit_id": "5d092b029251415273b984e1",
                 "department": "Costume & Make-Up",
-                "job": "Costume Assistant"
+                "jobs": [
+                    {
+                        "credit_id": "5d092b029251415273b984e1",
+                        "job": "Costume Assistant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3232,9 +4558,15 @@
                 "original_name": "Greta Vitkauskaite",
                 "popularity": 0.175,
                 "profile_path": null,
-                "credit_id": "5d092b0c9251411dbab96ba2",
                 "department": "Costume & Make-Up",
-                "job": "Costume Assistant"
+                "jobs": [
+                    {
+                        "credit_id": "5d092b0c9251411dbab96ba2",
+                        "job": "Costume Assistant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3245,9 +4577,15 @@
                 "original_name": "Giedre Girdauskaite",
                 "popularity": 0.064,
                 "profile_path": null,
-                "credit_id": "5d092b229251411dbab96bd0",
                 "department": "Costume & Make-Up",
-                "job": "Costume Assistant"
+                "jobs": [
+                    {
+                        "credit_id": "5d092b229251411dbab96bd0",
+                        "job": "Costume Assistant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3258,9 +4596,15 @@
                 "original_name": "Vėjūnė Tamuliūnaitė",
                 "popularity": 0.0656,
                 "profile_path": null,
-                "credit_id": "5d092b2c0e0a267fe0cb0ae2",
                 "department": "Costume & Make-Up",
-                "job": "Costume Assistant"
+                "jobs": [
+                    {
+                        "credit_id": "5d092b2c0e0a267fe0cb0ae2",
+                        "job": "Costume Assistant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3271,9 +4615,15 @@
                 "original_name": "Bozena Maisejenko",
                 "popularity": 0.0581,
                 "profile_path": null,
-                "credit_id": "5d092be90e0a267ffbcb05a8",
                 "department": "Costume & Make-Up",
-                "job": "Hair Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d092be90e0a267ffbcb05a8",
+                        "job": "Hair Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3284,9 +4634,15 @@
                 "original_name": "Aivaras Sidla",
                 "popularity": 0.051,
                 "profile_path": null,
-                "credit_id": "5d092e73c3a368647c1f7684",
                 "department": "Production",
-                "job": "Second Unit Location Manager"
+                "jobs": [
+                    {
+                        "credit_id": "5d092e73c3a368647c1f7684",
+                        "job": "Second Unit Location Manager",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3297,9 +4653,15 @@
                 "original_name": "Evyen Klean",
                 "popularity": 0.2869,
                 "profile_path": null,
-                "credit_id": "5d092f0a0e0a26317acafe3a",
                 "department": "Sound",
-                "job": "Music Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d092f0a0e0a26317acafe3a",
+                        "job": "Music Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3310,9 +4672,15 @@
                 "original_name": "George Cressey",
                 "popularity": 0.0955,
                 "profile_path": null,
-                "credit_id": "5d0931c1c3a36871861f70a7",
                 "department": "Visual Effects",
-                "job": "Visual Effects Compositor"
+                "jobs": [
+                    {
+                        "credit_id": "5d0931c1c3a36871861f70a7",
+                        "job": "Visual Effects Compositor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3323,9 +4691,15 @@
                 "original_name": "Andrew Robertson",
                 "popularity": 0.0906,
                 "profile_path": null,
-                "credit_id": "5d09327492514150c1b984cc",
                 "department": "Visual Effects",
-                "job": "3D Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d09327492514150c1b984cc",
+                        "job": "3D Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3336,9 +4710,15 @@
                 "original_name": "Harriette Cates",
                 "popularity": 0.0612,
                 "profile_path": null,
-                "credit_id": "5d0932819251411dbab97a8a",
                 "department": "Visual Effects",
-                "job": "3D Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d0932819251411dbab97a8a",
+                        "job": "3D Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3349,9 +4729,15 @@
                 "original_name": "Elaine Waugh",
                 "popularity": 0.1133,
                 "profile_path": null,
-                "credit_id": "5d0920f1c3a36871861f56f8",
                 "department": "Crew",
-                "job": "Post Production Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d0920f1c3a36871861f56f8",
+                        "job": "Post Production Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3362,9 +4748,15 @@
                 "original_name": "Mantautas Kvedaras",
                 "popularity": 0.0775,
                 "profile_path": null,
-                "credit_id": "5d0921220e0a2628abcad76d",
                 "department": "Production",
-                "job": "Production Manager"
+                "jobs": [
+                    {
+                        "credit_id": "5d0921220e0a2628abcad76d",
+                        "job": "Production Manager",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3375,9 +4767,15 @@
                 "original_name": "Egle Zajankauskaite",
                 "popularity": 0.0581,
                 "profile_path": null,
-                "credit_id": "5d0921870e0a2625adcafc6e",
                 "department": "Production",
-                "job": "Production Assistant"
+                "jobs": [
+                    {
+                        "credit_id": "5d0921870e0a2625adcafc6e",
+                        "job": "Production Assistant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3388,9 +4786,15 @@
                 "original_name": "Astrid Sieben",
                 "popularity": 0.391,
                 "profile_path": null,
-                "credit_id": "5d0924789251417ea0b95997",
                 "department": "Art",
-                "job": "Standby Art Director"
+                "jobs": [
+                    {
+                        "credit_id": "5d0924789251417ea0b95997",
+                        "job": "Standby Art Director",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3401,9 +4805,15 @@
                 "original_name": "Gintas Matonis",
                 "popularity": 0.1025,
                 "profile_path": null,
-                "credit_id": "5d0925a00e0a2630d0cad992",
                 "department": "Art",
-                "job": "Construction Manager"
+                "jobs": [
+                    {
+                        "credit_id": "5d0925a00e0a2630d0cad992",
+                        "job": "Construction Manager",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3414,9 +4824,15 @@
                 "original_name": "Lina Geciene",
                 "popularity": 0.1072,
                 "profile_path": null,
-                "credit_id": "5d09262ec3a3687c751f47c9",
                 "department": "Art",
-                "job": "Assistant Set Decoration"
+                "jobs": [
+                    {
+                        "credit_id": "5d09262ec3a3687c751f47c9",
+                        "job": "Assistant Set Decoration",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3427,9 +4843,15 @@
                 "original_name": "Andrius Savickas",
                 "popularity": 0.0602,
                 "profile_path": null,
-                "credit_id": "5d0926c8c3a3687c751f482d",
                 "department": "Art",
-                "job": "Set Dresser"
+                "jobs": [
+                    {
+                        "credit_id": "5d0926c8c3a3687c751f482d",
+                        "job": "Set Dresser",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3440,9 +4862,15 @@
                 "original_name": "Emilija Einoryte",
                 "popularity": 0.2651,
                 "profile_path": null,
-                "credit_id": "5d0926fac3a3683dd81f1f21",
                 "department": "Art",
-                "job": "Assistant Set Dresser"
+                "jobs": [
+                    {
+                        "credit_id": "5d0926fac3a3683dd81f1f21",
+                        "job": "Assistant Set Dresser",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3453,9 +4881,15 @@
                 "original_name": "Gvido Puke",
                 "popularity": 0.0854,
                 "profile_path": null,
-                "credit_id": "5d0929410e0a267fe0cb07ac",
                 "department": "Crew",
-                "job": "Drone Operator"
+                "jobs": [
+                    {
+                        "credit_id": "5d0929410e0a267fe0cb07ac",
+                        "job": "Drone Operator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3466,9 +4900,15 @@
                 "original_name": "Nikolas Verseckas",
                 "popularity": 0.1272,
                 "profile_path": null,
-                "credit_id": "5d092955c3a3687c751f4ca5",
                 "department": "Crew",
-                "job": "Video Assist Operator"
+                "jobs": [
+                    {
+                        "credit_id": "5d092955c3a3687c751f4ca5",
+                        "job": "Video Assist Operator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3479,9 +4919,15 @@
                 "original_name": "Zygimantas Strolia",
                 "popularity": 0.1022,
                 "profile_path": null,
-                "credit_id": "5d0929c7c3a3687c751f4db0",
                 "department": "Lighting",
-                "job": "Electrician"
+                "jobs": [
+                    {
+                        "credit_id": "5d0929c7c3a3687c751f4db0",
+                        "job": "Electrician",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3492,9 +4938,15 @@
                 "original_name": "Julio Parodi",
                 "popularity": 0.0809,
                 "profile_path": null,
-                "credit_id": "5d092bb9c3a368647c1f72aa",
                 "department": "Costume & Make-Up",
-                "job": "Hair Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d092bb9c3a368647c1f72aa",
+                        "job": "Hair Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3505,9 +4957,15 @@
                 "original_name": "Barrie Gower",
                 "popularity": 0.3585,
                 "profile_path": "/w4aurjKq2sIGPHZSpjLDp6BIHV2.jpg",
-                "credit_id": "5d092cfdc3a3684c6a1f4baf",
                 "department": "Costume & Make-Up",
-                "job": "Prosthetic Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d092cfdc3a3684c6a1f4baf",
+                        "job": "Prosthetic Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3518,9 +4976,15 @@
                 "original_name": "Paul Spateri",
                 "popularity": 0.2104,
                 "profile_path": null,
-                "credit_id": "5d092d0e0e0a267ffbcb075a",
                 "department": "Costume & Make-Up",
-                "job": "Prosthetic Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d092d0e0e0a267ffbcb075a",
+                        "job": "Prosthetic Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3531,9 +4995,15 @@
                 "original_name": "Ting Yu Sylvester",
                 "popularity": 0.0378,
                 "profile_path": null,
-                "credit_id": "5d09315e9251411dbab97771",
                 "department": "Visual Effects",
-                "job": "Visual Effects Compositor"
+                "jobs": [
+                    {
+                        "credit_id": "5d09315e9251411dbab97771",
+                        "job": "Visual Effects Compositor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3544,9 +5014,15 @@
                 "original_name": "Guled Ahmed",
                 "popularity": 0.1149,
                 "profile_path": null,
-                "credit_id": "5d0931b50e0a267ffbcb0ecc",
                 "department": "Visual Effects",
-                "job": "Visual Effects Compositor"
+                "jobs": [
+                    {
+                        "credit_id": "5d0931b50e0a267ffbcb0ecc",
+                        "job": "Visual Effects Compositor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3557,9 +5033,15 @@
                 "original_name": "Elena Topouzoglou",
                 "popularity": 0.0793,
                 "profile_path": null,
-                "credit_id": "5d093203c3a3685bfc1f855b",
                 "department": "Visual Effects",
-                "job": "Visual Effects Compositor"
+                "jobs": [
+                    {
+                        "credit_id": "5d093203c3a3685bfc1f855b",
+                        "job": "Visual Effects Compositor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3570,9 +5052,15 @@
                 "original_name": "Philipp Kratzer",
                 "popularity": 0.0759,
                 "profile_path": null,
-                "credit_id": "5d09323c9251411dbab979f5",
                 "department": "Visual Effects",
-                "job": "VFX Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d09323c9251411dbab979f5",
+                        "job": "VFX Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3583,9 +5071,15 @@
                 "original_name": "Colin Tunnicliffe",
                 "popularity": 0.0976,
                 "profile_path": null,
-                "credit_id": "5d093388c3a3683dd81f3f5a",
                 "department": "Visual Effects",
-                "job": "Animation"
+                "jobs": [
+                    {
+                        "credit_id": "5d093388c3a3683dd81f3f5a",
+                        "job": "Animation",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3596,9 +5090,15 @@
                 "original_name": "Ieva Svitojute",
                 "popularity": 0.0578,
                 "profile_path": null,
-                "credit_id": "5d092136c3a3685fdf1f098c",
                 "department": "Production",
-                "job": "Production Coordinator"
+                "jobs": [
+                    {
+                        "credit_id": "5d092136c3a3685fdf1f098c",
+                        "job": "Production Coordinator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3609,9 +5109,15 @@
                 "original_name": "Sarah Stiff",
                 "popularity": 0.1451,
                 "profile_path": null,
-                "credit_id": "5d0921fd92514150c1b96b30",
                 "department": "Production",
-                "job": "Assistant Accountant"
+                "jobs": [
+                    {
+                        "credit_id": "5d0921fd92514150c1b96b30",
+                        "job": "Assistant Accountant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3622,9 +5128,15 @@
                 "original_name": "Brett Thomas",
                 "popularity": 0.1359,
                 "profile_path": null,
-                "credit_id": "5d09223992514163bab9716d",
                 "department": "Directing",
-                "job": "Second Assistant Director"
+                "jobs": [
+                    {
+                        "credit_id": "5d09223992514163bab9716d",
+                        "job": "Second Assistant Director",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3635,9 +5147,15 @@
                 "original_name": "Evelina Verčinskaja",
                 "popularity": 0.0638,
                 "profile_path": null,
-                "credit_id": "5d0922539251415273b97573",
                 "department": "Directing",
-                "job": "Second Second Assistant Director"
+                "jobs": [
+                    {
+                        "credit_id": "5d0922539251415273b97573",
+                        "job": "Second Second Assistant Director",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3648,9 +5166,15 @@
                 "original_name": "Neil Floyd",
                 "popularity": 0.2504,
                 "profile_path": null,
-                "credit_id": "5d09248bc3a368647c1f6257",
                 "department": "Art",
-                "job": "Graphic Designer"
+                "jobs": [
+                    {
+                        "credit_id": "5d09248bc3a368647c1f6257",
+                        "job": "Graphic Designer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3661,9 +5185,15 @@
                 "original_name": "Jone Grubyte",
                 "popularity": 0.0619,
                 "profile_path": null,
-                "credit_id": "5d0924db0e0a26317acae65d",
                 "department": "Art",
-                "job": "Art Department Assistant"
+                "jobs": [
+                    {
+                        "credit_id": "5d0924db0e0a26317acae65d",
+                        "job": "Art Department Assistant",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3674,9 +5204,15 @@
                 "original_name": "Justin Hayzelden",
                 "popularity": 0.0608,
                 "profile_path": null,
-                "credit_id": "5d0927120e0a26317acaead0",
                 "department": "Art",
-                "job": "Property Master"
+                "jobs": [
+                    {
+                        "credit_id": "5d0927120e0a26317acaead0",
+                        "job": "Property Master",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3687,9 +5223,15 @@
                 "original_name": "Gwen Griffiths",
                 "popularity": 0.0542,
                 "profile_path": null,
-                "credit_id": "5d0927aac3a368647c1f6c71",
                 "department": "Crew",
-                "job": "Animal Wrangler"
+                "jobs": [
+                    {
+                        "credit_id": "5d0927aac3a368647c1f6c71",
+                        "job": "Animal Wrangler",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3700,9 +5242,15 @@
                 "original_name": "Aliona Abasova",
                 "popularity": 0.12,
                 "profile_path": null,
-                "credit_id": "5d092b680e0a2628abcaea89",
                 "department": "Costume & Make-Up",
-                "job": "Seamstress"
+                "jobs": [
+                    {
+                        "credit_id": "5d092b680e0a2628abcaea89",
+                        "job": "Seamstress",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3713,9 +5261,15 @@
                 "original_name": "Natalija Samonenko",
                 "popularity": 0.0805,
                 "profile_path": null,
-                "credit_id": "5d092b79c3a3680efe1f239f",
                 "department": "Costume & Make-Up",
-                "job": "Seamstress"
+                "jobs": [
+                    {
+                        "credit_id": "5d092b79c3a3680efe1f239f",
+                        "job": "Seamstress",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3726,9 +5280,15 @@
                 "original_name": "Linas Kuzminskas",
                 "popularity": 0.0464,
                 "profile_path": null,
-                "credit_id": "5d092e06c3a3687c751f533e",
                 "department": "Crew",
-                "job": "Special Effects Technician"
+                "jobs": [
+                    {
+                        "credit_id": "5d092e06c3a3687c751f533e",
+                        "job": "Special Effects Technician",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3739,9 +5299,15 @@
                 "original_name": "Jimmy Rogers",
                 "popularity": 0.0415,
                 "profile_path": null,
-                "credit_id": "5d0932c492514135eab987f0",
                 "department": "Visual Effects",
-                "job": "3D Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d0932c492514135eab987f0",
+                        "job": "3D Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3752,9 +5318,15 @@
                 "original_name": "Louise Stevenson",
                 "popularity": 0.0606,
                 "profile_path": null,
-                "credit_id": "5d0934640e0a267ffbcb1301",
                 "department": "Editing",
-                "job": "Digital Intermediate Producer"
+                "jobs": [
+                    {
+                        "credit_id": "5d0934640e0a267ffbcb1301",
+                        "job": "Digital Intermediate Producer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3765,9 +5337,15 @@
                 "original_name": "Nick Timms",
                 "popularity": 0.0898,
                 "profile_path": null,
-                "credit_id": "5d09347cc3a3684c6a1f5ac4",
                 "department": "Editing",
-                "job": "Online Editor"
+                "jobs": [
+                    {
+                        "credit_id": "5d09347cc3a3684c6a1f5ac4",
+                        "job": "Online Editor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3778,9 +5356,15 @@
                 "original_name": "Joe Beal",
                 "popularity": 0.1095,
                 "profile_path": null,
-                "credit_id": "5d0934a00e0a267ffbcb1387",
                 "department": "Sound",
-                "job": "Sound Designer"
+                "jobs": [
+                    {
+                        "credit_id": "5d0934a00e0a267ffbcb1387",
+                        "job": "Sound Designer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3791,9 +5375,15 @@
                 "original_name": "Elisenda Faustino",
                 "popularity": 0.0397,
                 "profile_path": null,
-                "credit_id": "5d0932e592514150c1b98550",
                 "department": "Visual Effects",
-                "job": "3D Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d0932e592514150c1b98550",
+                        "job": "3D Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3804,9 +5394,15 @@
                 "original_name": "Terry Tsang",
                 "popularity": 0.1145,
                 "profile_path": null,
-                "credit_id": "5d0933c50e0a267fe0cb1b19",
                 "department": "Visual Effects",
-                "job": "Roto Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d0933c50e0a267fe0cb1b19",
+                        "job": "Roto Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3817,9 +5413,15 @@
                 "original_name": "Stefan Henrix",
                 "popularity": 0.1887,
                 "profile_path": null,
-                "credit_id": "5d09349492514101b2b99b67",
                 "department": "Sound",
-                "job": "Supervising Sound Editor"
+                "jobs": [
+                    {
+                        "credit_id": "5d09349492514101b2b99b67",
+                        "job": "Supervising Sound Editor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3830,9 +5432,15 @@
                 "original_name": "Michael Maroussas",
                 "popularity": 0.1708,
                 "profile_path": null,
-                "credit_id": "5d0934aac3a3683dd81f41a4",
                 "department": "Sound",
-                "job": "Dialogue Editor"
+                "jobs": [
+                    {
+                        "credit_id": "5d0934aac3a3683dd81f41a4",
+                        "job": "Dialogue Editor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3843,9 +5451,15 @@
                 "original_name": "Harry Barnes",
                 "popularity": 0.1039,
                 "profile_path": null,
-                "credit_id": "5d0934b5c3a3687c751f659a",
                 "department": "Sound",
-                "job": "ADR Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "5d0934b5c3a3687c751f659a",
+                        "job": "ADR Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3856,9 +5470,15 @@
                 "original_name": "Emily Greeley",
                 "popularity": 0.0681,
                 "profile_path": null,
-                "credit_id": "5d0931edc3a368647c1f7d4a",
                 "department": "Visual Effects",
-                "job": "Visual Effects Compositor"
+                "jobs": [
+                    {
+                        "credit_id": "5d0931edc3a368647c1f7d4a",
+                        "job": "Visual Effects Compositor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3869,9 +5489,15 @@
                 "original_name": "Daniel Churchill",
                 "popularity": 0.074,
                 "profile_path": null,
-                "credit_id": "5d0931f89251415273b98e30",
                 "department": "Visual Effects",
-                "job": "Visual Effects Compositor"
+                "jobs": [
+                    {
+                        "credit_id": "5d0931f89251415273b98e30",
+                        "job": "Visual Effects Compositor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3882,9 +5508,15 @@
                 "original_name": "Alex Alvarez",
                 "popularity": 0.1164,
                 "profile_path": null,
-                "credit_id": "5d0933b40e0a267ffbcb11df",
                 "department": "Visual Effects",
-                "job": "Animation"
+                "jobs": [
+                    {
+                        "credit_id": "5d0933b40e0a267ffbcb11df",
+                        "job": "Animation",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3895,9 +5527,15 @@
                 "original_name": "Jean-Clement Soret",
                 "popularity": 0.0972,
                 "profile_path": null,
-                "credit_id": "5d093413c3a36871861f7749",
                 "department": "Editing",
-                "job": "Colorist"
+                "jobs": [
+                    {
+                        "credit_id": "5d093413c3a36871861f7749",
+                        "job": "Colorist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3908,9 +5546,15 @@
                 "original_name": "Jolan Auzeby",
                 "popularity": 0.0692,
                 "profile_path": null,
-                "credit_id": "5d0932320e0a2628abcaf48c",
                 "department": "Visual Effects",
-                "job": "VFX Artist"
+                "jobs": [
+                    {
+                        "credit_id": "5d0932320e0a2628abcaf48c",
+                        "job": "VFX Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3921,9 +5565,15 @@
                 "original_name": "Stuart Hilliker",
                 "popularity": 0.2924,
                 "profile_path": null,
-                "credit_id": "5d0934890e0a266f99cb1c9f",
                 "department": "Sound",
-                "job": "Sound Re-Recording Mixer"
+                "jobs": [
+                    {
+                        "credit_id": "5d0934890e0a266f99cb1c9f",
+                        "job": "Sound Re-Recording Mixer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3934,9 +5584,15 @@
                 "original_name": "Tom Stewart",
                 "popularity": 0.0771,
                 "profile_path": null,
-                "credit_id": "5dfd556f65686e0015912358",
                 "department": "Sound",
-                "job": "Foley Editor"
+                "jobs": [
+                    {
+                        "credit_id": "5dfd556f65686e0015912358",
+                        "job": "Foley Editor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3947,9 +5603,15 @@
                 "original_name": "Yevheniia Yatsuta",
                 "popularity": 0.1162,
                 "profile_path": "/xz8nHEkMFSn3zlGVeUiHyy26KZ6.jpg",
-                "credit_id": "6102b59422931a0072246697",
                 "department": "Production",
-                "job": "Co-Producer"
+                "jobs": [
+                    {
+                        "credit_id": "6102b59422931a0072246697",
+                        "job": "Co-Producer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3960,9 +5622,15 @@
                 "original_name": "Elo Soode",
                 "popularity": 0.153,
                 "profile_path": null,
-                "credit_id": "644f8fa4124c8d02f57e5175",
                 "department": "Art",
-                "job": "Concept Artist"
+                "jobs": [
+                    {
+                        "credit_id": "644f8fa4124c8d02f57e5175",
+                        "job": "Concept Artist",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3973,9 +5641,15 @@
                 "original_name": "Elo Soode",
                 "popularity": 0.153,
                 "profile_path": null,
-                "credit_id": "64956e26d5ffcb011c5b064a",
                 "department": "Art",
-                "job": "Conceptual Design"
+                "jobs": [
+                    {
+                        "credit_id": "64956e26d5ffcb011c5b064a",
+                        "job": "Conceptual Design",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3986,9 +5660,15 @@
                 "original_name": "Clare Cheetham",
                 "popularity": 0.1469,
                 "profile_path": null,
-                "credit_id": "67d6e4d5191868c54ff19815",
                 "department": "Visual Effects",
-                "job": "Visual Effects Producer"
+                "jobs": [
+                    {
+                        "credit_id": "67d6e4d5191868c54ff19815",
+                        "job": "Visual Effects Producer",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -3999,9 +5679,15 @@
                 "original_name": "Natasha Nikolic-Dunlop",
                 "popularity": 0.1457,
                 "profile_path": null,
-                "credit_id": "686015dfcd07c7ba010d8ee0",
                 "department": "Costume & Make-Up",
-                "job": "Makeup Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "686015dfcd07c7ba010d8ee0",
+                        "job": "Makeup Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -4012,9 +5698,15 @@
                 "original_name": "Svetlana Alexievich",
                 "popularity": 0.1848,
                 "profile_path": "/fnEiuixdiXEEIEttVQiGuU6gIVX.jpg",
-                "credit_id": "6a553743dc54b321b883d281",
                 "department": "Writing",
-                "job": "Story"
+                "jobs": [
+                    {
+                        "credit_id": "6a553743dc54b321b883d281",
+                        "job": "Story",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -4025,9 +5717,15 @@
                 "original_name": "Craig Mazin",
                 "popularity": 0.9885,
                 "profile_path": "/uEhna6qcMuyU5TP7irpTUZ2ZsZc.jpg",
-                "credit_id": "6aba4729c5d7d353c8ddbef3",
                 "department": "Crew",
-                "job": "Creator"
+                "jobs": [
+                    {
+                        "credit_id": "6aba4729c5d7d353c8ddbef3",
+                        "job": "Creator",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             },
             {
                 "adult": false,
@@ -4038,9 +5736,15 @@
                 "original_name": "Steven Godfrey",
                 "popularity": 0.0869,
                 "profile_path": null,
-                "credit_id": "6abeb1439a1b8600560a404d",
                 "department": "Crew",
-                "job": "CG Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "6abeb1439a1b8600560a404d",
+                        "job": "CG Supervisor",
+                        "episode_count": 5
+                    }
+                ],
+                "total_episode_count": 5
             }
         ]
     },

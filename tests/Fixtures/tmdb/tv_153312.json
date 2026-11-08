@@ -434,7 +434,7 @@
             }
         ]
     },
-    "credits": {
+    "aggregate_credits": {
         "cast": [
             {
                 "adult": false,
@@ -445,9 +445,15 @@
                 "original_name": "Sylvester Stallone",
                 "popularity": 8.4158,
                 "profile_path": "/gn3pDWthJqR0VDYGViGD3048og7.jpg",
-                "character": "Dwight 'The General' Manfredi",
-                "credit_id": "61b47a64aafebd00606af4f7",
-                "order": 0
+                "order": 0,
+                "roles": [
+                    {
+                        "credit_id": "61b47a64aafebd00606af4f7",
+                        "character": "Dwight 'The General' Manfredi",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -458,9 +464,15 @@
                 "original_name": "Martin Starr",
                 "popularity": 2.6322,
                 "profile_path": "/cxGxr0S1jnvOpOHyZDYXrg2GHju.jpg",
-                "character": "Lawrence 'Bodhi' Geigerman",
-                "credit_id": "63190af3caef2d00794a9b20",
-                "order": 1
+                "order": 1,
+                "roles": [
+                    {
+                        "credit_id": "63190af3caef2d00794a9b20",
+                        "character": "Lawrence 'Bodhi' Geigerman",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -471,9 +483,15 @@
                 "original_name": "Jay Will",
                 "popularity": 1.748,
                 "profile_path": "/6ABA1136deiDOBMOHAtJIMsOnSM.jpg",
-                "character": "Tyson Mitchell",
-                "credit_id": "623d4cf8efca000047aed712",
-                "order": 2
+                "order": 2,
+                "roles": [
+                    {
+                        "credit_id": "623d4cf8efca000047aed712",
+                        "character": "Tyson Mitchell",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -484,9 +502,15 @@
                 "original_name": "Vincent Piazza",
                 "popularity": 1.9181,
                 "profile_path": "/cybUCnpnrvtfmJcF2vC2nBWzmKU.jpg",
-                "character": "Vince Antonacci",
-                "credit_id": "623d4ce29ca75900482a5363",
-                "order": 3
+                "order": 3,
+                "roles": [
+                    {
+                        "credit_id": "623d4ce29ca75900482a5363",
+                        "character": "Vince Antonacci",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -497,9 +521,15 @@
                 "original_name": "Annabella Sciorra",
                 "popularity": 5.8096,
                 "profile_path": "/p2dnBSjLzKxldrHCQZYmVq0LcFw.jpg",
-                "character": "Joanne",
-                "credit_id": "638c73a115376c3e0ff3cab9",
-                "order": 5
+                "order": 5,
+                "roles": [
+                    {
+                        "credit_id": "638c73a115376c3e0ff3cab9",
+                        "character": "Joanne",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -510,9 +540,15 @@
                 "original_name": "Chris Caldovino",
                 "popularity": 2.3592,
                 "profile_path": "/m1c4zItCH0LQccJZ3oTjCww4xJ.jpg",
-                "character": "Goodie Carangi",
-                "credit_id": "6370bcd11684f700c4eb34b7",
-                "order": 6
+                "order": 6,
+                "roles": [
+                    {
+                        "credit_id": "6370bcd11684f700c4eb34b7",
+                        "character": "Goodie Carangi",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -523,9 +559,15 @@
                 "original_name": "McKenna Quigley Harrington",
                 "popularity": 3.328,
                 "profile_path": "/zCucjO9kk169oOMn4jeoB1vAgBf.jpg",
-                "character": "Grace",
-                "credit_id": "6370bd9121621b00777dca20",
-                "order": 7
+                "order": 7,
+                "roles": [
+                    {
+                        "credit_id": "6370bd9121621b00777dca20",
+                        "character": "Grace",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -536,9 +578,15 @@
                 "original_name": "Frank Grillo",
                 "popularity": 4.8546,
                 "profile_path": "/kuEco4vo1xrsM8DyrNSZUEi593P.jpg",
-                "character": "Bill Bevilaqua",
-                "credit_id": "66d074b87fc4dbcb00992dce",
-                "order": 9
+                "order": 9,
+                "roles": [
+                    {
+                        "credit_id": "66d074b87fc4dbcb00992dce",
+                        "character": "Bill Bevilaqua",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -549,9 +597,15 @@
                 "original_name": "Michael Walden",
                 "popularity": 2.0435,
                 "profile_path": "/bFPr7XLkk9QL7Lb3NQAIeZL6ey5.jpg",
-                "character": "Bigfoot",
-                "credit_id": "66e68696e8211ecd22b06702",
-                "order": 10
+                "order": 10,
+                "roles": [
+                    {
+                        "credit_id": "66e68696e8211ecd22b06702",
+                        "character": "Bigfoot",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -562,9 +616,15 @@
                 "original_name": "James Russo",
                 "popularity": 3.1194,
                 "profile_path": "/nubhNb5OUkzsrndD1BNqzp7MGyo.jpg",
-                "character": "Quiet Ray Renzetti",
-                "credit_id": "68cfeba41a1d88e2edd4190e",
-                "order": 13
+                "order": 13,
+                "roles": [
+                    {
+                        "credit_id": "68cfeba41a1d88e2edd4190e",
+                        "character": "Quiet Ray Renzetti",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -575,9 +635,15 @@
                 "original_name": "Kevin Pollak",
                 "popularity": 2.5265,
                 "profile_path": "/ss4vL5itVF1I2AEC64k1vb79GEq.jpg",
-                "character": "Special Agent Musso",
-                "credit_id": "68cfdf5cb29b8a6d72cec263",
-                "order": 15
+                "order": 15,
+                "roles": [
+                    {
+                        "credit_id": "68cfdf5cb29b8a6d72cec263",
+                        "character": "Special Agent Musso",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -588,9 +654,15 @@
                 "original_name": "Neal McDonough",
                 "popularity": 5.5301,
                 "profile_path": "/3mI3i1CpjATSCta1Tb2qsyl1KCh.jpg",
-                "character": "Cal Thresher",
-                "credit_id": "66d074b1181f96b34a032e5b",
-                "order": 16
+                "order": 16,
+                "roles": [
+                    {
+                        "credit_id": "66d074b1181f96b34a032e5b",
+                        "character": "Cal Thresher",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -601,9 +673,15 @@
                 "original_name": "Garrett Hedlund",
                 "popularity": 4.1021,
                 "profile_path": "/9zec61HuFJgiUEzPSt0NfPIj0Xv.jpg",
-                "character": "Mitch Keller",
-                "credit_id": "63190b30fac50200a2c13067",
-                "order": 18
+                "order": 18,
+                "roles": [
+                    {
+                        "credit_id": "63190b30fac50200a2c13067",
+                        "character": "Mitch Keller",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -614,9 +692,15 @@
                 "original_name": "Dana Delany",
                 "popularity": 5.8663,
                 "profile_path": "/sUzs7I87K4wSvLD7TjoYH6avRrL.jpg",
-                "character": "Margaret Devereaux",
-                "credit_id": "62b0fbacc58acd00511cf1eb",
-                "order": 19
+                "order": 19,
+                "roles": [
+                    {
+                        "credit_id": "62b0fbacc58acd00511cf1eb",
+                        "character": "Margaret Devereaux",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -627,9 +711,15 @@
                 "original_name": "Gretchen Mol",
                 "popularity": 12.7191,
                 "profile_path": "/e3C1D1I09gtSGy4Ej1ewW2FFoew.jpg",
-                "character": "Amanda Clark",
-                "credit_id": "6950b9f52f91b5982470f22d",
-                "order": 21
+                "order": 21,
+                "roles": [
+                    {
+                        "credit_id": "6950b9f52f91b5982470f22d",
+                        "character": "Amanda Clark",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             }
         ],
         "crew": [
@@ -642,9 +732,15 @@
                 "original_name": "Sean Ryan Jennings",
                 "popularity": 0.3189,
                 "profile_path": "/umAm5n6T1QHP4DS5EWDZEiSq1qj.jpg",
-                "credit_id": "6ad29ae28708878189a76050",
                 "department": "Art",
-                "job": "Supervising Art Director"
+                "jobs": [
+                    {
+                        "credit_id": "6ad29ae28708878189a76050",
+                        "job": "Supervising Art Director",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -655,9 +751,15 @@
                 "original_name": "Olivia Blum",
                 "popularity": 0.2336,
                 "profile_path": null,
-                "credit_id": "6ad27d258f1e462c0bad82e6",
                 "department": "Production",
-                "job": "Producer"
+                "jobs": [
+                    {
+                        "credit_id": "6ad27d258f1e462c0bad82e6",
+                        "job": "Producer",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -668,9 +770,15 @@
                 "original_name": "Andrea Ciannavei",
                 "popularity": 0.5895,
                 "profile_path": null,
-                "credit_id": "6ad27cd88fbc9ee719c6340b",
                 "department": "Production",
-                "job": "Consulting Producer"
+                "jobs": [
+                    {
+                        "credit_id": "6ad27cd88fbc9ee719c6340b",
+                        "job": "Consulting Producer",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -681,9 +789,15 @@
                 "original_name": "Matthew Shire",
                 "popularity": 0.3648,
                 "profile_path": "/3F5T4HnH4v8QSYFg42m4peA0328.jpg",
-                "credit_id": "6ad27ccd75cc7f56751d2296",
                 "department": "Production",
-                "job": "Consulting Producer"
+                "jobs": [
+                    {
+                        "credit_id": "6ad27ccd75cc7f56751d2296",
+                        "job": "Consulting Producer",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -694,9 +808,15 @@
                 "original_name": "Joseph Riccobene",
                 "popularity": 0.4826,
                 "profile_path": "/fWKFMNkFXkuQSx7Z7y02EAPfPnN.jpg",
-                "credit_id": "6ad27cc05410fcd5c21d207d",
                 "department": "Production",
-                "job": "Producer"
+                "jobs": [
+                    {
+                        "credit_id": "6ad27cc05410fcd5c21d207d",
+                        "job": "Producer",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -707,9 +827,15 @@
                 "original_name": "Bradley Paul",
                 "popularity": 0.522,
                 "profile_path": null,
-                "credit_id": "6ad27c96e953b778a80d6e65",
                 "department": "Production",
-                "job": "Co-Executive Producer"
+                "jobs": [
+                    {
+                        "credit_id": "6ad27c96e953b778a80d6e65",
+                        "job": "Co-Executive Producer",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -720,9 +846,15 @@
                 "original_name": "Michael Notarile",
                 "popularity": 0.2387,
                 "profile_path": "/xrtADyV3ZqRzOOWcZYa63OvHZoP.jpg",
-                "credit_id": "6ad23daad7f33efba3c63058",
                 "department": "Production",
-                "job": "Consulting Producer"
+                "jobs": [
+                    {
+                        "credit_id": "6ad23daad7f33efba3c63058",
+                        "job": "Consulting Producer",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -733,9 +865,15 @@
                 "original_name": "Thomas Kelly",
                 "popularity": 0.3054,
                 "profile_path": null,
-                "credit_id": "6a9719e00dedef06fb6bb293",
                 "department": "Production",
-                "job": "Executive Producer"
+                "jobs": [
+                    {
+                        "credit_id": "6a9719e00dedef06fb6bb293",
+                        "job": "Executive Producer",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -746,9 +884,15 @@
                 "original_name": "Thomas Golubić",
                 "popularity": 0.3985,
                 "profile_path": "/umzkpmX3p3GdrSutAHFX7Rij0Sm.jpg",
-                "credit_id": "6ad27d817ae8c2a8b3d8110f",
                 "department": "Sound",
-                "job": "Music Supervisor"
+                "jobs": [
+                    {
+                        "credit_id": "6ad27d817ae8c2a8b3d8110f",
+                        "job": "Music Supervisor",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -759,9 +903,15 @@
                 "original_name": "Jennifer Flavin Stallone",
                 "popularity": 1.4738,
                 "profile_path": "/ev7jKx0qg4wpLdKb1heQvN51nB4.jpg",
-                "credit_id": "6a88d1370f998a0ddefb2ddb",
                 "department": "Production",
-                "job": "Co-Executive Producer"
+                "jobs": [
+                    {
+                        "credit_id": "6a88d1370f998a0ddefb2ddb",
+                        "job": "Co-Executive Producer",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -772,9 +922,15 @@
                 "original_name": "Rebecca Rivo",
                 "popularity": 0.2907,
                 "profile_path": null,
-                "credit_id": "6a88d13b46d8c2471a7cb56f",
                 "department": "Production",
-                "job": "Co-Executive Producer"
+                "jobs": [
+                    {
+                        "credit_id": "6a88d13b46d8c2471a7cb56f",
+                        "job": "Co-Executive Producer",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -785,9 +941,15 @@
                 "original_name": "Charisma J. Sieras",
                 "popularity": 0.1596,
                 "profile_path": null,
-                "credit_id": "6a88d20e0f998a0ddefb2de4",
                 "department": "Production",
-                "job": "Associate Producer"
+                "jobs": [
+                    {
+                        "credit_id": "6a88d20e0f998a0ddefb2de4",
+                        "job": "Associate Producer",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -798,9 +960,15 @@
                 "original_name": "Christian Agypt",
                 "popularity": 0.1395,
                 "profile_path": null,
-                "credit_id": "6ad27d5014d71bc4ecad8326",
                 "department": "Production",
-                "job": "Unit Production Manager"
+                "jobs": [
+                    {
+                        "credit_id": "6ad27d5014d71bc4ecad8326",
+                        "job": "Unit Production Manager",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -811,9 +979,15 @@
                 "original_name": "Sheila Jaffe",
                 "popularity": 0.3248,
                 "profile_path": null,
-                "credit_id": "6ad27b56a8c87983520d6fbb",
                 "department": "Production",
-                "job": "Casting"
+                "jobs": [
+                    {
+                        "credit_id": "6ad27b56a8c87983520d6fbb",
+                        "job": "Casting",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -824,9 +998,15 @@
                 "original_name": "Bryan Riley",
                 "popularity": 0.2602,
                 "profile_path": null,
-                "credit_id": "6ad27b6ce953b778a80d6e4e",
                 "department": "Production",
-                "job": "Casting"
+                "jobs": [
+                    {
+                        "credit_id": "6ad27b6ce953b778a80d6e4e",
+                        "job": "Casting",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -837,9 +1017,15 @@
                 "original_name": "Bernardo Trujillo",
                 "popularity": 0.2283,
                 "profile_path": "/w58QlKiyXNK7Yf7lW08IGepi65Z.jpg",
-                "credit_id": "6ad27bb24ae2da643ac63152",
                 "department": "Art",
-                "job": "Production Design"
+                "jobs": [
+                    {
+                        "credit_id": "6ad27bb24ae2da643ac63152",
+                        "job": "Production Design",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -850,9 +1036,15 @@
                 "original_name": "Rebecca Rivo",
                 "popularity": 0.2907,
                 "profile_path": null,
-                "credit_id": "6ad27d46b0a1e2c1f6d81128",
                 "department": "Production",
-                "job": "Unit Production Manager"
+                "jobs": [
+                    {
+                        "credit_id": "6ad27d46b0a1e2c1f6d81128",
+                        "job": "Unit Production Manager",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -863,9 +1055,15 @@
                 "original_name": "Suzanne McCabe",
                 "popularity": 0.3075,
                 "profile_path": null,
-                "credit_id": "636ee0aaca4f67009b545eb8",
                 "department": "Costume & Make-Up",
-                "job": "Costume Design"
+                "jobs": [
+                    {
+                        "credit_id": "636ee0aaca4f67009b545eb8",
+                        "job": "Costume Design",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -876,9 +1074,15 @@
                 "original_name": "Dustin Berry",
                 "popularity": 0.1203,
                 "profile_path": null,
-                "credit_id": "6ad27bd4234128718e0d6e09",
                 "department": "Art",
-                "job": "Set Decoration"
+                "jobs": [
+                    {
+                        "credit_id": "6ad27bd4234128718e0d6e09",
+                        "job": "Set Decoration",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -889,9 +1093,15 @@
                 "original_name": "Jeff Charbonneau",
                 "popularity": 0.182,
                 "profile_path": null,
-                "credit_id": "6ad27e6918fc77421dc633e6",
                 "department": "Sound",
-                "job": "Music Editor"
+                "jobs": [
+                    {
+                        "credit_id": "6ad27e6918fc77421dc633e6",
+                        "job": "Music Editor",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -902,9 +1112,15 @@
                 "original_name": "Terence Winter",
                 "popularity": 0.94,
                 "profile_path": "/6zXJtYwjH9njuAcyCIeZXngVOgR.jpg",
-                "credit_id": "61b4774ad144430092c78a23",
                 "department": "Production",
-                "job": "Executive Producer"
+                "jobs": [
+                    {
+                        "credit_id": "61b4774ad144430092c78a23",
+                        "job": "Executive Producer",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -915,9 +1131,15 @@
                 "original_name": "Danny Bensi",
                 "popularity": 0.3697,
                 "profile_path": "/qyyiInZcq9uKI7BAUON6XKxOBim.jpg",
-                "credit_id": "66d0751a54f1d04b83319ab9",
                 "department": "Sound",
-                "job": "Original Music Composer"
+                "jobs": [
+                    {
+                        "credit_id": "66d0751a54f1d04b83319ab9",
+                        "job": "Original Music Composer",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -928,9 +1150,15 @@
                 "original_name": "Saunder Jurriaans",
                 "popularity": 0.3491,
                 "profile_path": null,
-                "credit_id": "66d075266d639bc911319a4c",
                 "department": "Sound",
-                "job": "Original Music Composer"
+                "jobs": [
+                    {
+                        "credit_id": "66d075266d639bc911319a4c",
+                        "job": "Original Music Composer",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -941,9 +1169,15 @@
                 "original_name": "Taylor Sheridan",
                 "popularity": 5.8056,
                 "profile_path": "/enrOQII7bCIf7U0WbdxiuXGfzrs.jpg",
-                "credit_id": "61b47724894ed6005e910e03",
                 "department": "Production",
-                "job": "Executive Producer"
+                "jobs": [
+                    {
+                        "credit_id": "61b47724894ed6005e910e03",
+                        "job": "Executive Producer",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -954,9 +1188,15 @@
                 "original_name": "Sylvester Stallone",
                 "popularity": 8.4158,
                 "profile_path": "/gn3pDWthJqR0VDYGViGD3048og7.jpg",
-                "credit_id": "61b4770a7d5f4b0091225baf",
                 "department": "Production",
-                "job": "Executive Producer"
+                "jobs": [
+                    {
+                        "credit_id": "61b4770a7d5f4b0091225baf",
+                        "job": "Executive Producer",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -967,9 +1207,15 @@
                 "original_name": "Bob Yari",
                 "popularity": 0.3691,
                 "profile_path": "/8PecTVSJk5uJmndCGTLwgsLPEhP.jpg",
-                "credit_id": "61b47790f9183a008d0f35f4",
                 "department": "Production",
-                "job": "Executive Producer"
+                "jobs": [
+                    {
+                        "credit_id": "61b47790f9183a008d0f35f4",
+                        "job": "Executive Producer",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -980,9 +1226,15 @@
                 "original_name": "Ron Burkle",
                 "popularity": 0.4792,
                 "profile_path": "/hf69HPpxXieEPqSblJGqX5Hq31V.jpg",
-                "credit_id": "61b4778703726400635e636d",
                 "department": "Production",
-                "job": "Executive Producer"
+                "jobs": [
+                    {
+                        "credit_id": "61b4778703726400635e636d",
+                        "job": "Executive Producer",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -993,9 +1245,15 @@
                 "original_name": "David Hutkin",
                 "popularity": 0.4481,
                 "profile_path": null,
-                "credit_id": "66d07636c91bdc6d1b2bafe3",
                 "department": "Production",
-                "job": "Executive Producer"
+                "jobs": [
+                    {
+                        "credit_id": "66d07636c91bdc6d1b2bafe3",
+                        "job": "Executive Producer",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             },
             {
                 "adult": false,
@@ -1006,9 +1264,15 @@
                 "original_name": "David C. Glasser",
                 "popularity": 1.1312,
                 "profile_path": "/t26MlYwJl4TBLFkHz9pjixA8yo7.jpg",
-                "credit_id": "61b4777f58efd30041784b10",
                 "department": "Production",
-                "job": "Executive Producer"
+                "jobs": [
+                    {
+                        "credit_id": "61b4777f58efd30041784b10",
+                        "job": "Executive Producer",
+                        "episode_count": 39
+                    }
+                ],
+                "total_episode_count": 39
             }
         ]
     },

@@ -2,6 +2,7 @@
 import { User } from '@lucide/vue';
 import type { CastMember } from '@/components/movie/CastGrid.vue';
 import MatchHighlight from '@/components/movie/MatchHighlight.vue';
+import { castCaption } from '@/lib/cast';
 import type { CastTier } from '@/lib/cast';
 import { isSafeTmdbPath, tmdbImageUrl } from '@/lib/tmdb';
 
@@ -69,11 +70,11 @@ defineProps<{
                         <MatchHighlight :text="member.name" :query="query" />
                     </span>
                     <span
-                        v-if="member.character"
+                        v-if="castCaption(member)"
                         class="mt-0.5 text-sm text-muted"
                     >
                         <MatchHighlight
-                            :text="member.character"
+                            :text="castCaption(member) ?? ''"
                             :query="query"
                         />
                     </span>

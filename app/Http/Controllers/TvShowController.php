@@ -49,6 +49,7 @@ class TvShowController extends Controller
         }
 
         $pageData = $catalog->tvShowPageData($tvShow);
+        $cast = $pageData->cast ?? [];
         $metadata = $tvShow->details;
         $airedEpisodes = $tvShow->episodes()->whereNull('removed_at')->whereDate('air_date', '<=', today())
             ->whereHas('season', fn (Builder $season): Builder => $season->where('season_number', '>', 0)->whereNull('removed_at'));
@@ -60,6 +61,7 @@ class TvShowController extends Controller
             'watchlisted' => $tvShow->isWatchlistedBy($request->user()),
             'progress' => $progress->for($tvShow, $request->user()),
             'canonicalUrl' => $tvShow->canonicalUrl(),
+            'castUrl' => route('tv-shows.cast', ['slug' => $tvShow->slug, 'id' => $tvShow->id]),
             'imageBaseUrl' => config('catalog.image_base_url'),
             'catalogStatus' => $result->status->value,
             'tvShow' => [
@@ -70,7 +72,8 @@ class TvShowController extends Controller
                 'status' => $metadata->status, 'seasonCount' => $seasonCount, 'episodeCount' => $episodeCount,
                 'genres' => $tvShow->genres()->orderBy('name')->pluck('name')->all(),
                 'creators' => $pageData->creators ?? [], 'networks' => $pageData->networks ?? [],
-                'cast' => array_slice($pageData->cast ?? [], 0, config('catalog.movie_page.cast_limit')),
+                'cast' => array_slice($cast, 0, config('catalog.movie_page.cast_limit')),
+                'castCount' => count($cast),
                 'certification' => $pageData?->certification, 'trailer' => $pageData?->trailer,
                 'ratings' => array_map(fn (ExternalRating $rating): array => $rating->toArray(), $ratings->ratingsFor(collect([$tvShow]))[$tvShow->id]),
                 'detailsUnavailable' => $pageData === null,
