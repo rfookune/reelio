@@ -34,6 +34,9 @@
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
+        {{-- Poster and backdrop images are hotlinked from TMDB, so open the connection before the first one is requested --}}
+        <link rel="preconnect" href="https://image.tmdb.org">
+
         @fonts
 
         @vite(['resources/css/app.css', 'resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
