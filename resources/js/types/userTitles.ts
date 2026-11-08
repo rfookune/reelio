@@ -1,8 +1,8 @@
-import type { PosterCardMovie } from '@/components/shared/PosterCard.vue';
+import type { PosterCardTitle } from '@/components/shared/PosterCard.vue';
 
 export type UserList = 'watchlist' | 'watched';
 
-interface UnavailableMovie extends PosterCardMovie {
+interface UnavailableTitle extends PosterCardTitle {
     date: string;
 }
 
@@ -15,9 +15,9 @@ export type UserListPageProps = {
     filter: ListFilter;
     /** Whether TV Shows are on the lists, so the page offers the kind filter. */
     includesTvShows: boolean;
-    titles: { data: PosterCardMovie[] };
-    unavailableTitles: UnavailableMovie[];
-    trending: PosterCardMovie[];
+    titles: { data: PosterCardTitle[] };
+    unavailableTitles: UnavailableTitle[];
+    trending: PosterCardTitle[];
     userMovies: UserMovies;
     userTvShows: UserTvShows;
 };

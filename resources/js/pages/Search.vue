@@ -3,7 +3,7 @@ import { Head, InfiniteScroll, router } from '@inertiajs/vue3';
 import { LoaderCircle, RotateCw, Search as SearchIcon } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import PosterCard from '@/components/shared/PosterCard.vue';
-import type { PosterCardMovie } from '@/components/shared/PosterCard.vue';
+import type { PosterCardTitle } from '@/components/shared/PosterCard.vue';
 import PosterCardSkeleton from '@/components/shared/PosterCardSkeleton.vue';
 import { Button } from '@/components/ui/button';
 import { announce } from '@/composables/useAnnouncer';
@@ -14,7 +14,7 @@ import { search } from '@/routes';
 import type { UserMovies } from '@/types';
 
 /** A result card, and the page of the search it is on. */
-type SearchResult = PosterCardMovie & { kind: CardKind; page: number };
+type SearchResult = PosterCardTitle & { kind: CardKind; page: number };
 
 const props = defineProps<{
     imageBaseUrl: string;
@@ -30,7 +30,7 @@ const props = defineProps<{
     totalResults: number | null;
     /** How the Catalog answered the search; null with no search. */
     status: 'fresh' | 'stale' | 'unavailable' | null;
-    trending: PosterCardMovie[];
+    trending: PosterCardTitle[];
     userMovies: UserMovies;
 }>();
 

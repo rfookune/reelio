@@ -5,7 +5,7 @@ import { computed, nextTick, ref, watch } from 'vue';
 import MoviePicker from '@/components/movie/MoviePicker.vue';
 import PosterCard from '@/components/shared/PosterCard.vue';
 import PosterCardSkeleton from '@/components/shared/PosterCardSkeleton.vue';
-import type { PosterCardMovie } from '@/components/shared/PosterCard.vue';
+import type { PosterCardTitle } from '@/components/shared/PosterCard.vue';
 import UserListCardMenu from '@/components/shared/UserListCardMenu.vue';
 import TvShowMarkDialog from '@/components/tv-show/TvShowMarkDialog.vue';
 import { Button } from '@/components/ui/button';
@@ -78,15 +78,15 @@ const filterCount = computed(
 );
 
 /** A TV Show card's facts; every other card is a Movie. */
-function tvFacts(card: PosterCardMovie): UserTvShowFacts | undefined {
+function tvFacts(card: PosterCardTitle): UserTvShowFacts | undefined {
     return card.kind === 'tv' ? props.userTvShows[card.tmdbId] : undefined;
 }
 
-function cardFacts(card: PosterCardMovie) {
+function cardFacts(card: PosterCardTitle) {
     return card.kind === 'tv' ? tvFacts(card) : props.userMovies[card.tmdbId];
 }
 
-function cardKey(card: PosterCardMovie): string {
+function cardKey(card: PosterCardTitle): string {
     return card.key ?? String(card.tmdbId);
 }
 
@@ -99,7 +99,7 @@ const {
     clearWatched,
     removeWatchlist,
 } = useTvShowListActions(() => props.collection);
-const markingTvShow = ref<PosterCardMovie | null>(null);
+const markingTvShow = ref<PosterCardTitle | null>(null);
 const confirmingMark = computed({
     get: () => markingTvShow.value !== null,
     set: (open: boolean) => {
@@ -110,7 +110,7 @@ const confirmingMark = computed({
 });
 
 /** Clears a TV Show's Watched Episodes; if that fails the card stays, so no focus is left waiting for it to go. */
-async function clearTvShow(card: PosterCardMovie): Promise<void> {
+async function clearTvShow(card: PosterCardTitle): Promise<void> {
     if (!(await clearWatched(card.tmdbId))) {
         menuRemoval = null;
     }

@@ -13,7 +13,7 @@ import type { UserMovieActionSource, UserMovieFacts } from '@/types';
  * One Movie or TV Show on a poster card, linked to its page (the entry route when it has no row yet). A TV Show
  * wears a badge on its poster and has no Movie Watchlist toggle.
  */
-export type PosterCardMovie = {
+export type PosterCardTitle = {
     /** A card without a kind is a Movie. */
     kind?: CardKind;
     /** The catalog id for a Movie, and `tv:` and it for a TV Show, when a Movie and a TV Show may share a page. */
@@ -37,7 +37,7 @@ export type PosterCardMovie = {
 const props = withDefaults(
     defineProps<{
         imageBaseUrl: string;
-        movie: PosterCardMovie;
+        movie: PosterCardTitle;
         facts: UserMovieFacts | undefined;
         source: UserMovieActionSource;
         /** Load the poster at once, for cards above the fold. */
