@@ -71,8 +71,9 @@ expect()->extend('toBeOne', function () {
  * @param  array<string, string>  $headers  Extra headers sent with every request, such as the edge's country header.
  * @param  string  $timezone  The browser's time zone.
  * @param  string  $locale  The browser's locale.
+ * @param  string  $colorScheme  The operating system's colour scheme, "light" or "dark".
  */
-function visitWithCsp(string $url, int $width = 1440, int $height = 900, array $headers = [], string $timezone = 'UTC', string $locale = 'en-US'): AwaitableWebpage
+function visitWithCsp(string $url, int $width = 1440, int $height = 900, array $headers = [], string $timezone = 'UTC', string $locale = 'en-US', string $colorScheme = 'light'): AwaitableWebpage
 {
     $context = Playwright::browser(Playwright::defaultBrowserType())->launch()->newContext([
         'bypassCSP' => false,
@@ -80,7 +81,7 @@ function visitWithCsp(string $url, int $width = 1440, int $height = 900, array $
         'viewport' => ['width' => $width, 'height' => $height],
         'locale' => $locale,
         'timezoneId' => $timezone,
-        'colorScheme' => 'light',
+        'colorScheme' => $colorScheme,
         'permissions' => ['clipboard-read', 'clipboard-write'],
     ]);
 
@@ -96,6 +97,19 @@ function visitWithCsp(string $url, int $width = 1440, int $height = 900, array $
     $url = ComputeUrl::from($url);
 
     return new AwaitableWebpage($context->newPage()->goto($url), $url);
+}
+
+/**
+ * Visits a URL with the `appearance` cookie set to "light" or "dark", so the server renders that theme, and the
+ * operating system set to the same scheme, for the pages that follow it instead, such as Laravel's own 404 and 500.
+ * The cookie is written in the browser and the page loaded again, as a visitor's earlier choice would be.
+ */
+function visitWithAppearance(string $url, string $appearance, int $width = 1440, int $height = 900): AwaitableWebpage
+{
+    $page = visitWithCsp($url, $width, $height, colorScheme: $appearance);
+    $page->script("() => { document.cookie = 'appearance={$appearance};path=/;SameSite=Lax'; }");
+
+    return $page->navigate(ComputeUrl::from($url));
 }
 
 /** Waits for Sonner's toast transitions to finish, so accessibility checks see settled colours. */
