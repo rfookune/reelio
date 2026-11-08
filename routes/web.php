@@ -9,6 +9,7 @@ use App\Http\Controllers\MovieCastController;
 use App\Http\Controllers\MovieController;
 use App\Http\Controllers\MovieEntryController;
 use App\Http\Controllers\MoviePickerController;
+use App\Http\Controllers\RobotsController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SearchRatingsController;
 use App\Http\Controllers\UndoController;
@@ -21,6 +22,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Middleware\EncryptHistory;
 
 Route::get('/', DiscoverController::class)->name('home');
+Route::get('robots.txt', RobotsController::class)->name('robots');
 
 Route::get('search', SearchController::class)->middleware('throttle:search')->name('search');
 Route::get('search/ratings', SearchRatingsController::class)->middleware('throttle:search-ratings')->name('search.ratings');

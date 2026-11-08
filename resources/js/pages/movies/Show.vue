@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import type { ExternalRating } from '@/components/ExternalRatings.vue';
+import SeoHead from '@/components/SeoHead.vue';
 import MovieCast from '@/components/movie/MovieCast.vue';
 import type { CastMember } from '@/components/movie/MovieCast.vue';
 import MovieDetailsCard from '@/components/movie/MovieDetailsCard.vue';
@@ -11,6 +12,7 @@ import TrailerPlayer from '@/components/movie/TrailerPlayer.vue';
 import WhereToWatch from '@/components/movie/WhereToWatch.vue';
 import type { WhereToWatchBlock } from '@/components/movie/WhereToWatch.vue';
 import type { Trailer } from '@/components/movie/TrailerPlayer.vue';
+import { describeMovie, movieJsonLd, movieTitle, shareImage } from '@/lib/seo';
 import { isSafeTmdbPath, tmdbImageUrl } from '@/lib/tmdb';
 import type { UserMovies } from '@/types';
 
@@ -48,6 +50,34 @@ const props = defineProps<{
 
 const glowUrl = (width: 780 | 1280) =>
     tmdbImageUrl(props.imageBaseUrl, width, props.movie.backdropPath ?? '');
+const page = usePage();
+const title = computed(() => movieTitle(props.movie.title, props.movie.year));
+const description = computed(() =>
+    describeMovie(
+        props.movie.overview,
+        `Where to watch ${props.movie.title ?? 'this movie'}, with its cast, ratings and trailer.`,
+    ),
+);
+const image = computed(() =>
+    shareImage(
+        props.imageBaseUrl,
+        props.movie.backdropPath,
+        props.movie.posterPath,
+        page.props.seo.card,
+    ),
+);
+const jsonLd = computed(() =>
+    movieJsonLd({
+        name: props.movie.title ?? 'Movie',
+        datePublished: props.movie.releaseDate,
+        directors: props.movie.directors,
+        genres: props.movie.genres,
+        runtime: props.movie.runtime,
+        image: image.value,
+        description: props.movie.overview,
+        url: props.canonicalUrl,
+    }),
+);
 const hasGlow = computed(() => isSafeTmdbPath(props.movie.backdropPath));
 
 /*
@@ -96,9 +126,14 @@ onBeforeUnmount(() => {
 
 <template>
     <div class="pb-12">
-        <Head :title="movie.title ?? 'Movie'">
-            <link rel="canonical" :href="canonicalUrl" />
-        </Head>
+        <SeoHead
+            :title="title"
+            :description="description"
+            :image="image"
+            :canonical-url="canonicalUrl"
+            type="video.movie"
+            :json-ld="jsonLd"
+        />
 
         <MovieHero
             :image-base-url="imageBaseUrl"

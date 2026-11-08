@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { RotateCw } from '@lucide/vue';
 import { ref } from 'vue';
 import DiscoverHero from '@/components/discover/DiscoverHero.vue';
 import type { DiscoverHeroMovie } from '@/components/discover/DiscoverHero.vue';
 import DiscoverSection from '@/components/discover/DiscoverSection.vue';
 import type { DiscoverSection as Section } from '@/components/discover/DiscoverSection.vue';
+import SeoHead from '@/components/SeoHead.vue';
 import { Button } from '@/components/ui/button';
+import { DISCOVER_DESCRIPTION } from '@/lib/seo';
 import { search } from '@/routes';
 import type { UserMovies } from '@/types';
 
@@ -29,7 +31,7 @@ function retry(): void {
 
 <template>
     <div class="pb-12">
-        <Head title="Discover" />
+        <SeoHead title="Discover" :description="DISCOVER_DESCRIPTION" />
         <h1 class="sr-only">Discover</h1>
 
         <DiscoverHero

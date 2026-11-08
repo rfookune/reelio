@@ -21,6 +21,7 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             sentry: SentryConfig;
+            seo: { url: string; card: string };
             [key: string]: unknown;
         };
     }

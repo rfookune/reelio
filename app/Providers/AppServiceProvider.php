@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Support\PublicRoutes;
 use App\Http\Support\RateLimitKey;
 use App\Http\Support\SearchPage;
 use App\Services\Catalog\CacheKey;
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Inertia\Inertia;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -47,6 +49,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureServerRendering();
         $this->configureRateLimiting();
     }
 
@@ -98,5 +101,16 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised()
             : null,
         );
+    }
+
+    /**
+     * Render on the server only the `PublicRoutes`: Discover, Movie pages and the
+     * About, Privacy, Terms and Accessibility pages. Search, auth, the Watchlist and Watched pages and settings are
+     * rendered on the client, and so is any page while the SSR server is down. Setting a condition replaces
+     * Inertia's own `inertia.ssr.enabled` check, so the condition repeats it.
+     */
+    private function configureServerRendering(): void
+    {
+        Inertia::disableSsr(fn (): bool => ! config('inertia.ssr.enabled') || ! PublicRoutes::includes(request()));
     }
 }

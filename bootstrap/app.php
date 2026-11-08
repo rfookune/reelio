@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Exceptions\ErrorPageException;
+use App\Http\Middleware\ApplyIndexingPolicy;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RecordGuestPage;
@@ -32,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
             RecordGuestPage::class,
+            ApplyIndexingPolicy::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

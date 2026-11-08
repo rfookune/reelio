@@ -17,17 +17,6 @@ class HandleInertiaRequests extends Middleware
     protected $rootView = 'app';
 
     /**
-     * Pages rendered on the client only: they aren't public pages a crawler indexes.
-     *
-     * @var array<int, string>
-     */
-    protected $withoutSsr = [
-        'search',
-        'watchlist',
-        'watched',
-    ];
-
-    /**
      * Determines the current asset version.
      *
      * @see https://inertiajs.com/asset-versioning
@@ -51,6 +40,10 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $request->user(),
+            ],
+            'seo' => [
+                'url' => $request->url(),
+                'card' => asset('og-card.png'),
             ],
             'sentry' => [
                 'dsn' => config('services.sentry.dsn'),
