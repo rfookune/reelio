@@ -2,13 +2,8 @@
 
 use App\Jobs\BuildSitemap;
 use App\Models\Movie;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Support\Facades\Storage;
-
-beforeEach(function () {
-    Storage::fake('sitemap');
-    config(['seo.sitemap_disk' => 'sitemap']);
-});
 
 /**
  * The `<loc>` values in a sitemap document.
@@ -73,7 +68,7 @@ test('with the flag off nothing is built and nothing is served', function () {
     $this->get(route('sitemap.show', ['page' => 1]))->assertNotFound();
 
     BuildSitemap::dispatchSync();
-    expect(Storage::disk('sitemap')->allFiles())->toBeEmpty();
+    expect(DB::table('sitemap_pages')->count())->toBe(0);
 
     config(['seo.indexing' => true]);
     $this->get(route('sitemap.index'))->assertNotFound();
