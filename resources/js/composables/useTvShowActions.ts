@@ -9,6 +9,12 @@ import {
     update as addToWatchlist,
     destroy as removeFromWatchlist,
 } from '@/actions/App/Http/Controllers/TvShowWatchlistController';
+import {
+    updateSeason,
+    destroySeason,
+    updateTvShow,
+    destroyTvShow,
+} from '@/actions/App/Http/Controllers/BulkWatchedController';
 import undoRoute from '@/actions/App/Http/Controllers/TvShowUndoController';
 
 export type Episode = {
@@ -190,6 +196,73 @@ export function useTvShowActions(
         }
     }
 
+    async function bulk(
+        send: () => Promise<Result>,
+        message: string,
+    ): Promise<boolean> {
+        if (busy.value) return false;
+        busy.value = true;
+        try {
+            const result = await send();
+            if (result.redirect) {
+                router.visit(result.redirect);
+                return false;
+            }
+            apply(result);
+            if (result.undoToken) offerUndo(result.undoToken, message);
+            return true;
+        } catch {
+            toast.error(
+                http.errors.episode ??
+                    http.errors.message ??
+                    "Couldn't save that. Try again.",
+            );
+            return false;
+        } finally {
+            busy.value = false;
+        }
+    }
+
+    function markSeason(season: Season) {
+        return bulk(
+            () =>
+                http.put(
+                    updateSeason.url({
+                        tvShow: tvShow().id,
+                        season: season.id,
+                    }),
+                ),
+            'Season marked as watched',
+        );
+    }
+
+    function clearSeason(season: Season) {
+        return bulk(
+            () =>
+                http.delete(
+                    destroySeason.url({
+                        tvShow: tvShow().id,
+                        season: season.id,
+                    }),
+                ),
+            'Season cleared',
+        );
+    }
+
+    function markTvShow() {
+        return bulk(
+            () => http.put(updateTvShow.url({ tmdbId: tvShow().tmdbId })),
+            'TV show marked as watched',
+        );
+    }
+
+    function clearTvShow() {
+        return bulk(
+            () => http.delete(destroyTvShow.url({ tmdbId: tvShow().tmdbId })),
+            'TV show cleared',
+        );
+    }
+
     async function toggleWatchlist() {
         if (busy.value) return;
         busy.value = true;
@@ -233,10 +306,20 @@ export function useTvShowActions(
                     : 'Removed from your Watchlist',
             );
         const flash = page.flash.episodeAction as
-            | { tmdbId: number; undoToken: string }
+            | { tmdbId: number; undoToken: string; message?: string }
             | undefined;
         if (flash?.tmdbId === tvShow().tmdbId)
-            offerUndo(flash.undoToken, 'Episode updated');
+            offerUndo(flash.undoToken, flash.message ?? 'Episode updated');
     });
-    return { progress, watchlisted, busy, toggle, toggleWatchlist };
+    return {
+        progress,
+        watchlisted,
+        busy,
+        toggle,
+        toggleWatchlist,
+        markSeason,
+        clearSeason,
+        markTvShow,
+        clearTvShow,
+    };
 }

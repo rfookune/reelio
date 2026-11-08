@@ -2,11 +2,13 @@
 
 namespace App\Listeners;
 
+use App\Actions\ChangeBulkWatched;
 use App\Actions\ChangeEpisodeWatched;
 use App\Actions\ChangeTvShowWatchlist;
 use App\Http\Support\PendingGuestAction;
 use App\Http\Support\UserMovieActionByCatalogId;
 use App\Models\Episode;
+use App\Models\Season;
 use App\Models\TvShow;
 use App\Models\User;
 use Illuminate\Auth\Events\Login;
@@ -25,7 +27,7 @@ class ApplyPendingGuestAction
 {
     private const FAILURE_MESSAGE = "Couldn't save that. Try again.";
 
-    public function __construct(private Request $request, private UserMovieActionByCatalogId $actions, private ChangeEpisodeWatched $episodes, private ChangeTvShowWatchlist $tvWatchlist) {}
+    public function __construct(private Request $request, private UserMovieActionByCatalogId $actions, private ChangeEpisodeWatched $episodes, private ChangeTvShowWatchlist $tvWatchlist, private ChangeBulkWatched $bulk) {}
 
     public function handle(Login $event): void
     {
@@ -43,6 +45,20 @@ class ApplyPendingGuestAction
             if (isset($pending['tv_show_tmdb_id'])) {
                 $result = $this->tvWatchlist->handle($this->request, $event->user, (string) $pending['tv_show_tmdb_id'], $pending['watchlisted']);
                 Inertia::flash('tvWatchlistAction', ['tmdbId' => $pending['tv_show_tmdb_id'], 'undoToken' => $result['undoToken'], 'watchlisted' => $result['watchlisted']]);
+
+                return;
+            }
+            if (isset($pending['season_id'])) {
+                $season = Season::query()->findOrFail($pending['season_id']);
+                $tvShow = TvShow::query()->findOrFail($season->title_id);
+                $result = $this->bulk->season($this->request, $event->user, $tvShow, $season, $pending['watched']);
+                Inertia::flash('episodeAction', ['tmdbId' => $tvShow->tmdb_id, 'undoToken' => $result['undoToken'], 'message' => $pending['watched'] ? 'Season marked as watched' : 'Season cleared']);
+
+                return;
+            }
+            if (isset($pending['bulk_tv_show_tmdb_id'])) {
+                $result = $this->bulk->tvShow($this->request, $event->user, (string) $pending['bulk_tv_show_tmdb_id'], $pending['watched']);
+                Inertia::flash('episodeAction', ['tmdbId' => $pending['bulk_tv_show_tmdb_id'], 'undoToken' => $result['undoToken'], 'message' => $pending['watched'] ? 'TV show marked as watched' : 'TV show cleared']);
 
                 return;
             }

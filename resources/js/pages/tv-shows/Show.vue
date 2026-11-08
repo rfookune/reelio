@@ -1,8 +1,16 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { BookmarkCheck, BookmarkPlus } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import SeasonAccordion from '@/components/tv-show/SeasonAccordion.vue';
 import { useTvShowActions } from '@/composables/useTvShowActions';
 import type { WatchedProgress } from '@/composables/useTvShowActions';
@@ -52,12 +60,26 @@ const props = defineProps<{
     };
 }>();
 const page = usePage();
-const { progress, watchlisted, busy, toggle, toggleWatchlist } =
-    useTvShowActions(
-        () => props.progress,
-        () => props.watchlisted,
-        () => props.tvShow,
-    );
+const {
+    progress,
+    watchlisted,
+    busy,
+    toggle,
+    toggleWatchlist,
+    markSeason,
+    clearSeason,
+    markTvShow,
+    clearTvShow,
+} = useTvShowActions(
+    () => props.progress,
+    () => props.watchlisted,
+    () => props.tvShow,
+);
+const confirmingMark = ref(false);
+async function confirmMark() {
+    await markTvShow();
+    confirmingMark.value = false;
+}
 const yearRange = computed(() =>
     tvShowYearRange(
         props.tvShow.firstAirDate,
@@ -145,6 +167,17 @@ const jsonLd = computed(() =>
                     <BookmarkPlus v-else aria-hidden="true" />
                     {{ watchlisted ? 'On your Watchlist' : 'Add to Watchlist' }}
                 </Button>
+                <Button
+                    v-if="progress.state !== 'Completed'"
+                    type="button"
+                    size="lg"
+                    variant="outline"
+                    data-slot="tv-show-mark"
+                    :disabled="busy"
+                    @click="confirmingMark = true"
+                >
+                    Mark as watched
+                </Button>
                 <div
                     data-slot="tv-show-progress"
                     class="flex flex-col gap-2"
@@ -165,6 +198,18 @@ const jsonLd = computed(() =>
                     >
                         {{ progress.state }}
                     </p>
+                    <Button
+                        v-if="progress.state === 'Completed'"
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        data-slot="tv-show-clear"
+                        class="w-fit"
+                        :disabled="busy"
+                        @click="clearTvShow"
+                    >
+                        Clear
+                    </Button>
                     <p class="text-sm text-muted">
                         {{ progress.watched }} of {{ progress.total }} Episodes
                         watched
@@ -261,6 +306,8 @@ const jsonLd = computed(() =>
                 :busy="busy"
                 class="order-5 lg:col-start-1"
                 @toggle="toggle"
+                @mark-season="markSeason"
+                @clear-season="clearSeason"
             />
             <MovieCast
                 :image-base-url="imageBaseUrl"
@@ -269,5 +316,38 @@ const jsonLd = computed(() =>
                 class="order-4 lg:col-start-1"
             />
         </div>
+        <Dialog v-model:open="confirmingMark">
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Mark as watched?</DialogTitle>
+                    <DialogDescription>
+                        {{
+                            progress.total === 0
+                                ? 'This marks every aired Episode as watched.'
+                                : `This marks all ${progress.total} aired ${progress.total === 1 ? 'Episode' : 'Episodes'} as watched.`
+                        }}
+                        You can undo it right after.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        data-slot="tv-show-mark-cancel"
+                        @click="confirmingMark = false"
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        type="button"
+                        data-slot="tv-show-mark-confirm"
+                        :disabled="busy"
+                        @click="confirmMark"
+                    >
+                        Mark as watched
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
 </template>

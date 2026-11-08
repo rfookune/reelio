@@ -1,11 +1,16 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/button';
 import type {
     Episode,
     Season,
     WatchedProgress,
 } from '@/composables/useTvShowActions';
 defineProps<{ progress: WatchedProgress; busy: boolean }>();
-defineEmits<{ toggle: [season: Season, episode: Episode] }>();
+defineEmits<{
+    toggle: [season: Season, episode: Episode];
+    markSeason: [season: Season];
+    clearSeason: [season: Season];
+}>();
 </script>
 <template>
     <section aria-labelledby="seasons-heading" class="flex flex-col gap-4">
@@ -53,6 +58,32 @@ defineEmits<{ toggle: [season: Season, episode: Episode] }>();
                     class="mt-2 block h-1 w-full accent-primary"
                 />
             </summary>
+            <div
+                v-if="season.total > 0"
+                data-slot="season-bulk-actions"
+                class="flex flex-wrap gap-2 border-t border-line p-4"
+            >
+                <Button
+                    type="button"
+                    size="sm"
+                    data-slot="season-mark"
+                    :disabled="busy || season.watched === season.total"
+                    @click="$emit('markSeason', season)"
+                >
+                    Mark {{ season.number === 0 ? 'Specials' : 'Season' }} as
+                    watched
+                </Button>
+                <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    data-slot="season-clear"
+                    :disabled="busy || season.watched === 0"
+                    @click="$emit('clearSeason', season)"
+                >
+                    Clear {{ season.number === 0 ? 'Specials' : 'Season' }}
+                </Button>
+            </div>
             <ul class="divide-y divide-line border-t border-line">
                 <li
                     v-for="episode in season.episodes"

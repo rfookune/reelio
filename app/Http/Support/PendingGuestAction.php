@@ -31,6 +31,16 @@ class PendingGuestAction
         $request->session()->put(self::SESSION_KEY, ['episode_id' => $episodeId, 'watched' => $watched, 'stored_at' => now()->timestamp]);
     }
 
+    public static function storeSeason(Request $request, int $seasonId, bool $watched): void
+    {
+        $request->session()->put(self::SESSION_KEY, ['season_id' => $seasonId, 'watched' => $watched, 'stored_at' => now()->timestamp]);
+    }
+
+    public static function storeTvShow(Request $request, int $tmdbId, bool $watched): void
+    {
+        $request->session()->put(self::SESSION_KEY, ['bulk_tv_show_tmdb_id' => $tmdbId, 'watched' => $watched, 'stored_at' => now()->timestamp]);
+    }
+
     public static function storeTvShowWatchlist(Request $request, int $tmdbId, bool $watchlisted, string $source): void
     {
         $request->session()->put(self::SESSION_KEY, ['tv_show_tmdb_id' => $tmdbId, 'watchlisted' => $watchlisted, 'source' => $source, 'stored_at' => now()->timestamp]);
@@ -39,7 +49,7 @@ class PendingGuestAction
     /**
      * Takes the pending action out of the session, so it is applied at most once, if it has not expired.
      *
-     * @return array{tmdb_id: int, action: UserMovieAction, source: string}|array{episode_id: int, watched: bool}|array{tv_show_tmdb_id: int, watchlisted: bool, source: string}|null
+     * @return array{tmdb_id: int, action: UserMovieAction, source: string}|array{episode_id: int, watched: bool}|array{season_id: int, watched: bool}|array{bulk_tv_show_tmdb_id: int, watched: bool}|array{tv_show_tmdb_id: int, watchlisted: bool, source: string}|null
      */
     public static function pull(Request $request): ?array
     {
@@ -51,6 +61,14 @@ class PendingGuestAction
 
         if (isset($pending['tv_show_tmdb_id'])) {
             return ['tv_show_tmdb_id' => $pending['tv_show_tmdb_id'], 'watchlisted' => $pending['watchlisted'], 'source' => $pending['source']];
+        }
+
+        if (isset($pending['season_id'])) {
+            return ['season_id' => $pending['season_id'], 'watched' => $pending['watched']];
+        }
+
+        if (isset($pending['bulk_tv_show_tmdb_id'])) {
+            return ['bulk_tv_show_tmdb_id' => $pending['bulk_tv_show_tmdb_id'], 'watched' => $pending['watched']];
         }
 
         if (isset($pending['episode_id'])) {
