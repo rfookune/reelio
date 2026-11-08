@@ -2,8 +2,8 @@
 
 use App\Models\TvShow;
 use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\Details\TvShowDetails;
 use App\Services\Catalog\Sources\FakeCatalogSource;
-use App\Services\Catalog\Sources\TvShowDetails;
 
 it('renders TV metadata in the document head under the real CSP', function () {
     $tvShow = TvShow::factory()->create(['tmdb_id' => 87108, 'slug' => 'chernobyl', 'synced_at' => now()->subDays(2)]);

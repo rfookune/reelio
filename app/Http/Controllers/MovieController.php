@@ -11,7 +11,7 @@ use App\Http\Support\WhereToWatch;
 use App\Models\Movie;
 use App\Services\Catalog\Catalog;
 use App\Services\Catalog\CatalogResult;
-use App\Services\Catalog\Sources\MovieDetails;
+use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Ratings\ExternalRating;
 use App\Services\Ratings\Ratings;
 use Illuminate\Http\RedirectResponse;

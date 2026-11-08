@@ -6,8 +6,8 @@ use App\Enums\UserMovieList;
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
-use App\Services\Catalog\Catalog;
-use App\Services\Catalog\DiscoverMovie;
+use App\Services\Catalog\Discover\DiscoverBuilder;
+use App\Services\Catalog\Discover\DiscoverMovie;
 use App\Services\Ratings\ExternalRating;
 use App\Services\Ratings\Ratings;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,7 +27,7 @@ class UserMovieListPage
 
     private ?int $count = null;
 
-    public function __construct(private User $user, private UserMovieList $list, private string $sort, private Catalog $catalog, private Ratings $ratings) {}
+    public function __construct(private User $user, private UserMovieList $list, private string $sort, private DiscoverBuilder $discover, private Ratings $ratings) {}
 
     private function count(): int
     {
@@ -78,7 +78,7 @@ class UserMovieListPage
     /** @return list<Card> */
     public function trending(): array
     {
-        $movies = $this->list === UserMovieList::Watchlist && $this->count() === 0 ? $this->catalog->storedTrending() : [];
+        $movies = $this->list === UserMovieList::Watchlist && $this->count() === 0 ? $this->discover->storedTrending() : [];
         if ($movies === []) {
             return [];
         }

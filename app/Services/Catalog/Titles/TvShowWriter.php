@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Services\Catalog;
+namespace App\Services\Catalog\Titles;
 
 use App\Models\Genre;
 use App\Models\TvShow;
-use App\Services\Catalog\Sources\TvShowDetails;
+use App\Services\Catalog\Sources\Details\TvShowDetails;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
 use App\Services\Ratings\TmdbRatingId;

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\UserMovieList;
 use App\Http\Support\UserMovieListPage;
-use App\Services\Catalog\Catalog;
+use App\Services\Catalog\Discover\DiscoverBuilder;
 use App\Services\Ratings\Ratings;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,12 +13,12 @@ use Symfony\Component\HttpFoundation\Response;
 
 class UserMovieListController extends Controller
 {
-    public function __invoke(Request $request, Catalog $catalog, Ratings $ratings): Response
+    public function __invoke(Request $request, DiscoverBuilder $discover, Ratings $ratings): Response
     {
         $list = $request->routeIs('watched') ? UserMovieList::Watched : UserMovieList::Watchlist;
         $sort = $request->query('sort', $list->defaultSort());
         abort_unless(is_string($sort) && in_array($sort, $list->sorts(), true), 422, 'Unknown '.$list->name.' sort.');
-        $page = new UserMovieListPage($request->user(), $list, $sort, $catalog, $ratings);
+        $page = new UserMovieListPage($request->user(), $list, $sort, $discover, $ratings);
 
         if ($request->has('restore')) {
             $tmdbId = filter_var($request->query('restore'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);

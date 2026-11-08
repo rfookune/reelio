@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Catalog;
+namespace App\Services\Catalog\Titles;
 
 use App\Models\Title;
 use App\Services\Catalog\Enums\OfferType;

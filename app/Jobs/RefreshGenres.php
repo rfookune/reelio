@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Services\Catalog\Catalog;
 use App\Services\Catalog\Enums\CatalogProfile;
+use App\Services\Catalog\Maintenance\GenreRefresh;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -17,8 +17,8 @@ class RefreshGenres implements ShouldQueue
 
     public int $tries = 1;
 
-    public function handle(Catalog $catalog): void
+    public function handle(GenreRefresh $genres): void
     {
-        $catalog->refreshGenres(CatalogProfile::Background);
+        $genres->refreshGenres(CatalogProfile::Background);
     }
 }

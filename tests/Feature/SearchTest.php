@@ -4,11 +4,12 @@ use App\Jobs\RecordAnalyticsEvent;
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
-use App\Services\Catalog\Catalog;
+use App\Services\Catalog\Discover\DiscoverBuilder;
 use App\Services\Catalog\Enums\CatalogProfile;
+use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\FakeCatalogSource;
-use App\Services\Catalog\Sources\MovieListing;
+use App\Services\Catalog\Sources\Listings\MovieListing;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
 use Illuminate\Support\Facades\Queue;
@@ -24,7 +25,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 function fakeSearchWithTrending(array $searches = [], bool $failingSearch = false): FakeCatalogSource
 {
     fakeDiscoverSource(['trending' => [movieListings(901, 910)]]);
-    app(Catalog::class)->buildDiscover(CatalogProfile::Background);
+    app(DiscoverBuilder::class)->build(CatalogProfile::Background);
     $source = new FakeCatalogSource(failing: $failingSearch, searches: $searches);
     app()->instance(CatalogSource::class, $source);
 
@@ -175,7 +176,7 @@ test('a search the source can\'t answer is unavailable, keeping the query and sh
 test('a stale search is shown as it was', function () {
     $this->freezeTime();
     fakeSearchWithTrending(['inter' => [movieListings(1, 3)]]);
-    app(Catalog::class)->search('inter', 1);
+    app(CatalogSearch::class)->search('inter', 1);
     $this->travel(2)->hours();
     fakeSearchWithTrending(failingSearch: true);
 

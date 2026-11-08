@@ -3,10 +3,10 @@
 use App\Jobs\RecordAnalyticsEvent;
 use App\Models\Movie;
 use App\Models\User;
-use App\Services\Catalog\Catalog;
+use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\FakeCatalogSource;
-use App\Services\Catalog\Sources\MovieListing;
+use App\Services\Catalog\Sources\Listings\MovieListing;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
 use Illuminate\Support\Facades\Queue;
@@ -23,7 +23,7 @@ function searchedWithImdbIds(array $searches, array $imdbIds, string $query = 'i
     config(['ratings.sources.imdb.enabled' => true]);
     $source = new FakeCatalogSource(searches: $searches, imdbIds: $imdbIds);
     app()->instance(CatalogSource::class, $source);
-    app(Catalog::class)->search($query, 1);
+    app(CatalogSearch::class)->search($query, 1);
 
     return $source;
 }

@@ -7,7 +7,7 @@ use App\Models\Genre;
 use App\Models\Movie;
 use App\Models\StreamingService;
 use App\Models\UserMovie;
-use App\Services\Catalog\Sources\MovieDetails;
+use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
 use Illuminate\Support\Facades\DB;

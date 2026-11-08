@@ -8,7 +8,7 @@ use App\Models\Movie;
 use App\Models\User;
 use App\Services\Catalog\Catalog;
 use App\Services\Catalog\CatalogResult;
-use App\Services\Catalog\Sources\MovieDetails;
+use App\Services\Catalog\Sources\Details\MovieDetails;
 
 /**
  * The Catalog details for one Movie page response, fetched the first time a prop needs them and at most once, so

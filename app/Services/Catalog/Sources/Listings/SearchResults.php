@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Catalog\Sources;
+namespace App\Services\Catalog\Sources\Listings;
 
 use Error;
 

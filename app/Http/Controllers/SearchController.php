@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
 use App\Http\Support\SearchPage;
-use App\Services\Catalog\Catalog;
+use App\Services\Catalog\Discover\DiscoverBuilder;
+use App\Services\Catalog\Search\CatalogSearch;
+use App\Services\Catalog\Search\ImdbIdLookup;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\Ratings;
 use Illuminate\Http\Request;
@@ -18,9 +20,9 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class SearchController extends Controller
 {
-    public function __invoke(Request $request, Catalog $catalog, Ratings $ratings, RecordEvent $recordEvent): Response
+    public function __invoke(Request $request, CatalogSearch $catalogSearch, ImdbIdLookup $imdbIds, DiscoverBuilder $discover, Ratings $ratings, RecordEvent $recordEvent): Response
     {
-        $page = SearchPage::fromRequest($request, $catalog, $ratings, $recordEvent);
+        $page = SearchPage::fromRequest($request, $catalogSearch, $imdbIds, $discover, $ratings, $recordEvent);
 
         $response = Inertia::render('Search', [
             'imageBaseUrl' => config('catalog.image_base_url'),

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Catalog\Sources;
+namespace App\Services\Catalog\Sources\Listings;
 
 /**
  * One Movie as a Catalog source's list shows it: what's needed to place it in a section, without the details a

@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Services\Catalog\Catalog;
+use App\Services\Catalog\Maintenance\RefreshSchedule;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -26,10 +26,10 @@ class PlanMovieRefreshes implements ShouldQueue
         $this->onQueue('default');
     }
 
-    public function handle(Catalog $catalog): void
+    public function handle(RefreshSchedule $schedule): void
     {
         $pageSize = config('catalog.refresh.planner_page_size');
-        $movieIds = $catalog->dueForRefresh($this->afterId, $pageSize);
+        $movieIds = $schedule->dueForRefresh($this->afterId, $pageSize);
 
         $lastMovieId = $this->afterId;
 

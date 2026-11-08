@@ -5,7 +5,7 @@ use App\Models\Availability;
 use App\Models\Genre;
 use App\Models\Movie;
 use App\Models\UserMovie;
-use App\Services\Catalog\Catalog;
+use App\Services\Catalog\Discover\DiscoverBuilder;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
 
@@ -40,7 +40,7 @@ test('catalog:purge clears everything from TMDB off every Movie and deletes ever
     $this->assertDatabaseHas('ratings', ['source' => 'imdb', 'source_id' => 'tt0000001']);
     $this->assertDatabaseEmpty('genres');
     $this->assertDatabaseEmpty('streaming_services');
-    expect(app(Catalog::class)->storedTrending())->toBe([]);
+    expect(app(DiscoverBuilder::class)->storedTrending())->toBe([]);
 });
 
 test('catalog:purge changes nothing unless confirmed, and --force skips the question', function () {

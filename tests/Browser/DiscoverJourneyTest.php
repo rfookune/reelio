@@ -2,9 +2,9 @@
 
 use App\Models\Movie;
 use App\Models\User;
-use App\Services\Catalog\Catalog;
+use App\Services\Catalog\Discover\DiscoverBuilder;
 use App\Services\Catalog\Enums\CatalogProfile;
-use App\Services\Catalog\Sources\MovieDetails;
+use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
 
@@ -25,7 +25,7 @@ function buildBrowserDiscover(): void
         new MovieDetails(tmdbId: 1, title: 'Movie 1', runtime: 169, posterPath: '/poster1.jpg', trailer: ['key' => 'zSWdZVtXT7E', 'name' => 'Trailer 4', 'type' => 'Trailer']),
         new MovieDetails(tmdbId: 31, title: 'Movie 31', usReleaseDate: '2026-11-21'),
     ]);
-    app(Catalog::class)->buildDiscover(CatalogProfile::Background);
+    app(DiscoverBuilder::class)->build(CatalogProfile::Background);
 }
 
 it('opens a Movie from Discover and saves it from its page', function (int $width, int $height) {
@@ -103,7 +103,7 @@ it('credits IMDb in short on a Discover card, linking IMDb itself', function () 
     config(['ratings.sources.imdb.enabled' => true, 'catalog.image_base_url' => '/test-images/']);
     app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000002', 8.1, 5000);
     fakeDiscoverSource(['trending' => [movieListings(1, 6)]], [new MovieDetails(tmdbId: 2, title: 'Movie 2', imdbId: 'tt0000002')]);
-    app(Catalog::class)->buildDiscover(CatalogProfile::Background);
+    app(DiscoverBuilder::class)->build(CatalogProfile::Background);
 
     visitWithCsp('/')
         ->assertSeeIn('[data-slot="discover-row"][data-tmdb-id="2"] [data-slot="imdb-credit"]', 'Information courtesy of IMDb. Used with permission.')

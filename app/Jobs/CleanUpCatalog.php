@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Services\Catalog\Catalog;
+use App\Services\Catalog\Maintenance\CatalogCleanup;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -25,9 +25,9 @@ class CleanUpCatalog implements ShouldQueue
         $this->onQueue('default');
     }
 
-    public function handle(Catalog $catalog): void
+    public function handle(CatalogCleanup $cleanup): void
     {
-        if ($catalog->cleanUp()) {
+        if ($cleanup->cleanUp()) {
             self::dispatch();
         }
     }

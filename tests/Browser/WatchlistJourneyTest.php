@@ -3,7 +3,7 @@
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
-use App\Services\Catalog\Catalog;
+use App\Services\Catalog\Discover\DiscoverBuilder;
 use App\Services\Catalog\Enums\CatalogProfile;
 use Illuminate\Support\Facades\RateLimiter;
 
@@ -88,7 +88,7 @@ it('loads all Movies after removals and restores the sort, loaded pages and scro
 it('saves a cached Trending suggestion from the empty state and returns it with Undo', function () {
     config(['catalog.image_base_url' => '/test-images/']);
     fakeDiscoverSource(['trending' => [[movieListing(901)]]]);
-    app(Catalog::class)->buildDiscover(CatalogProfile::Background);
+    app(DiscoverBuilder::class)->build(CatalogProfile::Background);
     $this->actingAs(User::factory()->create());
 
     $page = visitWithCsp('/watchlist');

@@ -4,11 +4,11 @@ use App\Jobs\BuildDiscover;
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
-use App\Services\Catalog\Catalog;
+use App\Services\Catalog\Discover\DiscoverBuilder;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\FakeCatalogSource;
-use App\Services\Catalog\Sources\MovieDetails;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
 use Illuminate\Support\Facades\Queue;
@@ -44,7 +44,7 @@ test('Discover shows the hero and numbered Trending, then Popular and Top rated,
         'popular' => [movieListings(11, 20)],
         'top_rated' => [movieListings(21, 30)],
     ], [new MovieDetails(tmdbId: 1, runtime: 169, imdbId: 'tt0000001', genres: [['id' => 878, 'name' => 'Science Fiction']], trailer: ['key' => 'abcdefghijk', 'name' => 'Trailer 4', 'type' => 'Trailer'])]);
-    app(Catalog::class)->buildDiscover(CatalogProfile::Background);
+    app(DiscoverBuilder::class)->build(CatalogProfile::Background);
 
     $this->get(route('home'))->assertOk()->assertInertia(fn (Assert $page) => $page
         ->component('Discover')
@@ -84,7 +84,7 @@ test('Discover shows Coming soon with each Movie\'s US date after Popular, and t
         'genre-18' => [movieListings(51, 60)],
         'genre-878' => [movieListings(61, 70)],
     ], [new MovieDetails(tmdbId: 21, usReleaseDate: '2026-11-21')]);
-    app(Catalog::class)->buildDiscover(CatalogProfile::Background);
+    app(DiscoverBuilder::class)->build(CatalogProfile::Background);
 
     $this->get(route('home'))->assertOk()->assertInertia(fn (Assert $page) => $page
         ->where('sections', fn ($sections) => collect($sections)->map(fn ($section): array => [$section['key'], $section['title']])->all() === [
@@ -104,7 +104,7 @@ test('Discover shows Coming soon with each Movie\'s US date after Popular, and t
 test('Discover carries the viewer\'s facts by catalog id and reloads only them after an action', function () {
     $facts = UserMovie::factory()->for(Movie::factory()->state(['tmdb_id' => 3]))->create();
     fakeDiscoverSource(['trending' => [movieListings(1, 10)]]);
-    app(Catalog::class)->buildDiscover(CatalogProfile::Background);
+    app(DiscoverBuilder::class)->build(CatalogProfile::Background);
 
     $this->actingAs($facts->user)->get(route('home'))->assertInertia(fn (Assert $page) => $page
         ->where('userMovies.3', ['watchlisted' => true, 'watched' => false, 'watchedDate' => null])

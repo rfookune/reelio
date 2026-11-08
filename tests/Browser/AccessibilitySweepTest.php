@@ -4,11 +4,11 @@ use App\Models\Genre;
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
-use App\Services\Catalog\Catalog;
+use App\Services\Catalog\Discover\DiscoverBuilder;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\FakeCatalogSource;
-use App\Services\Catalog\Sources\MovieDetails;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 
@@ -31,7 +31,7 @@ function accessibilitySweepUrl(string $scenario): string
                 new MovieDetails(tmdbId: 1, title: 'Movie 1', runtime: 169, posterPath: '/poster1.jpg', trailer: ['key' => 'zSWdZVtXT7E', 'name' => 'Trailer 4', 'type' => 'Trailer']),
                 new MovieDetails(tmdbId: 31, title: 'Movie 31', usReleaseDate: '2026-11-21'),
             ]);
-            app(Catalog::class)->buildDiscover(CatalogProfile::Background);
+            app(DiscoverBuilder::class)->build(CatalogProfile::Background);
 
             return '/';
         })(),

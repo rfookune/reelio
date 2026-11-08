@@ -4,6 +4,12 @@ namespace App\Services\Catalog\Sources;
 
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\SectionKind;
+use App\Services\Catalog\Sources\Details\MovieDetails;
+use App\Services\Catalog\Sources\Details\TvShowDetails;
+use App\Services\Catalog\Sources\Listings\MovieListing;
+use App\Services\Catalog\Sources\Listings\SearchResults;
+use App\Services\Catalog\Sources\Listings\SectionPage;
+use App\Services\Catalog\Sources\Listings\SectionQuery;
 
 class FakeCatalogSource implements CatalogSource
 {

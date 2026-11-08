@@ -3,8 +3,8 @@
 use App\Models\Movie;
 use App\Models\TvShow;
 use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\FakeCatalogSource;
-use App\Services\Catalog\Sources\MovieDetails;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\ExternalRating;
 use App\Services\Ratings\Ratings;

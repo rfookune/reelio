@@ -6,8 +6,8 @@ use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
 use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\FakeCatalogSource;
-use App\Services\Catalog\Sources\MovieDetails;
 use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia as Assert;
 

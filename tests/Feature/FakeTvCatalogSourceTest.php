@@ -2,12 +2,12 @@
 
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\CatalogContext;
-use App\Services\Catalog\Sources\EpisodeDetails;
+use App\Services\Catalog\Sources\Details\EpisodeDetails;
+use App\Services\Catalog\Sources\Details\SeasonDetails;
+use App\Services\Catalog\Sources\Details\TvShowDetails;
 use App\Services\Catalog\Sources\FakeCatalogSource;
 use App\Services\Catalog\Sources\GuardedCatalogSource;
-use App\Services\Catalog\Sources\SeasonDetails;
 use App\Services\Catalog\Sources\SourceUnavailable;
-use App\Services\Catalog\Sources\TvShowDetails;
 
 test('returns a TV Show with Seasons and Episodes and reports unknown TV Shows', function () {
     $tvShow = new TvShowDetails(87108, seasons: [new SeasonDetails(119454, 1, episodes: [new EpisodeDetails(1725580, 1, 1)])]);

@@ -1,9 +1,9 @@
 <?php
 
 use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\FakeCatalogSource;
-use App\Services\Catalog\Sources\MovieDetails;
-use App\Services\Catalog\Sources\MovieListing;
+use App\Services\Catalog\Sources\Listings\MovieListing;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
 use Illuminate\Support\Facades\RateLimiter;

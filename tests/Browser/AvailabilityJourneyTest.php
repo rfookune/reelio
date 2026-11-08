@@ -1,9 +1,9 @@
 <?php
 
 use App\Models\Movie;
-use App\Services\Catalog\AvailabilityWriter;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\FakeCatalogSource;
+use App\Services\Catalog\Titles\AvailabilityWriter;
 use Illuminate\Support\Facades\Route;
 
 /** A Movie last synced 9 days ago whose refresh on view fails, so its stored Availability shows as possibly out of date. */

@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\Catalog\Catalog;
+use App\Services\Catalog\Maintenance\CatalogPurge;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -16,7 +16,7 @@ use Illuminate\Console\Command;
 #[Description('Clear the data stored from TMDB, keeping users\' facts')]
 class PurgeCatalogCommand extends Command
 {
-    public function handle(Catalog $catalog): int
+    public function handle(CatalogPurge $purge): int
     {
         if (! $this->option('force') && ! $this->confirm('Clear the TMDB data Reelio stores? Users\' facts are kept. Remove the TMDB token first, or the next refreshes fetch it all again.')) {
             $this->components->warn('Nothing was purged.');
@@ -24,7 +24,7 @@ class PurgeCatalogCommand extends Command
             return self::FAILURE;
         }
 
-        $purged = $catalog->purgeSourceData();
+        $purged = $purge->purgeSourceData();
         $this->components->info("Cleared {$purged['movies']} Movies and deleted {$purged['ratings']} TMDB ratings.");
 
         return self::SUCCESS;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Catalog\Sources;
+namespace App\Services\Catalog\Sources\Listings;
 
 /**
  * One page of a Catalog source's list, in its order, and how many pages the list has.

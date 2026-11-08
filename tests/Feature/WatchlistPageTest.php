@@ -3,7 +3,7 @@
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
-use App\Services\Catalog\Catalog;
+use App\Services\Catalog\Discover\DiscoverBuilder;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
@@ -100,7 +100,7 @@ test('cards use one batched ratings lookup and prefer IMDb while keeping poster-
 test('an empty Watchlist suggests cached Trending without making Catalog requests', function (bool $hasTrending) {
     $source = fakeDiscoverSource(['trending' => [movieListings(901, 906)]]);
     if ($hasTrending) {
-        app(Catalog::class)->buildDiscover(CatalogProfile::Background);
+        app(DiscoverBuilder::class)->build(CatalogProfile::Background);
     }
     $calls = $source->sectionCalls;
 

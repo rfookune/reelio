@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Services\Catalog;
+namespace App\Services\Catalog\Discover;
 
-use App\Services\Catalog\Sources\MovieDetails;
-use App\Services\Catalog\Sources\MovieListing;
+use App\Services\Catalog\Sources\Details\MovieDetails;
+use App\Services\Catalog\Sources\Listings\MovieListing;
 use Error;
 
 /**

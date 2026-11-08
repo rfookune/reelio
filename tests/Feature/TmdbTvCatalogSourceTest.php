@@ -4,7 +4,7 @@ use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Sources\SourceMisconfigured;
 use App\Services\Catalog\Sources\SourceUnavailable;
-use App\Services\Catalog\Sources\TmdbCatalogSource;
+use App\Services\Catalog\Sources\Tmdb\TmdbCatalogSource;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Sleep;

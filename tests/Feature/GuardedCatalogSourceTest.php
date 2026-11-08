@@ -4,10 +4,10 @@ use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Enums\SectionKind;
+use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\FakeCatalogSource;
 use App\Services\Catalog\Sources\GuardedCatalogSource;
-use App\Services\Catalog\Sources\MovieDetails;
-use App\Services\Catalog\Sources\SectionQuery;
+use App\Services\Catalog\Sources\Listings\SectionQuery;
 use App\Services\Catalog\Sources\SourceMisconfigured;
 use App\Services\Catalog\Sources\SourceUnavailable;
 

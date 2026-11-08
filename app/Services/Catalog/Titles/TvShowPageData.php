@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services\Catalog;
+namespace App\Services\Catalog\Titles;
 
-use App\Services\Catalog\Sources\TvShowDetails;
+use App\Services\Catalog\Sources\Details\TvShowDetails;
 
 /** The appended page data, cached separately from the stored Season and Episode inventory. */
 readonly class TvShowPageData

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Support\DiscoverPage;
-use App\Services\Catalog\Catalog;
+use App\Services\Catalog\Discover\DiscoverBuilder;
 use App\Services\Ratings\Ratings;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,9 +15,9 @@ use Inertia\Response;
  */
 class DiscoverController extends Controller
 {
-    public function __invoke(Request $request, Catalog $catalog, Ratings $ratings): Response
+    public function __invoke(Request $request, DiscoverBuilder $discover, Ratings $ratings): Response
     {
-        $page = new DiscoverPage($catalog, $ratings, $request->user());
+        $page = new DiscoverPage($discover, $ratings, $request->user());
 
         return Inertia::render('Discover', [
             'imageBaseUrl' => config('catalog.image_base_url'),

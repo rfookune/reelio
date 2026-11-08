@@ -3,9 +3,16 @@
 namespace App\Services\Catalog\Sources;
 
 use App\Services\Catalog\CatalogContext;
+use App\Services\Catalog\Sources\Details\MovieDetails;
+use App\Services\Catalog\Sources\Details\TvShowDetails;
+use App\Services\Catalog\Sources\Listings\SearchResults;
+use App\Services\Catalog\Sources\Listings\SectionPage;
+use App\Services\Catalog\Sources\Listings\SectionQuery;
 
 interface CatalogSource
 {
+    public const LAST_SOURCE_PAGE = 500;
+
     /** The whole TV Show, or null when removed; a partial fetch is a failure. */
     public function tvShow(int $tmdbId, CatalogContext $context): ?TvShowDetails;
 

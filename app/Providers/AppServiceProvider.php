@@ -8,7 +8,7 @@ use App\Http\Support\SeoRoutes;
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\GuardedCatalogSource;
-use App\Services\Catalog\Sources\TmdbCatalogSource;
+use App\Services\Catalog\Sources\Tmdb\TmdbCatalogSource;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\Ratings;
 use App\Services\Ratings\Sources\StoredRatingSource;

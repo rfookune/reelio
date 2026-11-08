@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Services\Catalog\Catalog;
+use App\Services\Catalog\Maintenance\RefreshSchedule;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -19,9 +19,9 @@ class CheckOverdueRefreshes implements ShouldQueue
 
     private const SAMPLE_SIZE = 10;
 
-    public function handle(Catalog $catalog): void
+    public function handle(RefreshSchedule $schedule): void
     {
-        $overdue = $catalog->overdueForRefresh(self::SAMPLE_SIZE);
+        $overdue = $schedule->overdueForRefresh(self::SAMPLE_SIZE);
 
         if ($overdue['count'] > 0) {
             Log::error('Movies users hold are overdue for refresh.', [

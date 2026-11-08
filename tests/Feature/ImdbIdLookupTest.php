@@ -5,9 +5,11 @@ use App\Models\Movie;
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\Catalog;
 use App\Services\Catalog\CatalogContext;
+use App\Services\Catalog\Maintenance\CatalogCleanup;
+use App\Services\Catalog\Search\ImdbIdLookup;
 use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\FakeCatalogSource;
-use App\Services\Catalog\Sources\MovieDetails;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
@@ -25,26 +27,26 @@ function fakeImdbIds(array $imdbIds, bool $failing = false): FakeCatalogSource
 test('a lookup asks the source only for the ids it has not cached, and remembers the answers, none included', function () {
     $source = fakeImdbIds([1 => 'tt0000001', 2 => null]);
 
-    expect(app(Catalog::class)->lookUpImdbIds([1, 2]))->toBe([1 => 'tt0000001']);
-    expect(app(Catalog::class)->lookUpImdbIds([1, 2, 3]))->toBe([1 => 'tt0000001'])
+    expect(app(ImdbIdLookup::class)->lookUpImdbIds([1, 2]))->toBe([1 => 'tt0000001']);
+    expect(app(ImdbIdLookup::class)->lookUpImdbIds([1, 2, 3]))->toBe([1 => 'tt0000001'])
         ->and(array_column($source->imdbIdCalls, 'tmdbId'))->toBe([1, 2, 3])
-        ->and(app(Catalog::class)->cachedImdbIds([1, 2, 3]))->toBe([1 => 'tt0000001']);
+        ->and(app(ImdbIdLookup::class)->cachedImdbIds([1, 2, 3]))->toBe([1 => 'tt0000001']);
 });
 
 test('a failed lookup is not remembered, and stops the ones after it', function () {
     $source = fakeImdbIds([1 => 'tt0000001', 2 => 'tt0000002'], failing: true);
 
-    expect(app(Catalog::class)->lookUpImdbIds([1, 2]))->toBe([])
+    expect(app(ImdbIdLookup::class)->lookUpImdbIds([1, 2]))->toBe([])
         ->and($source->imdbIdCalls)->toHaveCount(1);
 
     fakeImdbIds([1 => 'tt0000001', 2 => 'tt0000002']);
 
-    expect(app(Catalog::class)->lookUpImdbIds([1, 2]))->toBe([1 => 'tt0000001', 2 => 'tt0000002']);
+    expect(app(ImdbIdLookup::class)->lookUpImdbIds([1, 2]))->toBe([1 => 'tt0000001', 2 => 'tt0000002']);
 });
 
 test('a found id is remembered for 30 days and a missing one for a day', function () {
     fakeImdbIds([1 => 'tt0000001', 2 => null]);
-    app(Catalog::class)->lookUpImdbIds([1, 2]);
+    app(ImdbIdLookup::class)->lookUpImdbIds([1, 2]);
 
     /** Redis expires keys on the real clock, which `travelTo()` can't move, so the lifetimes are read from Redis. */
     $secondsLeft = function (int $tmdbId): int {
@@ -61,7 +63,7 @@ test('a request looks up at most the configured number of ids', function () {
     config(['catalog.imdb_lookup.max_per_request' => 2]);
     $source = fakeImdbIds([1 => 'tt1', 2 => 'tt2', 3 => 'tt3']);
 
-    expect(app(Catalog::class)->lookUpImdbIds([1, 2, 3]))->toBe([1 => 'tt1', 2 => 'tt2'])
+    expect(app(ImdbIdLookup::class)->lookUpImdbIds([1, 2, 3]))->toBe([1 => 'tt1', 2 => 'tt2'])
         ->and($source->imdbIdCalls)->toHaveCount(2);
 });
 
@@ -72,7 +74,7 @@ test('lookups share their own per-second ceiling, below the live one, and wait f
     Sleep::whenFakingSleep(fn () => RateLimiter::clear($throttle));
     $source = fakeImdbIds([1 => 'tt1', 2 => 'tt2', 3 => 'tt3']);
 
-    expect(app(Catalog::class)->lookUpImdbIds([1, 2, 3]))->toBe([1 => 'tt1', 2 => 'tt2', 3 => 'tt3'])
+    expect(app(ImdbIdLookup::class)->lookUpImdbIds([1, 2, 3]))->toBe([1 => 'tt1', 2 => 'tt2', 3 => 'tt3'])
         ->and($source->imdbIdCalls)->toHaveCount(3);
     Sleep::assertSleptTimes(1);
 });
@@ -82,7 +84,7 @@ test('a lookup still over the ceiling when the budget is spent is skipped, with 
     Sleep::fake();
     $source = fakeImdbIds([1 => 'tt1', 2 => 'tt2', 3 => 'tt3']);
 
-    expect(app(Catalog::class)->lookUpImdbIds([1, 2, 3]))->toBe([1 => 'tt1'])
+    expect(app(ImdbIdLookup::class)->lookUpImdbIds([1, 2, 3]))->toBe([1 => 'tt1'])
         ->and($source->imdbIdCalls)->toHaveCount(1);
     Sleep::assertSleptTimes(10);
 });
@@ -101,7 +103,7 @@ test('a request stops looking up once its time budget is spent', function () {
     };
     app()->instance(CatalogSource::class, $source);
 
-    app(Catalog::class)->lookUpImdbIds([1, 2, 3, 4]);
+    app(ImdbIdLookup::class)->lookUpImdbIds([1, 2, 3, 4]);
 
     expect($source->imdbIdCalls)->toHaveCount(2);
 });
@@ -114,7 +116,7 @@ test('a refresh remembers the Movie\'s IMDb id, or that it has none, with no cal
     app(Catalog::class)->refresh($withId, new CatalogContext);
     app(Catalog::class)->refresh($without, new CatalogContext);
 
-    expect(app(Catalog::class)->lookUpImdbIds([1, 2]))->toBe([1 => 'tt0000001'])
+    expect(app(ImdbIdLookup::class)->lookUpImdbIds([1, 2]))->toBe([1 => 'tt0000001'])
         ->and($source->imdbIdCalls)->toBe([]);
 });
 
@@ -123,7 +125,7 @@ test('creating a Movie from its catalog id remembers its IMDb id too', function 
 
     app(Catalog::class)->findOrCreate(1, 'test');
 
-    expect(app(Catalog::class)->cachedImdbIds([1]))->toBe([1 => 'tt0000001']);
+    expect(app(ImdbIdLookup::class)->cachedImdbIds([1]))->toBe([1 => 'tt0000001']);
 });
 
 test('a Movie that is removed, or cleared at the cap, has its remembered IMDb id forgotten', function (string $how) {
@@ -131,17 +133,17 @@ test('a Movie that is removed, or cleared at the cap, has its remembered IMDb id
     $movie->genres()->attach(Genre::factory()->create());
     fakeCatalogKnowing(new MovieDetails(tmdbId: 1, title: 'One', imdbId: 'tt0000001'));
     app(Catalog::class)->refresh($movie, new CatalogContext);
-    expect(app(Catalog::class)->cachedImdbIds([1]))->toBe([1 => 'tt0000001']);
+    expect(app(ImdbIdLookup::class)->cachedImdbIds([1]))->toBe([1 => 'tt0000001']);
 
     if ($how === 'removal') {
         fakeCatalogKnowing();
         app(Catalog::class)->refresh($movie->fresh(), new CatalogContext);
     } else {
         $this->travelTo(now()->addDays(171));
-        app(Catalog::class)->cleanUp();
+        app(CatalogCleanup::class)->cleanUp();
     }
 
-    expect(app(Catalog::class)->cachedImdbIds([1]))->toBe([]);
+    expect(app(ImdbIdLookup::class)->cachedImdbIds([1]))->toBe([]);
 })->with(['removal' => 'removal', 'the cap' => 'cap']);
 
 test('an unviewed Movie\'s purge forgets its remembered IMDb id', function () {
@@ -149,19 +151,19 @@ test('an unviewed Movie\'s purge forgets its remembered IMDb id', function () {
     fakeCatalogKnowing(new MovieDetails(tmdbId: 1, title: 'One', imdbId: 'tt0000001'));
     app(Catalog::class)->refresh($movie, new CatalogContext);
 
-    app(Catalog::class)->cleanUp();
+    app(CatalogCleanup::class)->cleanUp();
 
     $this->assertModelMissing($movie);
-    expect(app(Catalog::class)->cachedImdbIds([1]))->toBe([]);
+    expect(app(ImdbIdLookup::class)->cachedImdbIds([1]))->toBe([]);
 });
 
 test('catalog:purge forgets every remembered IMDb id, Movie row or not', function () {
     fakeImdbIds([1 => 'tt0000001']);
-    app(Catalog::class)->lookUpImdbIds([1]);
+    app(ImdbIdLookup::class)->lookUpImdbIds([1]);
 
     $this->artisan('catalog:purge --force')->assertSuccessful();
 
-    expect(app(Catalog::class)->cachedImdbIds([1]))->toBe([]);
+    expect(app(ImdbIdLookup::class)->cachedImdbIds([1]))->toBe([]);
 });
 
 test('the purge generation never expires, so a later purge can never make an earlier one\'s ids reachable again', function () {

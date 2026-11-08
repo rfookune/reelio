@@ -2,9 +2,9 @@
 
 use App\Models\Movie;
 use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\FakeCatalogSource;
-use App\Services\Catalog\Sources\MovieDetails;
-use App\Services\Catalog\Sources\MovieListing;
+use App\Services\Catalog\Sources\Listings\MovieListing;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Vite;
 use Pest\Browser\Api\AwaitableWebpage;

@@ -5,11 +5,14 @@ namespace App\Http\Support;
 use App\Actions\RecordEvent;
 use App\Models\Movie;
 use App\Models\User;
-use App\Services\Catalog\Catalog;
 use App\Services\Catalog\CatalogResult;
-use App\Services\Catalog\DiscoverMovie;
-use App\Services\Catalog\Sources\MovieListing;
-use App\Services\Catalog\Sources\SearchResults;
+use App\Services\Catalog\Discover\DiscoverBuilder;
+use App\Services\Catalog\Discover\DiscoverMovie;
+use App\Services\Catalog\Search\CatalogSearch;
+use App\Services\Catalog\Search\ImdbIdLookup;
+use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\Listings\MovieListing;
+use App\Services\Catalog\Sources\Listings\SearchResults;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\ExternalRating;
 use App\Services\Ratings\Ratings;
@@ -43,7 +46,9 @@ class SearchPage
     private ?array $trendingMovies = null;
 
     public function __construct(
-        private Catalog $catalog,
+        private CatalogSearch $catalogSearch,
+        private ImdbIdLookup $imdbIds,
+        private DiscoverBuilder $discover,
         private Ratings $ratingSources,
         private RecordEvent $recordEvent,
         private ?User $user,
@@ -57,10 +62,12 @@ class SearchPage
      * characters, and its `page`, kept from 1 to the source's last page. A reload of `userMovies` alone, as after
      * a Watchlist action, reads the search from the cache only.
      */
-    public static function fromRequest(Request $request, Catalog $catalog, Ratings $ratingSources, RecordEvent $recordEvent): self
+    public static function fromRequest(Request $request, CatalogSearch $catalogSearch, ImdbIdLookup $imdbIds, DiscoverBuilder $discover, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
         return new self(
-            $catalog,
+            $catalogSearch,
+            $imdbIds,
+            $discover,
             $ratingSources,
             $recordEvent,
             $request->user(),
@@ -74,9 +81,9 @@ class SearchPage
      * The page asked for by the Search page's lookups of the IMDb ratings: the request's query and page, read as
      * `fromRequest()` reads them, from the cache alone. It searches nothing and records nothing.
      */
-    public static function cachedFromRequest(Request $request, Catalog $catalog, Ratings $ratingSources, RecordEvent $recordEvent): self
+    public static function cachedFromRequest(Request $request, CatalogSearch $catalogSearch, ImdbIdLookup $imdbIds, DiscoverBuilder $discover, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
-        return new self($catalog, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), readsCacheOnly: true);
+        return new self($catalogSearch, $imdbIds, $discover, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), readsCacheOnly: true);
     }
 
     /** The request's `q`, trimmed of Unicode whitespace and cut to `search.maximum_query_length` characters. */
@@ -92,7 +99,7 @@ class SearchPage
     {
         $page = $request->query('page');
 
-        return max(1, min(Catalog::LAST_SOURCE_PAGE, is_string($page) && ctype_digit($page) ? (int) $page : 1));
+        return max(1, min(CatalogSource::LAST_SOURCE_PAGE, is_string($page) && ctype_digit($page) ? (int) $page : 1));
     }
 
     /** Whether the request is Search's partial reload of `userMovies` alone, which searches nothing new. */
@@ -143,7 +150,7 @@ class SearchPage
             array_map(fn (MovieListing $listing): int => $listing->tmdbId, $listings),
             fn (int $tmdbId): bool => $this->rows()->get($tmdbId)?->imdb_id === null,
         ));
-        $imdbIds = $this->catalog->lookUpImdbIds($tmdbIdsWithoutImdbId);
+        $imdbIds = $this->imdbIds->lookUpImdbIds($tmdbIdsWithoutImdbId);
         $found = [];
 
         foreach (RatingsByCatalogId::for($this->ratingSources, $imdbIds) as $tmdbId => $ratings) {
@@ -167,7 +174,7 @@ class SearchPage
             return new ScrollMetadata('page', $this->page, $this->page, $this->page);
         }
 
-        $lastPage = min($result?->value->totalPages ?? 0, Catalog::LAST_SOURCE_PAGE);
+        $lastPage = min($result?->value->totalPages ?? 0, CatalogSource::LAST_SOURCE_PAGE);
 
         return new ScrollMetadata(
             'page',
@@ -219,12 +226,12 @@ class SearchPage
         }
 
         if ($this->readsCacheOnly) {
-            $cached = $this->catalog->cachedSearch($this->query, $this->page);
+            $cached = $this->catalogSearch->cachedSearch($this->query, $this->page);
 
             return $this->result ??= $cached === null ? CatalogResult::unavailable() : CatalogResult::stale($cached);
         }
 
-        return $this->result ??= $this->catalog->search($this->query, $this->page);
+        return $this->result ??= $this->catalogSearch->search($this->query, $this->page);
     }
 
     /** @return list<DiscoverMovie> */
@@ -232,7 +239,7 @@ class SearchPage
     {
         $result = $this->search();
 
-        return $this->trendingMovies ??= $result === null || $result->isUnavailable() || $result->value?->totalResults === 0 ? $this->catalog->storedTrending() : [];
+        return $this->trendingMovies ??= $result === null || $result->isUnavailable() || $result->value?->totalResults === 0 ? $this->discover->storedTrending() : [];
     }
 
     /** @return list<int> */
@@ -275,7 +282,7 @@ class SearchPage
     {
         $missing = array_keys(array_filter($imdbIds, fn (?string $imdbId): bool => $imdbId === null));
 
-        return array_replace($imdbIds, $this->catalog->cachedImdbIds($missing));
+        return array_replace($imdbIds, $this->imdbIds->cachedImdbIds($missing));
     }
 
     /** @return array<int, list<ExternalRating>> keyed by catalog id */

@@ -3,12 +3,12 @@
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Enums\SectionKind;
-use App\Services\Catalog\Sources\MovieDetails;
-use App\Services\Catalog\Sources\MovieListing;
-use App\Services\Catalog\Sources\SectionQuery;
+use App\Services\Catalog\Sources\Details\MovieDetails;
+use App\Services\Catalog\Sources\Listings\MovieListing;
+use App\Services\Catalog\Sources\Listings\SectionQuery;
 use App\Services\Catalog\Sources\SourceMisconfigured;
 use App\Services\Catalog\Sources\SourceUnavailable;
-use App\Services\Catalog\Sources\TmdbCatalogSource;
+use App\Services\Catalog\Sources\Tmdb\TmdbCatalogSource;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;

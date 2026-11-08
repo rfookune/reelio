@@ -4,10 +4,10 @@ use App\Models\TvShow;
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Sources\CatalogSource;
-use App\Services\Catalog\Sources\EpisodeDetails;
+use App\Services\Catalog\Sources\Details\EpisodeDetails;
+use App\Services\Catalog\Sources\Details\SeasonDetails;
+use App\Services\Catalog\Sources\Details\TvShowDetails;
 use App\Services\Catalog\Sources\FakeCatalogSource;
-use App\Services\Catalog\Sources\SeasonDetails;
-use App\Services\Catalog\Sources\TvShowDetails;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Testing\AssertableInertia as Assert;
 

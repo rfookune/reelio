@@ -1,18 +1,22 @@
 <?php
 
-namespace App\Services\Catalog;
+namespace App\Services\Catalog\Discover;
 
+use App\Services\Catalog\CacheKey;
+use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Enums\SectionKind;
+use App\Services\Catalog\MisconfigurationReporter;
 use App\Services\Catalog\Sources\CatalogSource;
-use App\Services\Catalog\Sources\MovieDetails;
-use App\Services\Catalog\Sources\MovieListing;
-use App\Services\Catalog\Sources\SectionQuery;
+use App\Services\Catalog\Sources\Details\MovieDetails;
+use App\Services\Catalog\Sources\Listings\MovieListing;
+use App\Services\Catalog\Sources\Listings\SectionQuery;
 use App\Services\Catalog\Sources\SourceUnavailable;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
 use App\Services\Ratings\TmdbRatingId;
 use Closure;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -313,7 +317,7 @@ class DiscoverBuilder
         $wanted = config('catalog.discover.movies_per_section');
         $collected = [];
         $considered = [];
-        $lastPage = min(config('catalog.discover.max_pages_per_section'), Catalog::LAST_SOURCE_PAGE);
+        $lastPage = min(config('catalog.discover.max_pages_per_section'), CatalogSource::LAST_SOURCE_PAGE);
 
         for ($page = 1; $page <= $lastPage && count($collected) < $wanted && ! ($isDone !== null && $isDone()); $page++) {
             $this->ensureTimeLeft();
@@ -392,5 +396,44 @@ class DiscoverBuilder
     private function isFresh(int $builtAt): bool
     {
         return $builtAt >= now()->subDays(config('catalog.discover.stale_after_days'))->getTimestamp();
+    }
+
+    /**
+     * What Discover shows, the same for every visitor. It is read, never built, while it has something to show;
+     * otherwise this request builds it, asking only for the hero's details, while other visitors wait for that
+     * build up to a limit.
+     */
+    public function discover(): Discover
+    {
+        $context = new CatalogContext(config('catalog.language'));
+        $discover = $this->stored($context);
+
+        if (! $discover->isEmpty()) {
+            return $discover;
+        }
+
+        try {
+            Cache::lock($this->key($context).':build', 60)->block(config('catalog.discover.build_wait_seconds'), function () use ($context): void {
+                if ($this->stored($context)->isEmpty()) {
+                    $this->build(CatalogProfile::Interactive);
+                }
+            });
+        } catch (LockTimeoutException) {
+        }
+
+        return $this->stored($context);
+    }
+
+    /**
+     * Discover's stored Trending Movies, in rank order, without building the payload or asking the source: none
+     * when nothing fresh enough is stored.
+     *
+     * @return list<DiscoverMovie>
+     */
+    public function storedTrending(): array
+    {
+        $trending = array_find($this->stored(new CatalogContext(config('catalog.language')))->sections, fn (DiscoverSection $section): bool => $section->kind === SectionKind::Trending);
+
+        return $trending->movies ?? [];
     }
 }

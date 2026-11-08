@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Services\Catalog\Catalog;
+use App\Services\Catalog\Discover\DiscoverBuilder;
 use App\Services\Catalog\Enums\CatalogProfile;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -25,8 +25,8 @@ class BuildDiscover implements ShouldBeUnique, ShouldQueue
     /** Held longer than a build can take, so a second dispatch can't start while one is running. */
     public int $uniqueFor = 120;
 
-    public function handle(Catalog $catalog): void
+    public function handle(DiscoverBuilder $discover): void
     {
-        $catalog->buildDiscover(CatalogProfile::Background);
+        $discover->build(CatalogProfile::Background);
     }
 }

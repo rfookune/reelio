@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Catalog;
+namespace App\Services\Catalog\Discover;
 
 /**
  * What Discover shows, the same for every visitor: the hero and the sections fresh enough to show, in page order.

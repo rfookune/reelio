@@ -6,11 +6,11 @@ use App\Models\Movie;
 use App\Models\StreamingService;
 use App\Models\TvShow;
 use App\Models\User;
-use App\Services\Catalog\AvailabilityWriter;
 use App\Services\Catalog\Enums\OfferType;
 use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\FakeCatalogSource;
-use App\Services\Catalog\Sources\MovieDetails;
+use App\Services\Catalog\Titles\AvailabilityWriter;
 use Illuminate\Support\Facades\Queue;
 
 /** @return array{serviceId: int, serviceName: string, logoPath: ?string, country: string, offerType: string, displayPriority: int} */

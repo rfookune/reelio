@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Services\Catalog\Sources;
+namespace App\Services\Catalog\Sources\Tmdb;
 
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\CatalogContext;
+use App\Services\Catalog\Sources\SourceUnavailable;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Sleep;
 

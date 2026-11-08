@@ -5,10 +5,10 @@ namespace App\Http\Support;
 use App\Jobs\BuildDiscover;
 use App\Models\Movie;
 use App\Models\User;
-use App\Services\Catalog\Catalog;
-use App\Services\Catalog\Discover;
-use App\Services\Catalog\DiscoverMovie;
-use App\Services\Catalog\DiscoverSection;
+use App\Services\Catalog\Discover\Discover;
+use App\Services\Catalog\Discover\DiscoverBuilder;
+use App\Services\Catalog\Discover\DiscoverMovie;
+use App\Services\Catalog\Discover\DiscoverSection;
 use App\Services\Catalog\Enums\SectionKind;
 use App\Services\Ratings\ExternalRating;
 use App\Services\Ratings\Ratings;
@@ -30,7 +30,7 @@ class DiscoverPage
     /** @var array<int, list<ExternalRating>>|null keyed by catalog id */
     private ?array $ratings = null;
 
-    public function __construct(private Catalog $catalog, private Ratings $ratingSources, private ?User $user) {}
+    public function __construct(private DiscoverBuilder $builder, private Ratings $ratingSources, private ?User $user) {}
 
     /**
      * @return array{tmdbId: int, title: ?string, year: ?int, runtime: ?int, posterPath: ?string, ratings: list<array{source: string, name: string, value: float, voteCount: int}>, href: string, overview: ?string, backdropPath: ?string, genres: list<string>, trailer: array{key: string, name: string, type: string}|null}|null
@@ -92,7 +92,7 @@ class DiscoverPage
     private function discover(): Discover
     {
         if ($this->discover === null) {
-            $this->discover = $this->catalog->discover();
+            $this->discover = $this->builder->discover();
 
             if (! $this->discover->detailed && ! $this->discover->isEmpty()) {
                 BuildDiscover::dispatch();

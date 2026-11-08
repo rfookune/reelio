@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Catalog;
+namespace App\Services\Catalog\Discover;
 
 use App\Services\Catalog\Enums\SectionKind;
 use Closure;
