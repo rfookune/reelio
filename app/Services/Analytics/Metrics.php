@@ -4,6 +4,7 @@ namespace App\Services\Analytics;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
+use stdClass;
 
 /**
  * The beta's success metrics, each defined once here as documented SQL over `events` and `event_daily_counts`. The
@@ -35,7 +36,7 @@ class Metrics
             ) as activated
             SQL, [$weekStart, $weekStart]);
 
-        return $this->share((int) $row->returning, (int) $row->activated, 'returning', 'activated');
+        return ['activated' => (int) $row->activated, 'returning' => (int) $row->returning, 'rate' => $this->rate((int) $row->returning, (int) $row->activated)];
     }
 
     /**
@@ -58,7 +59,7 @@ class Metrics
             where viewed.name = 'movie_viewed' and viewed.occurred_at >= ?
             SQL, [$start, $start]);
 
-        return $this->share((int) $row->converted, (int) $row->viewers, 'converted', 'viewers');
+        return ['viewers' => (int) $row->viewers, 'converted' => (int) $row->converted, 'rate' => $this->rate((int) $row->converted, (int) $row->viewers)];
     }
 
     /**
@@ -75,12 +76,13 @@ class Metrics
             where occurred_at >= ?
             SQL, [$this->windowStart($now, self::WEEK_DAYS)]);
 
-        return $this->share((int) $row->pickers, (int) $row->active, 'pickers', 'active');
+        return ['active' => (int) $row->active, 'pickers' => (int) $row->pickers, 'rate' => $this->rate((int) $row->pickers, (int) $row->active)];
     }
 
     /**
      * One row per day in the window, newest first: the distinct users searching (null for a day already rolled up,
-     * which no longer knows its users; a day split by the roll-up cutoff counts only its users not yet rolled up), the picker uses and the average pool size of the picker's Watchlist.
+     * which no longer knows its users; a day split by the roll-up cutoff counts only its users not yet rolled up), the
+     * picker uses and the average pool size of the picker's Watchlist.
      *
      * @return list<array{day: string, searching_users: ?int, picker_uses: int, average_pool_size: ?float}>
      */
@@ -88,14 +90,7 @@ class Metrics
     {
         $start = $this->windowStart($now, $days);
 
-        return array_map(fn (object $row): array => [
-            'day' => $row->day,
-            'searching_users' => $row->searching_users === null ? null : (int) $row->searching_users,
-            'picker_uses' => (int) $row->picker_uses,
-            'average_pool_size' => $row->pool_size_total === null || (int) $row->picker_uses === 0
-                ? null
-                : round((int) $row->pool_size_total / (int) $row->picker_uses, 1),
-        ], DB::select(<<<'SQL'
+        $rows = DB::select(<<<'SQL'
             select day::text as day, sum(searching_users) as searching_users, sum(picker_uses) as picker_uses,
                 sum(pool_size_total) as pool_size_total
             from (
@@ -114,7 +109,16 @@ class Metrics
             ) as days
             group by day
             order by day desc
-            SQL, [$start, $start]));
+            SQL, [$start, $start]);
+
+        return array_values(array_map(fn (stdClass $row): array => [
+            'day' => $row->day,
+            'searching_users' => $row->searching_users === null ? null : (int) $row->searching_users,
+            'picker_uses' => (int) $row->picker_uses,
+            'average_pool_size' => $row->pool_size_total === null || (int) $row->picker_uses === 0
+                ? null
+                : round((int) $row->pool_size_total / (int) $row->picker_uses, 1),
+        ], $rows));
     }
 
     private function windowStart(CarbonImmutable $now, int $days): string
@@ -122,11 +126,8 @@ class Metrics
         return $now->subDays($days)->toDateTimeString();
     }
 
-    /**
-     * @return array<string, int|float|null>
-     */
-    private function share(int $part, int $whole, string $partKey, string $wholeKey): array
+    private function rate(int $part, int $whole): ?float
     {
-        return [$wholeKey => $whole, $partKey => $part, 'rate' => $whole === 0 ? null : round($part / $whole, 3)];
+        return $whole === 0 ? null : round($part / $whole, 3);
     }
 }

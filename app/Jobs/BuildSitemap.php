@@ -47,30 +47,29 @@ class BuildSitemap implements ShouldBeUnique, ShouldQueue
 
         $pageSize = max(1, (int) config('seo.sitemap_page_size'));
         $builtAt = now();
-        $documents = [];
+        $pages = [];
         $entries = '';
         $count = 0;
-
-        $flush = function () use (&$documents, &$entries, &$count): void {
-            if ($count > 0) {
-                $documents[self::pageName(count($documents) + 1)] = $this->document('urlset', $entries);
-                $entries = '';
-                $count = 0;
-            }
-        };
 
         foreach (Movie::query()->whereNotNull('synced_at')->orderBy('id')->lazyById(1000) as $movie) {
             $entries .= '<url><loc>'.$this->escape($movie->canonicalUrl()).'</loc><lastmod>'.$movie->synced_at->toIso8601String().'</lastmod></url>';
 
             if (++$count === $pageSize) {
-                $flush();
+                $pages[] = $entries;
+                $entries = '';
+                $count = 0;
             }
         }
 
-        $flush();
+        if ($count > 0) {
+            $pages[] = $entries;
+        }
 
+        $documents = [];
         $locations = '';
-        foreach (array_keys($documents) as $name) {
+        foreach ($pages as $index => $body) {
+            $name = self::pageName($index + 1);
+            $documents[$name] = $this->document('urlset', $body);
             $locations .= '<sitemap><loc>'.$this->escape(route('sitemap.show', ['page' => $name])).'</loc></sitemap>';
         }
 
