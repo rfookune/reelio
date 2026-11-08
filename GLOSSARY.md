@@ -6,9 +6,17 @@ Reelio helps people discover movies, save the ones they want to see, decide what
 
 ### Movie data
 
+**Title**:
+A Movie or a TV Show; the one word for either when the difference doesn't matter. People see "movie" or "TV show", never "Title".
+_Avoid_: Media, content, item, work
+
+**Name**:
+The text a Title is called, as Reelio displays it.
+_Avoid_: Title
+
 **Movie**:
 A film Reelio shows, identified by Reelio's own id and linked to its Catalog source entry; a Movie exists in Reelio once someone has opened or saved it.
-_Avoid_: Title, film, provider movie
+_Avoid_: Film, provider movie
 
 **Removed Movie**:
 A Movie the Catalog source no longer has; Reelio keeps users' Watchlist and Watched facts about it but can show none of its details.
@@ -34,7 +42,7 @@ _Avoid_: Home feed, browse, explore
 
 **TV Show**:
 A programme made of Seasons of Episodes that Reelio shows, linked to its Catalog source entry.
-_Avoid_: Show, series, TV series, programme, title
+_Avoid_: Show, series, TV series, programme
 
 **Season**:
 A numbered group of a TV Show's Episodes.
@@ -65,12 +73,30 @@ When a Movie was last put on a user's Watchlist; re-adding it after a removal se
 _Avoid_: Saved date, watchlisted at
 
 **Watched**:
-A user's record of having seen a Movie; set by marking the Movie as watched, independently of the Watchlist.
+A user's record of having seen a Movie or an Episode; set by marking it as watched, independently of the Watchlist.
 _Avoid_: Viewing history, history, seen, viewing record
 
 **Watched date**:
-The most recent time a user saw a Movie; one per Movie.
+The most recent time a user saw a Movie or an Episode; one per Movie or Episode.
 _Avoid_: Viewing date, watched at
+
+**Watched progress**:
+A user's record of which Episodes of a TV Show they have seen.
+_Avoid_: Viewing history, progress, tracking
+
+**Special**:
+An Episode outside a TV Show's numbered Seasons; it can be marked as watched but never counts toward Completed.
+_Avoid_: Extra, bonus episode
+
+**Not started**:
+A TV Show of which a user has watched no Episode.
+
+**In progress**:
+A TV Show of which a user has watched some Episodes but is not Completed.
+
+**Completed**:
+A TV Show whose every aired Episode in the numbered Seasons a user has watched.
+_Avoid_: Finished, watched
 
 **Movie picker**:
 Chooses one Movie at random from a user's Watchlist, optionally narrowed by genre.

@@ -13,6 +13,7 @@ A buildable spec at `.scratch/tv-shows/spec.md` for adding TV Shows to Reelio, w
 - Vocabulary: always TV Show, Season and Episode. Never the bare word "Show".
 - Scope settled with the user: in are search, the TV Show page (Seasons and Episodes), the Watchlist, Watched progress, Availability and External ratings. The Watchlist is TV Show-level; Watched progress is Episode-level; the two stay separate.
 - Sequencing: local ratings, like/dislike and the Discover filters wait for the model decision in the first ticket below. They are not part of this map.
+- The first build slice is the behaviour-preserving generalisation of Movie to Title; nothing is live, so migrations are edited in place.
 - Consult `grilling` and `domain-modeling` for grilling tickets; update `GLOSSARY.md` as terms resolve; offer an ADR only for hard-to-reverse, surprising, traded-off decisions.
 
 ## Decisions so far
@@ -20,12 +21,14 @@ A buildable spec at `.scratch/tv-shows/spec.md` for adding TV Shows to Reelio, w
 <!-- one line per resolved ticket: [title](link): gist -->
 
 - [What TMDB offers for TV Shows](issues/02-tmdb-tv-data-shape.md): TV Show, Season and Episode details exist; Availability at TV Show and Season level only; about 1 + one request per Season to fetch a whole TV Show; findings are on the throwaway branch `research/tv-shows-tmdb-data-shape`.
+- [Shared title model or a parallel TV Show model](issues/01-shared-title-or-parallel-tv-show-model.md): a shared `titles` base with a kind, detail tables per kind and `Title` as the base model; Movie URLs unchanged; migrations edited in place; see [ADR 0002](../../docs/adr/0002-shared-title-base-for-movies-and-tv-shows.md).
+- [What Watched means for a TV Show](issues/03-what-watched-means-for-a-tv-show.md): Episode-level Watched facts with a derived TV Show state (Not started, In progress, Completed); Season and TV Show bulk actions with one Undo; the TV Show leaves the Watchlist on Completed and never returns on its own.
 
 ## Not yet specified
 
 - URLs and routes for TV Shows, and how existing Movie routes, canonical URLs and the entry route relate.
 - Refresh and rate-limit behaviour for TV Shows and their Episodes (follows the data-volume decision).
-- What a Removed TV Show looks like (follows the model decision).
+- What a Removed TV Show looks like (the shared `removed_at` on Title makes it a Removed Title question; the glossary term is open).
 - Events and analytics for TV Show actions, and how the metrics report treats them.
 - Test strategy: browser journeys and the accessibility sweep for the new pages.
 - Whether the Movie picker's Watchlist page changes once TV Shows sit on the Watchlist (the picker itself stays Movies-only).
