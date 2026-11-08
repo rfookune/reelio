@@ -4,6 +4,7 @@ namespace App\Services\Catalog;
 
 use App\Models\Genre;
 use App\Models\Movie;
+use App\Models\TvShow;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Enums\SectionKind;
 use App\Services\Catalog\Exceptions\CreationLimited;
@@ -36,7 +37,84 @@ class Catalog
         private AvailabilityWriter $availability,
         private DiscoverBuilder $discover,
         private MisconfigurationReporter $misconfiguration,
+        private TvShowWriter $tvShows,
     ) {}
+
+    /** @return CatalogResult<TvShow> */
+    public function findOrCreateTvShow(int $tmdbId, string $actor): CatalogResult
+    {
+        if (! config('catalog.tv_shows.enabled')) {
+            return CatalogResult::unavailable();
+        }
+        $existing = TvShow::query()->where('tmdb_id', $tmdbId)->first();
+        if ($existing !== null) {
+            return CatalogResult::fresh($existing);
+        }
+        $context = new CatalogContext(config('catalog.language'));
+        $this->limitCreation($actor, $context);
+        try {
+            $details = $this->source->tvShow($tmdbId, $context);
+        } catch (SourceUnavailable $exception) {
+            $this->misconfiguration->reportIfMisconfigured($exception, $context);
+
+            return CatalogResult::unavailable();
+        }
+        if ($details === null) {
+            return CatalogResult::fresh(null);
+        }
+
+        return DB::transaction(function () use ($tmdbId, $details): CatalogResult {
+            $tvShow = TvShow::query()->firstOrCreate(['tmdb_id' => $tmdbId], ['last_viewed_at' => now()]);
+            if ($tvShow->wasRecentlyCreated) {
+                $this->tvShows->store($tvShow, $details);
+            }
+
+            return CatalogResult::fresh($tvShow);
+        });
+    }
+
+    /**
+     * Refreshes the whole TV Show when older than the view interval. A failed fetch never writes a partial
+     * Season inventory; stored details remain usable as stale, while a Title with no successful sync is unavailable.
+     *
+     * @return CatalogResult<TvShow>
+     */
+    public function tvShowDetails(TvShow $tvShow): CatalogResult
+    {
+        if (! config('catalog.tv_shows.enabled')) {
+            return CatalogResult::unavailable();
+        }
+        if ($tvShow->isRemoved()) {
+            return CatalogResult::removed();
+        }
+        if ($tvShow->synced_at !== null && $tvShow->synced_at->greaterThanOrEqualTo(now()->subSeconds(config('catalog.refresh.on_view_after_seconds')))) {
+            return CatalogResult::fresh($tvShow);
+        }
+        $context = new CatalogContext(config('catalog.language'));
+        try {
+            $details = $this->source->tvShow($tvShow->tmdb_id, $context);
+        } catch (SourceUnavailable $exception) {
+            $this->misconfiguration->reportIfMisconfigured($exception, $context);
+
+            return $tvShow->hasSourceDetails() ? CatalogResult::stale($tvShow) : CatalogResult::unavailable();
+        }
+
+        return DB::transaction(function () use ($tvShow, $details): CatalogResult {
+            $locked = TvShow::query()->lockForUpdate()->findOrFail($tvShow->id);
+            $tvShow->setRawAttributes($locked->getAttributes(), true);
+            if ($tvShow->isRemoved()) {
+                return CatalogResult::removed();
+            }
+            if ($details === null) {
+                $this->tvShows->markRemoved($tvShow);
+
+                return CatalogResult::removed();
+            }
+            $this->tvShows->store($tvShow, $details);
+
+            return CatalogResult::fresh($tvShow);
+        });
+    }
 
     /** @return CatalogResult<Movie> */
     public function findOrCreate(int $tmdbId, string $actor): CatalogResult

@@ -2,7 +2,7 @@
 
 namespace App\Services\Catalog;
 
-use App\Models\Movie;
+use App\Models\Title;
 use App\Services\Catalog\Enums\OfferType;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Query\Builder;
@@ -18,7 +18,7 @@ class AvailabilityWriter
     /**
      * @param  list<array{serviceId: int, serviceName: string, logoPath: ?string, country: string, offerType: string, displayPriority: int}>  $offers
      */
-    public function replace(Movie $movie, array $offers): void
+    public function replace(Title $movie, array $offers): void
     {
         DB::transaction(function () use ($movie, $offers): void {
             $services = [];

@@ -26,4 +26,9 @@ class TvShow extends Title
     {
         return $this->hasOne(TvShowDetail::class, 'title_id');
     }
+
+    public function canonicalUrl(): string
+    {
+        return route('tv-shows.show', ['slug' => $this->slug ?? 'tv-show', 'id' => $this->id]);
+    }
 }

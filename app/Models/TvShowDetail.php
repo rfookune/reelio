@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable([])]
+#[Fillable(['first_air_date', 'last_air_date', 'status', 'season_count', 'episode_count'])]
 class TvShowDetail extends Model
 {
     protected $primaryKey = 'title_id';
@@ -18,7 +18,7 @@ class TvShowDetail extends Model
     /** @return array<string, string> */
     protected function casts(): array
     {
-        return [];
+        return ['first_air_date' => 'immutable_date', 'last_air_date' => 'immutable_date'];
     }
 
     /** @return BelongsTo<Title, $this> */

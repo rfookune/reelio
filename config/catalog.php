@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'tv_shows' => ['enabled' => (bool) env('CATALOG_TV_SHOWS', false)],
+
     'language' => env('CATALOG_LANGUAGE', 'en-US'),
     'image_base_url' => env('TMDB_IMAGE_BASE_URL', 'https://image.tmdb.org/t/p/'),
 
