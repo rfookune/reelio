@@ -14,3 +14,10 @@
 - [ ] Stubs appear in the group with the right date and menu, and count in the filter
 - [ ] `last_viewed_at` is not updated on the 410; the Removed Movie page and tests are unchanged
 - [ ] The cap-cleared 503 page behaves as for a cap-cleared Movie
+
+## Comments
+
+### 2026-11-08 — Notes from ticket 12
+
+- The list classes were renamed there: `UserListPage`, `UserListController`, `UserList`, `ListSort`, `UserList.vue`, `UserListCardMenu.vue`, and the page prop `movies` is now `titles`. `unavailableMovies` is still Movie-only; making it `unavailableTitles` belongs here, with the stubs.
+- A TV Show without details is excluded from the cards, `userTvShows` and the counts (`UserListPage::entries()`, `userTvShows()`); the stubs need to be added to all three so the filter counts include them.
