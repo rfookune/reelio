@@ -64,3 +64,12 @@ test('SSR is off for every page when it is switched off', function () {
 
     Http::assertNothingSent();
 });
+
+test('a route added to the SSR list is rendered on the server without becoming indexable', function () {
+    Http::fake(['127.0.0.1:13714/render' => Http::response(['head' => [], 'body' => '<div></div>'])]);
+    config(['seo.ssr_routes' => [...config('seo.ssr_routes'), 'login'], 'seo.indexing' => true]);
+
+    $response = $this->get(route('login'));
+
+    expect(renderedComponents())->toBe(['auth/Login'])->and($response->headers->get('X-Robots-Tag'))->toBe('noindex');
+});

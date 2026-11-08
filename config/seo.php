@@ -9,9 +9,16 @@ return [
     'indexing' => (bool) env('SEO_INDEXING_ENABLED', false),
 
     /*
-     * The routes that are rendered on the server and, with the flag on, indexable: Discover, Movie pages and the
-     * About, Privacy, Terms and Accessibility pages. Every other route is client-rendered and `noindex`.
+     * The routes rendered on the server: Discover, Movie pages and the About, Privacy, Terms and Accessibility
+     * pages. Every other route is rendered on the client, and so is any page while the SSR server is down. Add a
+     * route here to server-render it; that doesn't make it indexable.
      */
-    'public_routes' => ['home', 'movies.show', 'about', 'privacy', 'terms', 'accessibility'],
+    'ssr_routes' => ['home', 'movies.show', 'about', 'privacy', 'terms', 'accessibility'],
+
+    /*
+     * The routes crawlers may index when the flag is on. Every other route, and every response that isn't a 200,
+     * is `noindex` whatever the flag says.
+     */
+    'indexable_routes' => ['home', 'movies.show', 'about', 'privacy', 'terms', 'accessibility'],
 
 ];

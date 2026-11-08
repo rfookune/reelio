@@ -5,6 +5,7 @@ use App\Models\User;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\FakeCatalogSource;
 use App\Services\Catalog\Sources\MovieDetails;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 
 /** The `X-Robots-Tag` a response carries, or null when it has none and so may be indexed. */
@@ -99,4 +100,14 @@ test('Discover hands the head its own URL as canonical, without a query string',
     fakeDiscoverSource(['trending' => [movieListings(1, 5)]]);
 
     $this->get(route('home', ['utm_source' => 'x']))->assertOk()->assertInertia(fn ($page) => $page->where('seo.url', route('home')));
+});
+
+test('a route can be indexable without being server-rendered', function () {
+    config(['seo.indexing' => true, 'seo.ssr_routes' => [], 'inertia.ssr.enabled' => true]);
+    Http::fake();
+
+    $response = $this->get(route('home'));
+
+    expect(robotsTag($response))->toBeNull();
+    Http::assertNothingSent();
 });

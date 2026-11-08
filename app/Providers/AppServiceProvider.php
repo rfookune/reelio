@@ -2,9 +2,9 @@
 
 namespace App\Providers;
 
-use App\Http\Support\PublicRoutes;
 use App\Http\Support\RateLimitKey;
 use App\Http\Support\SearchPage;
+use App\Http\Support\SeoRoutes;
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\GuardedCatalogSource;
@@ -104,13 +104,13 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Render on the server only the `PublicRoutes`: Discover, Movie pages and the
+     * Render on the server only the `seo.ssr_routes`: Discover, Movie pages and the
      * About, Privacy, Terms and Accessibility pages. Search, auth, the Watchlist and Watched pages and settings are
      * rendered on the client, and so is any page while the SSR server is down. Setting a condition replaces
      * Inertia's own `inertia.ssr.enabled` check, so the condition repeats it.
      */
     private function configureServerRendering(): void
     {
-        Inertia::disableSsr(fn (): bool => ! config('inertia.ssr.enabled') || ! PublicRoutes::includes(request()));
+        Inertia::disableSsr(fn (): bool => ! config('inertia.ssr.enabled') || ! SeoRoutes::isServerRendered(request()));
     }
 }
