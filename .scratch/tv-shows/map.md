@@ -30,10 +30,6 @@ A buildable spec at `.scratch/tv-shows/spec.md` for adding TV Shows to Reelio, w
 
 ## Not yet specified
 
-- URLs and routes for TV Shows, and how existing Movie routes, canonical URLs and the entry route relate.
-- What a Removed TV Show's own page shows for users (the Watchlist stub and the glossary term Removed Title are settled; the shared `removed_at` on Title makes it a Removed Title question; the refresh rule is settled in the Episode data ticket).
-- Events and analytics for TV Show actions, and how the metrics report treats them.
-- What the rest of the TV Show page shows beside the Season accordion: overview, Details panel (creators, network, status, first and last air date, content rating), trailer and cast, and what the first view of a TV Show looks like while it is being fetched.
 - Test strategy: browser journeys and the accessibility sweep for the new pages.
 
 ## Out of scope
