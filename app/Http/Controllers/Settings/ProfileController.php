@@ -10,6 +10,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -47,7 +48,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Delete the user's account at once, with everything it holds, and log only that it happened.
+     * Delete the user's account at once, with its sessions on every device and everything else it holds, and log only that it happened.
      */
     public function destroy(ProfileDeleteRequest $request): RedirectResponse
     {
@@ -55,7 +56,10 @@ class ProfileController extends Controller
 
         Auth::logout();
 
-        $user->delete();
+        DB::transaction(function () use ($user): void {
+            DB::table(config('session.table'))->where('user_id', $user->id)->delete();
+            $user->delete();
+        });
 
         Log::info('account_deleted', ['user_id' => $user->id]);
 

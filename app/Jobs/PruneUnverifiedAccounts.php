@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * Keeps Reelio's published retention for unverified accounts, daily at 05:00 UTC: an account that never verified its
  * email is deleted 30 days after registration. An account holding a Watchlist or Watched fact is spared, because
- * actions need only a signed-in user. The account's sessions and events go with it, through their cascading foreign
- * keys. Repeating the job does no harm.
+ * actions need only a signed-in user. Its sessions are deleted with it, and its events go through their cascading
+ * foreign key. Repeating the job does no harm.
  */
 class PruneUnverifiedAccounts implements ShouldQueue
 {
@@ -30,10 +30,14 @@ class PruneUnverifiedAccounts implements ShouldQueue
 
     public function handle(): void
     {
-        User::query()
-            ->whereNull('email_verified_at')
-            ->where('created_at', '<=', now()->subDays(self::RETENTION_DAYS))
-            ->whereNotExists(fn ($facts) => $facts->select(DB::raw(1))->from('user_movies')->whereColumn('user_movies.user_id', 'users.id'))
-            ->delete();
+        DB::transaction(function (): void {
+            $accounts = User::query()
+                ->whereNull('email_verified_at')
+                ->where('created_at', '<=', now()->subDays(self::RETENTION_DAYS))
+                ->whereNotExists(fn ($facts) => $facts->select(DB::raw(1))->from('user_movies')->whereColumn('user_movies.user_id', 'users.id'));
+
+            DB::table(config('session.table'))->whereIn('user_id', (clone $accounts)->select('users.id'))->delete();
+            $accounts->delete();
+        });
     }
 }
