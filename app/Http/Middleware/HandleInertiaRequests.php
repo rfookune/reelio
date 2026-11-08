@@ -52,6 +52,11 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'sentry' => [
+                'dsn' => config('services.sentry.dsn'),
+                'environment' => config('services.sentry.environment'),
+                'release' => config('services.sentry.release'),
+            ],
         ];
     }
 }

@@ -37,6 +37,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         /** Render every application 429 consistently, including limits outside the route middleware. */
         $exceptions->respond(function (Response $response, Throwable $exception, Request $request): Response {
+            $request->attributes->set('monitoring.exception_class', $exception::class);
+
             if ($response->getStatusCode() !== 429) {
                 return $response;
             }

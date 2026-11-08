@@ -29,6 +29,9 @@ return [
     ],
 
     'sentry' => [
+        'dsn' => env('SENTRY_DSN'),
+        'environment' => env('SENTRY_ENVIRONMENT', env('APP_ENV', 'production')),
+        'release' => env('SENTRY_RELEASE'),
         'ingest_host' => env('SENTRY_INGEST_HOST'),
     ],
 

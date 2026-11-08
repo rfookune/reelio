@@ -4,6 +4,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
+import { initializeMonitoring } from '@/lib/monitoring';
 import { initializePageFocus } from '@/lib/pageFocus';
 import { initializeAppliedActionToast } from '@/lib/userMovieActions';
 
@@ -21,7 +22,11 @@ void createInertiaApp({
                 return AppLayout;
         }
     },
-    withApp: (app) => {
+    withApp: (app, { ssr, page }) => {
+        if (!ssr) {
+            initializeMonitoring(app, page.props.sentry);
+        }
+
         app.directive('focus', {
             mounted: (el: HTMLElement, shouldFocus) => {
                 if (shouldFocus.value !== false) {

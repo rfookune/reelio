@@ -38,7 +38,9 @@ it('lists the billed cast in tiers, behind a breadcrumb back to the movie', func
 it('goes back to the movie from the breadcrumb', function () {
     $page = visitFullCast();
 
-    $page->click('[data-slot="back-to-movie"]')->assertSee('Avengers: Doomsday')->assertNoJavaScriptErrors();
+    $page->click('[data-slot="back-to-movie"]')->assertMissing('[data-slot="back-to-movie"]');
+
+    $page->assertSee('Avengers: Doomsday')->assertNoJavaScriptErrors();
 
     expect($page->script('location.pathname'))->toStartWith('/movies/avengers-doomsday-')->not->toContain('/casts');
 });
