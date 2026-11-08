@@ -3,6 +3,7 @@
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Password;
 use Laravel\Fortify\Features;
 
 beforeEach(function () {
@@ -25,21 +26,27 @@ test('reset password link can be requested', function () {
     Notification::assertSentTo($user, ResetPassword::class);
 });
 
-test('reset link requests give the same response for known, unknown and recently emailed accounts', function (bool $json) {
+test('reset link requests use the default responses for known, unknown and recently emailed accounts', function (bool $json) {
     $this->freezeTime();
     Notification::fake();
     $user = User::factory()->create();
-    $message = "If that email has an account, we've sent a link";
 
-    foreach ([$user->email, 'unknown@example.com', $user->email] as $email) {
+    foreach ([[$user->email, Password::RESET_LINK_SENT], ['unknown@example.com', Password::INVALID_USER], [$user->email, Password::RESET_THROTTLED]] as [$email, $status]) {
         $response = $this->from(route('password.request'))
             ->json('POST', route('password.email'), ['email' => $email], $json ? ['Accept' => 'application/json'] : ['Accept' => 'text/html']);
 
-        if ($json) {
-            $response->assertOk()->assertExactJson(['message' => $message]);
+        if ($status === Password::RESET_LINK_SENT) {
+            if ($json) {
+                $response->assertOk()->assertExactJson(['message' => __($status)]);
+            } else {
+                $response->assertRedirect(route('password.request'))
+                    ->assertSessionHasNoErrors()->assertSessionHas('status', __($status));
+            }
+        } elseif ($json) {
+            $response->assertUnprocessable()->assertJsonValidationErrors(['email' => __($status)]);
         } else {
             $response->assertRedirect(route('password.request'))
-                ->assertSessionHasNoErrors()->assertSessionHas('status', $message);
+                ->assertSessionHasErrors(['email' => __($status)]);
         }
     }
 

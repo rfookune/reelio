@@ -22,9 +22,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
-use Inertia\ExceptionResponse;
-use Inertia\Inertia;
-use Symfony\Component\HttpFoundation\Response;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -51,39 +48,6 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureRateLimiting();
-        $this->configureErrorResponses();
-    }
-
-    /** Render every application 429 consistently, including limits outside the route middleware. */
-    protected function configureErrorResponses(): void
-    {
-        Inertia::handleExceptionsUsing(function (ExceptionResponse $exception): ?Response {
-            if ($exception->statusCode() !== 429) {
-                return null;
-            }
-
-            $message = "You're going too fast. Try again in a moment.";
-            $headers = array_filter([
-                'Retry-After' => $exception->response->headers->get('Retry-After', '60'),
-                'X-RateLimit-Limit' => $exception->response->headers->get('X-RateLimit-Limit'),
-                'X-RateLimit-Remaining' => $exception->response->headers->get('X-RateLimit-Remaining'),
-                'X-Robots-Tag' => 'noindex',
-            ], fn (?string $value): bool => $value !== null);
-
-            if ($exception->request->expectsJson()) {
-                return response()->json(['message' => $message], 429, $headers);
-            }
-
-            $response = $exception->render('Error', [
-                'status' => 429,
-                'title' => 'Too many requests',
-                'message' => $message,
-                'exceptionClass' => $exception->exception::class,
-            ])->withSharedData()->toResponse($exception->request);
-            $response->headers->add($headers);
-
-            return $response;
-        });
     }
 
     /**
