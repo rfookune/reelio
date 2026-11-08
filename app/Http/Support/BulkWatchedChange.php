@@ -2,6 +2,7 @@
 
 namespace App\Http\Support;
 
+use App\Enums\ProgressState;
 use App\Models\Episode;
 use App\Models\TvShow;
 use App\Models\User;
@@ -33,7 +34,7 @@ class BulkWatchedChange
     public function apply(Request $request, User $user, TvShow $tvShow, bool $watched, Builder $eligible, bool $clearsAll): array
     {
         $token = $this->latest->change($request, $user, $tvShow, $tvShow->tmdb_id, function () use ($user, $tvShow, $watched, $eligible, $clearsAll): void {
-            $wasCompleted = $this->progress->for($tvShow, $user)['state'] === 'Completed';
+            $wasCompleted = $this->progress->for($tvShow, $user)['state'] === ProgressState::Completed;
             if ($watched) {
                 $this->markUnwatched($user, $eligible);
             } elseif ($clearsAll) {
@@ -41,7 +42,7 @@ class BulkWatchedChange
             } else {
                 UserEpisode::query()->where('user_id', $user->id)->whereIn('episode_id', (clone $eligible)->select('id'))->delete();
             }
-            if (! $wasCompleted && $this->progress->for($tvShow, $user)['state'] === 'Completed') {
+            if (! $wasCompleted && $this->progress->for($tvShow, $user)['state'] === ProgressState::Completed) {
                 UserTitle::change($user, $tvShow, function (UserTitle $row): void {
                     $row->watchlisted_at = null;
                 });

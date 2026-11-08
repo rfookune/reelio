@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgressState;
 use App\Http\Support\LatestTvShowAction;
 use App\Models\Episode;
 use App\Models\TvShow;
@@ -27,14 +28,14 @@ class ChangeEpisodeWatched
         }
 
         $token = $this->latest->change($request, $user, $tvShow, $tvShow->tmdb_id, function () use ($user, $tvShow, $episode, $watched): void {
-            $wasCompleted = $this->progress->for($tvShow, $user)['state'] === 'Completed';
+            $wasCompleted = $this->progress->for($tvShow, $user)['state'] === ProgressState::Completed;
             if ($watched) {
                 UserEpisode::query()->updateOrCreate(['user_id' => $user->id, 'episode_id' => $episode->id], ['watched_at' => now()]);
             } else {
                 UserEpisode::query()->where('user_id', $user->id)->where('episode_id', $episode->id)->delete();
             }
             $progress = $this->progress->for($tvShow, $user);
-            if (! $wasCompleted && $progress['state'] === 'Completed') {
+            if (! $wasCompleted && $progress['state'] === ProgressState::Completed) {
                 UserTitle::change($user, $tvShow, function (UserTitle $row): void {
                     $row->watchlisted_at = null;
                 });
