@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Exceptions\ErrorPageException;
+use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -24,3 +25,40 @@ test('custom error pages expose their exception class and optional data without 
     'empty data' => [[]],
     'custom data' => [['status' => 200, 'title' => 'Payload title', 'context' => ['reason' => 'example']]],
 ]);
+
+test('full 429 visits use the shared error page and preserve retry and rate-limit headers', function (array $retryHeaders, string $retryAfter) {
+    Route::get('/test-rate-limited', fn () => abort(429, 'Internal limit detail', [
+        ...$retryHeaders,
+        'X-RateLimit-Limit' => '5',
+        'X-RateLimit-Remaining' => '0',
+    ]))->middleware('web');
+
+    $response = $this->get('/test-rate-limited')->assertTooManyRequests()
+        ->assertHeader('Retry-After', $retryAfter)
+        ->assertHeader('X-RateLimit-Limit', '5')
+        ->assertHeader('X-RateLimit-Remaining', '0')
+        ->assertHeader('X-Robots-Tag', 'noindex');
+
+    $response->assertInertia(fn (Assert $page) => $page->component('Error')
+        ->where('status', 429)->where('title', 'Too many requests')
+        ->where('message', "You're going too fast. Try again in a moment.")
+        ->where('auth.user', null));
+})->with([
+    'supplied retry delay' => [['Retry-After' => '17'], '17'],
+    'default retry delay' => [[], '60'],
+]);
+
+test('throttled Inertia visits receive the styled page with shared data and Retry-After', function () {
+    $this->freezeTime();
+    Route::get('/test-throttled-visit', fn () => response()->noContent())->middleware(['web', 'throttle:1,1']);
+    $this->get('/test-throttled-visit')->assertNoContent();
+
+    $this->get('/test-throttled-visit', [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => (string) app(HandleInertiaRequests::class)->version(request()),
+    ])->assertTooManyRequests()->assertHeader('Retry-After', '60')->assertHeader('X-Inertia', 'true')
+        ->assertJsonPath('component', 'Error')
+        ->assertJsonPath('props.status', 429)
+        ->assertJsonPath('props.auth.user', null)
+        ->assertJsonPath('props.message', "You're going too fast. Try again in a moment.");
+});

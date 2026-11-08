@@ -4,6 +4,7 @@ use App\Models\Movie;
 use App\Models\User;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\FakeCatalogSource;
+use Illuminate\Support\Facades\RateLimiter;
 
 it('adds a Movie to the Watchlist from its page and takes it off again', function () {
     $user = User::factory()->create();
@@ -86,6 +87,45 @@ it('rolls the toggle back and says so when saving fails', function () {
         ->assertNoJavaScriptErrors();
 
     expect($page->script('window.pressedStates'))->toBe(['true', 'false']);
+    $this->assertDatabaseCount('user_movies', 0);
+});
+
+it('rolls back a throttled action and shows the 429 toast', function () {
+    $user = User::factory()->create();
+    $movie = Movie::factory()->create();
+    fakeCatalogKnowing($movie);
+    $this->actingAs($user)->freezeTime();
+
+    $page = visitWithCsp($movie->canonicalUrl());
+    for ($attempt = 0; $attempt < 60; $attempt++) {
+        RateLimiter::hit(md5('user-movie-actions'.'user:'.$user->id));
+    }
+
+    $page->click('[data-slot="watchlist-toggle"]')
+        ->assertSeeIn('[data-sonner-toast]', "You're going too fast. Try again in a moment.")
+        ->assertSeeIn('[data-slot="watchlist-toggle"]', 'Add to Watchlist')
+        ->assertAttribute('[data-slot="watchlist-toggle"]', 'aria-pressed', 'false')
+        ->assertDontSee('Too many requests')
+        ->assertNoJavaScriptErrors();
+
+    $this->assertDatabaseCount('user_movies', 0);
+});
+
+it('keeps guests on the Movie page with a toast when a pending action is throttled', function () {
+    $movie = Movie::factory()->create();
+    fakeCatalogKnowing($movie);
+    $this->freezeTime();
+    $page = visitWithCsp($movie->canonicalUrl());
+    for ($attempt = 0; $attempt < 60; $attempt++) {
+        RateLimiter::hit(md5('user-movie-actions'.'ip:127.0.0.1'));
+    }
+
+    $page->click('[data-slot="watchlist-toggle"]')
+        ->assertSeeIn('[data-sonner-toast]', "You're going too fast. Try again in a moment.")
+        ->assertSeeIn('[data-slot="watchlist-toggle"]', 'Add to Watchlist')
+        ->assertPathIs(parse_url($movie->canonicalUrl(), PHP_URL_PATH))
+        ->assertNoJavaScriptErrors();
+
     $this->assertDatabaseCount('user_movies', 0);
 });
 

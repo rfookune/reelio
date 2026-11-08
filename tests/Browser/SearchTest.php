@@ -171,6 +171,8 @@ it('says inline when searches come too fast, and Retry searches again from the i
         ->assertSeeIn('[data-slot=search-unavailable]', "You're going too fast. Try again in a moment.")
         ->assertNotPresent('[data-slot=search-loading]');
 
+    expect($page->text('[role="status"][aria-live="polite"]'))->toBe("You're going too fast. Try again in a moment.");
+
     RateLimiter::clear(md5('search'.'ip:127.0.0.1'));
     $page->click('Retry')
         ->assertSeeIn('[data-slot=search-results]', '3 results')

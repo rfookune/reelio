@@ -3,6 +3,7 @@
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
+use Illuminate\Support\Facades\RateLimiter;
 use Pest\Browser\Api\AwaitableWebpage;
 
 /**
@@ -97,4 +98,24 @@ it('says so when the action can no longer be undone, then shows the facts as the
 
     expect(focusedSlotAfterUndo($page))->toBe('mark-as-watched');
     $this->assertDatabaseHas('user_movies', ['id' => $facts->id, 'watchlisted_at' => '2026-09-10 12:00:30', 'watched_at' => '2026-09-10 12:00:00']);
+});
+
+it('rolls back a throttled Undo and shows the 429 toast', function () {
+    $facts = UserMovie::factory()->create();
+    fakeCatalogKnowing($facts->movie);
+    $this->actingAs($facts->user)->freezeTime();
+    $page = visitWithCsp($facts->movie->canonicalUrl());
+    $page->click('[data-slot="mark-as-watched"]')->assertSee('Marked as watched');
+    for ($attempt = 0; $attempt < 60; $attempt++) {
+        RateLimiter::hit(md5('user-movie-actions'.'user:'.$facts->user_id));
+    }
+
+    $page->click('[data-sonner-toast] [data-action]')
+        ->assertSeeIn('[data-sonner-toast]', "You're going too fast. Try again in a moment.")
+        ->assertSeeIn('[data-slot="watchlist-toggle"]', 'Add to Watchlist')
+        ->assertPresent('[data-slot="watched-chip"]')
+        ->assertDontSee('Too many requests')
+        ->assertNoJavaScriptErrors();
+
+    $this->assertDatabaseHas('user_movies', ['id' => $facts->id, 'watchlisted_at' => null, 'watched_at' => now()]);
 });

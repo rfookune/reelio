@@ -16,6 +16,7 @@ import type {
 
 const TOAST_DURATION = 6000;
 const FAILURE_MESSAGE = "Couldn't save that. Try again.";
+const TOO_FAST = "You're going too fast. Try again in a moment.";
 const NO_FACTS: UserMovieFacts = {
     watchlisted: false,
     watched: false,
@@ -53,10 +54,13 @@ function visitUserMovies({
     const pageMovie =
         page.component === 'Error' ? errorPageMovieData(page.props) : undefined;
     const factProps = pageMovie ? ['data', 'exceptionClass'] : ['userMovies'];
-    const failed = (errors?: Errors): false => {
-        toast.error(errors?.undo ?? FAILURE_MESSAGE, {
-            duration: TOAST_DURATION,
-        });
+    const failed = (errors?: Errors, status?: number): false => {
+        toast.error(
+            status === 429 ? TOO_FAST : (errors?.undo ?? FAILURE_MESSAGE),
+            {
+                duration: TOAST_DURATION,
+            },
+        );
 
         if (errors?.undo) {
             router.reload({ only: factProps, async: true });
@@ -89,7 +93,7 @@ function visitUserMovies({
                 : { userMovies: updated };
         },
         onSuccess: (response) => onSuccess?.(response.component),
-        onError: failed,
+        onError: (errors) => failed(errors),
         onHttpException: (response) => {
             const page = response.data as Partial<Page>;
             // The action returns to the same Movie's error page, whose successful render still has its status: 410
@@ -105,7 +109,7 @@ function visitUserMovies({
                 return;
             }
 
-            return failed();
+            return failed(undefined, response.status);
         },
         onNetworkError: () => failed(),
     });
@@ -264,7 +268,16 @@ function sendUserMovieAction({
     const page = usePage();
 
     if (page.props.auth.user === null) {
-        router.visit(route, { data: { source } });
+        router.visit(route, {
+            data: { source },
+            onHttpException: (response) => {
+                if (response.status === 429) {
+                    toast.error(TOO_FAST, { duration: TOAST_DURATION });
+
+                    return false;
+                }
+            },
+        });
 
         return;
     }

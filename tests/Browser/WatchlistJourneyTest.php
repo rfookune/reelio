@@ -112,7 +112,7 @@ it('rolls a refused removal back into the grid and restores the count', function
     }
 
     $page = visitWithCsp('/watchlist');
-    $page->click('[data-slot="bookmark-toggle"]')->assertSee("Couldn't save that. Try again.")
+    $page->click('[data-slot="bookmark-toggle"]')->assertSee("You're going too fast. Try again in a moment.")
         ->assertPresent('[data-slot="watchlist-grid"] [data-slot="poster-card"]')->assertSee('Watchlist · 1')
         ->assertNoJavaScriptErrors();
 
