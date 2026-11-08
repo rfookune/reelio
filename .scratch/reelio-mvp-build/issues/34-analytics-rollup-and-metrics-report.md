@@ -6,8 +6,8 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 
 **Blocked by:** [05: Analytics event recording](./05-analytics-event-recording.md)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] A daily job (05:00 UTC slot) rolls events older than 13 months into an aggregate table (one row per day and event name with a count; `movie_picker_used` also keeps its `pool_size` total) and deletes them
-- [ ] `metrics:report` runs documented SQL over both tables, with each metric defined in one place (e.g. weekly returning users, search-to-watchlist conversion, picker usage), counting distinct users searching per day and reporting no zero-result rate
-- [ ] Feature tests cover the roll-up boundary and the report's definitions on seeded events
+- [x] A daily job (05:00 UTC slot) rolls events older than 13 months into an aggregate table (one row per day and event name with a count; `movie_picker_used` also keeps its `pool_size` total) and deletes them
+- [x] `metrics:report` runs documented SQL over both tables, with each metric defined in one place (e.g. weekly returning users, search-to-watchlist conversion, picker usage), counting distinct users searching per day and reporting no zero-result rate
+- [x] Feature tests cover the roll-up boundary and the report's definitions on seeded events

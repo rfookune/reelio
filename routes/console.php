@@ -10,6 +10,7 @@ use App\Jobs\PlanMovieRefreshes;
 use App\Jobs\PruneFailedJobs;
 use App\Jobs\PruneUnverifiedAccounts;
 use App\Jobs\RefreshGenres;
+use App\Jobs\RollUpEvents;
 use App\Jobs\SyncRatingDataset;
 use App\Services\Ratings\Sync\Datasets\RatingDatasets;
 use Carbon\CarbonInterval;
@@ -40,6 +41,7 @@ Schedule::dailyAt('05:00')->timezone('UTC')->onOneServer()->group(function (): v
     Schedule::job(new PruneUnverifiedAccounts);
     Schedule::job(new ClearExpiredPasswordResets);
     Schedule::job(new PruneFailedJobs);
+    Schedule::job(new RollUpEvents);
     Schedule::job((new BuildSitemap)->delay(CarbonInterval::minutes(10)));
     Schedule::job((new CheckOverdueRefreshes)->delay(CarbonInterval::minutes(15)));
     Schedule::job(new RefreshGenres)->mondays();

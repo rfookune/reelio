@@ -9,6 +9,7 @@ use App\Jobs\PlanMovieRefreshes;
 use App\Jobs\PruneFailedJobs;
 use App\Jobs\PruneUnverifiedAccounts;
 use App\Jobs\RefreshGenres;
+use App\Jobs\RollUpEvents;
 use App\Jobs\SyncRatingDataset;
 use App\Services\Ratings\Enums\RatingSourceName;
 use Carbon\CarbonInterval;
@@ -36,6 +37,7 @@ test('at 05:00 UTC the scheduler dispatches each Rating dataset sync, a delayed 
     Queue::assertPushed(BuildDiscover::class);
     Queue::assertPushed(PlanMovieRefreshes::class, fn (PlanMovieRefreshes $job) => $job->afterId === 0);
     Queue::assertPushed(CleanUpCatalog::class);
+    Queue::assertPushed(RollUpEvents::class);
     Queue::assertPushed(CheckOverdueRefreshes::class, fn (CheckOverdueRefreshes $job) => delayedWithinLimit($job->delay));
     Queue::assertNotPushed(RefreshGenres::class);
 });
