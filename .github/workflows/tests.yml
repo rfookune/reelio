@@ -168,20 +168,20 @@ jobs:
       - name: Run Browser Tests
         run: composer test:browser
 
-  deploy:
-    needs: [ci, browser, audit]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    concurrency:
-      group: production-deploy
-      cancel-in-progress: false
+  # deploy:
+  #   needs: [ci, browser, audit]
+  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 5
+  #   concurrency:
+  #     group: production-deploy
+  #     cancel-in-progress: false
 
-    steps:
-      - name: Deploy checked commit to Laravel Cloud
-        env:
-          LARAVEL_CLOUD_DEPLOY_HOOK: ${{ secrets.LARAVEL_CLOUD_DEPLOY_HOOK }}
-        run: |
-          test -n "$LARAVEL_CLOUD_DEPLOY_HOOK"
-          curl --fail --silent --show-error --max-time 60 --request POST \
-            "${LARAVEL_CLOUD_DEPLOY_HOOK}?commit_hash=${{ github.sha }}"
+  #   steps:
+  #     - name: Deploy checked commit to Laravel Cloud
+  #       env:
+  #         LARAVEL_CLOUD_DEPLOY_HOOK: ${{ secrets.LARAVEL_CLOUD_DEPLOY_HOOK }}
+  #       run: |
+  #         test -n "$LARAVEL_CLOUD_DEPLOY_HOOK"
+  #         curl --fail --silent --show-error --max-time 60 --request POST \
+  #           "${LARAVEL_CLOUD_DEPLOY_HOOK}?commit_hash=${{ github.sha }}"
