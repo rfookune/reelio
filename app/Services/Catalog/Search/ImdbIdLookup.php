@@ -2,6 +2,7 @@
 
 namespace App\Services\Catalog\Search;
 
+use App\Enums\TitleKind;
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\MisconfigurationReporter;
@@ -17,15 +18,15 @@ class ImdbIdLookup
     public function __construct(private CatalogSource $source, private CacheKey $keys, private MisconfigurationReporter $misconfiguration) {}
 
     /**
-     * The IMDb ids already remembered for the catalog ids, without asking the source; a Movie whose id isn't
+     * The IMDb ids already remembered for the catalog ids, without asking the source; a title whose id isn't
      * remembered, or is remembered as having none, is left out.
      *
      * @param  list<int>  $tmdbIds
      * @return array<int, string> keyed by catalog id
      */
-    public function cachedImdbIds(array $tmdbIds): array
+    public function cachedImdbIds(array $tmdbIds, TitleKind $kind = TitleKind::Movie): array
     {
-        return array_filter($this->rememberedImdbIds($tmdbIds), is_string(...));
+        return array_filter($this->rememberedImdbIds($tmdbIds, $kind), is_string(...));
     }
 
     /**
@@ -38,10 +39,10 @@ class ImdbIdLookup
      * @param  list<int>  $tmdbIds
      * @return array<int, string> keyed by catalog id
      */
-    public function lookUpImdbIds(array $tmdbIds): array
+    public function lookUpImdbIds(array $tmdbIds, TitleKind $kind = TitleKind::Movie): array
     {
         $tmdbIds = array_values(array_unique($tmdbIds));
-        $remembered = $this->rememberedImdbIds($tmdbIds);
+        $remembered = $this->rememberedImdbIds($tmdbIds, $kind);
         $context = new CatalogContext(config('catalog.language'));
         $generation = $this->purgeGeneration($context);
         $lookups = 0;
@@ -55,14 +56,14 @@ class ImdbIdLookup
             $lookups++;
 
             try {
-                $imdbId = $this->source->imdbId($tmdbId, $context);
+                $imdbId = $kind === TitleKind::TvShow ? $this->source->tvImdbId($tmdbId, $context) : $this->source->imdbId($tmdbId, $context);
             } catch (SourceUnavailable $exception) {
                 $this->misconfiguration->reportIfMisconfigured($exception, $context);
 
                 break;
             }
 
-            $this->rememberImdbId($tmdbId, $imdbId, $context, $generation);
+            $this->rememberImdbId($tmdbId, $imdbId, $context, $generation, $kind);
             $remembered[$tmdbId] = $imdbId;
         }
 
@@ -76,15 +77,15 @@ class ImdbIdLookup
      * @param  list<int>  $tmdbIds
      * @return array<int, string|null>
      */
-    private function rememberedImdbIds(array $tmdbIds): array
+    private function rememberedImdbIds(array $tmdbIds, TitleKind $kind): array
     {
         $context = new CatalogContext(config('catalog.language'));
         $generation = $this->purgeGeneration($context);
-        $entries = Cache::many(array_map(fn (int $tmdbId): string => $this->imdbIdKey($tmdbId, $context, $generation), $tmdbIds));
+        $entries = Cache::many(array_map(fn (int $tmdbId): string => $this->imdbIdKey($tmdbId, $context, $generation, $kind), $tmdbIds));
         $remembered = [];
 
         foreach ($tmdbIds as $tmdbId) {
-            $entry = $entries[$this->imdbIdKey($tmdbId, $context, $generation)] ?? null;
+            $entry = $entries[$this->imdbIdKey($tmdbId, $context, $generation, $kind)] ?? null;
 
             if (is_array($entry) && array_key_exists('imdbId', $entry)) {
                 $remembered[$tmdbId] = is_string($entry['imdbId']) ? $entry['imdbId'] : null;
@@ -94,10 +95,10 @@ class ImdbIdLookup
         return $remembered;
     }
 
-    public function rememberImdbId(int $tmdbId, ?string $imdbId, CatalogContext $context, ?int $generation = null): void
+    public function rememberImdbId(int $tmdbId, ?string $imdbId, CatalogContext $context, ?int $generation = null, TitleKind $kind = TitleKind::Movie): void
     {
         Cache::put(
-            $this->imdbIdKey($tmdbId, $context, $generation ?? $this->purgeGeneration($context)),
+            $this->imdbIdKey($tmdbId, $context, $generation ?? $this->purgeGeneration($context), $kind),
             ['imdbId' => $imdbId],
             $imdbId === null ? now()->addSeconds(config('catalog.imdb_lookup.missing_lifetime_seconds')) : now()->addDays(config('catalog.imdb_lookup.lifetime_days')),
         );
@@ -139,8 +140,9 @@ class ImdbIdLookup
         return (int) Cache::get($this->keys->build('purge-generation', [], $context), 0);
     }
 
-    private function imdbIdKey(int $tmdbId, CatalogContext $context, int $generation): string
+    /** A Movie's key is as it always was; a TV Show's names its kind, since the two share catalog ids. */
+    private function imdbIdKey(int $tmdbId, CatalogContext $context, int $generation, TitleKind $kind = TitleKind::Movie): string
     {
-        return $this->keys->build('imdb-id', ['tmdb_id' => $tmdbId, 'generation' => $generation], $context);
+        return $this->keys->build('imdb-id', ['tmdb_id' => $tmdbId, 'generation' => $generation, ...($kind === TitleKind::TvShow ? ['kind' => $kind->value] : [])], $context);
     }
 }

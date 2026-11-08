@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TitleKind;
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Enums\SectionKind;
@@ -478,8 +479,8 @@ test('a genre collection reads TMDB\'s discover list for the genre by popularity
     ]);
 });
 
-test('a search page is translated from the recorded fixture, in TMDB\'s order with poster-less Movies kept', function () {
-    config(['catalog.tmdb.token' => 'test-read-token']);
+test('with TV Shows off, a search page is translated from the recorded Movie fixture, in TMDB\'s order with poster-less Movies kept', function () {
+    config(['catalog.tmdb.token' => 'test-read-token', 'catalog.tv_shows.enabled' => false]);
     Http::fake(['https://api.themoviedb.org/3/search/movie?*' => Http::response(json_decode(file_get_contents(base_path('tests/Fixtures/tmdb/search_inter.json')), true, flags: JSON_THROW_ON_ERROR))]);
 
     $results = app(TmdbCatalogSource::class)->search('inter', 1, new CatalogContext('en-US'));
@@ -499,6 +500,7 @@ test('a search page is translated from the recorded fixture, in TMDB\'s order wi
 });
 
 test('a search fails explicitly on unsuccessful or malformed responses', function (array $body, int $status) {
+    config(['catalog.tv_shows.enabled' => false]);
     Http::fake(['https://api.themoviedb.org/3/search/movie?*' => Http::response($body, $status)]);
 
     expect(fn () => app(TmdbCatalogSource::class)->search('inter', 1, new CatalogContext))->toThrow(SourceUnavailable::class);
@@ -598,4 +600,30 @@ test('a rejected token on the external ids is a configuration error', function (
     Http::fake(['https://api.themoviedb.org/3/movie/9/external_ids*' => Http::response([], 401)]);
 
     expect(fn () => app(TmdbCatalogSource::class)->imdbId(9, new CatalogContext))->toThrow(SourceMisconfigured::class);
+});
+
+test('with TV Shows on, a search reads every kind, telling Movies from TV Shows by media type and dropping people', function () {
+    config(['catalog.tmdb.token' => 'test-read-token', 'catalog.tv_shows.enabled' => true]);
+    Http::fake(['https://api.themoviedb.org/3/search/multi?*' => Http::response(['page' => 1, 'total_pages' => 2, 'total_results' => 5, 'results' => [
+        ['media_type' => 'movie', 'id' => 1, 'title' => 'Chernobyl 1', 'release_date' => '2001-02-03', 'poster_path' => '/m.jpg', 'vote_average' => 6.5, 'vote_count' => 10],
+        ['media_type' => 'tv', 'id' => 1, 'name' => 'Chernobyl', 'first_air_date' => '2019-05-06', 'poster_path' => '/t.jpg', 'vote_average' => 8.5, 'vote_count' => 100],
+        ['media_type' => 'person', 'id' => 7, 'name' => 'Someone'],
+        ['media_type' => 'tv', 'id' => 1, 'name' => 'Repeated', 'first_air_date' => '2020-01-01'],
+        ['media_type' => 'tv', 'id' => 2, 'name' => 'Adult', 'adult' => true],
+    ]])]);
+
+    $results = app(TmdbCatalogSource::class)->search('chernobyl', 1, new CatalogContext('en-US'));
+
+    expect($results->listings)->toHaveCount(2)
+        ->and($results->totalResults)->toBe(5)
+        ->and($results->listings[0])->toMatchArray(['kind' => TitleKind::Movie, 'tmdbId' => 1, 'title' => 'Chernobyl 1', 'releaseDate' => '2001-02-03'])
+        ->and($results->listings[1])->toMatchArray(['kind' => TitleKind::TvShow, 'tmdbId' => 1, 'title' => 'Chernobyl', 'releaseDate' => '2019-05-06', 'posterPath' => '/t.jpg', 'voteAverage' => 8.5, 'voteCount' => 100]);
+    Http::assertSent(fn (Request $request) => queryOf($request) === ['query' => 'chernobyl', 'page' => '1', 'language' => 'en-US', 'include_adult' => 'false']);
+});
+
+test('a TV Show\'s IMDb id comes from the TV external ids', function () {
+    config(['catalog.tmdb.token' => 'test-read-token']);
+    Http::fake(['https://api.themoviedb.org/3/tv/5/external_ids*' => Http::response(['id' => 5, 'imdb_id' => 'tt0000005'])]);
+
+    expect(app(TmdbCatalogSource::class)->tvImdbId(5, new CatalogContext('en-US')))->toBe('tt0000005');
 });

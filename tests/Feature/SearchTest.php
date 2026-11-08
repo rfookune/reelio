@@ -1,8 +1,10 @@
 <?php
 
 use App\Enums\Surface;
+use App\Enums\TitleKind;
 use App\Jobs\RecordAnalyticsEvent;
 use App\Models\Movie;
+use App\Models\TvShow;
 use App\Models\User;
 use App\Models\UserMovie;
 use App\Services\Catalog\Discover\DiscoverBuilder;
@@ -114,6 +116,8 @@ test('results are 20 a page in TMDB\'s order, poster-less Movies kept, each with
         ->where('totalResults', 25)
         ->has('results.data', 20)
         ->where('results.data.0', [
+            'kind' => 'movie',
+            'key' => '1',
             'tmdbId' => 1,
             'title' => 'Movie 1',
             'year' => 2026,
@@ -130,7 +134,7 @@ test('results are 20 a page in TMDB\'s order, poster-less Movies kept, each with
         ->where('trending', []));
 
     expect(pageObject($response)['scrollProps']['results'])->toMatchArray(['pageName' => 'page', 'previousPage' => null, 'nextPage' => 2, 'currentPage' => 1])
-        ->and(pageObject($response)['matchPropsOn'])->toContain('results.data.tmdbId');
+        ->and(pageObject($response)['matchPropsOn'])->toContain('results.data.key');
 });
 
 test('the next page stops at the search\'s last page and at TMDB\'s page 500', function (int $pages, int $page, ?int $nextPage) {
@@ -270,4 +274,82 @@ test('the page says whether the IMDb ratings of its results are looked up, which
     fakeSearchWithTrending();
 
     $this->get(route('search'))->assertInertia(fn (Assert $page) => $page->where('looksUpImdbRatings', $enabled));
+})->with([true, false]);
+
+test('TV Shows are listed beside Movies with their kind, Name, first-air year, one rating and the entry route', function () {
+    config(['ratings.sources.imdb.enabled' => true]);
+    fakeSearchWithTrending(['inter' => [[
+        movieListing(1),
+        movieListing(1, title: 'Chernobyl', releaseDate: '2019-05-06', kind: TitleKind::TvShow, voteAverage: 8.5, voteCount: 100),
+        movieListing(2, kind: TitleKind::TvShow, voteAverage: null, voteCount: 0),
+    ]]]);
+
+    $this->get(route('search', ['q' => 'inter']))->assertInertia(fn (Assert $page) => $page
+        ->has('results.data', 3)
+        ->where('results.data.0.kind', 'movie')
+        ->where('results.data.1', [
+            'kind' => 'tv',
+            'key' => 'tv:1',
+            'tmdbId' => 1,
+            'title' => 'Chernobyl',
+            'year' => 2019,
+            'posterPath' => '/poster1.jpg',
+            'ratings' => [['source' => 'tmdb', 'name' => 'TMDB', 'value' => 8.5, 'voteCount' => 100]],
+            'href' => route('tv-shows.entry', ['tmdbId' => 1, 'referrer' => 'search']),
+            'seasonCount' => null,
+            'page' => 1,
+        ])
+        ->where('results.data.2.ratings', [])
+        ->etc());
+});
+
+test('a TV Show with a row links to its canonical URL, shows its stored IMDb rating and says how many Seasons it has', function () {
+    config(['ratings.sources.imdb.enabled' => true]);
+    $tvShow = TvShow::factory()->create(['tmdb_id' => 5, 'imdb_id' => 'tt0000005']);
+    $tvShow->details->update(['season_count' => 3]);
+    app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000005', 9.1, 800);
+    fakeSearchWithTrending(['inter' => [[movieListing(5, kind: TitleKind::TvShow)]]]);
+
+    $this->get(route('search', ['q' => 'inter']))->assertInertia(fn (Assert $page) => $page
+        ->where('results.data.0.href', $tvShow->canonicalUrl())
+        ->where('results.data.0.seasonCount', 3)
+        ->where('results.data.0.ratings.0.source', 'imdb'));
+});
+
+test('a Movie and a TV Show with one catalog id keep their own rows and ratings', function () {
+    $movie = Movie::factory()->create(['tmdb_id' => 7, 'imdb_id' => 'tt0000007']);
+    TvShow::factory()->create(['tmdb_id' => 7, 'imdb_id' => 'tt0000077']);
+    config(['ratings.sources.imdb.enabled' => true]);
+    app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000007', 7.0, 10);
+    app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000077', 8.0, 20);
+    fakeSearchWithTrending(['inter' => [[movieListing(7), movieListing(7, kind: TitleKind::TvShow)]]]);
+
+    $this->get(route('search', ['q' => 'inter']))->assertInertia(fn (Assert $page) => $page
+        ->where('results.data.0.ratings.0.value', 7)
+        ->where('results.data.1.ratings.0.value', 8)
+        ->where('results.data.0.href', $movie->canonicalUrl(Surface::Search)));
+});
+
+test('with TV Shows off, no TV Show appears, even one cached or listed by the source', function () {
+    config(['catalog.tv_shows.enabled' => false]);
+    fakeSearchWithTrending(['inter' => [[movieListing(1), movieListing(2, kind: TitleKind::TvShow)]]]);
+
+    $this->get(route('search', ['q' => 'inter']))->assertInertia(fn (Assert $page) => $page
+        ->has('results.data', 1)
+        ->where('results.data.0.kind', 'movie'));
+});
+
+test('userMovies covers Movies only, since a TV Show card has no Movie Watchlist toggle', function () {
+    fakeSearchWithTrending(['inter' => [[movieListing(1), movieListing(2, kind: TitleKind::TvShow)]]]);
+
+    $this->get(route('search', ['q' => 'inter']))->assertInertia(fn (Assert $page) => $page
+        ->has('userMovies.1')
+        ->missing('userMovies.2'));
+});
+
+test('the page says whether TV Shows are searched, so it can offer the kind chips', function (bool $enabled) {
+    config(['catalog.tv_shows.enabled' => $enabled]);
+    fakeSearchWithTrending();
+
+    $this->get(route('search'))->assertInertia(fn (Assert $page) => $page->where('includesTvShows', $enabled));
 })->with([true, false]);

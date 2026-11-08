@@ -2,7 +2,6 @@
 
 namespace App\Services\Catalog\Search;
 
-use App\Enums\TitleKind;
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\CatalogResult;
@@ -23,7 +22,7 @@ class CatalogSearch
      * One page of a title search. A page read within `search.fresh_seconds` is served from the cache; an older or
      * missing one is read from the source, and each result's TMDB score recorded. When the source fails, the cached
      * page is served as stale for up to `search.stale_seconds` after it was read; otherwise the search is
-     * unavailable. The cache key holds a hash of the query, never its text.
+     * unavailable. The cache key holds a hash of the query, never its text, and tells a search of every kind from one of Movies.
      *
      * @return CatalogResult<SearchResults>
      */
@@ -46,7 +45,7 @@ class CatalogSearch
         }
 
         foreach ($results->listings as $listing) {
-            $this->ratings->record(RatingSourceName::Tmdb, TmdbRatingId::for(TitleKind::Movie, $listing->tmdbId), $listing->voteAverage, $listing->voteCount);
+            $this->ratings->record(RatingSourceName::Tmdb, TmdbRatingId::for($listing->kind, $listing->tmdbId), $listing->voteAverage, $listing->voteCount);
         }
 
         Cache::put($key, ['fetchedAt' => now()->getTimestamp(), 'results' => $results->toArray()], now()->addSeconds(config('catalog.search.stale_seconds')));
@@ -62,7 +61,7 @@ class CatalogSearch
 
     private function searchKey(string $query, int $page, CatalogContext $context): string
     {
-        return $this->keys->build('search', ['query' => $query, 'page' => $page], $context);
+        return $this->keys->build('search', ['query' => $query, 'page' => $page, ...(config('catalog.tv_shows.enabled') ? ['kinds' => 'all'] : [])], $context);
     }
 
     /**

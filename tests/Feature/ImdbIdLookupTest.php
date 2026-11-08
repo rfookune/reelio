@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TitleKind;
 use App\Models\Genre;
 use App\Models\Movie;
 use App\Services\Catalog\CacheKey;
@@ -173,4 +174,18 @@ test('the purge generation never expires, so a later purge can never make an ear
 
     expect((int) Cache::get($key))->toBe(1)
         ->and(Cache::getStore()->connection()->ttl(Cache::getStore()->getPrefix().$key))->toBe(-1);
+});
+
+test('TV Show ids are looked up and remembered apart from Movies that share their catalog id', function () {
+    $source = new FakeCatalogSource(imdbIds: [1 => 'tt0000001'], tvImdbIds: [1 => 'tt0009999']);
+    app()->instance(CatalogSource::class, $source);
+    $lookup = app(ImdbIdLookup::class);
+
+    expect($lookup->lookUpImdbIds([1], TitleKind::TvShow))->toBe([1 => 'tt0009999'])
+        ->and($lookup->cachedImdbIds([1]))->toBe([])
+        ->and($lookup->cachedImdbIds([1], TitleKind::TvShow))->toBe([1 => 'tt0009999'])
+        ->and($lookup->lookUpImdbIds([1]))->toBe([1 => 'tt0000001'])
+        ->and($lookup->lookUpImdbIds([1], TitleKind::TvShow))->toBe([1 => 'tt0009999'])
+        ->and($source->tvImdbIdCalls)->toHaveCount(1)
+        ->and($source->imdbIdCalls)->toHaveCount(1);
 });

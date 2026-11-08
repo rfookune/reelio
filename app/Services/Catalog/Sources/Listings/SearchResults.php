@@ -2,6 +2,7 @@
 
 namespace App\Services\Catalog\Sources\Listings;
 
+use App\Enums\TitleKind;
 use Error;
 
 /**
@@ -24,7 +25,7 @@ readonly class SearchResults
     public function toArray(): array
     {
         return [
-            'listings' => array_map(fn (MovieListing $listing): array => get_object_vars($listing), $this->listings),
+            'listings' => array_map(fn (MovieListing $listing): array => [...get_object_vars($listing), 'kind' => $listing->kind->value], $this->listings),
             'totalPages' => $this->totalPages,
             'totalResults' => $this->totalResults,
         ];
@@ -38,7 +39,7 @@ readonly class SearchResults
         }
 
         try {
-            $listings = array_map(fn (mixed $listing): MovieListing => new MovieListing(...$listing), array_values($data['listings']));
+            $listings = array_map(fn (mixed $listing): MovieListing => new MovieListing(...[...$listing, 'kind' => TitleKind::tryFrom($listing['kind'] ?? TitleKind::Movie->value) ?? throw new Error('Unknown kind.')]), array_values($data['listings']));
         } catch (Error) {
             return null;
         }

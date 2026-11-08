@@ -87,12 +87,15 @@ class TmdbCatalogSource implements CatalogSource
     }
 
     /**
-     * One page of a title search, in TMDB's order, Movies without a poster included. Adult listings, listings that
-     * aren't well formed and repeats within the page are dropped; an unsafe image path is cleared.
+     * One page of a title search, in TMDB's order, Movies without a poster included. With TV Shows on it searches
+     * every kind and keeps the Movies and TV Shows, told apart by `media_type`; with them off, Movies alone. Adult
+     * listings, listings that aren't well formed and repeats within the page are dropped; an unsafe image path is
+     * cleared.
      */
     public function search(string $query, int $page, CatalogContext $context): SearchResults
     {
-        $response = $this->client->get('search/movie', ['query' => $query, 'page' => $page, 'language' => $context->language, 'include_adult' => 'false'], $context)
+        $includesTvShows = (bool) config('catalog.tv_shows.enabled');
+        $response = $this->client->get($includesTvShows ? 'search/multi' : 'search/movie', ['query' => $query, 'page' => $page, 'language' => $context->language, 'include_adult' => 'false'], $context)
             ?? throw new SourceUnavailable('The Catalog source has no such search page.');
         $data = $this->movies->listPage((array) $response->json());
         $totalResults = $response->json('total_results');
@@ -101,7 +104,7 @@ class TmdbCatalogSource implements CatalogSource
             throw new SourceUnavailable('The Catalog source returned an invalid result count.');
         }
 
-        return new SearchResults($this->movies->listings($data['results']), $data['total_pages'], $totalResults);
+        return new SearchResults($includesTvShows ? $this->movies->mixedListings($data['results']) : $this->movies->listings($data['results']), $data['total_pages'], $totalResults);
     }
 
     /**
@@ -111,6 +114,18 @@ class TmdbCatalogSource implements CatalogSource
     public function imdbId(int $tmdbId, CatalogContext $context): ?string
     {
         $response = $this->client->get("movie/{$tmdbId}/external_ids", [], $context);
+
+        if ($response === null) {
+            return null;
+        }
+
+        return $this->movies->imdbId((array) $response->json(), $tmdbId);
+    }
+
+    /** The TV Show's IMDb id from its external ids, read as `imdbId()` reads a Movie's. */
+    public function tvImdbId(int $tmdbId, CatalogContext $context): ?string
+    {
+        $response = $this->client->get("tv/{$tmdbId}/external_ids", [], $context);
 
         if ($response === null) {
             return null;

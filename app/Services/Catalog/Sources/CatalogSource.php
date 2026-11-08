@@ -30,6 +30,9 @@ interface CatalogSource
      */
     public function imdbId(int $tmdbId, CatalogContext $context): ?string;
 
+    /** The TV Show's IMDb title id, as `imdbId()` gives a Movie's. */
+    public function tvImdbId(int $tmdbId, CatalogContext $context): ?string;
+
     /**
      * The source's whole list of Movie genres. An empty or malformed list is a failure, not an empty answer.
      *

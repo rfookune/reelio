@@ -8,11 +8,13 @@ import PosterCardSkeleton from '@/components/movie/PosterCardSkeleton.vue';
 import { Button } from '@/components/ui/button';
 import { announce } from '@/composables/useAnnouncer';
 import { useLookedUpRatings } from '@/composables/useLookedUpRatings';
+import { cardKey, filterByKind, kindCounts } from '@/lib/searchKinds';
+import type { CardKind, KindFilter } from '@/lib/searchKinds';
 import { search } from '@/routes';
 import type { UserMovies } from '@/types';
 
 /** A result card, and the page of the search it is on. */
-type SearchResult = PosterCardMovie & { page: number };
+type SearchResult = PosterCardMovie & { kind: CardKind; page: number };
 
 const props = defineProps<{
     imageBaseUrl: string;
@@ -22,6 +24,8 @@ const props = defineProps<{
     maximumQueryLength: number;
     /** Whether the IMDb ratings of results are looked up; they aren't while IMDb is switched off. */
     looksUpImdbRatings: boolean;
+    /** Whether TV Shows are searched beside Movies, so the results can be filtered by kind. */
+    includesTvShows: boolean;
     results: { data: SearchResult[] };
     totalResults: number | null;
     /** How the Catalog answered the search; null with no search. */
@@ -36,6 +40,11 @@ const { withLookedUpRatings, isLookingUp } = useLookedUpRatings(
     () => props.looksUpImdbRatings,
 );
 
+const KIND_CHIPS: { value: KindFilter; label: string }[] = [
+    { value: 'all', label: 'All' },
+    { value: 'movie', label: 'Movies' },
+    { value: 'tv', label: 'TV Shows' },
+];
 const DEBOUNCE_MILLISECONDS = 300;
 const EAGER_CARDS = 6;
 const SHIMMER_CARDS = 12;
@@ -72,6 +81,15 @@ const wantedQuery = computed(() => {
         ? trimmed
         : '';
 });
+/** The chip chosen; it filters the cards on the page, which the chips' counts are over. */
+const kindFilter = ref<KindFilter>('all');
+const counts = computed(() => kindCounts(props.results.data));
+const shownResults = computed(() =>
+    filterByKind(props.results.data, kindFilter.value),
+);
+const emptyKindLabel = computed(() =>
+    kindFilter.value === 'tv' ? 'TV shows' : 'movies',
+);
 const settling = computed(() => typing.value || pending.value);
 const hasResults = computed(() => props.results.data.length > 0);
 const firstLoading = computed(
@@ -105,7 +123,9 @@ const noResults = computed(
         !settling.value &&
         failure.value === null &&
         (props.status === 'fresh' || props.status === 'stale') &&
-        props.totalResults === 0,
+        (props.totalResults === 0 ||
+            // A search of every kind counts people too, which the page drops.
+            (props.includesTvShows && !hasResults.value)),
 );
 const showsTrending = computed(
     () =>
@@ -258,9 +278,11 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
         <h1 class="text-3xl font-semibold tracking-tight">Search</h1>
 
         <form role="search" @submit.prevent="visit(wantedQuery)">
-            <label for="search-query" class="sr-only"
-                >Search movies by title</label
-            >
+            <label for="search-query" class="sr-only">{{
+                includesTvShows
+                    ? 'Search movies and TV shows by title'
+                    : 'Search movies by title'
+            }}</label>
             <div class="relative max-w-2xl">
                 <SearchIcon
                     class="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted"
@@ -303,7 +325,10 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
             data-slot="search-no-results"
             class="flex flex-col gap-2"
         >
-            <h2 class="text-lg font-semibold">No movies match "{{ query }}"</h2>
+            <h2 class="text-lg font-semibold">
+                No {{ includesTvShows ? 'movies or TV shows' : 'movies' }} match
+                "{{ query }}"
+            </h2>
             <p class="text-sm text-muted">
                 Check the spelling, or try fewer or different words
             </p>
@@ -329,6 +354,26 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
             >
                 {{ resultCount(totalResults ?? 0) }}
             </h2>
+            <div
+                v-if="includesTvShows"
+                role="group"
+                aria-label="Filter results by kind"
+                class="flex flex-wrap gap-2"
+            >
+                <Button
+                    v-for="chip in KIND_CHIPS"
+                    :key="chip.value"
+                    type="button"
+                    size="sm"
+                    :variant="kindFilter === chip.value ? 'default' : 'outline'"
+                    :aria-pressed="kindFilter === chip.value"
+                    :data-kind-chip="chip.value"
+                    @click="kindFilter = chip.value"
+                >
+                    {{ chip.label }}
+                    <span class="tabular-nums">{{ counts[chip.value] }}</span>
+                </Button>
+            </div>
             <InfiniteScroll
                 data="results"
                 manual
@@ -354,15 +399,27 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
                     </div>
                 </template>
 
+                <p
+                    v-if="shownResults.length === 0"
+                    data-slot="search-kind-empty"
+                    class="text-sm text-muted"
+                >
+                    No {{ emptyKindLabel }} in these results. Show more results
+                    to look further.
+                </p>
                 <ul ref="resultsList" :class="GRID">
                     <li
-                        v-for="(movie, index) in results.data"
-                        :key="movie.tmdbId"
+                        v-for="(movie, index) in shownResults"
+                        :key="cardKey(movie)"
                     >
                         <PosterCard
                             :image-base-url="imageBaseUrl"
                             :movie="withLookedUpRatings(movie)"
-                            :facts="userMovies[movie.tmdbId]"
+                            :facts="
+                                movie.kind === 'tv'
+                                    ? undefined
+                                    : userMovies[movie.tmdbId]
+                            "
                             source="search"
                             :eager="index < EAGER_CARDS"
                             :rating-pending="isLookingUp(movie)"

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TitleKind;
 use App\Jobs\RecordAnalyticsEvent;
 use App\Models\Movie;
 use App\Models\User;
@@ -118,4 +119,30 @@ test('the ratings requests have their own limit, apart from Search\'s', function
 
     $this->getJson(route('search.ratings', ['q' => 'inter']))->assertTooManyRequests();
     $this->get(route('search', ['q' => 'inter']))->assertOk();
+});
+
+test('the IMDb ratings of TV Shows are looked up through the TV external ids and returned under a tv key', function () {
+    config(['ratings.sources.imdb.enabled' => true]);
+    $source = new FakeCatalogSource(searches: ['inter' => [[movieListing(1), movieListing(1, kind: TitleKind::TvShow)]]], imdbIds: [1 => 'tt0000001'], tvImdbIds: [1 => 'tt0000099']);
+    app()->instance(CatalogSource::class, $source);
+    app(CatalogSearch::class)->search('inter', 1);
+    app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000001', 8.1, 5000);
+    app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000099', 9.2, 700);
+
+    $this->getJson(route('search.ratings', ['q' => 'inter']))->assertOk()
+        ->assertJsonPath('ratings.1.0.value', 8.1)
+        ->assertJsonPath('ratings.tv:1.0.value', 9.2);
+
+    expect(array_column($source->tvImdbIdCalls, 'tmdbId'))->toBe([1])->and(array_column($source->imdbIdCalls, 'tmdbId'))->toBe([1]);
+});
+
+test('with TV Shows off, TV Shows are not looked up', function () {
+    config(['ratings.sources.imdb.enabled' => true, 'catalog.tv_shows.enabled' => false]);
+    $source = new FakeCatalogSource(searches: ['inter' => [[movieListing(1, kind: TitleKind::TvShow)]]], tvImdbIds: [1 => 'tt0000099']);
+    app()->instance(CatalogSource::class, $source);
+    app(CatalogSearch::class)->search('inter', 1);
+
+    $this->getJson(route('search.ratings', ['q' => 'inter']))->assertExactJson(['ratings' => []]);
+
+    expect($source->tvImdbIdCalls)->toBe([]);
 });

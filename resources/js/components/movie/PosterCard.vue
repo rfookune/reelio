@@ -5,10 +5,19 @@ import ExternalRatings from '@/components/ExternalRatings.vue';
 import type { ExternalRating } from '@/components/ExternalRatings.vue';
 import BookmarkToggle from '@/components/movie/BookmarkToggle.vue';
 import TmdbImage from '@/components/TmdbImage.vue';
+import { tvBadgeLabel } from '@/lib/searchKinds';
+import type { CardKind } from '@/lib/searchKinds';
 import type { UserMovieActionSource, UserMovieFacts } from '@/types';
 
-/** One Movie on a poster card, linked to its page (the entry route when it has no row yet). */
+/**
+ * One Movie or TV Show on a poster card, linked to its page (the entry route when it has no row yet). A TV Show
+ * wears a badge on its poster and has no Movie Watchlist toggle.
+ */
 export type PosterCardMovie = {
+    /** A card without a kind is a Movie. */
+    kind?: CardKind;
+    /** How many Seasons a TV Show has, when known. */
+    seasonCount?: number | null;
     tmdbId: number;
     title: string | null;
     year: number | null;
@@ -38,7 +47,10 @@ const props = withDefaults(
     { eager: false, showBookmark: true, ratingPending: false },
 );
 
-const title = computed(() => props.movie.title ?? 'Movie');
+const isTvShow = computed(() => props.movie.kind === 'tv');
+const title = computed(
+    () => props.movie.title ?? (isTvShow.value ? 'TV show' : 'Movie'),
+);
 </script>
 
 <template>
@@ -55,7 +67,17 @@ const title = computed(() => props.movie.title ?? 'Movie');
                     :loading="eager ? 'eager' : 'lazy'"
                 />
             </Link>
-            <div v-if="showBookmark" class="absolute top-1.5 right-1.5">
+            <span
+                v-if="isTvShow"
+                data-slot="tv-badge"
+                class="absolute bottom-1.5 left-1.5 rounded-md bg-black/75 px-1.5 py-0.5 text-xs font-medium text-white"
+            >
+                {{ tvBadgeLabel(movie.seasonCount) }}
+            </span>
+            <div
+                v-if="showBookmark && !isTvShow"
+                class="absolute top-1.5 right-1.5"
+            >
                 <BookmarkToggle
                     :tmdb-id="movie.tmdbId"
                     :title="title"

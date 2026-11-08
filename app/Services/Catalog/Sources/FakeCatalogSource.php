@@ -34,10 +34,14 @@ class FakeCatalogSource implements CatalogSource
     /** @var list<array{tmdbId: int, context: CatalogContext}> */
     public array $imdbIdCalls = [];
 
+    /** @var list<array{tmdbId: int, context: CatalogContext}> */
+    public array $tvImdbIdCalls = [];
+
     /**
      * @param  list<TvShowDetails>  $tvShows
      * @param  list<int>  $failingTvShows
      * @param  array<int, list<int>>  $failingSeasons  Season numbers by TV Show catalog id.
+     * @param  array<int, string|null>  $tvImdbIds  each TV Show's IMDb id by catalog id; one not listed has none
      * @param  list<MovieDetails>  $movies
      * @param  array<string, list<list<MovieListing>>>  $sections  each list's pages, keyed by `SectionQuery::key()`
      * @param  list<SectionKind|string>  $failingSections  kinds, or `SectionQuery::key()`s
@@ -56,6 +60,7 @@ class FakeCatalogSource implements CatalogSource
         public array $tvShows = [],
         public array $failingTvShows = [],
         public array $failingSeasons = [],
+        public array $tvImdbIds = [],
     ) {}
 
     public function tvShow(int $tmdbId, CatalogContext $context): ?TvShowDetails
@@ -149,6 +154,17 @@ class FakeCatalogSource implements CatalogSource
         }
 
         return $this->imdbIds[$tmdbId] ?? null;
+    }
+
+    public function tvImdbId(int $tmdbId, CatalogContext $context): ?string
+    {
+        $this->tvImdbIdCalls[] = ['tmdbId' => $tmdbId, 'context' => $context];
+
+        if ($this->failing) {
+            throw new SourceUnavailable('The Catalog source is unavailable.');
+        }
+
+        return $this->tvImdbIds[$tmdbId] ?? null;
     }
 
     /** @return list<array{id: int, name: string}> */

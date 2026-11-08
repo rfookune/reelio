@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TitleKind;
 use App\Models\Movie;
 use App\Services\Catalog\Enums\CatalogStatus;
 use App\Services\Catalog\Search\CatalogSearch;
@@ -84,4 +85,29 @@ test('each result\'s TMDB score is recorded, with or without a Movie row', funct
     $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => 'movie:2', 'value' => 6.1, 'vote_count' => 40]);
     $this->assertDatabaseMissing('ratings', ['source' => 'tmdb', 'source_id' => 'movie:3']);
     expect(Movie::query()->count())->toBe(0);
+});
+
+test('a TV Show result\'s TMDB score is recorded under its own kind, apart from a Movie with the same catalog id', function () {
+    fakeSearchSource([[movieListing(1, voteAverage: 8.4, voteCount: 2500), movieListing(1, kind: TitleKind::TvShow, voteAverage: 6.1, voteCount: 40)]]);
+
+    app(CatalogSearch::class)->search('inter', 1);
+
+    $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => 'movie:1', 'value' => 8.4]);
+    $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => 'tv:1', 'value' => 6.1]);
+});
+
+test('a cached search keeps each result\'s kind, and is not shared between TV Shows on and off', function () {
+    $source = fakeSearchSource([[movieListing(1), movieListing(1, kind: TitleKind::TvShow)]]);
+    $search = app(CatalogSearch::class);
+
+    $search->search('inter', 1);
+    $cached = $search->search('inter', 1)->value->listings;
+
+    expect($cached[1]->kind)->toBe(TitleKind::TvShow)->and($source->searchCalls)->toHaveCount(1);
+
+    config(['catalog.tv_shows.enabled' => false]);
+
+    expect($search->cachedSearch('inter', 1))->toBeNull();
+    $search->search('inter', 1);
+    expect($source->searchCalls)->toHaveCount(2);
 });

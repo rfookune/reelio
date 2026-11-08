@@ -2,6 +2,7 @@
 
 namespace App\Services\Catalog\Sources\Tmdb;
 
+use App\Enums\TitleKind;
 use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\Listings\MovieListing;
 use App\Services\Catalog\Sources\SourceUnavailable;
@@ -119,11 +120,43 @@ class MovieParser
     }
 
     /**
+     * The page's well-formed, non-adult Movie and TV Show entries of a search across every kind, each once for its
+     * kind, told apart by `media_type`; people and the rest are dropped.
+     *
+     * @param  array<mixed>  $results
+     * @return list<MovieListing>
+     */
+    public function mixedListings(array $results): array
+    {
+        $listings = [];
+
+        foreach ($results as $result) {
+            $kind = is_array($result) ? match ($result['media_type'] ?? null) {
+                'movie' => TitleKind::Movie,
+                'tv' => TitleKind::TvShow,
+                default => null,
+            } : null;
+
+            if ($kind === null) {
+                continue;
+            }
+
+            $listing = $this->listing($kind === TitleKind::TvShow ? [...$result, 'title' => $result['name'] ?? null, 'release_date' => $result['first_air_date'] ?? null] : $result, $kind);
+
+            if ($listing !== null && ! isset($listings[$kind->value.$listing->tmdbId])) {
+                $listings[$kind->value.$listing->tmdbId] = $listing;
+            }
+        }
+
+        return array_values($listings);
+    }
+
+    /**
      * A well-formed, non-adult list entry, or null.
      *
      * @param  array<mixed>  $result
      */
-    private function listing(array $result): ?MovieListing
+    private function listing(array $result, TitleKind $kind = TitleKind::Movie): ?MovieListing
     {
         $validator = Validator::make($result, [
             'id' => ['required', 'integer', 'min:1'],
@@ -153,6 +186,7 @@ class MovieParser
             backdropPath: $this->appends->safeImagePath($data['backdrop_path'] ?? null),
             voteAverage: isset($data['vote_average']) ? (float) $data['vote_average'] : null,
             voteCount: isset($data['vote_count']) ? (int) $data['vote_count'] : null,
+            kind: $kind,
         );
     }
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TitleKind;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\FakeCatalogSource;
@@ -243,4 +244,35 @@ it('looks up the IMDb ratings of each further page as it is shown, and none a se
 
     expect(array_count_values(array_column($source->imdbIdCalls, 'tmdbId')))->each->toBe(1)
         ->and(array_column($source->imdbIdCalls, 'tmdbId'))->toContain(21)->toHaveCount(21);
+});
+
+it('shows TV Shows beside Movies, filters them with the chips, and fills in a TV Show\'s IMDb rating after render', function () {
+    config(['ratings.sources.imdb.enabled' => true]);
+    app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000099', 9.2, 700);
+    $source = fakeBrowserSearch(['inter' => [[
+        movieListing(1),
+        movieListing(2, title: 'Chernobyl', kind: TitleKind::TvShow, voteAverage: 8.5),
+        movieListing(3, title: 'Unrated', kind: TitleKind::TvShow, voteAverage: null, voteCount: 0),
+    ]]]);
+    $source->tvImdbIds = [2 => 'tt0000099'];
+
+    $page = visitWithCsp('/search');
+    $page->typeSlowly('#search-query', 'inter', 20)
+        ->wait(2)
+        ->assertSeeIn('[data-kind-chip="all"]', '3')
+        ->assertSeeIn('[data-kind-chip="movie"]', '1')
+        ->assertSeeIn('[data-kind-chip="tv"]', '2')
+        ->assertSeeIn('[data-tmdb-id="2"] [data-slot="tv-badge"]', 'TV')
+        ->assertSeeIn('[data-tmdb-id="2"] [data-slot="external-rating"]', 'IMDb')
+        ->assertSeeIn('[data-tmdb-id="2"] [data-slot="external-rating"]', '9.2')
+        ->assertSeeIn('[data-tmdb-id="3"]', 'Not yet rated')
+        ->click('[data-kind-chip="movie"]')
+        ->assertPresent('[data-tmdb-id="1"]')
+        ->assertMissing('[data-tmdb-id="2"]')
+        ->click('[data-kind-chip="tv"]')
+        ->assertMissing('[data-tmdb-id="1"]')
+        ->assertPresent('[data-tmdb-id="2"]')
+        ->click('[data-kind-chip="all"]')
+        ->assertPresent('[data-tmdb-id="1"]')
+        ->assertNoJavaScriptErrors();
 });
