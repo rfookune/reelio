@@ -26,14 +26,13 @@ class EpisodeWatchedController extends Controller
 
     private function apply(Request $request, TvShow $tvShow, Episode $episode, ChangeEpisodeWatched $action, bool $watched): JsonResponse|RedirectResponse
     {
-        $action->validateEpisode($tvShow, $episode);
+        $result = $action->handle($request, $request->user(), $tvShow, $episode, $watched);
         if ($request->user() === null) {
             PendingGuestAction::storeEpisode($request, $episode->id, $watched);
             IntendedUrl::setToLastPage($request);
 
             return $request->expectsJson() ? response()->json(['redirect' => route('login')]) : redirect()->route('login');
         }
-        $result = $action->handle($request, $request->user(), $tvShow, $episode, $watched);
 
         return $request->expectsJson() ? response()->json($result) : back();
     }

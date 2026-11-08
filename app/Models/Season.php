@@ -17,6 +17,7 @@ class Season extends Model
     /** @use HasFactory<SeasonFactory> */
     use HasFactory;
 
+    /** @param Builder<Season> $query */
     #[Scope]
     protected function ordered(Builder $query): void
     {

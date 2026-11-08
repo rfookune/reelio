@@ -17,11 +17,16 @@ class ChangeEpisodeWatched
 {
     public function __construct(private WatchedProgress $progress, private LatestTvShowAction $latest) {}
 
-    /** @return array{progress: Progress, undoToken: string, watchlisted: bool} */
-    public function handle(Request $request, User $user, TvShow $tvShow, Episode $episode, bool $watched): array
+    /** @return ($user is null ? null : array{progress: Progress, undoToken: string, watchlisted: bool}) */
+    public function handle(Request $request, ?User $user, TvShow $tvShow, Episode $episode, bool $watched): ?array
     {
+        $this->validateEpisode($tvShow, $episode);
+
+        if ($user === null) {
+            return null;
+        }
+
         $token = $this->latest->change($request, $user, $tvShow, $tvShow->tmdb_id, function () use ($user, $tvShow, $episode, $watched): void {
-            $this->validateEpisode($tvShow, $episode);
             $wasCompleted = $this->progress->for($tvShow, $user)['state'] === 'Completed';
             if ($watched) {
                 UserEpisode::query()->updateOrCreate(['user_id' => $user->id, 'episode_id' => $episode->id], ['watched_at' => now()]);
@@ -39,7 +44,7 @@ class ChangeEpisodeWatched
         return ['progress' => $this->progress->for($tvShow, $user), 'undoToken' => $token, 'watchlisted' => $tvShow->isWatchlistedBy($user)];
     }
 
-    public function validateEpisode(TvShow $tvShow, Episode $episode): void
+    private function validateEpisode(TvShow $tvShow, Episode $episode): void
     {
         abort_unless(config('catalog.tv_shows.enabled'), 404);
         abort_if($tvShow->isRemoved() || $episode->removed_at !== null || $episode->season->removed_at !== null || $episode->title_id !== $tvShow->id, 404);

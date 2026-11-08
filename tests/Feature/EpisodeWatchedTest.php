@@ -115,6 +115,16 @@ test('a guest Episode action saves nothing and replays once after sign-in', func
     $this->assertDatabaseHas('user_episodes', ['user_id' => $user->id, 'episode_id' => $episode->id]);
 });
 
+test('a guest cannot queue an unaired Episode', function () {
+    config(['catalog.tv_shows.enabled' => true]);
+    $episode = Episode::factory()->create(['air_date' => today()->addDay()]);
+
+    $this->putJson(episodeWatchedUrl($episode))->assertUnprocessable()
+        ->assertJsonPath('errors.episode.0', 'This Episode has not aired yet.')
+        ->assertSessionMissing('user_movie_actions.pending');
+    $this->assertDatabaseCount('user_episodes', 0);
+});
+
 test('a Completed TV Show queued for a rewatch stays on the Watchlist when marking an Episode again', function () {
     config(['catalog.tv_shows.enabled' => true]);
     $episode = Episode::factory()->create();
