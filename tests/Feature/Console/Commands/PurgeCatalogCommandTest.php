@@ -20,8 +20,8 @@ test('catalog:purge clears everything from TMDB off every Movie and deletes ever
     $facts = UserMovie::factory()->for($held)->create();
     $unheld = Movie::factory()->create(['tmdb_id' => 2]);
     $removed = Movie::factory()->removed()->create();
-    app(RatingStore::class)->record(RatingSourceName::Tmdb, '1', 7.0, 100);
-    app(RatingStore::class)->record(RatingSourceName::Tmdb, '999', 7.0, 100);
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, 'movie:1', 7.0, 100);
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, 'tv:1', 7.0, 100);
     app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000001', 8.0, 100);
 
     $this->artisan('catalog:purge')
@@ -45,12 +45,12 @@ test('catalog:purge clears everything from TMDB off every Movie and deletes ever
 
 test('catalog:purge changes nothing unless confirmed, and --force skips the question', function () {
     $movie = Movie::factory()->create(['tmdb_id' => 1]);
-    app(RatingStore::class)->record(RatingSourceName::Tmdb, '1', 7.0, 100);
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, 'movie:1', 7.0, 100);
 
     $this->artisan('catalog:purge')->expectsConfirmation(PURGE_QUESTION, 'no')->assertFailed();
 
     $this->assertDatabaseHas('titles', ['id' => $movie->id, 'title' => $movie->title]);
-    $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => '1']);
+    $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => 'movie:1']);
 
     $this->artisan('catalog:purge --force')->assertSuccessful();
 

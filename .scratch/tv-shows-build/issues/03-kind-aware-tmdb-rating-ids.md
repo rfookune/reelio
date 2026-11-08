@@ -8,8 +8,8 @@
 
 **Status:** ready-for-agent
 
-- [ ] Stored TMDB rows are keyed by kind-prefixed ids; IMDb rows are unchanged
-- [ ] A Movie and a TV Show sharing a TMDB id keep separate scores
-- [ ] Reads, writes, the cap guard, the purge and `catalog:purge` use the new ids
-- [ ] No new column on the ratings table
-- [ ] The Movie suite stays green and tests cover the id collision
+- [x] Stored TMDB rows are keyed by kind-prefixed ids; IMDb rows are unchanged
+- [x] A Movie and a TV Show sharing a TMDB id keep separate scores
+- [x] Reads, writes, the cap guard, the purge and `catalog:purge` use the new ids
+- [x] No new column on the ratings table
+- [x] The Movie suite stays green and tests cover the id collision

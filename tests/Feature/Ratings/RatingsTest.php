@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Movie;
+use App\Models\TvShow;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\FakeCatalogSource;
 use App\Services\Catalog\Sources\MovieDetails;
@@ -28,8 +29,32 @@ test('a stored source reads each Movie\'s score through the identifier its sourc
         ->toEqual([$movie->id => new ExternalRating($source, 8.493, 41780, CarbonImmutable::parse('2026-11-05 12:00:00'))]);
 })->with([
     'IMDb by imdb_id' => [RatingSourceName::Imdb, ['imdb_id' => 'tt0816692'], 'tt0816692'],
-    'TMDB by tmdb_id' => [RatingSourceName::Tmdb, ['tmdb_id' => 157336], '157336'],
+    'TMDB by tmdb_id' => [RatingSourceName::Tmdb, ['tmdb_id' => 157336], 'movie:157336'],
 ]);
+
+test('a Movie and TV Show sharing a TMDB id keep their own scores and unchanged IMDb ids', function () {
+    $this->travelTo('2026-11-05 12:00:00');
+    $movie = Movie::factory()->create(['tmdb_id' => 550, 'imdb_id' => 'tt0137523']);
+    $tvShow = TvShow::factory()->create(['tmdb_id' => 550, 'imdb_id' => 'tt0108778']);
+    recordRating(RatingSourceName::Tmdb, 'movie:550', 8.4, 30000);
+    recordRating(RatingSourceName::Tmdb, 'tv:550', 7.2, 1500);
+    recordRating(RatingSourceName::Imdb, 'tt0137523', 8.8, 2000000);
+    recordRating(RatingSourceName::Imdb, 'tt0108778', 8.9, 1000000);
+    $ratings = new Ratings([new StoredRatingSource(RatingSourceName::Tmdb), new StoredRatingSource(RatingSourceName::Imdb)]);
+
+    $result = $ratings->ratingsFor(collect([$movie, $tvShow]));
+
+    expect($result)->toEqual([
+        $movie->id => [
+            new ExternalRating(RatingSourceName::Imdb, 8.8, 2000000, CarbonImmutable::parse('2026-11-05 12:00:00')),
+            new ExternalRating(RatingSourceName::Tmdb, 8.4, 30000, CarbonImmutable::parse('2026-11-05 12:00:00')),
+        ],
+        $tvShow->id => [
+            new ExternalRating(RatingSourceName::Imdb, 8.9, 1000000, CarbonImmutable::parse('2026-11-05 12:00:00')),
+            new ExternalRating(RatingSourceName::Tmdb, 7.2, 1500, CarbonImmutable::parse('2026-11-05 12:00:00')),
+        ],
+    ]);
+});
 
 test('no identifier or no stored row means absent, with no title search', function () {
     recordRating(RatingSourceName::Imdb, 'tt0816692', 8.7, 2_400_000);
@@ -49,11 +74,13 @@ test('a stored source looks up many movies in one query', function () {
 });
 
 test('a missing, out-of-range or zero-vote score is never stored, and recording one removes the old row', function (?float $value, ?int $votes) {
-    recordRating(RatingSourceName::Tmdb, '157336', 8.5, 100);
+    recordRating(RatingSourceName::Tmdb, 'movie:157336', 8.5, 100);
+    recordRating(RatingSourceName::Tmdb, 'tv:157336', 7.2, 1500);
 
-    recordRating(RatingSourceName::Tmdb, '157336', $value, $votes);
+    recordRating(RatingSourceName::Tmdb, 'movie:157336', $value, $votes);
 
-    expect(DB::table('ratings')->count())->toBe(0);
+    $this->assertDatabaseMissing('ratings', ['source' => 'tmdb', 'source_id' => 'movie:157336']);
+    $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => 'tv:157336', 'value' => 7.2]);
 })->with([
     'no data' => [null, null],
     'zero votes' => [0.0, 0],
@@ -64,16 +91,16 @@ test('a missing, out-of-range or zero-vote score is never stored, and recording 
 ]);
 
 test('recording a score again updates it in place', function () {
-    recordRating(RatingSourceName::Tmdb, '157336', 8.5, 100);
-    recordRating(RatingSourceName::Tmdb, '157336', 8.4, 120);
+    recordRating(RatingSourceName::Tmdb, 'movie:157336', 8.5, 100);
+    recordRating(RatingSourceName::Tmdb, 'movie:157336', 8.4, 120);
 
-    expect(DB::table('ratings')->sole())->toMatchObject(['source' => 'tmdb', 'source_id' => '157336', 'value' => '8.400', 'vote_count' => 120]);
+    expect(DB::table('ratings')->sole())->toMatchObject(['source' => 'tmdb', 'source_id' => 'movie:157336', 'value' => '8.400', 'vote_count' => 120]);
 });
 
 test('ratings come back in one batch for many movies in the fixed IMDb then TMDB order', function () {
     $first = Movie::factory()->create(['tmdb_id' => 1]);
     $second = Movie::factory()->create(['tmdb_id' => 2]);
-    recordRating(RatingSourceName::Tmdb, '1', 7.0, 10);
+    recordRating(RatingSourceName::Tmdb, 'movie:1', 7.0, 10);
     $imdb = new FakeRatingSource([$first->id => new ExternalRating(RatingSourceName::Imdb, 8.7, 2_400_000, CarbonImmutable::now())]);
 
     $result = (new Ratings([new StoredRatingSource(RatingSourceName::Tmdb), $imdb]))->ratingsFor(collect([$first, $second]));
@@ -98,7 +125,7 @@ test('creating a Movie records its TMDB score', function () {
 
     $this->get('/movies/tmdb/157336')->assertStatus(301);
 
-    expect(DB::table('ratings')->sole())->toMatchObject(['source' => 'tmdb', 'source_id' => '157336', 'value' => '8.493', 'vote_count' => 41780]);
+    expect(DB::table('ratings')->sole())->toMatchObject(['source' => 'tmdb', 'source_id' => 'movie:157336', 'value' => '8.493', 'vote_count' => 41780]);
 });
 
 test('refetching a Movie\'s details records its latest TMDB score', function () {
@@ -107,13 +134,13 @@ test('refetching a Movie\'s details records its latest TMDB score', function () 
 
     $this->get(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]))->assertOk();
 
-    expect(DB::table('ratings')->sole())->toMatchObject(['source' => 'tmdb', 'source_id' => '157336', 'value' => '8.600', 'vote_count' => 50000]);
+    expect(DB::table('ratings')->sole())->toMatchObject(['source' => 'tmdb', 'source_id' => 'movie:157336', 'value' => '8.600', 'vote_count' => 50000]);
 });
 
 test('a switched-off source records nothing', function () {
     config(['ratings.sources.tmdb.enabled' => false]);
 
-    recordRating(RatingSourceName::Tmdb, '157336', 8.5, 100);
+    recordRating(RatingSourceName::Tmdb, 'movie:157336', 8.5, 100);
 
     expect(DB::table('ratings')->count())->toBe(0);
 });

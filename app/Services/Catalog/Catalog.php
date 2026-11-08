@@ -13,6 +13,7 @@ use App\Services\Catalog\Sources\SearchResults;
 use App\Services\Catalog\Sources\SourceUnavailable;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
+use App\Services\Ratings\TmdbRatingId;
 use Carbon\CarbonInterface;
 use Closure;
 use Illuminate\Contracts\Cache\LockTimeoutException;
@@ -73,7 +74,7 @@ class Catalog
 
         $this->storeDetails($this->detailsKey($tmdbId, $context), $details);
         $this->rememberImdbId($details->tmdbId, $details->imdbId, $context);
-        $this->ratings->record(RatingSourceName::Tmdb, (string) $details->tmdbId, $details->voteAverage, $details->voteCount);
+        $this->ratings->record(RatingSourceName::Tmdb, TmdbRatingId::for('movie', $details->tmdbId), $details->voteAverage, $details->voteCount);
 
         return CatalogResult::fresh($movie);
     }
@@ -131,7 +132,7 @@ class Catalog
         }
 
         foreach ($results->listings as $listing) {
-            $this->ratings->record(RatingSourceName::Tmdb, (string) $listing->tmdbId, $listing->voteAverage, $listing->voteCount);
+            $this->ratings->record(RatingSourceName::Tmdb, TmdbRatingId::for('movie', $listing->tmdbId), $listing->voteAverage, $listing->voteCount);
         }
 
         Cache::put($key, ['fetchedAt' => now()->getTimestamp(), 'results' => $results->toArray()], now()->addSeconds(config('catalog.search.stale_seconds')));
@@ -311,7 +312,7 @@ class Catalog
 
             $movie->update($this->sourceAttributes($details));
             $this->storeRelations($movie, $details);
-            $this->ratings->record(RatingSourceName::Tmdb, (string) $movie->tmdb_id, $details->voteAverage, $details->voteCount);
+            $this->ratings->record(RatingSourceName::Tmdb, TmdbRatingId::for('movie', $movie->tmdb_id), $details->voteAverage, $details->voteCount);
             $this->storeDetails($this->detailsKey($movie->tmdb_id, $context), $details);
             $this->rememberImdbId($movie->tmdb_id, $details->imdbId, $context);
 
@@ -535,7 +536,7 @@ class Catalog
             $movies = $this->unviewedAndUnheld(Movie::query()->whereKey($candidateIds))->get(['id', 'tmdb_id']);
             Movie::query()->whereKey($movies->modelKeys())->delete();
             $tmdbIds = array_values($movies->map(fn (Movie $movie): int => $movie->tmdb_id)->all());
-            $this->ratings->forgetMany(RatingSourceName::Tmdb, array_map(strval(...), $tmdbIds));
+            $this->ratings->forgetMany(RatingSourceName::Tmdb, array_map(fn (int $tmdbId): string => TmdbRatingId::for('movie', $tmdbId), $tmdbIds));
 
             return $tmdbIds;
         });
@@ -580,7 +581,7 @@ class Catalog
         $movie->update([...$this->clearedSourceAttributes($movie), ...$extraAttributes]);
         $movie->genres()->detach();
         $movie->availabilities()->delete();
-        $this->ratings->forget(RatingSourceName::Tmdb, (string) $movie->tmdb_id);
+        $this->ratings->forget(RatingSourceName::Tmdb, TmdbRatingId::for('movie', $movie->tmdb_id));
         Cache::forget($this->detailsKey($movie->tmdb_id, $context));
         $this->forgetImdbId($movie->tmdb_id, $context);
     }

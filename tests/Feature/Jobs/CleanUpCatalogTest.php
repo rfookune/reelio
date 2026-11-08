@@ -19,7 +19,7 @@ function storedMovieViewedDaysAgo(int $days, int $minutes = 1, mixed ...$attribu
     $movie = Movie::factory()->create(['last_viewed_at' => now()->subDays($days)->subMinutes($minutes), ...$attributes]);
     $movie->genres()->attach(Genre::factory()->create());
     Availability::factory()->for($movie)->create();
-    app(RatingStore::class)->record(RatingSourceName::Tmdb, (string) $movie->tmdb_id, 7.5, 1000);
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, 'movie:'.$movie->tmdb_id, 7.5, 1000);
 
     return $movie;
 }
@@ -32,15 +32,17 @@ test('a Movie nobody holds is purged with its genre links, Availability and TMDB
     UserMovie::factory()->for($held)->watched()->create();
     $removed = Movie::factory()->removed()->create(['last_viewed_at' => now()->subDays(31)]);
     app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0816692', 8.7, 2_400_000);
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, 'tv:'.$unviewed->tmdb_id, 8.0, 200);
 
     CleanUpCatalog::dispatch();
 
     expect(Movie::query()->orderBy('id')->pluck('id')->all())->toBe([$viewedRecently->id, $held->id]);
     $this->assertDatabaseMissing('genre_title', ['title_id' => $unviewed->id]);
     $this->assertDatabaseMissing('availabilities', ['title_id' => $unviewed->id]);
-    $this->assertDatabaseMissing('ratings', ['source' => 'tmdb', 'source_id' => (string) $unviewed->tmdb_id]);
+    $this->assertDatabaseMissing('ratings', ['source' => 'tmdb', 'source_id' => 'movie:'.$unviewed->tmdb_id]);
     $this->assertDatabaseHas('ratings', ['source' => 'imdb', 'source_id' => 'tt0816692']);
-    $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => (string) $held->tmdb_id]);
+    $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => 'movie:'.$held->tmdb_id]);
+    $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => 'tv:'.$unviewed->tmdb_id, 'value' => 8.0]);
     $this->assertModelMissing($removed);
 });
 
@@ -59,6 +61,7 @@ test('a Movie not synced for over 170 days has everything from TMDB cleared, kee
     $stale = storedMovieViewedDaysAgo(1, synced_at: now()->subDays(170)->subMinute(), title: 'Interstellar', slug: 'interstellar', poster_path: '/p.jpg', imdb_id: 'tt0816692');
     $facts = UserMovie::factory()->for($stale)->create();
     $withinCap = storedMovieViewedDaysAgo(1, synced_at: now()->subDays(170));
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, 'tv:'.$stale->tmdb_id, 8.0, 200);
 
     CleanUpCatalog::dispatch();
 
@@ -69,7 +72,8 @@ test('a Movie not synced for over 170 days has everything from TMDB cleared, kee
     $this->assertDatabaseHas('movie_details', ['title_id' => $stale->id, 'release_date' => null]);
     $this->assertDatabaseMissing('genre_title', ['title_id' => $stale->id]);
     $this->assertDatabaseMissing('availabilities', ['title_id' => $stale->id]);
-    $this->assertDatabaseMissing('ratings', ['source' => 'tmdb', 'source_id' => (string) $stale->tmdb_id]);
+    $this->assertDatabaseMissing('ratings', ['source' => 'tmdb', 'source_id' => 'movie:'.$stale->tmdb_id]);
+    $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => 'tv:'.$stale->tmdb_id, 'value' => 8.0]);
     $this->assertModelExists($facts);
     $this->assertDatabaseHas('titles', ['id' => $withinCap->id, 'title' => $withinCap->title]);
 
@@ -80,22 +84,25 @@ test('a Movie not synced for over 170 days has everything from TMDB cleared, kee
         ->and($stale->genres()->pluck('id')->all())->toBe([878]);
 });
 
-test('TMDB ratings older than 170 days are deleted whether or not a Movie exists, and IMDb ratings are kept', function () {
+test('TMDB ratings of both kinds older than 170 days are deleted without Title rows, and fresh and IMDb ratings are kept', function () {
     $this->travelTo('2026-05-20 05:00:00');
-    app(RatingStore::class)->record(RatingSourceName::Tmdb, '1', 7.0, 100);
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, 'movie:1', 7.0, 100);
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, 'tv:1', 8.0, 200);
     app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000001', 7.0, 100);
     $this->travelTo('2026-05-21 05:00:00');
-    app(RatingStore::class)->record(RatingSourceName::Tmdb, '2', 7.0, 100);
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, 'movie:2', 7.0, 100);
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, 'tv:2', 8.0, 200);
     $this->travelTo('2026-11-07 05:00:00');
 
     CleanUpCatalog::dispatch();
 
-    expect(DB::table('ratings')->orderBy('source')->get()->map(fn (object $rating): string => "{$rating->source}:{$rating->source_id}")->all())->toBe(['imdb:tt0000001', 'tmdb:2']);
+    expect(DB::table('ratings')->orderBy('source')->orderBy('source_id')->get()->map(fn (object $rating): string => "{$rating->source}:{$rating->source_id}")->all())->toBe(['imdb:tt0000001', 'tmdb:movie:2', 'tmdb:tv:2']);
 });
 
 test('with the purge switched off, the cap guard still clears stale Movies and deletes old TMDB ratings', function () {
     $this->travelTo('2026-05-01 05:00:00');
-    app(RatingStore::class)->record(RatingSourceName::Tmdb, '1', 7.0, 100);
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, 'movie:1', 7.0, 100);
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, 'tv:1', 8.0, 200);
     $this->travelTo('2026-11-07 05:00:00');
     config(['catalog.purge_unviewed.enabled' => false]);
     $stale = storedMovieViewedDaysAgo(100, synced_at: now()->subDays(171));
@@ -103,7 +110,8 @@ test('with the purge switched off, the cap guard still clears stale Movies and d
     CleanUpCatalog::dispatch();
 
     $this->assertDatabaseHas('titles', ['id' => $stale->id, 'title' => null, 'synced_at' => null]);
-    $this->assertDatabaseMissing('ratings', ['source' => 'tmdb', 'source_id' => '1']);
+    $this->assertDatabaseMissing('ratings', ['source' => 'tmdb', 'source_id' => 'movie:1']);
+    $this->assertDatabaseMissing('ratings', ['source' => 'tmdb', 'source_id' => 'tv:1']);
 });
 
 test('Streaming services no Availability references are deleted once not fetched for an hour', function () {

@@ -332,9 +332,9 @@ test('every listed Movie\'s TMDB score is recorded, with or without a Movie row'
 
     app(Catalog::class)->buildDiscover(CatalogProfile::Background);
 
-    $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => '1', 'value' => 8.4, 'vote_count' => 2500]);
-    $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => '2', 'value' => 6.1, 'vote_count' => 40]);
-    $this->assertDatabaseMissing('ratings', ['source' => 'tmdb', 'source_id' => '3']);
+    $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => 'movie:1', 'value' => 8.4, 'vote_count' => 2500]);
+    $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => 'movie:2', 'value' => 6.1, 'vote_count' => 40]);
+    $this->assertDatabaseMissing('ratings', ['source' => 'tmdb', 'source_id' => 'movie:3']);
     $this->assertDatabaseCount('titles', 0);
 });
 

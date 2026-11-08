@@ -106,7 +106,7 @@ test('the pick has what\'s needed to decide, read from storage alone, with only 
     $movie->genres()->attach([Genre::factory()->create(['id' => 878, 'name' => 'Science Fiction'])->id, Genre::factory()->create(['id' => 12, 'name' => 'Adventure'])->id]);
     UserMovie::factory()->for($user)->for($movie)->create();
     app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0816692', 8.7, 2000000);
-    app(RatingStore::class)->record(RatingSourceName::Tmdb, '157336', 8.4, 30000);
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, 'movie:157336', 8.4, 30000);
     $netflix = StreamingService::factory()->create(['id' => 8, 'name' => 'Netflix', 'logo_path' => '/netflix.png']);
     $pluto = StreamingService::factory()->create(['id' => 300, 'name' => 'Pluto TV', 'logo_path' => '/pluto.png']);
     $apple = StreamingService::factory()->create(['id' => 2, 'name' => 'Apple TV', 'logo_path' => '/apple.png']);

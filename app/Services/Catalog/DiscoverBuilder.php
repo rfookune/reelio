@@ -11,6 +11,7 @@ use App\Services\Catalog\Sources\SectionQuery;
 use App\Services\Catalog\Sources\SourceUnavailable;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
+use App\Services\Ratings\TmdbRatingId;
 use Closure;
 use Illuminate\Support\Facades\Cache;
 
@@ -320,7 +321,7 @@ class DiscoverBuilder
             $lastPage = min($lastPage, $sectionPage->totalPages);
 
             foreach ($sectionPage->listings as $listing) {
-                $this->ratings->record(RatingSourceName::Tmdb, (string) $listing->tmdbId, $listing->voteAverage, $listing->voteCount);
+                $this->ratings->record(RatingSourceName::Tmdb, TmdbRatingId::for('movie', $listing->tmdbId), $listing->voteAverage, $listing->voteCount);
 
                 if (count($collected) < $wanted && $listing->posterPath !== null && ! isset($seen[$listing->tmdbId]) && ! isset($considered[$listing->tmdbId])) {
                     $considered[$listing->tmdbId] = true;

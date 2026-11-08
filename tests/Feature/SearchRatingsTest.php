@@ -32,7 +32,7 @@ test('the IMDb ratings of the Movies with no known IMDb id are looked up and ret
     $source = searchedWithImdbIds(['inter' => [movieListings(1, 4)]], [1 => 'tt0000001', 2 => 'tt0000002', 3 => null]);
     Movie::factory()->create(['tmdb_id' => 4, 'imdb_id' => 'tt0000004']);
     app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000001', 8.1, 5000);
-    app(RatingStore::class)->record(RatingSourceName::Tmdb, '1', 7.5, 1000);
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, 'movie:1', 7.5, 1000);
     app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000004', 6.0, 100);
 
     $this->getJson(route('search.ratings', ['q' => 'inter']))->assertOk()->assertExactJson(['ratings' => [

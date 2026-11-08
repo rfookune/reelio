@@ -2,7 +2,8 @@
 
 namespace App\Services\Ratings\Enums;
 
-use App\Models\Movie;
+use App\Models\Title;
+use App\Services\Ratings\TmdbRatingId;
 
 /**
  * The organizations whose scores Reelio displays. Case order is display order.
@@ -25,15 +26,19 @@ enum RatingSourceName: string
         return (int) array_search($this, self::cases(), true);
     }
 
-    /** The identifier this source uses for the Movie's title, or null when the Movie has none. */
-    public function sourceIdFor(Movie $movie): ?string
+    /** The identifier this source uses for the Title, or null when the Title has none. */
+    public function sourceIdFor(Title $title): ?string
     {
         $identifier = match ($this) {
-            self::Imdb => $movie->imdb_id,
-            self::Tmdb => $movie->tmdb_id,
+            self::Imdb => $title->imdb_id,
+            self::Tmdb => $title->tmdb_id,
         };
 
-        return $identifier === null || $identifier === '' ? null : (string) $identifier;
+        if ($identifier === null || $identifier === '') {
+            return null;
+        }
+
+        return $this === self::Tmdb ? TmdbRatingId::for($title->kind, $title->tmdb_id) : (string) $identifier;
     }
 
     /** A switched-off source is hidden everywhere and isn't synced. */

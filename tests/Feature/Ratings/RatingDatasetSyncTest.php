@@ -101,13 +101,13 @@ test('a sync loads valid rows, skips a missing rating and a malformed row, and c
 
 test('a sync replaces only its own source\'s rows', function () {
     seedImdbRatings(2);
-    app(RatingStore::class)->record(RatingSourceName::Tmdb, '157336', 8.5, 41832);
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, 'movie:157336', 8.5, 41832);
     fakeDataset(gzippedDataset(["tt0816692\t8.6\t2500000", "tt0111161\t9.3\t3100000"]));
 
     syncImdb();
 
     expect(array_column(imdbRows(), 0))->toBe(['tt0111161', 'tt0816692'])
-        ->and(DB::table('ratings')->where('source', 'tmdb')->value('source_id'))->toBe('157336');
+        ->and(DB::table('ratings')->where('source', 'tmdb')->value('source_id'))->toBe('movie:157336');
 });
 
 /**

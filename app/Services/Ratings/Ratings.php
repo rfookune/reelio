@@ -2,12 +2,12 @@
 
 namespace App\Services\Ratings;
 
-use App\Models\Movie;
+use App\Models\Title;
 use App\Services\Ratings\Sources\RatingSource;
 use Illuminate\Support\Collection;
 
 /**
- * Collects the Rating sources and returns each Movie's External ratings in the fixed display order:
+ * Collects the Rating sources and returns each Title's External ratings in the fixed display order:
  * IMDb, then TMDB. Dropping a source from the list removes its display without touching any page.
  */
 class Ratings
@@ -16,16 +16,18 @@ class Ratings
     public function __construct(private iterable $sources) {}
 
     /**
-     * @param  Collection<int, Movie>  $movies
-     * @return array<int, list<ExternalRating>> keyed by Movie id; every given Movie has an entry
+     * @template TTitle of Title
+     *
+     * @param  Collection<int, TTitle>  $titles
+     * @return array<int, list<ExternalRating>> keyed by Title id; every given Title has an entry
      */
-    public function ratingsFor(Collection $movies): array
+    public function ratingsFor(Collection $titles): array
     {
-        $result = array_fill_keys($movies->pluck('id')->all(), []);
+        $result = array_fill_keys($titles->pluck('id')->all(), []);
 
         foreach ($this->sources as $source) {
-            foreach ($source->ratingsFor($movies) as $movieId => $rating) {
-                $result[$movieId][] = $rating;
+            foreach ($source->ratingsFor($titles) as $titleId => $rating) {
+                $result[$titleId][] = $rating;
             }
         }
 

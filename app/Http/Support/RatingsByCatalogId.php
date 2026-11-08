@@ -20,6 +20,7 @@ class RatingsByCatalogId
     public static function for(Ratings $ratings, array $imdbIds): array
     {
         return $ratings->ratingsFor(collect($imdbIds)->map(fn (?string $imdbId, int $tmdbId): Movie => (new Movie)->forceFill([
+            'kind' => 'movie',
             'id' => $tmdbId,
             'tmdb_id' => $tmdbId,
             'imdb_id' => $imdbId,

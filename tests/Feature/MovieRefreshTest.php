@@ -46,7 +46,7 @@ test('a view more than a day after the last sync refreshes the Movie, its genres
 
     $this->assertDatabaseHas('titles', ['id' => $movie->id, 'slug' => 'interstellar', 'synced_at' => '2026-11-05 12:00:00']);
     $this->assertDatabaseHas('streaming_services', ['id' => 350, 'name' => 'Apple TV']);
-    expect(DB::table('ratings')->sole())->toMatchObject(['source' => 'tmdb', 'source_id' => '157336', 'vote_count' => 41832]);
+    expect(DB::table('ratings')->sole())->toMatchObject(['source' => 'tmdb', 'source_id' => 'movie:157336', 'vote_count' => 41832]);
 });
 
 test('a failed refresh renders the stored Movie and flags Where to watch as possibly out of date', function () {
@@ -73,7 +73,7 @@ test('a 404 on refresh makes it a Removed Movie: the row stays with everything f
     ]);
     $movie->genres()->attach(Genre::factory()->create());
     app(AvailabilityWriter::class)->replace($movie, [['serviceId' => 350, 'serviceName' => 'Apple TV', 'logoPath' => null, 'country' => 'US', 'offerType' => 'stream', 'displayPriority' => 1]]);
-    app(RatingStore::class)->record(RatingSourceName::Tmdb, '157336', 8.5, 41832);
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, 'movie:157336', 8.5, 41832);
     app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0816692', 8.7, 2_400_000);
 
     $this->get(route('movies.show', ['slug' => 'interstellar', 'id' => $movie->id]))->assertGone();
@@ -93,7 +93,7 @@ test('a 404 on refresh makes it a Removed Movie: the row stays with everything f
 test('removal deletes the TMDB rating even while the TMDB source is switched off', function () {
     $this->travelTo('2026-11-05 12:00:00');
     $movie = Movie::factory()->create(['tmdb_id' => 157336, 'synced_at' => '2026-11-03 12:00:00']);
-    app(RatingStore::class)->record(RatingSourceName::Tmdb, '157336', 8.5, 41832);
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, 'movie:157336', 8.5, 41832);
     config(['ratings.sources.tmdb.enabled' => false]);
 
     $this->get(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]))->assertGone();

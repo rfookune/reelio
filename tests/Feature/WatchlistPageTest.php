@@ -81,7 +81,7 @@ test('cards use one batched ratings lookup and prefer IMDb while keeping poster-
     UserMovie::factory()->for($user)->for($movie)->create();
     UserMovie::factory()->for($user)->create();
     app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000001', 8.2, 1000);
-    app(RatingStore::class)->record(RatingSourceName::Tmdb, (string) $movie->tmdb_id, 7.5, 100);
+    app(RatingStore::class)->record(RatingSourceName::Tmdb, 'movie:'.$movie->tmdb_id, 7.5, 100);
     $ratingQueries = [];
     DB::listen(function ($query) use (&$ratingQueries): void {
         if (str_contains($query->sql, 'from "ratings"')) {
