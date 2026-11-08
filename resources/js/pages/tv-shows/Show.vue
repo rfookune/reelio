@@ -139,38 +139,40 @@ const jsonLd = computed(() =>
             :ratings="tvShow.ratings"
         >
             <template #actions>
-                <Button
-                    type="button"
-                    size="lg"
-                    data-slot="watchlist-toggle"
-                    :aria-pressed="watchlisted"
-                    :disabled="busy"
-                    :variant="
-                        watchlisted || progress.state === 'Not started'
-                            ? 'default'
-                            : 'outline'
-                    "
-                    @click="toggleWatchlist"
-                >
-                    <BookmarkCheck
-                        v-if="watchlisted"
-                        class="fill-current"
-                        aria-hidden="true"
-                    />
-                    <BookmarkPlus v-else aria-hidden="true" />
-                    {{ watchlisted ? 'On your Watchlist' : 'Add to Watchlist' }}
-                </Button>
-                <Button
-                    v-if="progress.state !== 'Completed'"
-                    type="button"
-                    size="lg"
-                    variant="outline"
-                    data-slot="tv-show-mark"
-                    :disabled="busy"
-                    @click="confirmingMark = true"
-                >
-                    Mark as watched
-                </Button>
+                <div class="flex flex-wrap items-center gap-2">
+                    <Button
+                        type="button"
+                        size="lg"
+                        data-slot="watchlist-toggle"
+                        :aria-pressed="watchlisted"
+                        :disabled="busy"
+                        :variant="
+                            watchlisted || progress.state === 'Not started'
+                                ? 'default'
+                                : 'outline'
+                        "
+                        @click="toggleWatchlist"
+                    >
+                        <BookmarkCheck
+                            v-if="watchlisted"
+                            class="fill-current"
+                            aria-hidden="true"
+                        />
+                        <BookmarkPlus v-else aria-hidden="true" />
+                        {{ watchlisted ? 'On your Watchlist' : 'Add to Watchlist' }}
+                    </Button>
+                    <Button
+                        v-if="progress.state !== 'Completed'"
+                        type="button"
+                        size="lg"
+                        variant="outline"
+                        data-slot="tv-show-mark"
+                        :disabled="busy"
+                        @click="confirmingMark = true"
+                    >
+                        Mark as watched
+                    </Button>
+                </div>
                 <div
                     data-slot="tv-show-progress"
                     class="flex flex-col gap-2"
@@ -211,7 +213,7 @@ const jsonLd = computed(() =>
                         :value="progress.watched"
                         :max="Math.max(1, progress.total)"
                         aria-label="Episodes watched"
-                        class="h-2 w-full max-w-sm accent-primary"
+                        class="h-2 w-full max-w-sm overflow-hidden rounded-full bg-raised accent-primary [&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-raised [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-primary"
                     />
                 </div>
             </template>
