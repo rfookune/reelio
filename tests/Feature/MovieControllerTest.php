@@ -47,6 +47,14 @@ test('the entry redirect preserves the referrer and records only the final page 
     Queue::assertPushed(RecordAnalyticsEvent::class, 1);
 });
 
+test('the entry redirect drops a referrer that is not a Movie referrer', function (string $referrer) {
+    $this->app->instance(CatalogSource::class, new FakeCatalogSource([new MovieDetails(tmdbId: 157336, title: 'Interstellar')]));
+
+    $response = $this->get('/movies/tmdb/157336?referrer='.urlencode($referrer))->assertStatus(301);
+
+    expect($response->headers->get('Location'))->not->toContain('referrer=');
+})->with(['private search text', 'movie', 'tv-show']);
+
 test('stale slugs permanently redirect without recording an extra view', function () {
     $user = User::factory()->create();
     $movie = Movie::factory()->create(['slug' => 'the-correct-title']);

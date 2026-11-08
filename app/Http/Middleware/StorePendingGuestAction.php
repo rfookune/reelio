@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\Surface;
 use App\Enums\UserMovieAction;
 use App\Http\Requests\UserMovieActionRequest;
 use App\Http\Support\IntendedUrl;
@@ -38,7 +39,7 @@ class StorePendingGuestAction
         }
 
         $validated = $request->validate((new UserMovieActionRequest)->rules());
-        PendingGuestAction::store($request, $this->movies->catalogId($request->route('tmdbId')), UserMovieAction::from($action), $validated['source']);
+        PendingGuestAction::store($request, $this->movies->catalogId($request->route('tmdbId')), UserMovieAction::from($action), Surface::from($validated['source']));
         IntendedUrl::setToLastPage($request);
 
         return redirect()->route('login');

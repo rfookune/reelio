@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Surface;
 use App\Enums\TitleKind;
 use Carbon\CarbonImmutable;
 use Database\Factories\MovieFactory;
@@ -86,8 +87,8 @@ class Movie extends Title
         return $this->hasMany(UserMovie::class, 'title_id');
     }
 
-    public function canonicalUrl(?string $referrer = null): string
+    public function canonicalUrl(?Surface $referrer = null): string
     {
-        return route('movies.show', ['slug' => $this->slug ?? 'movie', 'id' => $this->id, 'referrer' => $referrer]);
+        return route('movies.show', ['slug' => $this->slug ?? 'movie', 'id' => $this->id, 'referrer' => $referrer?->value]);
     }
 }

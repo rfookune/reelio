@@ -2,6 +2,7 @@
 
 namespace App\Http\Support;
 
+use App\Enums\Surface;
 use App\Enums\UserMovieList;
 use App\Models\Movie;
 use App\Models\User;
@@ -91,7 +92,7 @@ class UserMovieListPage
             'year' => $movie->releaseDate === null ? null : (int) substr($movie->releaseDate, 0, 4),
             'posterPath' => $movie->posterPath,
             'ratings' => array_map(fn (ExternalRating $rating): array => $rating->toArray(), $ratings[$movie->tmdbId] ?? []),
-            'href' => $rows->get($movie->tmdbId)?->canonicalUrl('watchlist') ?? route('movies.entry', ['tmdbId' => $movie->tmdbId, 'referrer' => 'watchlist']),
+            'href' => $rows->get($movie->tmdbId)?->canonicalUrl(Surface::Watchlist) ?? route('movies.entry', ['tmdbId' => $movie->tmdbId, 'referrer' => Surface::Watchlist->value]),
         ], $movies);
     }
 
@@ -162,7 +163,7 @@ class UserMovieListPage
             'year' => $movie->release_date?->year,
             'posterPath' => $movie->poster_path,
             'ratings' => array_map(fn (ExternalRating $rating): array => $rating->toArray(), $ratings),
-            'href' => $movie->canonicalUrl($this->list->value),
+            'href' => $movie->canonicalUrl($this->list->surface()),
         ];
     }
 }

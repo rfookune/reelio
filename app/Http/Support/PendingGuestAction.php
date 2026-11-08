@@ -2,6 +2,7 @@
 
 namespace App\Http\Support;
 
+use App\Enums\Surface;
 use App\Enums\UserMovieAction;
 use Illuminate\Http\Request;
 
@@ -16,12 +17,12 @@ class PendingGuestAction
     /** How long, in seconds, a pending action waits for sign-in: the spec's retention for it. */
     private const PENDING_FOR = 30 * 60;
 
-    public static function store(Request $request, int $tmdbId, UserMovieAction $action, string $source): void
+    public static function store(Request $request, int $tmdbId, UserMovieAction $action, Surface $source): void
     {
         $request->session()->put(self::SESSION_KEY, [
             'tmdb_id' => $tmdbId,
             'action' => $action->value,
-            'source' => $source,
+            'source' => $source->value,
             'stored_at' => now()->getTimestamp(),
         ]);
     }
@@ -41,15 +42,15 @@ class PendingGuestAction
         $request->session()->put(self::SESSION_KEY, ['bulk_tv_show_tmdb_id' => $tmdbId, 'watched' => $watched, 'stored_at' => now()->timestamp]);
     }
 
-    public static function storeTvShowWatchlist(Request $request, int $tmdbId, bool $watchlisted, string $source): void
+    public static function storeTvShowWatchlist(Request $request, int $tmdbId, bool $watchlisted, Surface $source): void
     {
-        $request->session()->put(self::SESSION_KEY, ['tv_show_tmdb_id' => $tmdbId, 'watchlisted' => $watchlisted, 'source' => $source, 'stored_at' => now()->timestamp]);
+        $request->session()->put(self::SESSION_KEY, ['tv_show_tmdb_id' => $tmdbId, 'watchlisted' => $watchlisted, 'source' => $source->value, 'stored_at' => now()->timestamp]);
     }
 
     /**
      * Takes the pending action out of the session, so it is applied at most once, if it has not expired.
      *
-     * @return array{tmdb_id: int, action: UserMovieAction, source: string}|array{episode_id: int, watched: bool}|array{season_id: int, watched: bool}|array{bulk_tv_show_tmdb_id: int, watched: bool}|array{tv_show_tmdb_id: int, watchlisted: bool, source: string}|null
+     * @return array{tmdb_id: int, action: UserMovieAction, source: Surface}|array{episode_id: int, watched: bool}|array{season_id: int, watched: bool}|array{bulk_tv_show_tmdb_id: int, watched: bool}|array{tv_show_tmdb_id: int, watchlisted: bool, source: Surface}|null
      */
     public static function pull(Request $request): ?array
     {
@@ -60,7 +61,7 @@ class PendingGuestAction
         }
 
         if (isset($pending['tv_show_tmdb_id'])) {
-            return ['tv_show_tmdb_id' => $pending['tv_show_tmdb_id'], 'watchlisted' => $pending['watchlisted'], 'source' => $pending['source']];
+            return ['tv_show_tmdb_id' => $pending['tv_show_tmdb_id'], 'watchlisted' => $pending['watchlisted'], 'source' => Surface::from($pending['source'])];
         }
 
         if (isset($pending['season_id'])) {
@@ -78,7 +79,7 @@ class PendingGuestAction
         return [
             'tmdb_id' => $pending['tmdb_id'],
             'action' => UserMovieAction::from($pending['action']),
-            'source' => $pending['source'],
+            'source' => Surface::from($pending['source']),
         ];
     }
 }

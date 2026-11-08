@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Surface;
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
@@ -73,7 +74,7 @@ test('Watched shows only the signed-in users watched Movies newest first, includ
         ->assertInertia(fn (Assert $page) => $page->component('Watched')
             ->where('sort', 'recently-watched')
             ->where('movies.data', fn ($cards) => collect($cards)->pluck('tmdbId')->all() === [$recent->movie->tmdb_id, $old->movie->tmdb_id])
-            ->where('movies.data.0.href', $recent->movie->canonicalUrl('watched'))
+            ->where('movies.data.0.href', $recent->movie->canonicalUrl(Surface::Watched))
             ->where('userMovies.'.$recent->movie->tmdb_id, ['watchlisted' => true, 'watched' => true, 'watchedDate' => '2026-02-01T00:00:00.000000Z'])
             ->where('trending', []));
 });

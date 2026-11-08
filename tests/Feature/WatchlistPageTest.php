@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Surface;
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
@@ -125,7 +126,7 @@ test('the Watchlist shows only the signed-in users saved Movies, newest first, w
             ->where('sort', 'recently-added')
             ->where('userMovies', fn ($facts) => collect($facts)->where('watchlisted', true)->count() === 3)
             ->where('movies.data', fn ($cards) => collect($cards)->pluck('tmdbId')->all() === [$recent->movie->tmdb_id, $old->movie->tmdb_id])
-            ->where('movies.data.0.href', $recent->movie->canonicalUrl('watchlist'))
+            ->where('movies.data.0.href', $recent->movie->canonicalUrl(Surface::Watchlist))
             ->where('userMovies.'.$recent->movie->tmdb_id.'.watchedDate', '2025-12-01T00:00:00.000000Z'));
 });
 

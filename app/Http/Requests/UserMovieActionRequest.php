@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\Surface;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -11,9 +12,6 @@ use Illuminate\Validation\Rule;
  */
 class UserMovieActionRequest extends FormRequest
 {
-    /** The surfaces that carry Watchlist and Watched controls. */
-    public const SOURCES = ['discover', 'search', 'movie', 'watchlist', 'watched', 'picker'];
-
     /**
      * Get the validation rules that apply to the request.
      *
@@ -22,12 +20,12 @@ class UserMovieActionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'source' => ['required', 'string', Rule::in(self::SOURCES)],
+            'source' => ['required', 'string', Rule::enum(Surface::class)->only(Surface::movieActionSources())],
         ];
     }
 
-    public function source(): string
+    public function source(): Surface
     {
-        return $this->validated('source');
+        return Surface::from($this->validated('source'));
     }
 }

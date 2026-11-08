@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Surface;
 use App\Http\Exceptions\MovieRemoved;
 use App\Models\Movie;
 use App\Models\User;
@@ -24,7 +25,7 @@ test('Removed Movies are a separate unpaginated group with only the viewers own 
                 'year' => null,
                 'posterPath' => null,
                 'ratings' => [],
-                'href' => $removed[0]->movie->canonicalUrl($list),
+                'href' => $removed[0]->movie->canonicalUrl(Surface::from($list)),
                 'date' => $expectedDate,
             ])
             ->has('movies.data', 1)

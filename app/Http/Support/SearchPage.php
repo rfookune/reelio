@@ -3,6 +3,7 @@
 namespace App\Http\Support;
 
 use App\Actions\RecordEvent;
+use App\Enums\Surface;
 use App\Models\Movie;
 use App\Models\User;
 use App\Services\Catalog\CatalogResult;
@@ -262,7 +263,7 @@ class SearchPage
             'year' => $releaseDate === null ? null : (int) substr($releaseDate, 0, 4),
             'posterPath' => $posterPath,
             'ratings' => array_map(fn (ExternalRating $rating): array => $rating->toArray(), $this->ratings()[$tmdbId] ?? []),
-            'href' => $row?->canonicalUrl('search') ?? route('movies.entry', ['tmdbId' => $tmdbId, 'referrer' => 'search']),
+            'href' => $row?->canonicalUrl(Surface::Search) ?? route('movies.entry', ['tmdbId' => $tmdbId, 'referrer' => Surface::Search->value]),
         ];
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Support;
 
+use App\Enums\Surface;
 use App\Jobs\BuildDiscover;
 use App\Models\Movie;
 use App\Models\User;
@@ -116,7 +117,7 @@ class DiscoverPage
             'runtime' => $movie->runtime ?? $row?->runtime,
             'posterPath' => $movie->posterPath,
             'ratings' => array_map(fn (ExternalRating $rating): array => $rating->toArray(), $this->ratings()[$movie->tmdbId] ?? []),
-            'href' => $row?->canonicalUrl('discover') ?? route('movies.entry', ['tmdbId' => $movie->tmdbId, 'referrer' => 'discover']),
+            'href' => $row?->canonicalUrl(Surface::Discover) ?? route('movies.entry', ['tmdbId' => $movie->tmdbId, 'referrer' => Surface::Discover->value]),
         ];
     }
 

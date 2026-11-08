@@ -6,6 +6,7 @@ use App\Actions\AddToWatchlist;
 use App\Actions\ClearWatched;
 use App\Actions\MarkAsWatched;
 use App\Actions\RemoveFromWatchlist;
+use App\Enums\Surface;
 use App\Enums\UserMovieAction;
 use App\Models\Movie;
 use App\Models\User;
@@ -33,7 +34,7 @@ class UserMovieActionByCatalogId
      *
      * @return array{before: array{watchlisted_at: ?string, watched_at: ?string}, after: array{watchlisted_at: ?string, watched_at: ?string}}
      */
-    public function apply(Request $request, User $user, string $tmdbId, UserMovieAction $action, string $source): array
+    public function apply(Request $request, User $user, string $tmdbId, UserMovieAction $action, Surface $source): array
     {
         $facts = match ($action) {
             UserMovieAction::AddToWatchlist => $this->addToWatchlist->handle($user, $this->movies->findOrCreateUnremoved($request, $tmdbId), $source),

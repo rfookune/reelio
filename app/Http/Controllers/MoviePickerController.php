@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
+use App\Enums\Surface;
 use App\Http\Requests\MoviePickerRequest;
 use App\Http\Support\MoviePicker;
 use App\Http\Support\VisitorCountry;
@@ -53,7 +54,7 @@ class MoviePickerController extends Controller
             'overview' => $movie->overview,
             'posterPath' => $movie->poster_path,
             'ratings' => array_map(fn (ExternalRating $rating): array => $rating->toArray(), $ratings->ratingsFor(collect([$movie]))[$movie->id]),
-            'href' => $movie->canonicalUrl('picker'),
+            'href' => $movie->canonicalUrl(Surface::Picker),
             'whereToWatch' => [
                 'country' => $whereToWatch['country'],
                 'countryName' => $whereToWatch['countryName'],

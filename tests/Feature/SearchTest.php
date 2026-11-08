@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Surface;
 use App\Jobs\RecordAnalyticsEvent;
 use App\Models\Movie;
 use App\Models\User;
@@ -122,7 +123,7 @@ test('results are 20 a page in TMDB\'s order, poster-less Movies kept, each with
             'page' => 1,
         ])
         ->where('results.data.1.ratings.0.source', 'imdb')
-        ->where('results.data.1.href', $stored->canonicalUrl('search'))
+        ->where('results.data.1.href', $stored->canonicalUrl(Surface::Search))
         ->where('results.data.2.posterPath', null)
         ->where('results.data.2.year', null)
         ->where('results.data.2.ratings', [])

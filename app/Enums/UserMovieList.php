@@ -7,6 +7,11 @@ enum UserMovieList: string
     case Watchlist = 'watchlist';
     case Watched = 'watched';
 
+    public function surface(): Surface
+    {
+        return $this === self::Watchlist ? Surface::Watchlist : Surface::Watched;
+    }
+
     /** @return 'watchlisted_at'|'watched_at' */
     public function dateColumn(): string
     {

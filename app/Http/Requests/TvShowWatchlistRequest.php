@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\Surface;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -12,11 +13,11 @@ class TvShowWatchlistRequest extends FormRequest
     {
         abort_unless(config('catalog.tv_shows.enabled'), 404);
 
-        return ['source' => ['required', 'string', Rule::in(['tv-show', 'search', 'watchlist', 'watched'])]];
+        return ['source' => ['required', 'string', Rule::enum(Surface::class)->only(Surface::tvShowActionSources())]];
     }
 
-    public function source(): string
+    public function source(): Surface
     {
-        return $this->validated('source');
+        return Surface::from($this->validated('source'));
     }
 }

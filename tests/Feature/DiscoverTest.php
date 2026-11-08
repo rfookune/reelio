@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Surface;
 use App\Jobs\BuildDiscover;
 use App\Models\Movie;
 use App\Models\User;
@@ -61,7 +62,7 @@ test('Discover shows the hero and numbered Trending, then Popular and Top rated,
         ->where('sections.0.title', 'Trending this week')
         ->where('sections.0.numbered', true)
         ->where('sections.0.movies.0.tmdbId', 1)
-        ->where('sections.0.movies.1.href', $stored->canonicalUrl('discover'))
+        ->where('sections.0.movies.1.href', $stored->canonicalUrl(Surface::Discover))
         ->where('sections.0.movies.1.runtime', 101)
         ->where('sections.0.movies.1.ratings.0', ['source' => 'imdb', 'name' => 'IMDb', 'value' => 6.2, 'voteCount' => 900])
         ->where('sections.1.title', 'Popular')

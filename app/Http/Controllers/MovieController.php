@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
+use App\Enums\Surface;
 use App\Http\Exceptions\MovieRemoved;
 use App\Http\Support\MoviePageDetails;
 use App\Http\Support\UserMovies;
@@ -39,19 +40,18 @@ class MovieController extends Controller
         }
         $movie = $title;
         throw_if($movie->isRemoved(), MovieRemoved::class, $movie, $request->user());
-        $referrer = $request->query('referrer');
+        $referrer = Surface::movieReferrerFrom($request->query('referrer'));
         $details = new MoviePageDetails($catalog, $movie, $request->user());
         $details->restoreIfCleared();
 
         if ($slug !== ($movie->slug ?? 'movie')) {
-            return redirect($movie->canonicalUrl(is_string($referrer) ? $referrer : null), 301);
+            return redirect($movie->canonicalUrl($referrer), 301);
         }
 
         if (! $request->hasHeader(Header::PARTIAL_COMPONENT)) {
             $details->result();
             $catalog->recordView($movie);
-            $referrer = in_array($referrer, ['discover', 'search', 'watchlist', 'watched', 'picker', 'direct'], true) ? $referrer : 'direct';
-            $recordEvent->handle($request->user(), 'movie_viewed', ['movie_id' => $movie->id, 'referrer' => $referrer]);
+            $recordEvent->handle($request->user(), 'movie_viewed', ['movie_id' => $movie->id, 'referrer' => ($referrer ?? Surface::Direct)->value]);
         }
 
         return Inertia::render('movies/Show', [
