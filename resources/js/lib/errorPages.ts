@@ -5,9 +5,9 @@ type ErrorPageMovieData = {
     userMovies: UserMovies;
 };
 
-/** The error pages that are about one stored Movie and carry the viewer's facts about it. */
-const MOVIE_ERROR_PAGES = [
-    'App\\Http\\Exceptions\\MovieRemoved',
+/** The error pages that are about one stored Title and carry the viewer's facts about it. */
+const TITLE_ERROR_PAGES = [
+    'App\\Http\\Exceptions\\TitleRemoved',
     'App\\Http\\Exceptions\\DetailsUnavailable',
 ];
 
@@ -19,7 +19,7 @@ const MOVIE_ERROR_PAGES = [
 export function errorPageMovieData(
     props: Record<string, unknown>,
 ): ErrorPageMovieData | undefined {
-    return MOVIE_ERROR_PAGES.includes(String(props.exceptionClass)) &&
+    return TITLE_ERROR_PAGES.includes(String(props.exceptionClass)) &&
         props.data &&
         (props.data as Record<string, unknown>).kind !== 'tv'
         ? (props.data as ErrorPageMovieData)
@@ -36,7 +36,7 @@ export type ErrorPageTvShowData = {
 export function errorPageTvShowData(
     props: Record<string, unknown>,
 ): ErrorPageTvShowData | undefined {
-    return MOVIE_ERROR_PAGES.includes(String(props.exceptionClass)) &&
+    return TITLE_ERROR_PAGES.includes(String(props.exceptionClass)) &&
         (props.data as Record<string, unknown> | undefined)?.kind === 'tv'
         ? (props.data as ErrorPageTvShowData)
         : undefined;

@@ -6,14 +6,14 @@
 
 **Blocked by:** 12 Watchlist and Watched with TV Shows
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The 410 page, copy and links match the spec for visitors and signed-in users with facts
-- [ ] Remove and Clear work from the page and the stubs, each with Undo
-- [ ] Setting a fact on a Removed TV Show is refused; guest replay shows the existing message
-- [ ] Stubs appear in the group with the right date and menu, and count in the filter
-- [ ] `last_viewed_at` is not updated on the 410; the Removed Movie page and tests are unchanged
-- [ ] The cap-cleared 503 page behaves as for a cap-cleared Movie
+- [x] The 410 page, copy and links match the spec for visitors and signed-in users with facts
+- [x] Remove and Clear work from the page and the stubs, each with Undo
+- [x] Setting a fact on a Removed TV Show is refused; guest replay shows the existing message
+- [x] Stubs appear in the group with the right date and menu, and count in the filter
+- [x] `last_viewed_at` is not updated on the 410; the Removed Movie page and tests are unchanged
+- [x] The cap-cleared 503 page behaves as for a cap-cleared Movie
 
 ## Comments
 
@@ -21,3 +21,10 @@
 
 - The list classes were renamed there: `UserListPage`, `UserListController`, `UserList`, `ListSort`, `UserList.vue`, `UserListCardMenu.vue`, and the page prop `movies` is now `titles`. `unavailableMovies` is still Movie-only; making it `unavailableTitles` belongs here, with the stubs.
 - A TV Show without details is excluded from the cards, `userTvShows` and the counts (`UserListPage::entries()`, `userTvShows()`); the stubs need to be added to all three so the filter counts include them.
+
+### 2026-11-08 — Implemented
+
+- Implemented the shared 410 and cap-cleared 503 pages, viewer-only cleanup facts, list stubs, filter counts, Remove and Clear with Undo, and refused fact-setting actions. Removed TV Shows are never fetched again and visits do not update `last_viewed_at`.
+- Implementation committed in `a2de9e7`. Standards and spec reviews cleared after fixing viewer facts on stale-action 410 responses and Movie Undo when a TV Show shares its TMDB id.
+- Renamed the shared exception to `TitleRemoved` at the user's request, including PHP callers and the frontend exception allowlist. Renamed the Movie test files to `RemovedTitlesTest.php` and `RemovedTitlesJourneyTest.php`; TV-specific coverage remains separate. Movie behavior is preserved; the shared list-heading expectation follows the spec.
+- Full implementation validation passed: 920 unit/feature tests, 176 browser tests, 31 frontend tests, lint, typechecking, build, and PHPStan. After the rename, 73 affected PHP tests and 10 browser tests passed, along with lint, typechecking, build, and PHPStan.

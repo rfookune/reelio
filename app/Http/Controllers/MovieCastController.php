@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Exceptions\MovieRemoved;
+use App\Http\Exceptions\TitleRemoved;
 use App\Http\Support\MoviePageDetails;
 use App\Models\Movie;
 use App\Services\Catalog\Catalog;
@@ -22,7 +22,7 @@ class MovieCastController extends Controller
     {
         $movie = $catalog->findTitle($id);
         abort_unless($movie instanceof Movie, 404);
-        throw_if($movie->isRemoved(), MovieRemoved::class, $movie, $request->user());
+        throw_if($movie->isRemoved(), TitleRemoved::class, $movie, $request->user());
         $details = new MoviePageDetails($catalog, $movie, $request->user());
         $details->restoreIfCleared();
 

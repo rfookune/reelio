@@ -75,7 +75,7 @@ it('keeps keyboard focus on the remaining Removed Movie when the last available 
     expect($page->script('document.activeElement.dataset.slot'))->toBe('movie-menu');
 });
 
-it('shows Removed Movie controls only for the MovieRemoved exception class', function () {
+it('shows Removed Movie controls only for the TitleRemoved exception class', function () {
     $user = User::factory()->create();
     Route::middleware('web')->get('/another-error', fn () => throw new class(410, 'Another error', 'Another description', data: ['tmdbId' => 1, 'userMovies' => [1 => ['watchlisted' => true, 'watched' => true, 'watchedDate' => '2026-10-01T12:00:00.000000Z']]]) extends ErrorPageException {});
     $this->actingAs($user);

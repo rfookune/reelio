@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
 use App\Enums\Surface;
-use App\Http\Exceptions\MovieRemoved;
+use App\Http\Exceptions\TitleRemoved;
 use App\Http\Support\MoviePageDetails;
 use App\Http\Support\UserMovies;
 use App\Http\Support\VisitorCountry;
@@ -39,7 +39,7 @@ class MovieController extends Controller
             return redirect($title->canonicalUrl(), 301);
         }
         $movie = $title;
-        throw_if($movie->isRemoved(), MovieRemoved::class, $movie, $request->user());
+        throw_if($movie->isRemoved(), TitleRemoved::class, $movie, $request->user());
         $referrer = Surface::movieReferrerFrom($request->query('referrer'));
         $details = new MoviePageDetails($catalog, $movie, $request->user());
         $details->restoreIfCleared();

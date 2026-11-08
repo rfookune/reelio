@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Exceptions\DetailsUnavailable;
-use App\Http\Exceptions\MovieRemoved;
+use App\Http\Exceptions\TitleRemoved;
 use App\Http\Support\VisitorCountry;
 use App\Http\Support\WhereToWatch;
 use App\Models\Movie;
@@ -29,12 +29,12 @@ class TvShowController extends Controller
             return redirect($title->canonicalUrl(), 301);
         }
         $tvShow = $title;
-        throw_if($tvShow->isRemoved(), MovieRemoved::class, $tvShow, $request->user());
+        throw_if($tvShow->isRemoved(), TitleRemoved::class, $tvShow, $request->user());
         if ($tvShow->hasSourceDetails() && $slug !== $tvShow->slug) {
             return redirect($tvShow->canonicalUrl(), 301);
         }
         $result = $catalog->tvShowDetails($tvShow);
-        throw_if($result->isRemoved(), MovieRemoved::class, $tvShow, $request->user());
+        throw_if($result->isRemoved(), TitleRemoved::class, $tvShow, $request->user());
         throw_if($result->isUnavailable() || ! $tvShow->hasSourceDetails(), DetailsUnavailable::class, $tvShow, $request->user());
         if ($slug !== $tvShow->slug) {
             return redirect($tvShow->canonicalUrl(), 301);

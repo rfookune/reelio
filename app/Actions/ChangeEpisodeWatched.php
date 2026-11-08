@@ -3,7 +3,7 @@
 namespace App\Actions;
 
 use App\Enums\ProgressState;
-use App\Http\Exceptions\MovieRemoved;
+use App\Http\Exceptions\TitleRemoved;
 use App\Http\Support\LatestTvShowAction;
 use App\Models\Episode;
 use App\Models\TvShow;
@@ -49,7 +49,7 @@ class ChangeEpisodeWatched
     private function validateEpisode(TvShow $tvShow, Episode $episode, ?User $user): void
     {
         abort_unless(config('catalog.tv_shows.enabled'), 404);
-        throw_if($tvShow->isRemoved(), MovieRemoved::class, $tvShow, $user);
+        throw_if($tvShow->isRemoved(), TitleRemoved::class, $tvShow, $user);
         abort_if($episode->removed_at !== null || $episode->season->removed_at !== null || $episode->title_id !== $tvShow->id, 404);
         if ($episode->air_date === null || $episode->air_date->greaterThan(today())) {
             throw ValidationException::withMessages(['episode' => 'This Episode has not aired yet.']);

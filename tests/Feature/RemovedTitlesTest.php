@@ -1,7 +1,7 @@
 <?php
 
 use App\Enums\Surface;
-use App\Http\Exceptions\MovieRemoved;
+use App\Http\Exceptions\TitleRemoved;
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
@@ -44,7 +44,7 @@ test('the 410 page includes only the signed-in viewers facts and no Movie detail
 
     $this->actingAs($user)->get($movie->canonicalUrl())->assertGone()->assertHeader('X-Robots-Tag', 'noindex')
         ->assertInertia(fn (Assert $page) => $page->component('Error')
-            ->where('exceptionClass', MovieRemoved::class)
+            ->where('exceptionClass', TitleRemoved::class)
             ->where('data.tmdbId', $movie->tmdb_id)
             ->where('data.userMovies', [$movie->tmdb_id => ['watchlisted' => true, 'watched' => true, 'watchedDate' => '2026-10-01T00:00:00.000000Z']])
             ->missing('movie'));

@@ -3,7 +3,7 @@
 namespace App\Actions;
 
 use App\Http\Exceptions\DetailsUnavailable;
-use App\Http\Exceptions\MovieRemoved;
+use App\Http\Exceptions\TitleRemoved;
 use App\Http\Support\BulkWatchedChange;
 use App\Http\Support\LatestTvShowAction;
 use App\Http\Support\TvShowByCatalogId;
@@ -41,13 +41,13 @@ class ChangeTvShowWatched
 
         if ($user === null) {
             $stored = $this->tvShows->find($tmdbId);
-            throw_if($watched && $stored?->isRemoved(), MovieRemoved::class, $stored, $user);
+            throw_if($watched && $stored?->isRemoved(), TitleRemoved::class, $stored, $user);
 
             return null;
         }
 
         $tvShow = $watched ? $this->tvShows->findOrCreate($request, $tmdbId) : $this->tvShows->find($tmdbId);
-        throw_if($watched && $tvShow?->isRemoved(), MovieRemoved::class, $tvShow, $user);
+        throw_if($watched && $tvShow?->isRemoved(), TitleRemoved::class, $tvShow, $user);
         if ($tvShow === null) {
             return ['progress' => null, 'undoToken' => $this->latest->change($request, $user, null, $catalogId, fn () => null), 'watchlisted' => false];
         }
@@ -67,7 +67,7 @@ class ChangeTvShowWatched
             return;
         }
         $result = $this->catalog->tvShowDetails($tvShow);
-        throw_if($result->isRemoved(), MovieRemoved::class, $tvShow, $user);
+        throw_if($result->isRemoved(), TitleRemoved::class, $tvShow, $user);
         throw_if($result->isUnavailable() || ($result->status === CatalogStatus::Stale && $tvShow->episodes()->doesntExist()), DetailsUnavailable::class, $tvShow, $user);
     }
 }
