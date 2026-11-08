@@ -1,16 +1,13 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { about, accessibility, privacy, terms } from '@/routes';
 import tmdbLogo from '../../images/tmdb-logo.svg';
 
-/*
- * These pages land with the public pages ticket; the links keep TMDB's
- * required placement and their fixed order until then.
- */
 const links = [
-    { title: 'About', href: '/about' },
-    { title: 'Privacy', href: '/privacy' },
-    { title: 'Terms', href: '/terms' },
-    { title: 'Accessibility', href: '/accessibility' },
+    { title: 'About', href: about() },
+    { title: 'Privacy', href: privacy() },
+    { title: 'Terms', href: terms() },
+    { title: 'Accessibility', href: accessibility() },
 ];
 </script>
 

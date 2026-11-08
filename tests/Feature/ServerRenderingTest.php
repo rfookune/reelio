@@ -4,7 +4,6 @@ use App\Models\Movie;
 use App\Models\User;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Route;
 
 beforeEach(function () {
     config(['inertia.ssr.enabled' => true, 'inertia.ssr.ensure_bundle_exists' => false]);
@@ -36,14 +35,15 @@ test('the Login and Register pages are rendered on the server', function () {
     expect(renderedComponents())->toBe(['auth/Login', 'auth/Register']);
 });
 
-test('the About, Privacy, Terms and Accessibility pages are rendered on the server', function (string $name) {
+test('the About, Privacy, Terms and Accessibility pages are rendered on the server', function () {
     Http::fake(['127.0.0.1:13714/render' => Http::response(['head' => [], 'body' => '<div></div>'])]);
-    Route::middleware('web')->get("/{$name}-page", fn () => inertia('Discover'))->name($name);
 
-    $this->get("/{$name}-page");
+    foreach (['about', 'privacy', 'terms', 'accessibility'] as $name) {
+        $this->get(route($name))->assertOk();
+    }
 
-    expect(renderedComponents())->toBe(['Discover']);
-})->with(['about', 'privacy', 'terms', 'accessibility']);
+    expect(renderedComponents())->toBe(['About', 'Privacy', 'Terms', 'Accessibility']);
+});
 
 test('Search, the other auth pages, Watchlist, Watched and settings pages are not rendered on the server', function () {
     Http::fake();

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { login } from '@/routes';
+import { login, privacy, terms } from '@/routes';
 import { store } from '@/routes/register';
 
 defineProps<{
@@ -94,6 +94,20 @@ defineOptions({
                 <Spinner v-if="processing" />
                 Create account
             </Button>
+
+            <p
+                class="text-center text-xs text-muted"
+                data-slot="register-terms"
+            >
+                By creating an account you agree to the
+                <TextLink :href="terms()" class="underline underline-offset-4"
+                    >Terms</TextLink
+                >
+                and have read the
+                <TextLink :href="privacy()" class="underline underline-offset-4"
+                    >Privacy Policy</TextLink
+                >. You must be 13 or older.
+            </p>
         </div>
 
         <div class="text-center text-sm text-muted">

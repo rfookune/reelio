@@ -23,6 +23,10 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Middleware\EncryptHistory;
 
 Route::get('/', DiscoverController::class)->name('home');
+Route::inertia('about', 'About')->name('about');
+Route::inertia('privacy', 'Privacy')->name('privacy');
+Route::inertia('terms', 'Terms')->name('terms');
+Route::inertia('accessibility', 'Accessibility')->name('accessibility');
 Route::get('robots.txt', RobotsController::class)->name('robots');
 Route::get('sitemap.xml', [SitemapController::class, 'index'])->name('sitemap.index');
 Route::get('sitemaps/{page}.xml', [SitemapController::class, 'show'])->whereNumber('page')->name('sitemap.show');
