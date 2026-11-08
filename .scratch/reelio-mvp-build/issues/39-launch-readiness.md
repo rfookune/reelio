@@ -19,3 +19,13 @@ Spec: [Reelio MVP spec](../../reelio-mvp/spec.md)
 ## Note from ticket 13 (2026-11-06)
 
 The edge country header's name is `config('catalog.country_header')`, set by `CATALOG_COUNTRY_HEADER` (default `CF-IPCountry`). If Cloud sends a different header, set the variable; no code change is needed. Without the header every visitor without a choice sees US, with no "not supported" notice.
+
+## Cloud deploy setup from ticket 37
+
+- [ ] Disable push-to-deploy on the production environment, which tracks `main`; enable its deploy hook and save the URL as the GitHub Actions repository secret `LARAVEL_CLOUD_DEPLOY_HOOK`. The `tests` workflow deploys the checked commit only after `ci`, `browser`, and `audit` succeed.
+- [ ] Set the Cloud build command to `composer install --no-dev && npm ci && npm run build:ssr` and deploy command to `php artisan migrate --force`.
+- [ ] Set the Cloud readiness path to `/health` (empty 200 on a working database/cache, empty 503 otherwise); leave `/up` as liveness. Confirm a failed readiness check keeps the previous release serving.
+- [ ] Set `QUEUE_CONNECTION=cloud` and provision the `default` and `imports` queues. Jobs already target these names; the AWS SDK is installed for the managed driver. Local development retains `database`.
+- [ ] Require the `ci`, `browser`, and `audit` checks in the GitHub rule for `main`. Enable Dependabot alerts and Dependabot security updates in repository Settings > Advanced Security. Composer, npm and Actions update schedules are configured in `.github/dependabot.yml`; that file alone does not enable security alerts or security updates.
+
+These account settings and the deploy hook secret must be verified by the owner; ticket 37's local implementation does not verify or change them.
