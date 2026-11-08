@@ -2,6 +2,7 @@
 
 use App\Jobs\RecordAnalyticsEvent;
 use App\Models\Movie;
+use App\Models\TvShow;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\FakeCatalogSource;
 use Illuminate\Support\Facades\Queue;
@@ -69,4 +70,10 @@ test('the full cast page carries the directors, writers and producers', function
 
     $this->get(route('movies.cast', ['slug' => $movie->slug, 'id' => $movie->id]))
         ->assertInertia(fn (Assert $page) => $page->where('movie.crew', $crew));
+});
+
+test('a TV Show id cannot open the Movie full-cast page', function () {
+    $tvShow = TvShow::factory()->create();
+
+    $this->get(route('movies.cast', ['slug' => $tvShow->slug, 'id' => $tvShow->id]))->assertNotFound();
 });

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
 use App\Http\Support\VisitorCountry;
+use App\Models\Movie;
 use App\Services\Catalog\Catalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,9 +20,8 @@ class AvailabilityLinkController extends Controller
 
     public function __invoke(Request $request, string $id, Catalog $catalog, RecordEvent $recordEvent): RedirectResponse
     {
-        $movieId = filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-        abort_if($movieId === false, 404);
-        $movie = $catalog->find($movieId);
+        $movie = $catalog->findTitle($id);
+        abort_unless($movie instanceof Movie, 404);
         $country = $request->query('country');
         abort_unless(VisitorCountry::isSupported($country), 404);
 

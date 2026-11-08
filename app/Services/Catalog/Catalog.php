@@ -4,6 +4,7 @@ namespace App\Services\Catalog;
 
 use App\Models\Genre;
 use App\Models\Movie;
+use App\Models\Title;
 use App\Models\TvShow;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Enums\SectionKind;
@@ -20,6 +21,7 @@ use Carbon\CarbonInterface;
 use Closure;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -346,9 +348,22 @@ class Catalog
         return Movie::query()->where('tmdb_id', $tmdbId)->first();
     }
 
-    public function find(int $id): Movie
+    /** The stored Title as its Movie or TV Show subtype, with request ids validated before querying. */
+    public function findTitle(int|string $id): Movie|TvShow
     {
-        return Movie::query()->findOrFail($id);
+        $titleId = filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if ($titleId === false) {
+            throw (new ModelNotFoundException)->setModel(Title::class, [$id]);
+        }
+        $title = Title::query()->findOrFail($titleId);
+        if ($title->kind === 'tv' && config('catalog.tv_shows.enabled')) {
+            return (new TvShow)->newFromBuilder($title->getAttributes(), $title->getConnectionName());
+        }
+        if ($title->kind === 'movie') {
+            return (new Movie)->newFromBuilder($title->getAttributes(), $title->getConnectionName())->load('details');
+        }
+
+        throw (new ModelNotFoundException)->setModel(Title::class, [$titleId]);
     }
 
     /**

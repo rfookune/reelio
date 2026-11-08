@@ -4,6 +4,7 @@ use App\Jobs\RecordAnalyticsEvent;
 use App\Models\Availability;
 use App\Models\Movie;
 use App\Models\StreamingService;
+use App\Models\TvShow;
 use App\Models\User;
 use App\Services\Catalog\AvailabilityWriter;
 use App\Services\Catalog\Enums\OfferType;
@@ -183,4 +184,10 @@ test('the watch-page link refuses anything but a known Movie and a supported cou
 
 test('the watch-page link 404s for an unknown Movie', function () {
     $this->get('/movies/999999/watch?country=US')->assertNotFound();
+});
+
+test('a TV Show id cannot use the Movie watch redirect', function () {
+    $tvShow = TvShow::factory()->create();
+
+    $this->get(route('movies.watch', ['id' => $tvShow->id, 'country' => 'US']))->assertNotFound();
 });

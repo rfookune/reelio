@@ -9,8 +9,6 @@ use App\Http\Support\UserMovies;
 use App\Http\Support\VisitorCountry;
 use App\Http\Support\WhereToWatch;
 use App\Models\Movie;
-use App\Models\Title;
-use App\Models\TvShow;
 use App\Services\Catalog\Catalog;
 use App\Services\Catalog\CatalogResult;
 use App\Services\Catalog\Sources\MovieDetails;
@@ -35,15 +33,11 @@ class MovieController extends Controller
      */
     public function show(Request $request, string $slug, string $id, Catalog $catalog, RecordEvent $recordEvent, Ratings $ratings): Response|RedirectResponse
     {
-        $movieId = filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-        abort_if($movieId === false, 404);
-        $title = Title::query()->findOrFail($movieId);
-        if ($title->kind === 'tv') {
-            abort_unless(config('catalog.tv_shows.enabled'), 404);
-
-            return redirect(TvShow::query()->findOrFail($movieId)->canonicalUrl(), 301);
+        $title = $catalog->findTitle($id);
+        if (! $title instanceof Movie) {
+            return redirect($title->canonicalUrl(), 301);
         }
-        $movie = $catalog->find($movieId);
+        $movie = $title;
         throw_if($movie->isRemoved(), MovieRemoved::class, $movie, $request->user());
         $referrer = $request->query('referrer');
         $details = new MoviePageDetails($catalog, $movie, $request->user());

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Exceptions\MovieRemoved;
 use App\Http\Support\MoviePageDetails;
+use App\Models\Movie;
 use App\Services\Catalog\Catalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,9 +20,8 @@ class MovieCastController extends Controller
      */
     public function __invoke(Request $request, string $slug, string $id, Catalog $catalog): Response|RedirectResponse
     {
-        $movieId = filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-        abort_if($movieId === false, 404);
-        $movie = $catalog->find($movieId);
+        $movie = $catalog->findTitle($id);
+        abort_unless($movie instanceof Movie, 404);
         throw_if($movie->isRemoved(), MovieRemoved::class, $movie, $request->user());
         $details = new MoviePageDetails($catalog, $movie, $request->user());
         $details->restoreIfCleared();

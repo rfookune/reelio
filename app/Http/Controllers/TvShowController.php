@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Exceptions\DetailsUnavailable;
 use App\Models\Movie;
-use App\Models\Title;
-use App\Models\TvShow;
 use App\Services\Catalog\Catalog;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -19,13 +17,11 @@ class TvShowController extends Controller
     public function show(Request $request, string $slug, string $id, Catalog $catalog): Response|RedirectResponse
     {
         abort_unless(config('catalog.tv_shows.enabled'), 404);
-        $titleId = filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-        abort_if($titleId === false, 404);
-        $title = Title::query()->findOrFail($titleId);
-        if ($title->kind === 'movie') {
-            return redirect(Movie::query()->findOrFail($titleId)->canonicalUrl(), 301);
+        $title = $catalog->findTitle($id);
+        if ($title instanceof Movie) {
+            return redirect($title->canonicalUrl(), 301);
         }
-        $tvShow = TvShow::query()->findOrFail($titleId);
+        $tvShow = $title;
         if (! $tvShow->isRemoved() && $tvShow->hasSourceDetails() && $slug !== $tvShow->slug) {
             return redirect($tvShow->canonicalUrl(), 301);
         }
