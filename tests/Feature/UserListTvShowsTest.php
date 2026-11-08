@@ -181,24 +181,24 @@ test('the TV facts match the progress the TV Show page shows, for Specials, unai
         ->where('userTvShows.2.watchedDate', '2026-01-05T00:00:00.000000Z'));
 });
 
-test('a TV Show without details is left to the removed-title work, in none of the cards, the facts or the count', function () {
+test('a TV Show without details appears as a stub and in the facts', function () {
     $user = User::factory()->create();
     $tvShow = TvShow::factory()->removed()->create();
     UserTitle::query()->create(['user_id' => $user->id, 'title_id' => $tvShow->id, 'watchlisted_at' => now()]);
 
     $this->actingAs($user)->get(route('watchlist'))->assertInertia(fn (Assert $page) => $page
-        ->where('titles.data', [])->where('userTvShows', [])->where('unavailableMovies', []));
+        ->where('titles.data', [])->has('userTvShows', 1)->has('unavailableTitles', 1));
     $this->get(route('watched'))->assertInertia(fn (Assert $page) => $page->where('titles.data', []));
 });
 
-test('a TV Show without details does not hide the Watchlist suggestions', function () {
+test('a TV Show without details counts toward a nonempty Watchlist', function () {
     $user = User::factory()->create();
     $tvShow = TvShow::factory()->removed()->create();
     UserTitle::query()->create(['user_id' => $user->id, 'title_id' => $tvShow->id, 'watchlisted_at' => now()]);
     fakeDiscoverSource(['trending' => [movieListings(901, 903)]]);
     app(DiscoverBuilder::class)->build(CatalogProfile::Background);
 
-    $this->actingAs($user)->get(route('watchlist'))->assertInertia(fn (Assert $page) => $page->has('trending', 3));
+    $this->actingAs($user)->get(route('watchlist'))->assertInertia(fn (Assert $page) => $page->where('trending', []));
 });
 
 test('an empty Watchlist keeps its suggestions, but an empty filter does not need them', function () {

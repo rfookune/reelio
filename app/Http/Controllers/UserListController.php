@@ -40,6 +40,7 @@ class UserListController extends Controller
             'sort' => $sort->value,
             'filter' => $filter->value,
             'includesTvShows' => (bool) config('catalog.tv_shows.enabled'),
+            'unavailableTitles' => fn (): array => $page->unavailableTitles(),
             'unavailableMovies' => fn (): array => $page->unavailableMovies(),
             'titles' => Inertia::scroll(fn (): array => $page->titles(), metadata: fn (): ScrollMetadata => $page->scrollMetadata())->matchOn('data.key'),
             'trending' => fn (): array => $page->trending(),

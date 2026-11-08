@@ -93,7 +93,12 @@ function cardKey(card: PosterCardMovie): string {
 const cards = computed(() =>
     props.titles.data.filter((card) => cardFacts(card)?.[fact.value]),
 );
-const { busy: tvBusy, markAsWatched, clearWatched } = useTvShowListActions();
+const {
+    busy: tvBusy,
+    markAsWatched,
+    clearWatched,
+    removeWatchlist,
+} = useTvShowListActions();
 const markingTvShow = ref<PosterCardMovie | null>(null);
 const confirmingMark = computed({
     get: () => markingTvShow.value !== null,
@@ -128,13 +133,14 @@ async function confirmMark(): Promise<void> {
     markingTvShow.value = null;
 }
 const unavailableCards = computed(() =>
-    props.unavailableMovies.filter(
-        (movie) => props.userMovies[movie.tmdbId]?.[fact.value],
-    ),
+    props.unavailableTitles.filter((movie) => cardFacts(movie)?.[fact.value]),
 );
 /** Watchlist Movies the picker can choose, whatever the filter: every one but those in the "No longer available" group. */
 const pickerCandidates = computed(() =>
-    isWatchlist.value ? counts.value.movie - unavailableCards.value.length : 0,
+    isWatchlist.value
+        ? counts.value.movie -
+          unavailableCards.value.filter((card) => card.kind !== 'tv').length
+        : 0,
 );
 let menuRemoval: string | null = null;
 
@@ -194,7 +200,7 @@ function visitList(sort: string, filter: ListFilter): void {
                 'sort',
                 'filter',
                 'titles',
-                'unavailableMovies',
+                'unavailableTitles',
                 'trending',
                 'userMovies',
                 'userTvShows',
@@ -225,7 +231,7 @@ function changeFilter(filter: ListFilter): void {
 }
 
 const showMoreParams = {
-    only: ['userMovies', 'unavailableMovies'],
+    only: ['userMovies', 'unavailableTitles'],
     onStart: () => {
         failure.value = null;
     },
@@ -387,14 +393,18 @@ const showMoreParams = {
                 No longer available
             </h2>
             <p class="text-sm text-muted">
-                TMDB has removed these movies, so we can't show their details.
+                TMDB has removed these, so we can't show their details.
             </p>
             <ul :class="GRID">
-                <li v-for="movie in unavailableCards" :key="movie.tmdbId">
+                <li v-for="movie in unavailableCards" :key="cardKey(movie)">
                     <PosterCard
                         :image-base-url="imageBaseUrl"
                         :movie="movie"
-                        :facts="userMovies[movie.tmdbId]"
+                        :facts="
+                            movie.kind === 'tv'
+                                ? undefined
+                                : userMovies[movie.tmdbId]
+                        "
                         :source="collection"
                         :show-bookmark="false"
                     >
@@ -404,12 +414,21 @@ const showMoreParams = {
                                 :title="movie.title"
                                 :collection="collection"
                                 unavailable
-                                @removing="menuRemoval = String(movie.tmdbId)"
+                                :tv-show="movie.kind === 'tv'"
+                                @removing="menuRemoval = cardKey(movie)"
+                                @remove-tv-show="removeWatchlist(movie.tmdbId)"
+                                @clear-tv-show="clearTvShow(movie)"
                             />
                         </template>
                         <template #date>
                             <span class="text-muted tabular-nums"
-                                >{{ isWatchlist ? 'Added' : 'Watched' }}
+                                >{{
+                                    isWatchlist
+                                        ? 'Added'
+                                        : movie.kind === 'tv'
+                                          ? 'Last watched'
+                                          : 'Watched'
+                                }}
                                 {{ formatShortDate(movie.date) }}</span
                             >
                         </template>
@@ -534,7 +553,7 @@ const showMoreParams = {
                 Trending this week
             </h2>
             <ul :class="GRID">
-                <li v-for="(movie, index) in trending" :key="movie.tmdbId">
+                <li v-for="(movie, index) in trending" :key="cardKey(movie)">
                     <PosterCard
                         :image-base-url="imageBaseUrl"
                         :movie="movie"

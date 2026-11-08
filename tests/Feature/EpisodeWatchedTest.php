@@ -52,7 +52,7 @@ test('Episode actions reject mismatched parents, removed inventory, and unaired 
     }
     $this->assertDatabaseCount('user_episodes', 0);
 })->with(['season' => ['season', 404], 'tv show' => ['tv show', 404], 'removed episode' => ['removed episode', 404],
-    'removed season' => ['removed season', 404], 'removed tv show' => ['removed tv show', 404], 'unaired' => ['unaired', 422], 'undated' => ['undated', 422], 'flag off' => ['flag off', 404]]);
+    'removed season' => ['removed season', 404], 'removed tv show' => ['removed tv show', 410], 'unaired' => ['unaired', 422], 'undated' => ['undated', 422], 'flag off' => ['flag off', 404]]);
 
 test('unmarking only clears the signed-in user and Undo restores the precise earlier date', function () {
     config(['catalog.tv_shows.enabled' => true]);

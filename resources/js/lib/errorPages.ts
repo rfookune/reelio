@@ -20,7 +20,24 @@ export function errorPageMovieData(
     props: Record<string, unknown>,
 ): ErrorPageMovieData | undefined {
     return MOVIE_ERROR_PAGES.includes(String(props.exceptionClass)) &&
-        props.data
+        props.data &&
+        (props.data as Record<string, unknown>).kind !== 'tv'
         ? (props.data as ErrorPageMovieData)
+        : undefined;
+}
+
+export type ErrorPageTvShowData = {
+    kind: 'tv';
+    tmdbId: number;
+    watchlisted: boolean;
+    watchedCount: number;
+};
+
+export function errorPageTvShowData(
+    props: Record<string, unknown>,
+): ErrorPageTvShowData | undefined {
+    return MOVIE_ERROR_PAGES.includes(String(props.exceptionClass)) &&
+        (props.data as Record<string, unknown> | undefined)?.kind === 'tv'
+        ? (props.data as ErrorPageTvShowData)
         : undefined;
 }

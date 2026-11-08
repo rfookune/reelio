@@ -16,7 +16,7 @@ export type UserListPageProps = {
     /** Whether TV Shows are on the lists, so the page offers the kind filter. */
     includesTvShows: boolean;
     titles: { data: PosterCardMovie[] };
-    unavailableMovies: UnavailableMovie[];
+    unavailableTitles: UnavailableMovie[];
     trending: PosterCardMovie[];
     userMovies: UserMovies;
     userTvShows: UserTvShows;

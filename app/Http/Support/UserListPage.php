@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Pagination\Cursor;
 use Illuminate\Pagination\CursorPaginator;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Inertia\ScrollMetadata;
@@ -31,7 +32,7 @@ use Inertia\ScrollMetadata;
  * Stored Watchlist or Watched cards and a stable cursor, Movies and TV Shows in one keyset-paged query. The
  * Watchlist holds the Titles with a Watchlist fact. Watched holds the Movies with a Watched date and the TV Shows
  * with at least one Episode watched, dated by the latest, a TV Show having no Watched fact of its own. TV Shows are
- * left out while they are switched off, and a TV Show without details is left to the Removed Title work. No Title is
+ * left out while they are switched off, including Removed Titles. No Title is
  * refreshed while listing it.
  *
  * @phpstan-import-type Card from SearchPage
@@ -48,7 +49,7 @@ class UserListPage
 
     public function __construct(private User $user, private UserList $list, private ListSort $sort, private ListFilter $filter, private DiscoverBuilder $discover, private Ratings $ratings, private ProgressSummaries $progress) {}
 
-    /** The whole list's size, whatever the filter, Removed Movies included. */
+    /** The whole list's size, whatever the filter, Removed Titles included. */
     private function count(): int
     {
         return $this->count ??= DB::query()->fromSub($this->entries($this->shownKinds(ListFilter::All)), 'entries')->count();
@@ -86,6 +87,34 @@ class UserListPage
                 'href' => $facts->movie->canonicalUrl($this->list->surface()),
                 'date' => $facts->getAttribute($this->list->dateColumn())->toJSON(),
             ])->all());
+    }
+
+    /** @return list<array{kind?: 'tv', key?: string, tmdbId: int, title: string, year: ?int, posterPath: ?string, ratings: array{}, href: string, date: string}> */
+    public function unavailableTitles(): array
+    {
+        $movies = $this->unavailableMovies();
+        if (! in_array(TitleKind::TvShow, $this->shownKinds($this->filter), true)) {
+            return $movies;
+        }
+        $shows = TvShow::query()->joinSub($this->entries([TitleKind::TvShow]), 'entries', 'entries.title_id', '=', 'titles.id')
+            ->whereNull('titles.title')->orderBy('titles.id')->get(['titles.*', 'entries.entry_date']);
+
+        foreach ($shows as $show) {
+            $movies[] = $this->unavailableTvShowCard($show);
+        }
+
+        return $movies;
+    }
+
+    /** @return array{kind: 'tv', key: string, tmdbId: int, title: string, year: null, posterPath: null, ratings: array{}, href: string, date: string} */
+    private function unavailableTvShowCard(TvShow $show): array
+    {
+        return [
+            'kind' => TitleKind::TvShow->value, 'key' => "tv:{$show->tmdb_id}", 'tmdbId' => $show->tmdb_id,
+            'title' => $show->isRemoved() ? 'Removed TV show' : 'Details temporarily unavailable',
+            'year' => null, 'posterPath' => null, 'ratings' => [], 'href' => $show->canonicalUrl(),
+            'date' => Carbon::parse($show->getAttribute('entry_date'))->toJSON(),
+        ];
     }
 
     /** A fresh page starting at the restored Movie, so Undo can reveal it even after a sort reset. */
@@ -141,7 +170,7 @@ class UserListPage
     }
 
     /**
-     * The user's facts about every TV Show with details they hold one about, keyed by catalog id, replaced on every
+     * The user's facts about every TV Show they hold one about, keyed by catalog id, replaced on every
      * reload like `userMovies`: on the Watchlist, with its derived state and counts, and watched once an Episode is.
      * The lists' counts and which cards show come from these.
      *
@@ -158,7 +187,7 @@ class UserListPage
         $ids = array_values(array_unique([...array_map(intval(...), $watchlisted->keys()->all()), ...array_map(intval(...), $marked->all())]));
         $summaries = $this->progress->for($this->user, $ids);
 
-        return TvShow::query()->whereIn('id', $ids)->whereNotNull('title')->get(['id', 'tmdb_id'])
+        return TvShow::query()->whereIn('id', $ids)->get(['id', 'tmdb_id'])
             ->mapWithKeys(function (TvShow $tvShow) use ($watchlisted, $summaries): array {
                 $summary = $summaries[$tvShow->id] ?? null;
 
@@ -217,8 +246,7 @@ class UserListPage
 
     /**
      * One row for each Title of the kinds the user has a fact about on this list, with the date of it: the
-     * Watchlist's Date added or Watched date, or for a TV Show on Watched its latest Episode's Watched date. A TV Show
-     * without details is left out, as from `userTvShows()`, so the sizes agree.
+     * Watchlist's Date added or Watched date, or for a TV Show on Watched its latest Episode's Watched date. Removed Titles are included, as in `userTvShows()`, so the sizes agree.
      *
      * @param  list<TitleKind>  $kinds
      */
@@ -228,12 +256,11 @@ class UserListPage
         $facts = fn (TitleKind $kind): QueryBuilder => DB::table('user_titles')
             ->join('titles', 'titles.id', '=', 'user_titles.title_id')
             ->where('user_titles.user_id', $this->user->id)->where('titles.kind', $kind->value)->whereNotNull('user_titles.'.$column)
-            ->when($kind === TitleKind::TvShow, fn (QueryBuilder $query): QueryBuilder => $query->whereNotNull('titles.title'))
             ->select('user_titles.title_id')->selectRaw('user_titles.'.$column.' as entry_date');
         $episodes = fn (): QueryBuilder => DB::table('user_episodes')
             ->join('episodes', 'episodes.id', '=', 'user_episodes.episode_id')
             ->join('titles', 'titles.id', '=', 'episodes.title_id')
-            ->where('user_episodes.user_id', $this->user->id)->whereNotNull('titles.title')
+            ->where('user_episodes.user_id', $this->user->id)
             ->groupBy('episodes.title_id')->select('episodes.title_id')->selectRaw('max(user_episodes.watched_at) as entry_date');
 
         $parts = array_map(fn (TitleKind $kind): QueryBuilder => $kind === TitleKind::TvShow && $this->list === UserList::Watched ? $episodes() : $facts($kind), $kinds);

@@ -3,6 +3,7 @@
 namespace App\Actions;
 
 use App\Enums\ProgressState;
+use App\Http\Exceptions\MovieRemoved;
 use App\Http\Support\LatestTvShowAction;
 use App\Models\Episode;
 use App\Models\TvShow;
@@ -21,7 +22,7 @@ class ChangeEpisodeWatched
     /** @return ($user is null ? null : array{progress: Progress, undoToken: string, watchlisted: bool}) */
     public function handle(Request $request, ?User $user, TvShow $tvShow, Episode $episode, bool $watched): ?array
     {
-        $this->validateEpisode($tvShow, $episode);
+        $this->validateEpisode($tvShow, $episode, $user);
 
         if ($user === null) {
             return null;
@@ -45,10 +46,11 @@ class ChangeEpisodeWatched
         return ['progress' => $this->progress->for($tvShow, $user), 'undoToken' => $token, 'watchlisted' => $tvShow->isWatchlistedBy($user)];
     }
 
-    private function validateEpisode(TvShow $tvShow, Episode $episode): void
+    private function validateEpisode(TvShow $tvShow, Episode $episode, ?User $user): void
     {
         abort_unless(config('catalog.tv_shows.enabled'), 404);
-        abort_if($tvShow->isRemoved() || $episode->removed_at !== null || $episode->season->removed_at !== null || $episode->title_id !== $tvShow->id, 404);
+        throw_if($tvShow->isRemoved(), MovieRemoved::class, $tvShow, $user);
+        abort_if($episode->removed_at !== null || $episode->season->removed_at !== null || $episode->title_id !== $tvShow->id, 404);
         if ($episode->air_date === null || $episode->air_date->greaterThan(today())) {
             throw ValidationException::withMessages(['episode' => 'This Episode has not aired yet.']);
         }

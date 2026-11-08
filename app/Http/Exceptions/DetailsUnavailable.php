@@ -3,6 +3,7 @@
 namespace App\Http\Exceptions;
 
 use App\Models\Movie;
+use App\Models\TvShow;
 use App\Models\User;
 
 /**
@@ -12,14 +13,15 @@ use App\Models\User;
  */
 class DetailsUnavailable extends ErrorPageException
 {
-    public function __construct(?Movie $movie = null, ?User $user = null)
+    public function __construct(Movie|TvShow|null $movie = null, ?User $user = null)
     {
+        $noun = $movie instanceof TvShow ? 'TV show' : 'movie';
         parent::__construct(
             503,
             'Details temporarily unavailable',
-            'We can\'t reach our movie data source right now. Please try again in a moment.',
+            "We can't reach our {$noun} data source right now. Please try again in a moment.",
             ['Retry-After' => '30', 'X-Robots-Tag' => 'noindex'],
-            data: self::movieData($movie, $user),
+            data: self::titleData($movie, $user),
         );
     }
 }

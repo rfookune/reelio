@@ -3,7 +3,8 @@ import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import { useShortDate } from '@/composables/useShortDate';
-import { errorPageMovieData } from '@/lib/errorPages';
+import { useTvShowListActions } from '@/composables/useTvShowListActions';
+import { errorPageMovieData, errorPageTvShowData } from '@/lib/errorPages';
 import { clearWatched, setWatchlist } from '@/lib/userMovieActions';
 import { home, watchlist } from '@/routes';
 
@@ -14,6 +15,12 @@ const props = defineProps<{
     exceptionClass: string;
     data?: Record<string, unknown>;
 }>();
+const pageTvShow = computed(() => errorPageTvShowData(props));
+const {
+    busy,
+    removeWatchlist,
+    clearWatched: clearTvShow,
+} = useTvShowListActions();
 const pageMovie = computed(() => errorPageMovieData(props));
 const facts = computed(
     () => pageMovie.value?.userMovies[pageMovie.value.tmdbId],
@@ -78,8 +85,49 @@ const formatShortDate = useShortDate({ localized: true });
                 >
             </div>
         </section>
+        <section
+            v-if="
+                pageTvShow &&
+                (pageTvShow.watchlisted || pageTvShow.watchedCount > 0)
+            "
+            aria-labelledby="tv-lists-heading"
+            class="flex flex-col gap-4 rounded-xl border border-line bg-surface p-5"
+        >
+            <h2 id="tv-lists-heading" class="text-lg font-semibold">
+                It's still in your lists
+            </h2>
+            <div
+                v-if="pageTvShow.watchlisted"
+                class="flex items-center justify-between gap-6"
+            >
+                <span class="text-sm">On your Watchlist</span>
+                <Button
+                    variant="outline"
+                    :disabled="busy"
+                    data-slot="remove-watchlist"
+                    @click="removeWatchlist(pageTvShow.tmdbId)"
+                    >Remove</Button
+                >
+            </div>
+            <div
+                v-if="pageTvShow.watchedCount > 0"
+                class="flex items-center justify-between gap-6"
+            >
+                <span class="text-sm"
+                    >You marked {{ pageTvShow.watchedCount }} Episodes as
+                    watched</span
+                >
+                <Button
+                    variant="outline"
+                    :disabled="busy"
+                    data-slot="clear-watched"
+                    @click="clearTvShow(pageTvShow.tmdbId)"
+                    >Clear</Button
+                >
+            </div>
+        </section>
         <Link
-            v-if="pageMovie && $page.props.auth.user"
+            v-if="(pageMovie || pageTvShow) && $page.props.auth.user"
             :href="watchlist()"
             class="rounded-lg text-accent underline-offset-4 hover:underline"
             >Your Watchlist</Link

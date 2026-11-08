@@ -16,7 +16,7 @@ it('removes and undoes a Removed Movie from each list without losing its date', 
 
     $page = visitWithCsp('/'.$list, width: 390);
     $page->assertSee($label.' · 1')->assertSee('No longer available')
-        ->assertSee("TMDB has removed these movies, so we can't show their details.")
+        ->assertSee("TMDB has removed these, so we can't show their details.")
         ->assertSee('Removed movie')->assertSee($date)->assertMissing('[data-slot="bookmark-toggle"]')
         ->click('[data-slot="movie-menu"]')->click($action)->assertSee($label.' · 0')
         ->assertDontSee('No longer available')->assertSee($toast);

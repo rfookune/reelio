@@ -3,6 +3,7 @@
 namespace App\Actions;
 
 use App\Http\Exceptions\DetailsUnavailable;
+use App\Http\Exceptions\MovieRemoved;
 use App\Http\Support\BulkWatchedChange;
 use App\Http\Support\LatestTvShowAction;
 use App\Http\Support\TvShowByCatalogId;
@@ -39,18 +40,19 @@ class ChangeTvShowWatched
         $catalogId = $this->tvShows->catalogId($tmdbId);
 
         if ($user === null) {
-            abort_if($watched && $this->tvShows->find($tmdbId)?->isRemoved(), 410);
+            $stored = $this->tvShows->find($tmdbId);
+            throw_if($watched && $stored?->isRemoved(), MovieRemoved::class, $stored, $user);
 
             return null;
         }
 
         $tvShow = $watched ? $this->tvShows->findOrCreate($request, $tmdbId) : $this->tvShows->find($tmdbId);
-        abort_if($watched && $tvShow?->isRemoved(), 410);
+        throw_if($watched && $tvShow?->isRemoved(), MovieRemoved::class, $tvShow, $user);
         if ($tvShow === null) {
             return ['progress' => null, 'undoToken' => $this->latest->change($request, $user, null, $catalogId, fn () => null), 'watchlisted' => false];
         }
         if ($watched) {
-            $this->ensureEpisodesStored($tvShow);
+            $this->ensureEpisodesStored($tvShow, $user);
         }
         $eligible = $tvShow->episodes()->getQuery()->whereNull('removed_at')->whereDate('air_date', '<=', today())
             ->whereHas('season', fn (Builder $season): Builder => $season->where('season_number', '>', 0)->whereNull('removed_at'));
@@ -59,13 +61,13 @@ class ChangeTvShowWatched
     }
 
     /** A TV Show with no Episodes stored (cap-cleared, or never fetched) is refreshed first; if that fails nothing changes. */
-    private function ensureEpisodesStored(TvShow $tvShow): void
+    private function ensureEpisodesStored(TvShow $tvShow, User $user): void
     {
         if ($tvShow->episodes()->exists()) {
             return;
         }
         $result = $this->catalog->tvShowDetails($tvShow);
-        abort_if($result->isRemoved(), 410);
-        throw_if($result->isUnavailable() || ($result->status === CatalogStatus::Stale && $tvShow->episodes()->doesntExist()), DetailsUnavailable::class);
+        throw_if($result->isRemoved(), MovieRemoved::class, $tvShow, $user);
+        throw_if($result->isUnavailable() || ($result->status === CatalogStatus::Stale && $tvShow->episodes()->doesntExist()), DetailsUnavailable::class, $tvShow, $user);
     }
 }

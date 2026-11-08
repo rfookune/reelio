@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Http\Exceptions\MovieRemoved;
 use App\Http\Support\BulkWatchedChange;
 use App\Models\Season;
 use App\Models\TvShow;
@@ -21,7 +22,7 @@ class ChangeSeasonWatched
      */
     public function handle(Request $request, ?User $user, TvShow $tvShow, Season $season, bool $watched): ?array
     {
-        $this->validate($tvShow, $season);
+        $this->validate($tvShow, $season, $user);
 
         if ($user === null) {
             return null;
@@ -32,10 +33,10 @@ class ChangeSeasonWatched
         return $this->change->apply($request, $user, $tvShow, $watched, $eligible, clearsAll: false);
     }
 
-    private function validate(TvShow $tvShow, Season $season): void
+    private function validate(TvShow $tvShow, Season $season, ?User $user): void
     {
         abort_unless(config('catalog.tv_shows.enabled'), 404);
-        abort_if($tvShow->isRemoved(), 410);
+        throw_if($tvShow->isRemoved(), MovieRemoved::class, $tvShow, $user);
         abort_if($season->removed_at !== null || $season->title_id !== $tvShow->id, 404);
     }
 }

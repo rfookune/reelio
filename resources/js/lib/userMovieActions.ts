@@ -188,8 +188,8 @@ function undo(
             const titles = usePage().props.titles as
                 | { data: { kind?: 'movie' | 'tv'; tmdbId: number }[] }
                 | undefined;
-            const unavailableMovies = usePage().props.unavailableMovies as
-                | { tmdbId: number }[]
+            const unavailableTitles = usePage().props.unavailableTitles as
+                | { kind?: 'movie' | 'tv'; tmdbId: number }[]
                 | undefined;
             if (
                 ((component === 'Watchlist' && restored.watchlisted) ||
@@ -197,7 +197,9 @@ function undo(
                 !titles?.data.some(
                     (card) => card.kind !== 'tv' && card.tmdbId === tmdbId,
                 ) &&
-                !unavailableMovies?.some((movie) => movie.tmdbId === tmdbId)
+                !unavailableTitles?.some(
+                    (movie) => movie.kind !== 'tv' && movie.tmdbId === tmdbId,
+                )
             ) {
                 revealUserMovieCard(tmdbId, restoreFocus);
             }
@@ -229,7 +231,7 @@ function revealUserMovieCard(tmdbId: number, restoreFocus: () => void): void {
             only: [
                 'titles',
                 'filter',
-                'unavailableMovies',
+                'unavailableTitles',
                 'userMovies',
                 'trending',
             ],

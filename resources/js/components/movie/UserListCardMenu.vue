@@ -26,13 +26,19 @@ const emit = defineEmits<{
     removing: [];
     markTvShow: [];
     clearTvShow: [];
+    removeTvShow: [];
 }>();
 const trigger = ref<HTMLButtonElement | null>(null);
 
 function apply(): void {
     if (props.tvShow) {
         if (props.collection === 'watchlist') {
-            emit('markTvShow');
+            if (props.unavailable) {
+                emit('removing');
+                emit('removeTvShow');
+            } else {
+                emit('markTvShow');
+            }
         } else {
             emit('removing');
             emit('clearTvShow');

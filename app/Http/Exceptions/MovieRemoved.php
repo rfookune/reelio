@@ -3,6 +3,7 @@
 namespace App\Http\Exceptions;
 
 use App\Models\Movie;
+use App\Models\TvShow;
 use App\Models\User;
 
 /**
@@ -10,14 +11,15 @@ use App\Models\User;
  */
 class MovieRemoved extends ErrorPageException
 {
-    public function __construct(?Movie $movie = null, ?User $user = null)
+    public function __construct(Movie|TvShow|null $movie = null, ?User $user = null)
     {
+        $noun = $movie instanceof TvShow ? 'TV show' : 'movie';
         parent::__construct(
             410,
-            'This movie is no longer available.',
-            'Our data source, TMDB, has removed this movie, so we can\'t show its details any more.',
+            "This {$noun} is no longer available.",
+            "Our data source, TMDB, has removed this {$noun}, so we can't show its details any more.",
             ['X-Robots-Tag' => 'noindex'],
-            data: self::movieData($movie, $user),
+            data: self::titleData($movie, $user),
         );
     }
 }
