@@ -3,11 +3,11 @@
 namespace App\Http\Support;
 
 use App\Models\Availability;
-use App\Models\Movie;
+use App\Models\Title;
 use App\Services\Catalog\Enums\OfferType;
 
 /**
- * Where a Movie streams for one country, from stored Availability: the non-empty offer-type groups in tab order,
+ * Where a Title streams for one country, from stored Availability: the non-empty offer-type groups in tab order,
  * each listing its Streaming services in `display_priority` order, and the freshness line from `synced_at`.
  */
 class WhereToWatch
@@ -16,16 +16,16 @@ class WhereToWatch
 
     /**
      * The block is flagged as possibly out of date past seven calendar days since the last sync, or when the
-     * caller's own refresh of the Movie failed.
+     * caller's own refresh of the Title failed.
      *
      * @param  list<OfferType>|null  $offerTypes  The groups to include; every offer type when null.
      * @return array{country: string, countryName: string, countryUnsupported: bool, countries: list<array{code: string, name: string}>, groups: list<array{type: string, label: string, caption: ?string, services: list<array{id: int, name: string, logoPath: ?string}>}>, updated: ?string, outOfDate: bool}
      */
-    public static function for(Movie $movie, VisitorCountry $visitorCountry, bool $refreshFailed = false, ?array $offerTypes = null): array
+    public static function for(Title $title, VisitorCountry $visitorCountry, bool $refreshFailed = false, ?array $offerTypes = null): array
     {
         $country = $visitorCountry->code;
         $offerTypes ??= OfferType::cases();
-        $offers = $movie->availabilities()
+        $offers = $title->availabilities()
             ->with('streamingService')
             ->where('country', $country)
             ->whereIn('offer_type', array_map(fn (OfferType $offerType): string => $offerType->value, $offerTypes))
@@ -52,7 +52,7 @@ class WhereToWatch
             ];
         }
 
-        $daysSinceSync = $movie->synced_at === null ? null : (int) $movie->synced_at->startOfDay()->diffInDays(now()->startOfDay());
+        $daysSinceSync = $title->synced_at === null ? null : (int) $title->synced_at->startOfDay()->diffInDays(now()->startOfDay());
 
         return [
             'country' => $country,

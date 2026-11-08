@@ -13,6 +13,7 @@ use App\Http\Controllers\RobotsController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SearchRatingsController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\TvShowAvailabilityLinkController;
 use App\Http\Controllers\TvShowController;
 use App\Http\Controllers\TvShowEntryController;
 use App\Http\Controllers\UndoController;
@@ -39,6 +40,7 @@ Route::get('watchlist', UserMovieListController::class)->middleware(['auth', Enc
 Route::get('watched', UserMovieListController::class)->middleware(['auth', EncryptHistory::class])->name('watched');
 Route::get('watchlist/pick', MoviePickerController::class)->middleware(['auth', EncryptHistory::class, 'throttle:movie-picker'])->name('watchlist.pick');
 
+Route::get('tv-shows/tmdb/{tmdbId}/watch', TvShowAvailabilityLinkController::class)->whereNumber('tmdbId')->name('tv-shows.watch');
 Route::get('tv-shows/tmdb/{tmdbId}', TvShowEntryController::class)->whereNumber('tmdbId')->name('tv-shows.entry');
 Route::get('tv-shows/{slug}-{id}', [TvShowController::class, 'show'])->where('slug', '[^/]+')->whereNumber('id')->name('tv-shows.show');
 

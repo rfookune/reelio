@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import type { ExternalRating } from '@/components/ExternalRatings.vue';
+import WhereToWatch from '@/components/movie/WhereToWatch.vue';
+import type { WhereToWatchBlock } from '@/components/movie/WhereToWatch.vue';
+import { watch as watchPage } from '@/routes/tv-shows';
 import SeoHead from '@/components/SeoHead.vue';
 import MovieHero from '@/components/movie/MovieHero.vue';
 import MovieCast from '@/components/movie/MovieCast.vue';
@@ -12,10 +16,13 @@ import { describeMovie, shareImage } from '@/lib/seo';
 import { tvShowJsonLd, tvShowTitle, tvShowYearRange } from '@/lib/tvShows';
 const props = defineProps<{
     canonicalUrl: string;
+    whereToWatch: WhereToWatchBlock;
     imageBaseUrl: string;
     catalogStatus: 'fresh' | 'stale';
     tvShow: {
         id: number;
+        tmdbId: number;
+        ratings: ExternalRating[];
         title: string | null;
         originalTitle: string | null;
         originalLanguage: string | null;
@@ -101,12 +108,8 @@ const jsonLd = computed(() =>
             :genres="tvShow.genres"
             :poster-path="tvShow.posterPath"
             :backdrop-path="tvShow.backdropPath"
-            :ratings="[]"
-        >
-            <template #ratings
-                ><div data-slot="tv-show-ratings"><slot name="ratings" /></div
-            ></template>
-        </MovieHero>
+            :ratings="tvShow.ratings"
+        />
         <div
             data-slot="tv-show-body"
             class="relative -mt-28 grid gap-x-12 gap-y-10 md:-mt-40 lg:grid-cols-[minmax(0,1fr)_20rem]"
@@ -133,8 +136,19 @@ const jsonLd = computed(() =>
             </section>
             <aside
                 data-slot="tv-show-details-column"
-                class="order-2 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-4 lg:row-start-1 lg:self-start"
+                class="order-2 flex flex-col gap-6 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-4 lg:row-start-1 lg:self-start"
             >
+                <WhereToWatch
+                    :image-base-url="imageBaseUrl"
+                    :watch-url="
+                        watchPage(
+                            { tmdbId: tvShow.tmdbId },
+                            { query: { country: whereToWatch.country } },
+                        ).url
+                    "
+                    kind="tv"
+                    :block="whereToWatch"
+                />
                 <TvShowDetailsCard
                     :title="tvShow.title"
                     :original-title="tvShow.originalTitle"

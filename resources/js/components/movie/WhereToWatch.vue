@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import StreamingServiceLogo from '@/components/movie/StreamingServiceLogo.vue';
 import { update as updateCountry } from '@/routes/country';
-import { watch as watchPage } from '@/routes/movies';
 import type { CountryChoice } from '@/types';
 
 export type AvailabilityGroup = {
@@ -33,21 +32,17 @@ export type WhereToWatchBlock = {
     outOfDate: boolean;
 };
 
-const props = defineProps<{
-    imageBaseUrl: string;
-    movieId: number;
-    block: WhereToWatchBlock;
-}>();
-
-const firstGroup = computed(() => props.block.groups[0]?.type);
-const watchPageUrl = computed(
-    () =>
-        watchPage(
-            { id: props.movieId },
-            { query: { country: props.block.country } },
-        ).url,
+const props = withDefaults(
+    defineProps<{
+        imageBaseUrl: string;
+        watchUrl: string;
+        kind?: 'movie' | 'tv';
+        block: WhereToWatchBlock;
+    }>(),
+    { kind: 'movie' },
 );
 
+const firstGroup = computed(() => props.block.groups[0]?.type);
 /**
  * Saves the choice, then reloads only this block, so changing the country isn't counted as a new view.
  */
@@ -164,7 +159,8 @@ function chooseCountry(country: unknown): void {
         </TabsRoot>
 
         <p v-else data-slot="availability-empty" class="text-sm">
-            We don't have streaming information for this movie in
+            We don't have streaming information for this
+            {{ kind === 'tv' ? 'TV show' : 'movie' }} in
             {{ block.countryName }}.
         </p>
 
@@ -184,7 +180,7 @@ function chooseCountry(country: unknown): void {
                 >
             </p>
             <a
-                :href="watchPageUrl"
+                :href="watchUrl"
                 target="_blank"
                 rel="nofollow noopener noreferrer"
                 class="w-fit text-sm text-accent underline-offset-4 hover:underline"

@@ -2,6 +2,7 @@
 import { usePage } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import type { ExternalRating } from '@/components/ExternalRatings.vue';
+import { watch as watchPage } from '@/routes/movies';
 import SeoHead from '@/components/SeoHead.vue';
 import MovieCast from '@/components/movie/MovieCast.vue';
 import type { CastMember } from '@/components/movie/MovieCast.vue';
@@ -212,7 +213,12 @@ onBeforeUnmount(() => {
                 />
                 <WhereToWatch
                     :image-base-url="imageBaseUrl"
-                    :movie-id="movie.id"
+                    :watch-url="
+                        watchPage(
+                            { id: movie.id },
+                            { query: { country: whereToWatch.country } },
+                        ).url
+                    "
                     :block="whereToWatch"
                     class="order-2 lg:order-none"
                 />

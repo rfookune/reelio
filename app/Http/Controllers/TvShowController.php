@@ -3,8 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Exceptions\DetailsUnavailable;
+use App\Http\Support\VisitorCountry;
+use App\Http\Support\WhereToWatch;
 use App\Models\Movie;
 use App\Services\Catalog\Catalog;
+use App\Services\Catalog\Enums\CatalogStatus;
+use App\Services\Ratings\ExternalRating;
+use App\Services\Ratings\Ratings;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,7 +19,7 @@ use Inertia\Support\Header;
 
 class TvShowController extends Controller
 {
-    public function show(Request $request, string $slug, string $id, Catalog $catalog): Response|RedirectResponse
+    public function show(Request $request, string $slug, string $id, Catalog $catalog, Ratings $ratings): Response|RedirectResponse
     {
         abort_unless(config('catalog.tv_shows.enabled'), 404);
         $title = $catalog->findTitle($id);
@@ -43,11 +48,12 @@ class TvShowController extends Controller
         $episodeCount = $airedEpisodes->count();
 
         return Inertia::render('tv-shows/Show', [
+            'whereToWatch' => fn (): array => WhereToWatch::for($tvShow, VisitorCountry::resolve($request), $result->status === CatalogStatus::Stale),
             'canonicalUrl' => $tvShow->canonicalUrl(),
             'imageBaseUrl' => config('catalog.image_base_url'),
             'catalogStatus' => $result->status->value,
             'tvShow' => [
-                'id' => $tvShow->id, 'title' => $tvShow->title, 'overview' => $tvShow->overview, 'posterPath' => $tvShow->poster_path,
+                'id' => $tvShow->id, 'tmdbId' => $tvShow->tmdb_id, 'title' => $tvShow->title, 'overview' => $tvShow->overview, 'posterPath' => $tvShow->poster_path,
                 'originalTitle' => $tvShow->original_title, 'originalLanguage' => $tvShow->original_language,
                 'tagline' => $tvShow->tagline, 'backdropPath' => $tvShow->backdrop_path,
                 'firstAirDate' => $metadata->first_air_date?->toDateString(), 'lastAirDate' => $metadata->last_air_date?->toDateString(),
@@ -56,6 +62,7 @@ class TvShowController extends Controller
                 'creators' => $pageData->creators ?? [], 'networks' => $pageData->networks ?? [],
                 'cast' => array_slice($pageData->cast ?? [], 0, config('catalog.movie_page.cast_limit')),
                 'certification' => $pageData?->certification, 'trailer' => $pageData?->trailer,
+                'ratings' => array_map(fn (ExternalRating $rating): array => $rating->toArray(), $ratings->ratingsFor(collect([$tvShow]))[$tvShow->id]),
                 'detailsUnavailable' => $pageData === null,
             ],
         ]);
