@@ -30,9 +30,7 @@
     "homepage": "https://www.paramountplus.com/shows/tulsa-king",
     "id": 153312,
     "in_production": true,
-    "languages": [
-        "en"
-    ],
+    "languages": ["en"],
     "last_air_date": "2026-11-06",
     "last_episode_to_air": {
         "id": 7499438,
@@ -75,9 +73,7 @@
     ],
     "number_of_episodes": 39,
     "number_of_seasons": 4,
-    "origin_country": [
-        "US"
-    ],
+    "origin_country": ["US"],
     "original_language": "en",
     "original_name": "Tulsa King",
     "overview": "New York mafia capo Dwight \"The General\" Manfredi is released from prison after 25 years and exiled by his boss to set up shop in Tulsa, Oklahoma. Realizing that his mob family may not have his best interests in mind, Dwight slowly builds a crew.",

@@ -20,17 +20,18 @@ Settled in a grilling session; no new terms and no ADR. The Season accordion, st
 
 **Hero actions**
 
-| State | Shown |
-| --- | --- |
-| Not started | "Add to Watchlist" (accent) and "Mark as watched" (opens the confirm dialog) |
-| In progress | the Watchlist toggle (pressed if on it), "Mark as watched", and "{n} of {m} Episodes watched" with the progress bar |
-| Completed | the Watchlist toggle, a "Completed" chip with Clear (×) that clears every Episode with one Undo, and the full progress bar |
+| State       | Shown                                                                                                                      |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Not started | "Add to Watchlist" (accent) and "Mark as watched" (opens the confirm dialog)                                               |
+| In progress | the Watchlist toggle (pressed if on it), "Mark as watched", and "{n} of {m} Episodes watched" with the progress bar        |
+| Completed   | the Watchlist toggle, a "Completed" chip with Clear (×) that clears every Episode with one Undo, and the full progress bar |
 
 Guests see the same controls, which start the pending-action flow.
 
 **Episode rows:** number, name, air date, runtime and the Watched toggle. The Episode overview is behind a per-Episode disclosure, collapsed by default. No Episode stills are shown (stills and overviews spoil). Consequence for the Episode data ticket: `still_path` is not needed for display, so the spec leaves it out unless stills are wanted later.
 
 **Season and Episode edge cases**
+
 - Specials is the last section, collapsed, labelled "Specials · don't count toward progress"; its Episodes can be marked.
 - Unaired Episodes show "Upcoming · {date}", undated ones "Date to be announced"; neither can be marked and Season bulk actions skip them.
 - A Season whose Episodes are all unaired shows collapsed and "Upcoming" with no bulk action. A Season with no Episodes stored is hidden, as are removed Seasons and Episodes.

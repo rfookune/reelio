@@ -30,9 +30,7 @@
     "homepage": "https://tv.apple.com/show/umc.cmc.1srk2goyh2q2zdxcx605w8vtx",
     "id": 95396,
     "in_production": true,
-    "languages": [
-        "en"
-    ],
+    "languages": ["en"],
     "last_air_date": "2025-03-20",
     "last_episode_to_air": {
         "id": 5469142,
@@ -61,9 +59,7 @@
     ],
     "number_of_episodes": 19,
     "number_of_seasons": 3,
-    "origin_country": [
-        "US"
-    ],
+    "origin_country": ["US"],
     "original_language": "en",
     "original_name": "Severance",
     "overview": "Mark leads a team of office workers whose memories have been surgically divided between their work and personal lives. When a mysterious colleague appears outside of work, it begins a journey to discover the truth about their jobs.",

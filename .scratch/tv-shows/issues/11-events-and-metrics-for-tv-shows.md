@@ -14,17 +14,17 @@ Settled in a grilling session; no new terms and no ADR. Events are signed-in onl
 
 **Naming:** Movie events keep their names, properties and meaning, so Movie metrics and tests are untouched. TV Shows get parallel `tv_show_*`, `season_*` and `episode_*` events. Only two events are kind-neutral, because one action serves both kinds: search and the Watch link click. Nothing is live, so those two renames are internal.
 
-| Event | Properties |
-| --- | --- |
-| `tv_show_viewed` | `tv_show_id`, `referrer` (same values as `movie_viewed`, without `picker`) |
-| `tv_show_watchlisted`, `tv_show_unwatchlisted` | `tv_show_id`, `source` |
-| `episode_marked_watched`, `episode_unmarked_watched` | `tv_show_id`, `season_id`, `episode_id`, `source`, `was_on_watchlist` |
-| `season_marked_watched`, `season_unmarked_watched` | `tv_show_id`, `season_id`, `episode_count` (Episodes changed) |
-| `tv_show_marked_watched`, `tv_show_unmarked_watched` | `tv_show_id`, `source`, `episode_count` |
-| `tv_show_completed` | `tv_show_id` (when the derived state becomes Completed and the TV Show leaves the Watchlist) |
-| `tv_show_action_undone` | `tv_show_id`, `action`, plus `season_id` or `episode_id` when the undone action had one |
-| `title_searched` (was `movie_searched`) | `query_length`, `result_count` (all results shown on page 1, both kinds; no text) |
-| `availability_link_clicked` | `title_id`, `kind` (`movie` or `tv_show`), `country`; recorded by the redirect route |
+| Event                                                | Properties                                                                                   |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `tv_show_viewed`                                     | `tv_show_id`, `referrer` (same values as `movie_viewed`, without `picker`)                   |
+| `tv_show_watchlisted`, `tv_show_unwatchlisted`       | `tv_show_id`, `source`                                                                       |
+| `episode_marked_watched`, `episode_unmarked_watched` | `tv_show_id`, `season_id`, `episode_id`, `source`, `was_on_watchlist`                        |
+| `season_marked_watched`, `season_unmarked_watched`   | `tv_show_id`, `season_id`, `episode_count` (Episodes changed)                                |
+| `tv_show_marked_watched`, `tv_show_unmarked_watched` | `tv_show_id`, `source`, `episode_count`                                                      |
+| `tv_show_completed`                                  | `tv_show_id` (when the derived state becomes Completed and the TV Show leaves the Watchlist) |
+| `tv_show_action_undone`                              | `tv_show_id`, `action`, plus `season_id` or `episode_id` when the undone action had one      |
+| `title_searched` (was `movie_searched`)              | `query_length`, `result_count` (all results shown on page 1, both kinds; no text)            |
+| `availability_link_clicked`                          | `title_id`, `kind` (`movie` or `tv_show`), `country`; recorded by the redirect route         |
 
 - **Ids:** `season_id` and `episode_id` are local ids and plain integers, with no foreign key, so a purged Season or Episode never blocks anything. Season events carry their `season_id`; whole-TV Show events carry no Season or Episode ids (they could list hundreds), only `episode_count`.
 - **Not recorded:** no view event on the Removed Title 410 or the cap-cleared 503. With `catalog.tv_shows.enabled` off no TV events occur. A guest's replayed pending action records on replay, as for Movies.

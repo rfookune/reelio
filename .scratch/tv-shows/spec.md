@@ -200,15 +200,15 @@ The whole feature ships behind a config flag that is off until launch.
 
 - Events are signed-in only, recorded after the response, one per user action (never per Episode). Movie events keep their names, properties and meaning. New events:
 
-    | Event | Properties |
-    | --- | --- |
-    | `tv_show_viewed` | `tv_show_id`, `referrer` (as `movie_viewed`, without `picker`) |
-    | `tv_show_watchlisted`, `tv_show_unwatchlisted` | `tv_show_id`, `source` |
-    | `episode_marked_watched`, `episode_unmarked_watched` | `tv_show_id`, `season_id`, `episode_id`, `source`, `was_on_watchlist` |
-    | `season_marked_watched`, `season_unmarked_watched` | `tv_show_id`, `season_id`, `episode_count` |
-    | `tv_show_marked_watched`, `tv_show_unmarked_watched` | `tv_show_id`, `source`, `episode_count` |
-    | `tv_show_completed` | `tv_show_id` |
-    | `tv_show_action_undone` | `tv_show_id`, `action`, plus `season_id` or `episode_id` when the undone action had one |
+    | Event                                                | Properties                                                                              |
+    | ---------------------------------------------------- | --------------------------------------------------------------------------------------- |
+    | `tv_show_viewed`                                     | `tv_show_id`, `referrer` (as `movie_viewed`, without `picker`)                          |
+    | `tv_show_watchlisted`, `tv_show_unwatchlisted`       | `tv_show_id`, `source`                                                                  |
+    | `episode_marked_watched`, `episode_unmarked_watched` | `tv_show_id`, `season_id`, `episode_id`, `source`, `was_on_watchlist`                   |
+    | `season_marked_watched`, `season_unmarked_watched`   | `tv_show_id`, `season_id`, `episode_count`                                              |
+    | `tv_show_marked_watched`, `tv_show_unmarked_watched` | `tv_show_id`, `source`, `episode_count`                                                 |
+    | `tv_show_completed`                                  | `tv_show_id`                                                                            |
+    | `tv_show_action_undone`                              | `tv_show_id`, `action`, plus `season_id` or `episode_id` when the undone action had one |
 
 - Two events become kind-neutral: `movie_searched` becomes `title_searched` (same properties; `result_count` counts all page-1 results of both kinds) and `availability_link_clicked` becomes `{title_id, kind, country}`.
 - `season_id` and `episode_id` are local ids stored as plain integers with no foreign key. Whole-TV Show events carry no Season or Episode ids. No view event on the Removed Title 410 or the cap-cleared 503. With the flag off no TV events occur. A guest's replayed pending action records on replay.

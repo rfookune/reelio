@@ -11,19 +11,13 @@
             "poster_path": "/y13WOeZ2rz2Ezpws0RJ0I8sQpG4.jpg",
             "media_type": "tv",
             "original_language": "en",
-            "genre_ids": [
-                80,
-                18,
-                35
-            ],
+            "genre_ids": [80, 18, 35],
             "popularity": 239.3036,
             "first_air_date": "2022-11-13",
             "softcore": false,
             "vote_average": 8.3,
             "vote_count": 2917,
-            "origin_country": [
-                "US"
-            ]
+            "origin_country": ["US"]
         },
         {
             "adult": false,
@@ -46,10 +40,7 @@
                     "poster_path": "/9XNBQpcmfmmvWg7AgQA7ZErj9e6.jpg",
                     "media_type": "movie",
                     "original_language": "es",
-                    "genre_ids": [
-                        18,
-                        10749
-                    ],
+                    "genre_ids": [18, 10749],
                     "popularity": 0.5948,
                     "release_date": "2015-09-11",
                     "softcore": false,
@@ -69,9 +60,7 @@
             "poster_path": "/mQMWt7KormvYxsbjcHwNpAuNi2p.jpg",
             "media_type": "movie",
             "original_language": "en",
-            "genre_ids": [
-                18
-            ],
+            "genre_ids": [18],
             "popularity": 1.2635,
             "release_date": "1949-04-13",
             "softcore": false,
@@ -89,10 +78,7 @@
             "poster_path": "/bCGcTlYllZZjNyxVUw0U6ndq2rs.jpg",
             "media_type": "movie",
             "original_language": "en",
-            "genre_ids": [
-                35,
-                18
-            ],
+            "genre_ids": [35, 18],
             "popularity": 0.8226,
             "release_date": "2020-08-21",
             "softcore": false,
@@ -121,11 +107,7 @@
                     "poster_path": "/A2VwHvpeVHnPlMm9OCAfHc1jq21.jpg",
                     "media_type": "movie",
                     "original_language": "en",
-                    "genre_ids": [
-                        18,
-                        80,
-                        28
-                    ],
+                    "genre_ids": [18, 80, 28],
                     "popularity": 0.1703,
                     "release_date": "2024-08-03",
                     "softcore": false,
@@ -174,17 +156,13 @@
                     "poster_path": "/tqVCKISBGI82DU5kE4iQFxebIDp.jpg",
                     "media_type": "tv",
                     "original_language": "es",
-                    "genre_ids": [
-                        10764
-                    ],
+                    "genre_ids": [10764],
                     "popularity": 0.2796,
                     "first_air_date": "2024-04-25",
                     "softcore": false,
                     "vote_average": 10,
                     "vote_count": 1,
-                    "origin_country": [
-                        "MX"
-                    ]
+                    "origin_country": ["MX"]
                 }
             ]
         },
@@ -216,11 +194,7 @@
             "poster_path": "/g3Y1t6AXTVyRrz2DOIGsBeeA3YB.jpg",
             "media_type": "movie",
             "original_language": "en",
-            "genre_ids": [
-                80,
-                18,
-                53
-            ],
+            "genre_ids": [80, 18, 53],
             "popularity": 0.8676,
             "release_date": "1997-04-11",
             "softcore": false,
@@ -238,10 +212,7 @@
             "poster_path": "/2NVRCCkxVyY6WphAG0AiC4ISB0C.jpg",
             "media_type": "movie",
             "original_language": "en",
-            "genre_ids": [
-                99,
-                27
-            ],
+            "genre_ids": [99, 27],
             "popularity": 0.1995,
             "release_date": "2025-08-27",
             "softcore": false,
@@ -259,9 +230,7 @@
             "poster_path": "/r6IaUXcRnHZFe9DFttbg2Z0G01n.jpg",
             "media_type": "movie",
             "original_language": "en",
-            "genre_ids": [
-                37
-            ],
+            "genre_ids": [37],
             "popularity": 0.4049,
             "release_date": "1940-08-16",
             "softcore": false,
@@ -279,9 +248,7 @@
             "poster_path": "/AkEWbIwNiGnodenkWqXS4ktZAtP.jpg",
             "media_type": "movie",
             "original_language": "en",
-            "genre_ids": [
-                99
-            ],
+            "genre_ids": [99],
             "popularity": 0.7428,
             "release_date": "2021-05-30",
             "softcore": false,
@@ -299,9 +266,7 @@
             "poster_path": null,
             "media_type": "movie",
             "original_language": "en",
-            "genre_ids": [
-                99
-            ],
+            "genre_ids": [99],
             "popularity": 0.1266,
             "release_date": "2016-04-26",
             "softcore": false,
@@ -319,9 +284,7 @@
             "poster_path": "/9AhdfI2512VEq7mzx6aFj7GZipa.jpg",
             "media_type": "movie",
             "original_language": "en",
-            "genre_ids": [
-                99
-            ],
+            "genre_ids": [99],
             "popularity": 0.2855,
             "release_date": "2021-05-31",
             "softcore": false,
@@ -339,9 +302,7 @@
             "poster_path": "/dLKvAscxtjv6guZFkavDt7deXvE.jpg",
             "media_type": "movie",
             "original_language": "en",
-            "genre_ids": [
-                99
-            ],
+            "genre_ids": [99],
             "popularity": 0.2733,
             "release_date": "2021-06-01",
             "softcore": false,
@@ -359,9 +320,7 @@
             "poster_path": null,
             "media_type": "movie",
             "original_language": "en",
-            "genre_ids": [
-                10402
-            ],
+            "genre_ids": [10402],
             "popularity": 0.28,
             "release_date": "1944-08-08",
             "softcore": false,
@@ -379,10 +338,7 @@
             "poster_path": "/swtNoIdT7ujPgMIwyNnxjqud2g6.jpg",
             "media_type": "movie",
             "original_language": "en",
-            "genre_ids": [
-                10402,
-                99
-            ],
+            "genre_ids": [10402, 99],
             "popularity": 0.7351,
             "release_date": "1997-11-17",
             "softcore": false,
@@ -400,9 +356,7 @@
             "poster_path": "/1OTUvVuuP3XtvnutkTtUZaFbGhL.jpg",
             "media_type": "movie",
             "original_language": "en",
-            "genre_ids": [
-                99
-            ],
+            "genre_ids": [99],
             "popularity": 0.5306,
             "release_date": "2021-06-18",
             "softcore": false,
@@ -420,9 +374,7 @@
             "poster_path": "/1ggBfSFjGYBAn0HwDJyJCfMTsLa.jpg",
             "media_type": "movie",
             "original_language": "en",
-            "genre_ids": [
-                99
-            ],
+            "genre_ids": [99],
             "popularity": 0.7908,
             "release_date": "2000-05-31",
             "softcore": false,
@@ -440,10 +392,7 @@
             "poster_path": "/1fEW8XWJwB6EHvYRXVPoeikbvKz.jpg",
             "media_type": "movie",
             "original_language": "en",
-            "genre_ids": [
-                99,
-                18
-            ],
+            "genre_ids": [99, 18],
             "popularity": 0.196,
             "release_date": "2024-02-14",
             "softcore": false,

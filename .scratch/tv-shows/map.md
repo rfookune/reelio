@@ -35,7 +35,6 @@ A buildable spec at `.scratch/tv-shows/spec.md` for adding TV Shows to Reelio, w
 
 ## Not yet specified
 
-
 ## Out of scope
 
 - Discover sections for TV Shows, the Movie picker for TV Shows, and sitemap and SEO for TV Shows: follow-ups once the core model is settled.
