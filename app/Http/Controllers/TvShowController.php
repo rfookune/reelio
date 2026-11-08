@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\RecordEvent;
+use App\Enums\Surface;
 use App\Http\Exceptions\DetailsUnavailable;
 use App\Http\Exceptions\TitleRemoved;
 use App\Http\Support\VisitorCountry;
@@ -21,7 +23,7 @@ use Inertia\Support\Header;
 
 class TvShowController extends Controller
 {
-    public function show(Request $request, string $slug, string $id, Catalog $catalog, Ratings $ratings, WatchedProgress $progress): Response|RedirectResponse
+    public function show(Request $request, string $slug, string $id, Catalog $catalog, Ratings $ratings, WatchedProgress $progress, RecordEvent $recordEvent): Response|RedirectResponse
     {
         abort_unless(config('catalog.tv_shows.enabled'), 404);
         $title = $catalog->findTitle($id);
@@ -29,18 +31,20 @@ class TvShowController extends Controller
             return redirect($title->canonicalUrl(), 301);
         }
         $tvShow = $title;
+        $referrer = Surface::tvShowReferrerFrom($request->query('referrer'));
         throw_if($tvShow->isRemoved(), TitleRemoved::class, $tvShow, $request->user());
         if ($tvShow->hasSourceDetails() && $slug !== $tvShow->slug) {
-            return redirect($tvShow->canonicalUrl(), 301);
+            return redirect($tvShow->canonicalUrl($referrer), 301);
         }
         $result = $catalog->tvShowDetails($tvShow);
         throw_if($result->isRemoved(), TitleRemoved::class, $tvShow, $request->user());
         throw_if($result->isUnavailable() || ! $tvShow->hasSourceDetails(), DetailsUnavailable::class, $tvShow, $request->user());
         if ($slug !== $tvShow->slug) {
-            return redirect($tvShow->canonicalUrl(), 301);
+            return redirect($tvShow->canonicalUrl($referrer), 301);
         }
         if (! $request->hasHeader(Header::PARTIAL_COMPONENT)) {
             $tvShow->update(['last_viewed_at' => now()]);
+            $recordEvent->handle($request->user(), 'tv_show_viewed', ['tv_show_id' => $tvShow->id, 'referrer' => ($referrer ?? Surface::Direct)->value]);
         }
 
         $pageData = $catalog->tvShowPageData($tvShow);

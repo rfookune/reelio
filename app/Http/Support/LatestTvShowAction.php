@@ -2,6 +2,7 @@
 
 namespace App\Http\Support;
 
+use App\Actions\RecordEvent;
 use App\Models\TvShow;
 use App\Models\User;
 use App\Models\UserEpisode;
@@ -21,19 +22,22 @@ class LatestTvShowAction
 {
     private const SESSION_KEY = 'tv_actions.latest';
 
-    public function __construct(private TvShowByCatalogId $tvShows) {}
+    public function __construct(private TvShowByCatalogId $tvShows, private RecordEvent $recordEvent) {}
 
-    /** @param Closure(): void $apply */
-    public function change(Request $request, User $user, ?TvShow $tvShow, int $tmdbId, Closure $apply): string
+    /**
+     * @param  Closure(): void  $apply
+     * @param  array{action: string, season_id?: int, episode_id?: int}  $action
+     */
+    public function change(Request $request, User $user, ?TvShow $tvShow, int $tmdbId, Closure $apply, array $action): string
     {
-        return DB::transaction(function () use ($request, $user, $tvShow, $tmdbId, $apply): string {
+        return DB::transaction(function () use ($request, $user, $tvShow, $tmdbId, $apply, $action): string {
             User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
             $before = $this->snapshot($user, $tvShow);
             $apply();
             $token = (string) Str::uuid();
             $request->session()->put(self::SESSION_KEY, [
                 'user_id' => $user->id, 'tmdb_id' => $tmdbId, 'token' => $token, 'stored_at' => now()->timestamp,
-                'before' => $before, 'after' => $this->snapshot($user, $tvShow),
+                'action' => $action, 'before' => $before, 'after' => $this->snapshot($user, $tvShow),
             ]);
 
             return $token;
@@ -87,6 +91,8 @@ class LatestTvShowAction
                 $row->watchlisted_at = $latest['before']['watchlisted_at'];
                 $row->watched_at = $latest['before']['watched_at'];
             });
+
+            $this->recordEvent->handle($user, 'tv_show_action_undone', ['tv_show_id' => $tvShow->id, ...$latest['action']]);
 
             return true;
         });

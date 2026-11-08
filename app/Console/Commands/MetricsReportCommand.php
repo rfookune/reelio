@@ -11,7 +11,7 @@ use Illuminate\Console\Command;
  * Prints the beta's success metrics, run by hand: see `Metrics` for each definition. Counts are of signed-in users
  * only, as anonymous visitors aren't measured.
  */
-#[Signature('metrics:report {--days=28 : Days in the window of the conversion and the daily table}')]
+#[Signature('metrics:report {--days=28 : Days in the window of conversion, TV Shows and the daily table}')]
 #[Description('Report the beta\'s success metrics from the analytics events')]
 class MetricsReportCommand extends Command
 {
@@ -33,6 +33,14 @@ class MetricsReportCommand extends Command
         $this->components->twoColumnDetail('Weekly returning users (target 30%)', $this->describe($returning['rate'], "{$returning['returning']} of {$returning['activated']} activated"));
         $this->components->twoColumnDetail("Search-to-watchlist conversion, {$days} days (target 20%)", $this->describe($conversion['rate'], "{$conversion['converted']} of {$conversion['viewers']} viewers"));
         $this->components->twoColumnDetail('Movie picker usage, 7 days (target 15%)', $this->describe($picker['rate'], "{$picker['pickers']} of {$picker['active']} active"));
+
+        $tvShows = $metrics->tvShows($now, $days);
+        $this->newLine();
+        $this->components->info("TV Shows, {$days} days");
+        $this->components->twoColumnDetail('TV Shows watchlisted', (string) $tvShows['watchlisted']);
+        $this->components->twoColumnDetail('Users who marked at least one Episode', (string) $tvShows['marking_users']);
+        $this->components->twoColumnDetail('Episode marks per marking user', $tvShows['marks_per_user'] === null ? 'no data' : number_format($tvShows['marks_per_user'], 1));
+        $this->components->twoColumnDetail('TV Shows completed', (string) $tvShows['completed']);
 
         $this->newLine();
         $this->table(

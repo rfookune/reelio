@@ -50,7 +50,7 @@ test('a TV Show card has its kind, key, Name, first-air year, canonical link and
             'year' => 2019,
             'posterPath' => '/chernobyl.jpg',
             'ratings' => [],
-            'href' => $tvShow->canonicalUrl(),
+            'href' => $tvShow->canonicalUrl(Surface::Watchlist),
         ]));
 });
 
@@ -127,7 +127,7 @@ test('Watched lists a TV Show once an Episode is watched, ordered by its latest 
 
     $this->actingAs($user)->get(route('watched'))->assertOk()->assertInertia(fn (Assert $page) => $page
         ->where('titles.data', fn ($cards) => collect($cards)->pluck('key')->all() === ['tv:2', 'tv:3', '1'])
-        ->where('titles.data.0.href', $first->canonicalUrl()));
+        ->where('titles.data.0.href', $first->canonicalUrl(Surface::Watched)));
     $this->get(route('watched', ['sort' => 'oldest-watched']))->assertInertia(fn (Assert $page) => $page
         ->where('titles.data', fn ($cards) => collect($cards)->pluck('key')->all() === ['1', 'tv:3', 'tv:2']));
 });

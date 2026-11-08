@@ -18,7 +18,7 @@ class Metrics
 
     /**
      * Weekly returning users: of the activated users, the share with any event in the last 7 days. A user is
-     * activated by their first `movie_watchlisted` event before that window starts.
+     * activated by their first Movie or TV Show Watchlist event before that window starts.
      *
      * @return array{activated: int, returning: int, rate: ?float}
      */
@@ -32,7 +32,7 @@ class Metrics
                     select 1 from events as recent where recent.user_id = activated.user_id and recent.occurred_at >= ?
                 )) as returning
             from (
-                select distinct user_id from events where name = 'movie_watchlisted' and occurred_at < ?
+                select distinct user_id from events where name in ('movie_watchlisted', 'tv_show_watchlisted') and occurred_at < ?
             ) as activated
             SQL, [$weekStart, $weekStart]);
 
@@ -40,8 +40,8 @@ class Metrics
     }
 
     /**
-     * Search-to-watchlist conversion: of the users who opened a Movie (`movie_viewed`) in the window, the share who
-     * also put one on their Watchlist (`movie_watchlisted`) in it.
+     * Search-to-watchlist conversion: of the users who opened a Movie or TV Show in the window, the share who
+     * also put a Movie or TV Show on their Watchlist in it.
      *
      * @return array{viewers: int, converted: int, rate: ?float}
      */
@@ -53,10 +53,10 @@ class Metrics
             select count(distinct viewed.user_id) as viewers,
                 count(distinct viewed.user_id) filter (where exists (
                     select 1 from events as saved
-                    where saved.user_id = viewed.user_id and saved.name = 'movie_watchlisted' and saved.occurred_at >= ?
+                    where saved.user_id = viewed.user_id and saved.name in ('movie_watchlisted', 'tv_show_watchlisted') and saved.occurred_at >= ?
                 )) as converted
             from events as viewed
-            where viewed.name = 'movie_viewed' and viewed.occurred_at >= ?
+            where viewed.name in ('movie_viewed', 'tv_show_viewed') and viewed.occurred_at >= ?
             SQL, [$start, $start]);
 
         return ['viewers' => (int) $row->viewers, 'converted' => (int) $row->converted, 'rate' => $this->rate((int) $row->converted, (int) $row->viewers)];
@@ -95,7 +95,7 @@ class Metrics
                 sum(pool_size_total) as pool_size_total
             from (
                 select occurred_at::date as day,
-                    count(distinct user_id) filter (where name = 'movie_searched') as searching_users,
+                    count(distinct user_id) filter (where name = 'title_searched') as searching_users,
                     count(*) filter (where name = 'movie_picker_used') as picker_uses,
                     sum(case when properties->>'pool_size' ~ '^[0-9]{1,15}$' then (properties->>'pool_size')::bigint end) filter (where name = 'movie_picker_used') as pool_size_total
                 from events
@@ -119,6 +119,47 @@ class Metrics
                 ? null
                 : round((int) $row->pool_size_total / (int) $row->picker_uses, 1),
         ], $rows));
+    }
+
+    /**
+     * TV Shows in the window: Watchlist additions, users marking at least one Episode, Episode marks per
+     * marking user (including bulk marks), and completions. Anonymous roll-ups preserve action counts only.
+     *
+     * @return array{watchlisted: int, marking_users: int, marks_per_user: ?float, completed: int}
+     */
+    public function tvShows(CarbonImmutable $now, int $days): array
+    {
+        $start = $this->windowStart($now, $days);
+        $row = DB::selectOne(<<<'SQL'
+            with recent as (
+                select user_id, name,
+                    case when name = 'episode_marked_watched' then 1
+                        when name in ('season_marked_watched', 'tv_show_marked_watched')
+                            and properties->>'episode_count' ~ '^[0-9]{1,15}$'
+                        then (properties->>'episode_count')::bigint else 0 end as episode_marks
+                from events where occurred_at >= ?
+            ), counts as (
+                select count(*) filter (where name = 'tv_show_watchlisted') as watchlisted,
+                    count(*) filter (where name = 'tv_show_completed') as completed
+                from recent
+                union all
+                select coalesce(sum(count) filter (where name = 'tv_show_watchlisted'), 0),
+                    coalesce(sum(count) filter (where name = 'tv_show_completed'), 0)
+                from event_daily_counts where day >= ?::date
+            )
+            select (select sum(watchlisted) from counts) as watchlisted,
+                (select sum(completed) from counts) as completed,
+                count(distinct user_id) filter (where episode_marks > 0) as marking_users,
+                coalesce(sum(episode_marks), 0) as episode_marks
+            from recent
+            SQL, [$start, $start]);
+
+        return [
+            'watchlisted' => (int) $row->watchlisted,
+            'marking_users' => (int) $row->marking_users,
+            'marks_per_user' => (int) $row->marking_users === 0 ? null : round((int) $row->episode_marks / (int) $row->marking_users, 1),
+            'completed' => (int) $row->completed,
+        ];
     }
 
     private function windowStart(CarbonImmutable $now, int $days): string

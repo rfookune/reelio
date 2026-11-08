@@ -112,7 +112,7 @@ class UserListPage
         return [
             'kind' => TitleKind::TvShow->value, 'key' => "tv:{$show->tmdb_id}", 'tmdbId' => $show->tmdb_id,
             'title' => $show->isRemoved() ? 'Removed TV show' : 'Details temporarily unavailable',
-            'year' => null, 'posterPath' => null, 'ratings' => [], 'href' => $show->canonicalUrl(),
+            'year' => null, 'posterPath' => null, 'ratings' => [], 'href' => $show->canonicalUrl($this->list->surface()),
             'date' => Carbon::parse($show->getAttribute('entry_date'))->toJSON(),
         ];
     }
@@ -325,7 +325,7 @@ class UserListPage
             'year' => ($isTvShow ? $title->details->first_air_date : $title->release_date)?->year,
             'posterPath' => $title->poster_path,
             'ratings' => array_map(fn (ExternalRating $rating): array => $rating->toArray(), $ratings),
-            'href' => $isTvShow ? $title->canonicalUrl() : $title->canonicalUrl($this->list->surface()),
+            'href' => $title->canonicalUrl($this->list->surface()),
         ];
     }
 }

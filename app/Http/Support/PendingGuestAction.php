@@ -37,9 +37,9 @@ class PendingGuestAction
         $request->session()->put(self::SESSION_KEY, ['season_id' => $seasonId, 'watched' => $watched, 'stored_at' => now()->timestamp]);
     }
 
-    public static function storeTvShow(Request $request, int $tmdbId, bool $watched): void
+    public static function storeTvShow(Request $request, int $tmdbId, bool $watched, Surface $source): void
     {
-        $request->session()->put(self::SESSION_KEY, ['bulk_tv_show_tmdb_id' => $tmdbId, 'watched' => $watched, 'stored_at' => now()->timestamp]);
+        $request->session()->put(self::SESSION_KEY, ['bulk_tv_show_tmdb_id' => $tmdbId, 'watched' => $watched, 'source' => $source->value, 'stored_at' => now()->timestamp]);
     }
 
     public static function storeTvShowWatchlist(Request $request, int $tmdbId, bool $watchlisted, Surface $source): void
@@ -50,7 +50,7 @@ class PendingGuestAction
     /**
      * Takes the pending action out of the session, so it is applied at most once, if it has not expired.
      *
-     * @return array{tmdb_id: int, action: UserMovieAction, source: Surface}|array{episode_id: int, watched: bool}|array{season_id: int, watched: bool}|array{bulk_tv_show_tmdb_id: int, watched: bool}|array{tv_show_tmdb_id: int, watchlisted: bool, source: Surface}|null
+     * @return array{tmdb_id: int, action: UserMovieAction, source: Surface}|array{episode_id: int, watched: bool}|array{season_id: int, watched: bool}|array{bulk_tv_show_tmdb_id: int, watched: bool, source: Surface}|array{tv_show_tmdb_id: int, watchlisted: bool, source: Surface}|null
      */
     public static function pull(Request $request): ?array
     {
@@ -69,7 +69,7 @@ class PendingGuestAction
         }
 
         if (isset($pending['bulk_tv_show_tmdb_id'])) {
-            return ['bulk_tv_show_tmdb_id' => $pending['bulk_tv_show_tmdb_id'], 'watched' => $pending['watched']];
+            return ['bulk_tv_show_tmdb_id' => $pending['bulk_tv_show_tmdb_id'], 'watched' => $pending['watched'], 'source' => Surface::from($pending['source'])];
         }
 
         if (isset($pending['episode_id'])) {

@@ -17,7 +17,9 @@ const FAILURE_MESSAGE = "Couldn't save that. Try again.";
  * Marks or clears a whole TV Show from a Watchlist or Watched card, by catalog id, and offers one Undo. The page's
  * `userTvShows` is reloaded after each, so the card leaves the list or comes back as the server now has it.
  */
-export function useTvShowListActions() {
+export function useTvShowListActions(
+    source: () => 'watchlist' | 'watched' | 'tv-show' = () => 'tv-show',
+) {
     const page = usePage();
     const busy = ref(false);
     const http = useHttp<
@@ -102,6 +104,7 @@ export function useTvShowListActions() {
         busy.value = true;
 
         try {
+            http.source = source();
             const route = { tmdbId };
             const result =
                 operation === 'remove-watchlist'

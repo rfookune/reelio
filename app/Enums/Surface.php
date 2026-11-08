@@ -36,6 +36,13 @@ enum Surface: string
         return [self::Discover, self::Search, self::Watchlist, self::Watched, self::Picker, self::Direct];
     }
 
+    public static function tvShowReferrerFrom(mixed $value): ?self
+    {
+        $surface = self::movieReferrerFrom($value);
+
+        return $surface === self::Picker ? null : $surface;
+    }
+
     /** The Movie referrer a query value names, or null when it is missing, not a string or not a Movie referrer. */
     public static function movieReferrerFrom(mixed $value): ?self
     {

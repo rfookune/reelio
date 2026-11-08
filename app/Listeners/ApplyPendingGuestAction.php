@@ -44,7 +44,7 @@ class ApplyPendingGuestAction
 
         try {
             if (isset($pending['tv_show_tmdb_id'])) {
-                $result = $this->tvWatchlist->handle($this->request, $event->user, (string) $pending['tv_show_tmdb_id'], $pending['watchlisted']);
+                $result = $this->tvWatchlist->handle($this->request, $event->user, (string) $pending['tv_show_tmdb_id'], $pending['watchlisted'], $pending['source']);
                 Inertia::flash('tvWatchlistAction', ['tmdbId' => $pending['tv_show_tmdb_id'], 'undoToken' => $result['undoToken'], 'watchlisted' => $result['watchlisted']]);
 
                 return;
@@ -58,7 +58,7 @@ class ApplyPendingGuestAction
                 return;
             }
             if (isset($pending['bulk_tv_show_tmdb_id'])) {
-                $result = $this->tvShowWatched->handle($this->request, $event->user, (string) $pending['bulk_tv_show_tmdb_id'], $pending['watched']);
+                $result = $this->tvShowWatched->handle($this->request, $event->user, (string) $pending['bulk_tv_show_tmdb_id'], $pending['watched'], $pending['source']);
                 Inertia::flash('episodeAction', ['tmdbId' => $pending['bulk_tv_show_tmdb_id'], 'undoToken' => $result['undoToken'], 'message' => $pending['watched'] ? 'TV show marked as watched' : 'TV show cleared']);
 
                 return;

@@ -17,7 +17,7 @@ use Illuminate\Validation\ValidationException;
 /** @phpstan-import-type Progress from WatchedProgress */
 class ChangeEpisodeWatched
 {
-    public function __construct(private WatchedProgress $progress, private LatestTvShowAction $latest) {}
+    public function __construct(private WatchedProgress $progress, private LatestTvShowAction $latest, private RecordEvent $recordEvent) {}
 
     /** @return ($user is null ? null : array{progress: Progress, undoToken: string, watchlisted: bool}) */
     public function handle(Request $request, ?User $user, TvShow $tvShow, Episode $episode, bool $watched): ?array
@@ -29,19 +29,25 @@ class ChangeEpisodeWatched
         }
 
         $token = $this->latest->change($request, $user, $tvShow, $tvShow->tmdb_id, function () use ($user, $tvShow, $episode, $watched): void {
+            $wasOnWatchlist = $tvShow->isWatchlistedBy($user);
             $wasCompleted = $this->progress->for($tvShow, $user)['state'] === ProgressState::Completed;
             if ($watched) {
                 UserEpisode::query()->updateOrCreate(['user_id' => $user->id, 'episode_id' => $episode->id], ['watched_at' => now()]);
             } else {
                 UserEpisode::query()->where('user_id', $user->id)->where('episode_id', $episode->id)->delete();
             }
+            $this->recordEvent->handle($user, $watched ? 'episode_marked_watched' : 'episode_unmarked_watched', [
+                'tv_show_id' => $tvShow->id, 'season_id' => $episode->season_id, 'episode_id' => $episode->id,
+                'source' => 'tv-show', 'was_on_watchlist' => $wasOnWatchlist,
+            ]);
             $progress = $this->progress->for($tvShow, $user);
             if (! $wasCompleted && $progress['state'] === ProgressState::Completed) {
                 UserTitle::change($user, $tvShow, function (UserTitle $row): void {
                     $row->watchlisted_at = null;
                 });
+                $this->recordEvent->handle($user, 'tv_show_completed', ['tv_show_id' => $tvShow->id]);
             }
-        });
+        }, ['action' => $watched ? 'mark_as_watched' : 'clear_watched', 'episode_id' => $episode->id]);
 
         return ['progress' => $this->progress->for($tvShow, $user), 'undoToken' => $token, 'watchlisted' => $tvShow->isWatchlistedBy($user)];
     }

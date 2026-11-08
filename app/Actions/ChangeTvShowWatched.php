@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\Surface;
 use App\Http\Exceptions\DetailsUnavailable;
 use App\Http\Exceptions\TitleRemoved;
 use App\Http\Support\BulkWatchedChange;
@@ -35,7 +36,7 @@ class ChangeTvShowWatched
      *
      * @return ($user is null ? null : array{progress: ?Progress, undoToken: string, watchlisted: bool})
      */
-    public function handle(Request $request, ?User $user, string $tmdbId, bool $watched): ?array
+    public function handle(Request $request, ?User $user, string $tmdbId, bool $watched, Surface $source): ?array
     {
         $catalogId = $this->tvShows->catalogId($tmdbId);
 
@@ -49,7 +50,7 @@ class ChangeTvShowWatched
         $tvShow = $watched ? $this->tvShows->findOrCreate($request, $tmdbId) : $this->tvShows->find($tmdbId);
         throw_if($watched && $tvShow?->isRemoved(), TitleRemoved::class, $tvShow, $user);
         if ($tvShow === null) {
-            return ['progress' => null, 'undoToken' => $this->latest->change($request, $user, null, $catalogId, fn () => null), 'watchlisted' => false];
+            return ['progress' => null, 'undoToken' => $this->latest->change($request, $user, null, $catalogId, fn () => null, ['action' => 'clear_watched']), 'watchlisted' => false];
         }
         if ($watched) {
             $this->ensureEpisodesStored($tvShow, $user);
@@ -57,7 +58,7 @@ class ChangeTvShowWatched
         $eligible = $tvShow->episodes()->getQuery()->whereNull('removed_at')->whereDate('air_date', '<=', today())
             ->whereHas('season', fn (Builder $season): Builder => $season->where('season_number', '>', 0)->whereNull('removed_at'));
 
-        return $this->change->apply($request, $user, $tvShow, $watched, $eligible, clearsAll: true);
+        return $this->change->apply($request, $user, $tvShow, $watched, $eligible, clearsAll: true, source: $source);
     }
 
     /** A cap-cleared TV Show or one with no Episodes stored is refreshed first; if that fails nothing changes. */

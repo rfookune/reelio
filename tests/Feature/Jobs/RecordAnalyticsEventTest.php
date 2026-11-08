@@ -1,6 +1,8 @@
 <?php
 
 use App\Jobs\RecordAnalyticsEvent;
+use App\Models\Episode;
+use App\Models\TvShow;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -70,4 +72,22 @@ test('redelivering the same UUID preserves one event while distinct events remai
 
     $this->assertDatabaseCount('events', 2);
     expect(DB::table('events')->where('uuid', '2ab37180-1884-4328-8b4a-981d723fc247')->value('properties'))->toBe('{}');
+});
+
+test('TV analytics retain plain local Season and Episode ids after the catalog rows are purged', function () {
+    $episode = Episode::factory()->create();
+    $properties = ['tv_show_id' => $episode->title_id, 'season_id' => $episode->season_id, 'episode_id' => $episode->id, 'source' => 'tv-show', 'was_on_watchlist' => false];
+    $user = User::factory()->create();
+    TvShow::query()->findOrFail($episode->title_id)->delete();
+    $job = new RecordAnalyticsEvent(
+        uuid: '2ab37180-1884-4328-8b4a-981d723fc247',
+        userId: $user->id,
+        name: 'episode_marked_watched',
+        properties: $properties,
+        occurredAt: '2026-11-05 12:00:00',
+    );
+
+    $job->handle();
+
+    expect(json_decode(DB::table('events')->sole()->properties, true))->toBe($properties);
 });

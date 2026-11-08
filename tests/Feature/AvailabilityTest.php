@@ -158,7 +158,7 @@ test('the watch-page link redirects to TMDB for a supported country and records 
         ->assertHeader('X-Robots-Tag', 'noindex');
 
     Queue::assertPushed(RecordAnalyticsEvent::class, fn ($job) => $job->name === 'availability_link_clicked'
-        && $job->properties === ['movie_id' => $movie->id, 'country' => 'GB']);
+        && $job->properties === ['title_id' => $movie->id, 'kind' => 'movie', 'country' => 'GB']);
 });
 
 test('a guest following the watch-page link is redirected without an event', function () {

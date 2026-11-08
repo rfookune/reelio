@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Surface;
 use App\Http\Exceptions\DetailsUnavailable;
 use App\Http\Support\RateLimitKey;
 use App\Services\Catalog\Catalog;
@@ -24,6 +25,6 @@ class TvShowEntryController extends Controller
         throw_if($result->isUnavailable(), DetailsUnavailable::class);
         abort_if($result->value === null, 404);
 
-        return redirect($result->value->canonicalUrl(), 301)->header('X-Robots-Tag', 'noindex');
+        return redirect($result->value->canonicalUrl(Surface::tvShowReferrerFrom($request->query('referrer'))), 301)->header('X-Robots-Tag', 'noindex');
     }
 }

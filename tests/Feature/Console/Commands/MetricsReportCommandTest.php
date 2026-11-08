@@ -60,14 +60,14 @@ test('picker usage is the share of the last 7 days\' active users who used the p
 
 test('the daily table counts distinct users searching, never repeat searches, and reads rolled-up days for picker use', function () {
     [$one, $two] = User::factory()->count(2)->create();
-    recordedEvent($one, 'movie_searched', '2026-11-06 10:00:00', ['query_length' => 3, 'result_count' => 0]);
-    recordedEvent($one, 'movie_searched', '2026-11-06 11:00:00', ['query_length' => 4, 'result_count' => 5]);
-    recordedEvent($two, 'movie_searched', '2026-11-06 12:00:00', ['query_length' => 4, 'result_count' => 5]);
+    recordedEvent($one, 'title_searched', '2026-11-06 10:00:00', ['query_length' => 3, 'result_count' => 0]);
+    recordedEvent($one, 'title_searched', '2026-11-06 11:00:00', ['query_length' => 4, 'result_count' => 5]);
+    recordedEvent($two, 'title_searched', '2026-11-06 12:00:00', ['query_length' => 4, 'result_count' => 5]);
     recordedEvent($one, 'movie_picker_used', '2026-11-06 13:00:00', ['pool_size' => 4]);
     recordedEvent($two, 'movie_picker_used', '2026-11-06 14:00:00', ['pool_size' => 8]);
     DB::table('event_daily_counts')->insert([
         ['day' => '2026-11-04', 'name' => 'movie_picker_used', 'count' => 2, 'pool_size_total' => 9],
-        ['day' => '2026-11-04', 'name' => 'movie_searched', 'count' => 5, 'pool_size_total' => null],
+        ['day' => '2026-11-04', 'name' => 'title_searched', 'count' => 5, 'pool_size_total' => null],
     ]);
 
     $this->artisan('metrics:report --days=7')
@@ -91,4 +91,39 @@ test('with no events it reports no data instead of failing', function () {
 
 test('a window under one day is refused', function () {
     $this->artisan('metrics:report --days=0')->assertFailed();
+});
+
+test('TV-only users activate and convert alongside users of both kinds', function () {
+    [$tv, $both, $lapsed] = User::factory()->count(3)->create();
+    recordedEvent($tv, 'tv_show_watchlisted', '2026-10-20 10:00:00');
+    recordedEvent($tv, 'tv_show_viewed', '2026-11-05 10:00:00');
+    recordedEvent($tv, 'tv_show_watchlisted', '2026-11-05 10:01:00');
+    recordedEvent($both, 'movie_watchlisted', '2026-10-20 10:00:00');
+    recordedEvent($both, 'tv_show_watchlisted', '2026-10-20 10:01:00');
+    recordedEvent($both, 'movie_viewed', '2026-11-05 10:00:00');
+    recordedEvent($both, 'tv_show_viewed', '2026-11-05 10:01:00');
+    recordedEvent($lapsed, 'tv_show_watchlisted', '2026-10-20 10:00:00');
+
+    $this->artisan('metrics:report --days=7')
+        ->expectsOutputToContain('66.7% (2 of 3 activated)')
+        ->expectsOutputToContain('50.0% (1 of 2 viewers)')
+        ->assertSuccessful();
+});
+
+test('the TV Shows block counts bulk Episode marks as Episodes rather than actions within its window', function () {
+    [$one, $two] = User::factory()->count(2)->create();
+    recordedEvent($one, 'tv_show_watchlisted', '2026-11-05 10:00:00');
+    recordedEvent($one, 'episode_marked_watched', '2026-11-05 10:00:00');
+    recordedEvent($one, 'season_marked_watched', '2026-11-05 10:00:00', ['episode_count' => 3]);
+    recordedEvent($two, 'tv_show_marked_watched', '2026-11-05 10:00:00', ['episode_count' => 6]);
+    recordedEvent($one, 'tv_show_completed', '2026-11-05 10:00:00');
+    recordedEvent($two, 'tv_show_unmarked_watched', '2026-11-05 10:00:00', ['episode_count' => 6]);
+    recordedEvent($two, 'tv_show_marked_watched', '2026-11-06 10:00:00', ['episode_count' => 0]);
+    recordedEvent(User::factory()->create(), 'tv_show_marked_watched', '2026-11-06 10:00:00', ['episode_count' => 0]);
+    recordedEvent($two, 'tv_show_completed', '2026-09-01 10:00:00');
+
+    $this->artisan('metrics:report --days=7')->expectsOutputToContain('TV Shows, 7 days')->assertSuccessful();
+    expect(app(Metrics::class)->tvShows(now()->toImmutable(), 7))->toBe([
+        'watchlisted' => 1, 'marking_users' => 2, 'marks_per_user' => 5.0, 'completed' => 1,
+    ]);
 });

@@ -26,15 +26,15 @@ test('events older than 13 months become one anonymous count per day and event n
     $other = User::factory()->create();
     seedEvent($user, 'movie_viewed', '2025-10-01 03:00:00', ['movie_id' => 1, 'referrer' => 'discover']);
     seedEvent($other, 'movie_viewed', '2025-10-01 22:00:00', ['movie_id' => 2, 'referrer' => 'search']);
-    seedEvent($user, 'movie_searched', '2025-10-01 09:00:00', ['query_length' => 4, 'result_count' => 9]);
+    seedEvent($user, 'title_searched', '2025-10-01 09:00:00', ['query_length' => 4, 'result_count' => 9]);
     seedEvent($user, 'movie_viewed', '2025-10-02 09:00:00', ['movie_id' => 1, 'referrer' => 'discover']);
 
     RollUpEvents::dispatchSync();
 
     $this->assertDatabaseEmpty('events');
     expect(DB::table('event_daily_counts')->orderBy('day')->orderBy('name')->get(['day', 'name', 'count', 'pool_size_total'])->map(fn ($row) => (array) $row)->all())->toBe([
-        ['day' => '2025-10-01', 'name' => 'movie_searched', 'count' => 1, 'pool_size_total' => null],
         ['day' => '2025-10-01', 'name' => 'movie_viewed', 'count' => 2, 'pool_size_total' => null],
+        ['day' => '2025-10-01', 'name' => 'title_searched', 'count' => 1, 'pool_size_total' => null],
         ['day' => '2025-10-02', 'name' => 'movie_viewed', 'count' => 1, 'pool_size_total' => null],
     ]);
 });
@@ -89,4 +89,17 @@ test('a picker event with a malformed pool size is counted and does not stop the
     RollUpEvents::dispatchSync();
 
     $this->assertDatabaseHas('event_daily_counts', ['name' => 'movie_picker_used', 'count' => 2, 'pool_size_total' => 5]);
+});
+
+test('TV bulk events roll up as action counts and discard Episode totals', function () {
+    $user = User::factory()->create();
+    seedEvent($user, 'season_marked_watched', '2025-10-01 03:00:00', ['tv_show_id' => 1, 'season_id' => 2, 'episode_count' => 4]);
+    seedEvent($user, 'season_marked_watched', '2025-10-01 04:00:00', ['tv_show_id' => 1, 'season_id' => 3, 'episode_count' => 7]);
+    seedEvent($user, 'title_searched', '2025-10-01 05:00:00', ['query_length' => 5, 'result_count' => 12]);
+
+    RollUpEvents::dispatchSync();
+
+    $this->assertDatabaseEmpty('events');
+    $this->assertDatabaseHas('event_daily_counts', ['name' => 'season_marked_watched', 'count' => 2, 'pool_size_total' => null]);
+    $this->assertDatabaseHas('event_daily_counts', ['name' => 'title_searched', 'count' => 1, 'pool_size_total' => null]);
 });

@@ -212,8 +212,8 @@ test('each signed-in page-1 search records its query length and result count, ne
     $this->actingAs($user)->get(route('search', ['q' => 'interstellar', 'page' => 2]))->assertOk();
 
     Queue::assertPushed(RecordAnalyticsEvent::class, fn (RecordAnalyticsEvent $job) => $job->userId === $user->id
-        && $job->name === 'movie_searched'
-        && $job->properties === ['query_length' => 12, 'result_count' => 25]);
+        && $job->name === 'title_searched'
+        && $job->properties === ['query_length' => 12, 'result_count' => 20]);
     Queue::assertPushed(RecordAnalyticsEvent::class, 1);
 });
 
@@ -311,7 +311,7 @@ test('a TV Show with a row links to its canonical URL, shows its stored IMDb rat
     fakeSearchWithTrending(['inter' => [[movieListing(5, kind: TitleKind::TvShow)]]]);
 
     $this->get(route('search', ['q' => 'inter']))->assertInertia(fn (Assert $page) => $page
-        ->where('results.data.0.href', $tvShow->canonicalUrl())
+        ->where('results.data.0.href', $tvShow->canonicalUrl(Surface::Search))
         ->where('results.data.0.seasonCount', 3)
         ->where('results.data.0.ratings.0.source', 'imdb'));
 });
@@ -353,3 +353,14 @@ test('the page says whether TV Shows are searched, so it can offer the kind chip
 
     $this->get(route('search'))->assertInertia(fn (Assert $page) => $page->where('includesTvShows', $enabled));
 })->with([true, false]);
+
+test('title search counts both kinds shown on page one and excludes disabled TV Shows', function (bool $enabled, int $count) {
+    config(['catalog.tv_shows.enabled' => $enabled]);
+    Queue::fake([RecordAnalyticsEvent::class]);
+    fakeSearchWithTrending(['inter' => [[movieListing(1), movieListing(2, kind: TitleKind::TvShow)], [movieListing(3)]]]);
+
+    $this->actingAs(User::factory()->create())->get(route('search', ['q' => 'inter']))->assertOk();
+
+    Queue::assertPushed(RecordAnalyticsEvent::class, fn ($job) => $job->name === 'title_searched' && $job->properties === ['query_length' => 5, 'result_count' => $count]);
+    Queue::assertPushed(RecordAnalyticsEvent::class, 1);
+})->with([[true, 2], [false, 1]]);

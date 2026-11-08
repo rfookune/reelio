@@ -3,6 +3,7 @@
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
+use Illuminate\Support\Facades\DB;
 
 it('filters the Watchlist by kind, marks a TV Show as watched after confirming, and undoes it', function (int $width) {
     config(['catalog.image_base_url' => '/test-images/']);
@@ -37,6 +38,7 @@ it('filters the Watchlist by kind, marks a TV Show as watched after confirming, 
         ->assertSee('TV show marked as watched')->assertSee('Watchlist · 2')
         ->assertNotPresent('[data-card-key="tv:2"]')->assertSeeIn('[data-filter-chip="tv-shows"]', '1');
     $this->assertDatabaseCount('user_episodes', 2);
+    expect(DB::table('events')->where('name', 'tv_show_marked_watched')->where('properties->source', 'watchlist')->count())->toBe(1);
     expect($page->script('document.activeElement.closest("[data-card-key]")?.dataset.cardKey'))->toBe('tv:3');
 
     $page->click('[data-sonner-toast]:has-text("TV show marked as watched") [data-action]')
@@ -62,6 +64,7 @@ it('lists a watched TV Show and clears its Episodes from the Watched menu with U
         ->click('[data-card-key="tv:2"] [data-slot="movie-menu"]')->click('Clear Watched')
         ->assertSee('TV show cleared')->assertSee('Watched · 1')->assertNotPresent('[data-card-key="tv:2"]');
     $this->assertDatabaseCount('user_episodes', 0);
+    expect(DB::table('events')->where('name', 'tv_show_unmarked_watched')->where('properties->source', 'watched')->count())->toBe(1);
     expect($page->script('document.activeElement.closest("[data-card-key]")?.dataset.cardKey'))->toBe('1');
 
     $page->click('[data-sonner-toast]:has-text("TV show cleared") [data-action]')

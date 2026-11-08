@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Surface;
 use App\Enums\TitleKind;
 use Database\Factories\TvShowFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -33,8 +34,8 @@ class TvShow extends Title
         return $user !== null && $this->userTitles()->whereBelongsTo($user)->whereNotNull('watchlisted_at')->exists();
     }
 
-    public function canonicalUrl(): string
+    public function canonicalUrl(?Surface $referrer = null): string
     {
-        return route('tv-shows.show', ['slug' => $this->slug ?? 'tv-show', 'id' => $this->id]);
+        return route('tv-shows.show', ['slug' => $this->slug ?? 'tv-show', 'id' => $this->id, 'referrer' => $referrer?->value]);
     }
 }

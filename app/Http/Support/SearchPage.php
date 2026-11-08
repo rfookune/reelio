@@ -33,7 +33,7 @@ use Inertia\ScrollMetadata;
  * Results hold TV Shows beside Movies, each by its kind and catalog id (`key`: the catalog id, or `tv:` and it for a
  * TV Show), linking through its own entry route; with TV Shows off they are dropped. A TV Show has no Movie
  * Watchlist toggle, so `userMovies` covers Movies only.
- * A results page records `movie_searched`; a reload of `userMovies` alone records nothing and asks no source.
+ * A results page records `title_searched`; a reload of `userMovies` alone records nothing and asks no source.
  *
  * @phpstan-type Card array{tmdbId: int, title: ?string, year: ?int, posterPath: ?string, ratings: list<array{source: string, name: string, value: float, voteCount: int}>, href: string}
  * @phpstan-type SearchCard array{kind: string, key: string, tmdbId: int, title: ?string, year: ?int, posterPath: ?string, ratings: list<array{source: string, name: string, value: float, voteCount: int}>, href: string, seasonCount?: ?int}
@@ -127,7 +127,7 @@ class SearchPage
     }
 
     /**
-     * The page's results. A signed-in viewer's first page records `movie_searched` with the query's length and the
+     * The page's results. A signed-in viewer's first page records `title_searched` with the query's length and the
      * result count, never its text.
      *
      * @return array{data: list<array{kind: string, key: string, tmdbId: int, title: ?string, year: ?int, posterPath: ?string, ratings: list<array{source: string, name: string, value: float, voteCount: int}>, href: string, seasonCount?: ?int, page: int}>}
@@ -137,7 +137,7 @@ class SearchPage
         $results = $this->search()?->value;
 
         if ($results !== null && $this->page === 1) {
-            $this->recordEvent->handle($this->user, 'movie_searched', ['query_length' => mb_strlen($this->query), 'result_count' => $results->totalResults]);
+            $this->recordEvent->handle($this->user, 'title_searched', ['query_length' => mb_strlen($this->query), 'result_count' => count($this->listings())]);
         }
 
         return ['data' => array_map(fn (MovieListing $listing): array => [...$this->card($listing->kind, $listing->tmdbId, $listing->title, $listing->releaseDate, $listing->posterPath), 'page' => $this->page], $this->listings())];
@@ -285,7 +285,7 @@ class SearchPage
             'posterPath' => $posterPath,
             'ratings' => array_map(fn (ExternalRating $rating): array => $rating->toArray(), $ratings[$tmdbId] ?? []),
             'href' => $kind === TitleKind::TvShow
-                ? $tvShow?->canonicalUrl() ?? route('tv-shows.entry', ['tmdbId' => $tmdbId, 'referrer' => $referrer])
+                ? $tvShow?->canonicalUrl(Surface::Search) ?? route('tv-shows.entry', ['tmdbId' => $tmdbId, 'referrer' => $referrer])
                 : $this->rows()->get($tmdbId)?->canonicalUrl(Surface::Search) ?? route('movies.entry', ['tmdbId' => $tmdbId, 'referrer' => $referrer]),
             ...($kind === TitleKind::TvShow ? ['seasonCount' => $tvShow?->details?->season_count] : []),
         ];

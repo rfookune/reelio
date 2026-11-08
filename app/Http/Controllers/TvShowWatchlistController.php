@@ -31,7 +31,7 @@ class TvShowWatchlistController extends Controller
 
             return $request->expectsJson() ? response()->json(['redirect' => route('login')]) : redirect()->route('login');
         }
-        $result = $action->handle($request, $request->user(), $tmdbId, $watchlisted);
+        $result = $action->handle($request, $request->user(), $tmdbId, $watchlisted, $request->source());
 
         return $request->expectsJson() ? response()->json($result) : back();
     }

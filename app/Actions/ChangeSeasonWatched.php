@@ -30,7 +30,7 @@ class ChangeSeasonWatched
 
         $eligible = $season->episodes()->getQuery()->whereNull('removed_at')->whereDate('air_date', '<=', today());
 
-        return $this->change->apply($request, $user, $tvShow, $watched, $eligible, clearsAll: false);
+        return $this->change->apply($request, $user, $tvShow, $watched, $eligible, clearsAll: false, seasonId: $season->id);
     }
 
     private function validate(TvShow $tvShow, Season $season, ?User $user): void

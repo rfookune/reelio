@@ -25,7 +25,7 @@ class AvailabilityLinkController extends Controller
         $country = $request->query('country');
         abort_unless(VisitorCountry::isSupported($country), 404);
 
-        $recordEvent->handle($request->user(), 'availability_link_clicked', ['movie_id' => $movie->id, 'country' => $country]);
+        $recordEvent->handle($request->user(), 'availability_link_clicked', ['title_id' => $movie->id, 'kind' => $movie->kind->value, 'country' => $country]);
 
         return redirect()->away(sprintf(self::TMDB_WATCH_PAGE, $movie->tmdb_id, $country))->header('X-Robots-Tag', 'noindex');
     }

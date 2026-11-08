@@ -98,7 +98,7 @@ const {
     markAsWatched,
     clearWatched,
     removeWatchlist,
-} = useTvShowListActions();
+} = useTvShowListActions(() => props.collection);
 const markingTvShow = ref<PosterCardMovie | null>(null);
 const confirmingMark = computed({
     get: () => markingTvShow.value !== null,
