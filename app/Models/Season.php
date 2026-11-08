@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Database\Factories\SeasonFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +16,12 @@ class Season extends Model
 {
     /** @use HasFactory<SeasonFactory> */
     use HasFactory;
+
+    #[Scope]
+    protected function ordered(Builder $query): void
+    {
+        $query->orderByRaw('CASE WHEN season_number = 0 THEN 1 ELSE 0 END')->orderBy('season_number');
+    }
 
     /** @return array<string, string> */
     protected function casts(): array

@@ -27,7 +27,7 @@ class WatchedProgress
             }
         }
         $seasons = $tvShow->seasons()->whereNull('removed_at')->with(['episodes' => fn ($query) => $query->whereNull('removed_at')->orderBy('episode_number')->orderBy('id')])
-            ->orderByRaw('CASE WHEN season_number = 0 THEN 1 ELSE 0 END')->orderBy('season_number')->get()
+            ->ordered()->get()
             ->map(function (Season $season) use ($marks): array {
                 $episodes = $season->episodes->map(fn (Episode $episode): array => [
                     'id' => $episode->id, 'number' => $episode->episode_number, 'name' => $episode->name,

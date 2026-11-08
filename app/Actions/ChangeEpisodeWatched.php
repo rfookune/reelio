@@ -17,15 +17,6 @@ class ChangeEpisodeWatched
 {
     public function __construct(private WatchedProgress $progress, private LatestTvShowAction $latest) {}
 
-    public function validateEpisode(TvShow $tvShow, Episode $episode): void
-    {
-        abort_unless(config('catalog.tv_shows.enabled'), 404);
-        abort_if($tvShow->isRemoved() || $episode->removed_at !== null || $episode->season->removed_at !== null || $episode->title_id !== $tvShow->id, 404);
-        if ($episode->air_date === null || $episode->air_date->greaterThan(today())) {
-            throw ValidationException::withMessages(['episode' => 'This Episode has not aired yet.']);
-        }
-    }
-
     /** @return array{progress: Progress, undoToken: string, watchlisted: bool} */
     public function handle(Request $request, User $user, TvShow $tvShow, Episode $episode, bool $watched): array
     {
@@ -46,5 +37,14 @@ class ChangeEpisodeWatched
         });
 
         return ['progress' => $this->progress->for($tvShow, $user), 'undoToken' => $token, 'watchlisted' => $tvShow->isWatchlistedBy($user)];
+    }
+
+    public function validateEpisode(TvShow $tvShow, Episode $episode): void
+    {
+        abort_unless(config('catalog.tv_shows.enabled'), 404);
+        abort_if($tvShow->isRemoved() || $episode->removed_at !== null || $episode->season->removed_at !== null || $episode->title_id !== $tvShow->id, 404);
+        if ($episode->air_date === null || $episode->air_date->greaterThan(today())) {
+            throw ValidationException::withMessages(['episode' => 'This Episode has not aired yet.']);
+        }
     }
 }
