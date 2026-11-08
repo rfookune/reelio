@@ -10,11 +10,13 @@ import {
     destroy as removeFromWatchlist,
 } from '@/actions/App/Http/Controllers/TvShowWatchlistController';
 import {
-    updateSeason,
-    destroySeason,
-    updateTvShow,
-    destroyTvShow,
-} from '@/actions/App/Http/Controllers/BulkWatchedController';
+    update as updateSeason,
+    destroy as destroySeason,
+} from '@/actions/App/Http/Controllers/SeasonWatchedController';
+import {
+    update as updateTvShow,
+    destroy as destroyTvShow,
+} from '@/actions/App/Http/Controllers/TvShowWatchedController';
 import undoRoute from '@/actions/App/Http/Controllers/TvShowUndoController';
 
 export type Episode = {

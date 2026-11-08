@@ -2,7 +2,6 @@
 
 use App\Enums\UserMovieAction;
 use App\Http\Controllers\AvailabilityLinkController;
-use App\Http\Controllers\BulkWatchedController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\CspReportController;
 use App\Http\Controllers\DiscoverController;
@@ -14,11 +13,13 @@ use App\Http\Controllers\MoviePickerController;
 use App\Http\Controllers\RobotsController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SearchRatingsController;
+use App\Http\Controllers\SeasonWatchedController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\TvShowAvailabilityLinkController;
 use App\Http\Controllers\TvShowController;
 use App\Http\Controllers\TvShowEntryController;
 use App\Http\Controllers\TvShowUndoController;
+use App\Http\Controllers\TvShowWatchedController;
 use App\Http\Controllers\TvShowWatchlistController;
 use App\Http\Controllers\UndoController;
 use App\Http\Controllers\UserMovieListController;
@@ -49,10 +50,10 @@ Route::scopeBindings()->middleware('throttle:user-movie-actions')->group(functio
     Route::delete('tv-shows/tmdb/{tmdbId}/watchlist', [TvShowWatchlistController::class, 'destroy'])->whereNumber('tmdbId')->name('tv-shows.watchlist.destroy');
     Route::put('tv-shows/{tvShow}/seasons/{season}/episodes/{episode}/watched', [EpisodeWatchedController::class, 'update'])->name('tv-shows.episodes.watched.update');
     Route::delete('tv-shows/{tvShow}/seasons/{season}/episodes/{episode}/watched', [EpisodeWatchedController::class, 'destroy'])->name('tv-shows.episodes.watched.destroy');
-    Route::put('tv-shows/{tvShow}/seasons/{season}/watched', [BulkWatchedController::class, 'updateSeason'])->name('tv-shows.seasons.watched.update');
-    Route::delete('tv-shows/{tvShow}/seasons/{season}/watched', [BulkWatchedController::class, 'destroySeason'])->name('tv-shows.seasons.watched.destroy');
-    Route::put('tv-shows/tmdb/{tmdbId}/watched', [BulkWatchedController::class, 'updateTvShow'])->whereNumber('tmdbId')->name('tv-shows.watched.update');
-    Route::delete('tv-shows/tmdb/{tmdbId}/watched', [BulkWatchedController::class, 'destroyTvShow'])->whereNumber('tmdbId')->name('tv-shows.watched.destroy');
+    Route::put('tv-shows/{tvShow}/seasons/{season}/watched', [SeasonWatchedController::class, 'update'])->name('tv-shows.seasons.watched.update');
+    Route::delete('tv-shows/{tvShow}/seasons/{season}/watched', [SeasonWatchedController::class, 'destroy'])->name('tv-shows.seasons.watched.destroy');
+    Route::put('tv-shows/tmdb/{tmdbId}/watched', [TvShowWatchedController::class, 'update'])->whereNumber('tmdbId')->name('tv-shows.watched.update');
+    Route::delete('tv-shows/tmdb/{tmdbId}/watched', [TvShowWatchedController::class, 'destroy'])->whereNumber('tmdbId')->name('tv-shows.watched.destroy');
     Route::post('tv-shows/tmdb/{tmdbId}/undo', TvShowUndoController::class)->middleware('auth')->whereNumber('tmdbId')->name('tv-shows.undo');
 });
 
