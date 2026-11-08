@@ -159,7 +159,11 @@ const jsonLd = computed(() =>
                             aria-hidden="true"
                         />
                         <BookmarkPlus v-else aria-hidden="true" />
-                        {{ watchlisted ? 'On your Watchlist' : 'Add to Watchlist' }}
+                        {{
+                            watchlisted
+                                ? 'On your Watchlist'
+                                : 'Add to Watchlist'
+                        }}
                     </Button>
                     <Button
                         v-if="progress.state !== 'Completed'"
