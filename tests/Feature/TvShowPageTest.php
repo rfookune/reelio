@@ -70,13 +70,16 @@ test('a refresh older than 24 hours updates the TV Show and its complete invento
 
 test('a recent TV Show page uses stored details without fetching', function (int $hours) {
     $this->travelTo('2026-11-08 12:00:00');
-    $tvShow = TvShow::factory()->create(['slug' => 'stored', 'title' => 'Stored name', 'synced_at' => now()->subHours($hours)]);
     $source = tvPageSource();
+    $source->tvShows = [new TvShowDetails(87108, title: 'Stored name')];
+    $this->get('/tv-shows/tmdb/87108')->assertStatus(301);
+    $tvShow = TvShow::query()->sole();
+    $tvShow->update(['synced_at' => now()->subHours($hours)]);
 
-    $this->get(route('tv-shows.show', ['slug' => 'stored', 'id' => $tvShow->id]))
+    $this->get(route('tv-shows.show', ['slug' => 'stored-name', 'id' => $tvShow->id]))
         ->assertOk()->assertInertia(fn (Assert $page) => $page->where('tvShow.title', 'Stored name')->where('catalogStatus', 'fresh'));
 
-    expect($source->tvShowCalls)->toBeEmpty();
+    expect($source->tvShowCalls)->toHaveCount(1);
 })->with([23, 24]);
 
 test('one failed Season leaves the stored TV Show and Episodes unchanged and renders stale', function () {

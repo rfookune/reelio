@@ -14,7 +14,7 @@ const props = withDefaults(
         description: string;
         image?: string | null;
         canonicalUrl?: string | null;
-        type?: 'website' | 'video.movie';
+        type?: 'website' | 'video.movie' | 'video.tv_show';
         jsonLd?: Record<string, unknown> | null;
     }>(),
     { image: null, canonicalUrl: null, type: 'website', jsonLd: null },
@@ -68,7 +68,7 @@ const jsonLdText = computed(() =>
             v-if="jsonLd"
             head-key="json-ld"
             type="application/ld+json"
-            >{{ jsonLd }}</component
+            >{{ jsonLdText }}</component
         >
     </Head>
 </template>

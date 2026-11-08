@@ -12,6 +12,7 @@ use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\MovieDetails;
 use App\Services\Catalog\Sources\SearchResults;
 use App\Services\Catalog\Sources\SourceUnavailable;
+use App\Services\Catalog\Sources\TvShowDetails;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
 use App\Services\Ratings\TmdbRatingId;
@@ -63,10 +64,11 @@ class Catalog
             return CatalogResult::fresh(null);
         }
 
-        return DB::transaction(function () use ($tmdbId, $details): CatalogResult {
+        return DB::transaction(function () use ($tmdbId, $details, $context): CatalogResult {
             $tvShow = TvShow::query()->firstOrCreate(['tmdb_id' => $tmdbId], ['last_viewed_at' => now()]);
             if ($tvShow->wasRecentlyCreated) {
                 $this->tvShows->store($tvShow, $details);
+                $this->storeTvShowPageData($tvShow, $details, $context);
             }
 
             return CatalogResult::fresh($tvShow);
@@ -87,7 +89,7 @@ class Catalog
         if ($tvShow->isRemoved()) {
             return CatalogResult::removed();
         }
-        if ($tvShow->synced_at !== null && $tvShow->synced_at->greaterThanOrEqualTo(now()->subSeconds(config('catalog.refresh.on_view_after_seconds')))) {
+        if ($tvShow->synced_at !== null && $tvShow->synced_at->greaterThanOrEqualTo(now()->subSeconds(config('catalog.refresh.on_view_after_seconds'))) && $this->tvShowPageData($tvShow) !== null) {
             return CatalogResult::fresh($tvShow);
         }
         $context = new CatalogContext(config('catalog.language'));
@@ -99,7 +101,7 @@ class Catalog
             return $tvShow->hasSourceDetails() ? CatalogResult::stale($tvShow) : CatalogResult::unavailable();
         }
 
-        return DB::transaction(function () use ($tvShow, $details): CatalogResult {
+        return DB::transaction(function () use ($tvShow, $details, $context): CatalogResult {
             $locked = TvShow::query()->lockForUpdate()->findOrFail($tvShow->id);
             $tvShow->setRawAttributes($locked->getAttributes(), true);
             if ($tvShow->isRemoved()) {
@@ -107,13 +109,35 @@ class Catalog
             }
             if ($details === null) {
                 $this->tvShows->markRemoved($tvShow);
+                Cache::forget($this->tvShowPageDataKey($tvShow, $context));
 
                 return CatalogResult::removed();
             }
             $this->tvShows->store($tvShow, $details);
+            $this->storeTvShowPageData($tvShow, $details, $context);
 
             return CatalogResult::fresh($tvShow);
         });
+    }
+
+    public function tvShowPageData(TvShow $tvShow): ?TvShowPageData
+    {
+        if ($tvShow->isRemoved() || ! $tvShow->hasSourceDetails()) {
+            return null;
+        }
+        $data = Cache::get($this->tvShowPageDataKey($tvShow, new CatalogContext(config('catalog.language'))));
+
+        return is_array($data) ? TvShowPageData::fromArray($data) : null;
+    }
+
+    private function tvShowPageDataKey(TvShow $tvShow, CatalogContext $context): string
+    {
+        return $this->keys->build('tv-page-details', ['tmdbId' => $tvShow->tmdb_id], $context);
+    }
+
+    private function storeTvShowPageData(TvShow $tvShow, TvShowDetails $details, CatalogContext $context): void
+    {
+        Cache::put($this->tvShowPageDataKey($tvShow, $context), TvShowPageData::fromDetails($details)->toArray(), now()->addDays(config('catalog.details.hard_lifetime_days')));
     }
 
     /** @return CatalogResult<Movie> */

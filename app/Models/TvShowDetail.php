@@ -2,10 +2,15 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property CarbonImmutable|null $first_air_date
+ * @property CarbonImmutable|null $last_air_date
+ */
 #[Fillable(['first_air_date', 'last_air_date', 'status', 'season_count', 'episode_count'])]
 class TvShowDetail extends Model
 {

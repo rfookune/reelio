@@ -1,58 +1,185 @@
 <script setup lang="ts">
+import { usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import SeoHead from '@/components/SeoHead.vue';
-import TmdbImage from '@/components/TmdbImage.vue';
-
-defineProps<{
+import MovieHero from '@/components/movie/MovieHero.vue';
+import MovieCast from '@/components/movie/MovieCast.vue';
+import type { CastMember } from '@/components/movie/MovieCast.vue';
+import TrailerPlayer from '@/components/movie/TrailerPlayer.vue';
+import type { Trailer } from '@/components/movie/TrailerPlayer.vue';
+import TvShowDetailsCard from '@/components/tv-show/TvShowDetailsCard.vue';
+import { describeMovie, shareImage } from '@/lib/seo';
+import { tvShowJsonLd, tvShowTitle, tvShowYearRange } from '@/lib/tvShows';
+const props = defineProps<{
     canonicalUrl: string;
     imageBaseUrl: string;
     catalogStatus: 'fresh' | 'stale';
     tvShow: {
         id: number;
         title: string | null;
+        originalTitle: string | null;
+        originalLanguage: string | null;
         overview: string | null;
+        tagline: string | null;
         posterPath: string | null;
+        backdropPath: string | null;
+        firstAirDate: string | null;
+        lastAirDate: string | null;
+        status: string | null;
+        seasonCount: number;
+        episodeCount: number;
+        creators: string[];
+        networks: string[];
+        genres: string[];
+        certification: string | null;
+        cast: CastMember[];
+        trailer: Trailer | null;
+        detailsUnavailable: boolean;
     };
 }>();
+const page = usePage();
+const yearRange = computed(() =>
+    tvShowYearRange(
+        props.tvShow.firstAirDate,
+        props.tvShow.lastAirDate,
+        props.tvShow.status,
+    ),
+);
+const metadata = computed(() =>
+    [
+        yearRange.value,
+        `${props.tvShow.seasonCount} ${props.tvShow.seasonCount === 1 ? 'Season' : 'Seasons'}`,
+    ].filter((value): value is string => value !== null),
+);
+const image = computed(() =>
+    shareImage(
+        props.imageBaseUrl,
+        props.tvShow.backdropPath,
+        props.tvShow.posterPath,
+        page.props.seo.card,
+    ),
+);
+const description = computed(() =>
+    describeMovie(
+        props.tvShow.overview,
+        `Find out where to watch ${props.tvShow.title ?? 'this TV show'}, with cast and ratings on Reelio.`,
+    ),
+);
+const jsonLd = computed(() =>
+    tvShowJsonLd({
+        name: props.tvShow.title ?? 'TV show',
+        firstAirDate: props.tvShow.firstAirDate,
+        seasonCount: props.tvShow.seasonCount,
+        episodeCount: props.tvShow.episodeCount,
+        creators: props.tvShow.creators,
+        genres: props.tvShow.genres,
+        image: image.value,
+        description: props.tvShow.overview,
+        url: props.canonicalUrl,
+    }),
+);
 </script>
-
 <template>
-    <div
-        class="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 py-10 sm:flex-row sm:px-8"
-    >
+    <div class="pb-12">
         <SeoHead
-            :title="tvShow.title ?? 'TV show'"
-            :description="tvShow.overview ?? 'TV show details on Reelio.'"
+            :title="tvShowTitle(tvShow.title, tvShow.firstAirDate)"
+            :description="description"
             :canonical-url="canonicalUrl"
+            :image="image"
+            type="video.tv_show"
+            :json-ld="jsonLd"
         />
-        <div
-            class="w-48 shrink-0 overflow-hidden rounded-lg ring-1 ring-line sm:w-64"
+        <MovieHero
+            :image-base-url="imageBaseUrl"
+            :title="tvShow.title ?? 'TV show'"
+            :original-title="tvShow.originalTitle"
+            :original-language="tvShow.originalLanguage"
+            :year="null"
+            :runtime="null"
+            :metadata="metadata"
+            :certification="tvShow.certification"
+            :genres="tvShow.genres"
+            :poster-path="tvShow.posterPath"
+            :backdrop-path="tvShow.backdropPath"
+            :ratings="[]"
         >
-            <TmdbImage
-                :base-url="imageBaseUrl"
-                :path="tvShow.posterPath"
-                :alt="`${tvShow.title ?? 'TV show'} poster`"
-                :placeholder="tvShow.title ?? 'TV show'"
-                :widths="[185, 342, 500]"
-                sizes="(min-width: 640px) 256px, 192px"
-                loading="eager"
-            />
-        </div>
-        <div class="flex flex-col gap-5">
-            <p class="text-sm text-muted">TV show</p>
-            <h1 class="text-4xl font-bold tracking-tight">
-                {{ tvShow.title ?? 'TV show' }}
-            </h1>
-            <p
-                v-if="catalogStatus === 'stale'"
-                role="status"
-                class="text-sm text-muted"
+            <template #ratings
+                ><div data-slot="tv-show-ratings"><slot name="ratings" /></div
+            ></template>
+        </MovieHero>
+        <div
+            data-slot="tv-show-body"
+            class="relative -mt-28 grid gap-x-12 gap-y-10 md:-mt-40 lg:grid-cols-[minmax(0,1fr)_20rem]"
+        >
+            <section
+                v-if="tvShow.tagline || tvShow.overview"
+                data-slot="tv-show-overview"
+                class="order-1 flex max-w-prose flex-col gap-3 lg:col-start-1"
             >
-                Details may be out of date. We couldn’t refresh this TV show
-                right now.
-            </p>
-            <p v-if="tvShow.overview" class="max-w-prose leading-relaxed">
-                {{ tvShow.overview }}
-            </p>
+                <p v-if="tvShow.tagline" class="text-lg text-muted italic">
+                    {{ tvShow.tagline }}
+                </p>
+                <h2 class="sr-only">Overview</h2>
+                <p v-if="tvShow.overview" class="leading-relaxed">
+                    {{ tvShow.overview }}
+                </p>
+                <p
+                    v-if="catalogStatus === 'stale'"
+                    role="status"
+                    class="text-sm text-muted"
+                >
+                    Details may be out of date.
+                </p>
+            </section>
+            <aside
+                data-slot="tv-show-details-column"
+                class="order-2 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-4 lg:row-start-1 lg:self-start"
+            >
+                <TvShowDetailsCard
+                    :title="tvShow.title"
+                    :original-title="tvShow.originalTitle"
+                    :original-language="tvShow.originalLanguage"
+                    :creators="tvShow.creators"
+                    :networks="tvShow.networks"
+                    :status="tvShow.status"
+                    :first-air-date="tvShow.firstAirDate"
+                    :last-air-date="tvShow.lastAirDate"
+                    :season-count="tvShow.seasonCount"
+                    :episode-count="tvShow.episodeCount"
+                    :certification="tvShow.certification"
+                    :genres="tvShow.genres"
+                    :unavailable="tvShow.detailsUnavailable"
+                />
+            </aside>
+            <TrailerPlayer
+                v-if="tvShow.trailer"
+                :image-base-url="imageBaseUrl"
+                :title="tvShow.title ?? 'TV show'"
+                :trailer="tvShow.trailer"
+                :cover-path="tvShow.backdropPath"
+                class="order-3 lg:col-start-1"
+            />
+            <section
+                v-else-if="tvShow.detailsUnavailable"
+                data-slot="trailer-unavailable"
+                aria-labelledby="trailer-heading"
+                class="order-3 lg:col-start-1"
+            >
+                <h2 id="trailer-heading" class="mb-4 text-xl font-semibold">
+                    Trailer
+                </h2>
+                <p
+                    class="rounded-xl border border-line bg-surface p-5 text-sm text-muted"
+                >
+                    The trailer is temporarily unavailable.
+                </p>
+            </section>
+            <MovieCast
+                :image-base-url="imageBaseUrl"
+                :cast="tvShow.cast"
+                :unavailable="tvShow.detailsUnavailable"
+                class="order-4 lg:col-start-1"
+            />
         </div>
     </div>
 </template>

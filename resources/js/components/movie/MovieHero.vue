@@ -7,6 +7,7 @@ import { formatRuntime, isSafeTmdbPath, tmdbImageUrl } from '@/lib/tmdb';
 
 const props = defineProps<{
     imageBaseUrl: string;
+    metadata?: string[];
     title: string | null;
     originalTitle: string | null;
     originalLanguage: string | null;
@@ -33,8 +34,12 @@ const backdropUrl = (width: 780 | 1280) =>
 const blurredPosterUrl = computed(() =>
     tmdbImageUrl(props.imageBaseUrl, 185, props.posterPath ?? ''),
 );
-const meta = computed(() =>
-    [props.year, formatRuntime(props.runtime)].filter((part) => part !== null),
+const meta = computed(
+    () =>
+        props.metadata ??
+        [props.year, formatRuntime(props.runtime)].filter(
+            (part) => part !== null,
+        ),
 );
 </script>
 
@@ -122,7 +127,9 @@ const meta = computed(() =>
                         <span>{{ genres.join(', ') }}</span>
                     </template>
                 </p>
-                <ExternalRatings :ratings="ratings" />
+                <slot name="ratings"
+                    ><ExternalRatings :ratings="ratings"
+                /></slot>
                 <slot name="actions" />
             </div>
         </div>
