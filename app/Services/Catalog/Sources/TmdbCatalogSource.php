@@ -8,6 +8,7 @@ use App\Services\Catalog\Enums\OfferType;
 use App\Services\Catalog\Enums\SectionKind;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Pool;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -38,6 +39,184 @@ class TmdbCatalogSource implements CatalogSource
     private const RELEASE_TYPE_DIGITAL = 4;
 
     public function __construct(private BackgroundThrottle $backgroundThrottle) {}
+
+    public function tvShow(int $tmdbId, CatalogContext $context): ?TvShowDetails
+    {
+        $deadline = $context->profile === CatalogProfile::Interactive ? microtime(true) + $context->profile->timeoutSeconds() : null;
+        try {
+            $response = $this->tvRequest(Http::createPendingRequest(), $context, $deadline)->get("tv/{$tmdbId}", [
+                'language' => $context->language,
+                'include_video_language' => explode('-', $context->language)[0].',null',
+                'append_to_response' => 'external_ids,content_ratings,videos,credits,watch/providers',
+            ]);
+        } catch (ConnectionException $exception) {
+            throw new SourceUnavailable('The Catalog source is unavailable.', previous: $exception);
+        }
+
+        if ($response->notFound()) {
+            return null;
+        }
+        $this->checkTvResponse($response);
+        $data = $this->validateTvData((array) $response->json(), [
+            'id' => ['required', 'integer', 'in:'.$tmdbId],
+            'name' => ['nullable', 'string', 'max:255'],
+            'original_name' => ['nullable', 'string', 'max:255'],
+            'overview' => ['nullable', 'string'],
+            'tagline' => ['nullable', 'string'],
+            'first_air_date' => ['nullable', 'date_format:Y-m-d'],
+            'last_air_date' => ['nullable', 'date_format:Y-m-d'],
+            'status' => ['nullable', 'string', 'max:255'],
+            'number_of_seasons' => ['required', 'integer', 'min:0'],
+            'number_of_episodes' => ['nullable', 'integer', 'min:0'],
+            'poster_path' => ['nullable', 'string', 'max:255'],
+            'backdrop_path' => ['nullable', 'string', 'max:255'],
+            'original_language' => ['nullable', 'string', 'max:255'],
+            'vote_average' => ['nullable', 'numeric', 'between:0,10'],
+            'vote_count' => ['nullable', 'integer', 'min:0'],
+            'seasons' => ['present', 'array'],
+            'seasons.*.id' => ['required', 'integer', 'min:1', 'distinct'],
+            'seasons.*.season_number' => ['required', 'integer', 'min:0', 'distinct'],
+            'seasons.*.episode_count' => ['required', 'integer', 'min:0'],
+            'genres' => ['sometimes', 'array'],
+            'genres.*.id' => ['required', 'integer', 'min:1'],
+            'genres.*.name' => ['required', 'string', 'max:255'],
+            'created_by' => ['sometimes', 'array'],
+            'created_by.*.name' => ['required', 'string'],
+            'networks' => ['sometimes', 'array'],
+            'networks.*.name' => ['required', 'string'],
+            'external_ids' => ['present', 'array'],
+            'external_ids.imdb_id' => ['present', 'nullable', 'string', 'max:255'],
+            'content_ratings' => ['present', 'array'],
+            'content_ratings.results' => ['present', 'array'],
+            'credits' => ['present', 'array'],
+            'credits.cast' => ['present', 'array'],
+            'credits.crew' => ['present', 'array'],
+            'videos' => ['present', 'array'],
+            'videos.results' => ['present', 'array'],
+            'watch/providers' => ['present', 'array'],
+            'watch/providers.results' => ['present', 'array'],
+        ]);
+
+        $numberedSeasons = array_filter($data['seasons'], fn (array $season): bool => $season['season_number'] > 0);
+        if (count($numberedSeasons) !== (int) $data['number_of_seasons']) {
+            throw new SourceUnavailable('The Catalog source returned an incomplete Season inventory.');
+        }
+
+        $responses = Http::pool(function (Pool $pool) use ($data, $tmdbId, $context, $deadline): array {
+            $requests = [];
+            foreach ($data['seasons'] as $season) {
+                $number = $season['season_number'];
+                $requests[] = $this->tvRequest($pool->as((string) $number), $context, $deadline)
+                    ->get("tv/{$tmdbId}/season/{$number}", ['language' => $context->language]);
+            }
+
+            return $requests;
+        });
+        $seasons = [];
+        foreach ($data['seasons'] as $summary) {
+            $seasonResponse = $responses[$summary['season_number']];
+            $seasonResponse = $this->checkTvResponse($seasonResponse);
+            $season = $this->validateTvData((array) $seasonResponse->json(), [
+                'id' => ['required', 'integer', 'in:'.$summary['id']],
+                'season_number' => ['required', 'integer', 'in:'.$summary['season_number']],
+                'name' => ['nullable', 'string', 'max:255'],
+                'overview' => ['nullable', 'string'],
+                'poster_path' => ['nullable', 'string', 'max:255'],
+                'air_date' => ['nullable', 'date_format:Y-m-d'],
+                'episodes' => ['present', 'array', 'size:'.$summary['episode_count']],
+                'episodes.*.id' => ['required', 'integer', 'min:1', 'distinct'],
+                'episodes.*.season_number' => ['required', 'integer', 'in:'.$summary['season_number']],
+                'episodes.*.episode_number' => ['required', 'integer', 'min:0', 'distinct'],
+                'episodes.*.name' => ['nullable', 'string', 'max:255'],
+                'episodes.*.overview' => ['nullable', 'string'],
+                'episodes.*.air_date' => ['nullable', 'date_format:Y-m-d'],
+                'episodes.*.runtime' => ['nullable', 'integer', 'min:0'],
+                'episodes.*.episode_type' => ['nullable', 'string', 'max:255'],
+            ]);
+            $episodes = array_map(fn (array $episode): EpisodeDetails => new EpisodeDetails(
+                tmdbId: (int) $episode['id'], seasonNumber: (int) $episode['season_number'], number: (int) $episode['episode_number'],
+                name: $episode['name'] ?? null, overview: $episode['overview'] ?? null, airDate: ($episode['air_date'] ?? null) ?: null,
+                runtime: isset($episode['runtime']) ? (int) $episode['runtime'] : null, episodeType: $episode['episode_type'] ?? null,
+            ), array_values($season['episodes']));
+            $seasons[] = new SeasonDetails(
+                tmdbId: (int) $season['id'], number: (int) $season['season_number'], name: $season['name'] ?? null,
+                overview: $season['overview'] ?? null, posterPath: $this->safeImagePath($season['poster_path'] ?? null),
+                airDate: ($season['air_date'] ?? null) ?: null, episodeCount: count($episodes), episodes: $episodes,
+            );
+        }
+
+        $certification = null;
+        foreach ($data['content_ratings']['results'] ?? [] as $rating) {
+            if (($rating['iso_3166_1'] ?? null) === 'US' && is_string($rating['rating'] ?? null)) {
+                $certification = $rating['rating'] ?: null;
+                break;
+            }
+        }
+
+        return new TvShowDetails(
+            tmdbId: (int) $data['id'], title: $data['name'] ?? null, originalTitle: $data['original_name'] ?? null,
+            overview: $data['overview'] ?? null, tagline: $data['tagline'] ?? null,
+            firstAirDate: ($data['first_air_date'] ?? null) ?: null, lastAirDate: ($data['last_air_date'] ?? null) ?: null,
+            status: $data['status'] ?? null, seasonCount: isset($data['number_of_seasons']) ? (int) $data['number_of_seasons'] : null,
+            episodeCount: isset($data['number_of_episodes']) ? (int) $data['number_of_episodes'] : null,
+            posterPath: $this->safeImagePath($data['poster_path'] ?? null), backdropPath: $this->safeImagePath($data['backdrop_path'] ?? null),
+            originalLanguage: $data['original_language'] ?? null,
+            voteAverage: isset($data['vote_average']) ? (float) $data['vote_average'] : null,
+            voteCount: isset($data['vote_count']) ? (int) $data['vote_count'] : null,
+            imdbId: $data['external_ids']['imdb_id'] ?? null, genres: array_map(fn (array $genre): array => ['id' => (int) $genre['id'], 'name' => $genre['name']], array_values($data['genres'] ?? [])),
+            creators: array_column($data['created_by'] ?? [], 'name'), networks: array_column($data['networks'] ?? [], 'name'),
+            cast: $this->cast($data['credits'] ?? []), certification: $certification,
+            trailer: $this->trailer($data['videos'] ?? [], $context->language, ($data['first_air_date'] ?? null) ?: null),
+            availability: $this->availability($data['watch/providers'] ?? []), seasons: $seasons,
+        );
+    }
+
+    /**
+     * Interactive TV calls share one budget and do not retry within it. Background attempts retain the usual
+     * retries and throttle, including each pooled Season request.
+     */
+    private function tvRequest(PendingRequest $request, CatalogContext $context, ?float $deadline): PendingRequest
+    {
+        $profile = $context->profile;
+        $timeout = $deadline === null ? $profile->timeoutSeconds() : $deadline - microtime(true);
+        if ($timeout <= 0) {
+            throw new SourceUnavailable('The Catalog source exceeded the TV Show fetch timeout.');
+        }
+
+        return $request->baseUrl(config('catalog.tmdb.base_url'))->withToken(config('catalog.tmdb.token'))->acceptJson()
+            ->connectTimeout($timeout)->timeout($timeout)
+            ->retry($deadline === null ? $profile->attempts() : 1, fn (int $attempt, Throwable $exception): int => $this->retryDelayMilliseconds($profile, $attempt, $exception), $this->isRetryable(...), throw: false)
+            ->when($profile === CatalogProfile::Background, fn (PendingRequest $pending): PendingRequest => $pending->beforeSending(fn () => $this->backgroundThrottle->awaitTurn()));
+    }
+
+    private function checkTvResponse(Response|Throwable $response): Response
+    {
+        if ($response instanceof Throwable) {
+            throw new SourceUnavailable('The Catalog source is unavailable.', previous: $response);
+        }
+        if ($response->unauthorized()) {
+            throw new SourceMisconfigured('The Catalog source rejected our credentials.');
+        }
+        if (! $response->successful()) {
+            throw new SourceUnavailable('The Catalog source returned an unsuccessful TV response.');
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  array<string, list<string>>  $rules
+     * @return array<string, mixed>
+     */
+    private function validateTvData(array $data, array $rules): array
+    {
+        try {
+            return Validator::make($data, $rules)->validate();
+        } catch (ValidationException $exception) {
+            throw new SourceUnavailable('The Catalog source returned invalid TV details.', previous: $exception);
+        }
+    }
 
     public function movie(int $tmdbId, CatalogContext $context): ?MovieDetails
     {

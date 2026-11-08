@@ -18,6 +18,12 @@ class GuardedCatalogSource implements CatalogSource
 {
     public function __construct(private CatalogSource $inner, private CacheKey $keys) {}
 
+    /** The whole TV Show, or null when removed; a partial fetch is a failure. */
+    public function tvShow(int $tmdbId, CatalogContext $context): ?TvShowDetails
+    {
+        return $this->guard($context, fn (): ?TvShowDetails => $this->inner->tvShow($tmdbId, $context));
+    }
+
     public function movie(int $tmdbId, CatalogContext $context): ?MovieDetails
     {
         return $this->guard($context, fn (): ?MovieDetails => $this->inner->movie($tmdbId, $context));

@@ -6,6 +6,9 @@ use App\Services\Catalog\CatalogContext;
 
 interface CatalogSource
 {
+    /** The whole TV Show, or null when removed; a partial fetch is a failure. */
+    public function tvShow(int $tmdbId, CatalogContext $context): ?TvShowDetails;
+
     public function movie(int $tmdbId, CatalogContext $context): ?MovieDetails;
 
     /** One page of a list, in the source's order. A missing page is a failure, not an empty answer. */

@@ -8,6 +8,12 @@ use App\Services\Catalog\Enums\SectionKind;
 class FakeCatalogSource implements CatalogSource
 {
     /** @var list<array{tmdbId: int, context: CatalogContext}> */
+    public array $tvShowCalls = [];
+
+    /** @var list<array{tmdbId: int, seasonNumber: int}> */
+    public array $seasonCalls = [];
+
+    /** @var list<array{tmdbId: int, context: CatalogContext}> */
     public array $movieCalls = [];
 
     /** @var list<array{kind: SectionKind, key: string, query: SectionQuery, page: int}> */
@@ -23,6 +29,9 @@ class FakeCatalogSource implements CatalogSource
     public array $imdbIdCalls = [];
 
     /**
+     * @param  list<TvShowDetails>  $tvShows
+     * @param  list<int>  $failingTvShows
+     * @param  array<int, list<int>>  $failingSeasons  Season numbers by TV Show catalog id.
      * @param  list<MovieDetails>  $movies
      * @param  array<string, list<list<MovieListing>>>  $sections  each list's pages, keyed by `SectionQuery::key()`
      * @param  list<SectionKind|string>  $failingSections  kinds, or `SectionQuery::key()`s
@@ -38,7 +47,36 @@ class FakeCatalogSource implements CatalogSource
         public array $searches = [],
         public array $genres = [],
         public array $imdbIds = [],
+        public array $tvShows = [],
+        public array $failingTvShows = [],
+        public array $failingSeasons = [],
     ) {}
+
+    public function tvShow(int $tmdbId, CatalogContext $context): ?TvShowDetails
+    {
+        $this->tvShowCalls[] = ['tmdbId' => $tmdbId, 'context' => $context];
+
+        if ($this->failing || in_array($tmdbId, $this->failingTvShows, true)) {
+            throw new SourceUnavailable('The Catalog source is unavailable.');
+        }
+
+        foreach ($this->tvShows as $tvShow) {
+            if ($tvShow->tmdbId !== $tmdbId) {
+                continue;
+            }
+
+            foreach ($tvShow->seasons as $season) {
+                $this->seasonCalls[] = ['tmdbId' => $tmdbId, 'seasonNumber' => $season->number];
+                if (in_array($season->number, $this->failingSeasons[$tmdbId] ?? [], true)) {
+                    throw new SourceUnavailable('The Catalog source could not fetch a Season.');
+                }
+            }
+
+            return $tvShow;
+        }
+
+        return null;
+    }
 
     public function movie(int $tmdbId, CatalogContext $context): ?MovieDetails
     {

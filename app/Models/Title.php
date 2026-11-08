@@ -58,6 +58,18 @@ class Title extends Model
         return $this->hasOne(TvShowDetail::class, 'title_id');
     }
 
+    /** @return HasMany<Season, $this> */
+    public function seasons(): HasMany
+    {
+        return $this->hasMany(Season::class, 'title_id');
+    }
+
+    /** @return HasMany<Episode, $this> */
+    public function episodes(): HasMany
+    {
+        return $this->hasMany(Episode::class, 'title_id');
+    }
+
     /** @return HasMany<UserTitle, $this> */
     public function userTitles(): HasMany
     {
