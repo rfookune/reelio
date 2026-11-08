@@ -22,6 +22,10 @@ _Avoid_: Film, provider movie
 A Movie the Catalog source no longer has; Reelio keeps users' Watchlist and Watched facts about it but can show none of its details.
 _Avoid_: Shell, dropped movie, deleted movie
 
+**Removed Title**:
+A Removed Movie or a Removed TV Show; the one word for either when the difference doesn't matter.
+_Avoid_: Shell, dropped title, deleted title
+
 **Catalog source**:
 The external service Reelio takes movie metadata, artwork, and Availability from (TMDB today).
 _Avoid_: Provider, movie provider, data provider
@@ -65,11 +69,11 @@ _Avoid_: Watch provider, streaming option
 ### A user's Movies
 
 **Watchlist**:
-The Movies a user wants to watch, or watch again.
+The Movies and TV Shows a user wants to watch, or watch again.
 _Avoid_: Queue, saved movies, list, library
 
 **Date added**:
-When a Movie was last put on a user's Watchlist; re-adding it after a removal sets a new one.
+When a Title was last put on a user's Watchlist; re-adding it after a removal sets a new one.
 _Avoid_: Saved date, watchlisted at
 
 **Watched**:
