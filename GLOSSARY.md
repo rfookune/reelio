@@ -30,6 +30,20 @@ _Avoid_: Score, critic rating, primary rating
 The public homepage of curated Movie sections, the same for every visitor.
 _Avoid_: Home feed, browse, explore
 
+### TV data
+
+**TV Show**:
+A programme made of Seasons of Episodes that Reelio shows, linked to its Catalog source entry.
+_Avoid_: Show, series, TV series, programme, title
+
+**Season**:
+A numbered group of a TV Show's Episodes.
+_Avoid_: Series, volume
+
+**Episode**:
+One installment of a TV Show, within a Season; the unit a user records having seen.
+_Avoid_: Installment, chapter
+
 ### Streaming
 
 **Streaming service**:
