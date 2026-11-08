@@ -2,6 +2,8 @@
 
 namespace App\Http\Support;
 
+use App\Enums\MovieListSort;
+use App\Enums\SortDirection;
 use App\Enums\Surface;
 use App\Enums\UserMovieList;
 use App\Models\Movie;
@@ -28,7 +30,7 @@ class UserMovieListPage
 
     private ?int $count = null;
 
-    public function __construct(private User $user, private UserMovieList $list, private string $sort, private DiscoverBuilder $discover, private Ratings $ratings) {}
+    public function __construct(private User $user, private UserMovieList $list, private MovieListSort $sort, private DiscoverBuilder $discover, private Ratings $ratings) {}
 
     private function count(): int
     {
@@ -64,12 +66,12 @@ class UserMovieListPage
     public function restoredMovieUrl(int $tmdbId): string
     {
         $facts = $this->orderedFacts()->where('titles.tmdb_id', $tmdbId)->first();
-        $parameters = $this->sort === $this->list->defaultSort() ? [] : ['sort' => $this->sort];
+        $parameters = $this->sort === $this->list->defaultSort() ? [] : ['sort' => $this->sort->value];
 
         if ($facts !== null) {
             $parameters['cursor'] = (new Cursor([
                 'sort_key' => $facts->getAttribute('sort_key'),
-                'user_titles.id' => $facts->id + ($this->direction() === 'desc' ? 1 : -1),
+                'user_titles.id' => $facts->id + ($this->sort->direction() === SortDirection::Desc ? 1 : -1),
             ]))->encode();
         }
 
@@ -126,29 +128,23 @@ class UserMovieListPage
         }
 
         return $this->movies = $this->orderedFacts()->with('movie')
-            ->cursorPaginate(48)->appends($this->sort === $this->list->defaultSort() ? [] : ['sort' => $this->sort]);
-    }
-
-    /** @return 'asc'|'desc' */
-    private function direction(): string
-    {
-        return in_array($this->sort, [$this->list->defaultSort(), 'newest-release'], true) ? 'desc' : 'asc';
+            ->cursorPaginate(48)->appends($this->sort === $this->list->defaultSort() ? [] : ['sort' => $this->sort->value]);
     }
 
     /** @return Builder<UserMovie> */
     private function orderedFacts(): Builder
     {
         $expression = match ($this->sort) {
-            'title' => '(titles.title COLLATE movie_title)',
-            'newest-release' => "COALESCE(movie_details.release_date, '-infinity'::date)",
-            'oldest-release' => "COALESCE(movie_details.release_date, 'infinity'::date)",
+            MovieListSort::Title => '(titles.title COLLATE movie_title)',
+            MovieListSort::NewestRelease => "COALESCE(movie_details.release_date, '-infinity'::date)",
+            MovieListSort::OldestRelease => "COALESCE(movie_details.release_date, 'infinity'::date)",
             default => 'user_titles.'.$this->list->dateColumn(),
         };
 
         return $this->facts()->join('titles', 'titles.id', '=', 'user_titles.title_id')
             ->leftJoin('movie_details', 'movie_details.title_id', '=', 'titles.id')
             ->whereNotNull('titles.title')->select('user_titles.*')->selectRaw($expression.' as sort_key')
-            ->orderBy('sort_key', $this->direction())->orderBy('user_titles.id', $this->direction());
+            ->orderBy('sort_key', $this->sort->direction()->value)->orderBy('user_titles.id', $this->sort->direction()->value);
     }
 
     /**

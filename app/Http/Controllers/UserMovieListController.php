@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\MovieListSort;
 use App\Enums\UserMovieList;
 use App\Http\Support\UserMovieListPage;
 use App\Services\Catalog\Discover\DiscoverBuilder;
@@ -16,8 +17,9 @@ class UserMovieListController extends Controller
     public function __invoke(Request $request, DiscoverBuilder $discover, Ratings $ratings): Response
     {
         $list = $request->routeIs('watched') ? UserMovieList::Watched : UserMovieList::Watchlist;
-        $sort = $request->query('sort', $list->defaultSort());
-        abort_unless(is_string($sort) && in_array($sort, $list->sorts(), true), 422, 'Unknown '.$list->name.' sort.');
+        $requested = $request->query('sort');
+        $sort = $requested === null ? $list->defaultSort() : (is_string($requested) ? MovieListSort::tryFrom($requested) : null);
+        abort_unless($sort !== null && in_array($sort, $list->sorts(), true), 422, 'Unknown '.$list->name.' sort.');
         $page = new UserMovieListPage($request->user(), $list, $sort, $discover, $ratings);
 
         if ($request->has('restore')) {
@@ -29,7 +31,7 @@ class UserMovieListController extends Controller
 
         $response = Inertia::render($list->name, [
             'imageBaseUrl' => config('catalog.image_base_url'),
-            'sort' => $sort,
+            'sort' => $sort->value,
             'unavailableMovies' => fn (): array => $page->unavailableMovies(),
             'movies' => Inertia::scroll(fn (): array => $page->movies(), metadata: fn (): ScrollMetadata => $page->scrollMetadata())->matchOn('data.tmdbId'),
             'trending' => fn (): array => $page->trending(),

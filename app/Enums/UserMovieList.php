@@ -18,14 +18,20 @@ enum UserMovieList: string
         return $this === self::Watchlist ? 'watchlisted_at' : 'watched_at';
     }
 
-    public function defaultSort(): string
+    public function defaultSort(): MovieListSort
     {
-        return $this === self::Watchlist ? 'recently-added' : 'recently-watched';
+        return $this === self::Watchlist ? MovieListSort::RecentlyAdded : MovieListSort::RecentlyWatched;
     }
 
-    /** @return list<string> */
+    /** @return list<MovieListSort> */
     public function sorts(): array
     {
-        return [$this->defaultSort(), $this === self::Watchlist ? 'oldest-added' : 'oldest-watched', 'title', 'newest-release', 'oldest-release'];
+        return [
+            $this->defaultSort(),
+            $this === self::Watchlist ? MovieListSort::OldestAdded : MovieListSort::OldestWatched,
+            MovieListSort::Title,
+            MovieListSort::NewestRelease,
+            MovieListSort::OldestRelease,
+        ];
     }
 }
