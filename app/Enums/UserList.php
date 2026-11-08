@@ -2,7 +2,10 @@
 
 namespace App\Enums;
 
-enum UserMovieList: string
+/**
+ * The two lists of Titles a user keeps, for Movies and TV Shows alike; the value is the page's route name.
+ */
+enum UserList: string
 {
     case Watchlist = 'watchlist';
     case Watched = 'watched';
@@ -18,20 +21,20 @@ enum UserMovieList: string
         return $this === self::Watchlist ? 'watchlisted_at' : 'watched_at';
     }
 
-    public function defaultSort(): MovieListSort
+    public function defaultSort(): ListSort
     {
-        return $this === self::Watchlist ? MovieListSort::RecentlyAdded : MovieListSort::RecentlyWatched;
+        return $this === self::Watchlist ? ListSort::RecentlyAdded : ListSort::RecentlyWatched;
     }
 
-    /** @return list<MovieListSort> */
+    /** @return list<ListSort> */
     public function sorts(): array
     {
         return [
             $this->defaultSort(),
-            $this === self::Watchlist ? MovieListSort::OldestAdded : MovieListSort::OldestWatched,
-            MovieListSort::Title,
-            MovieListSort::NewestRelease,
-            MovieListSort::OldestRelease,
+            $this === self::Watchlist ? ListSort::OldestAdded : ListSort::OldestWatched,
+            ListSort::Title,
+            ListSort::NewestRelease,
+            ListSort::OldestRelease,
         ];
     }
 }

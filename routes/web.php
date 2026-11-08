@@ -22,7 +22,7 @@ use App\Http\Controllers\TvShowUndoController;
 use App\Http\Controllers\TvShowWatchedController;
 use App\Http\Controllers\TvShowWatchlistController;
 use App\Http\Controllers\UndoController;
-use App\Http\Controllers\UserMovieListController;
+use App\Http\Controllers\UserListController;
 use App\Http\Controllers\WatchedController;
 use App\Http\Controllers\WatchlistController;
 use App\Http\Middleware\StorePendingGuestAction;
@@ -41,8 +41,8 @@ Route::get('sitemaps/{page}.xml', [SitemapController::class, 'show'])->whereNumb
 
 Route::get('search', SearchController::class)->middleware('throttle:search')->name('search');
 Route::get('search/ratings', SearchRatingsController::class)->middleware('throttle:search-ratings')->name('search.ratings');
-Route::get('watchlist', UserMovieListController::class)->middleware(['auth', EncryptHistory::class])->name('watchlist');
-Route::get('watched', UserMovieListController::class)->middleware(['auth', EncryptHistory::class])->name('watched');
+Route::get('watchlist', UserListController::class)->middleware(['auth', EncryptHistory::class])->name('watchlist');
+Route::get('watched', UserListController::class)->middleware(['auth', EncryptHistory::class])->name('watched');
 Route::get('watchlist/pick', MoviePickerController::class)->middleware(['auth', EncryptHistory::class, 'throttle:movie-picker'])->name('watchlist.pick');
 
 Route::scopeBindings()->middleware('throttle:user-movie-actions')->group(function () {

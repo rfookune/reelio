@@ -1,6 +1,6 @@
 import type { PosterCardMovie } from '@/components/movie/PosterCard.vue';
 
-export type UserMovieList = 'watchlist' | 'watched';
+export type UserList = 'watchlist' | 'watched';
 
 interface UnavailableMovie extends PosterCardMovie {
     date: string;
@@ -9,13 +9,13 @@ interface UnavailableMovie extends PosterCardMovie {
 /** Which kinds a Watchlist or Watched page shows; `filter` in the URL, left out for `all`. */
 export type ListFilter = 'all' | 'movies' | 'tv-shows';
 
-export type UserMovieListPageProps = {
+export type UserListPageProps = {
     imageBaseUrl: string;
     sort: string;
     filter: ListFilter;
     /** Whether TV Shows are on the lists, so the page offers the kind filter. */
     includesTvShows: boolean;
-    movies: { data: PosterCardMovie[] };
+    titles: { data: PosterCardMovie[] };
     unavailableMovies: UnavailableMovie[];
     trending: PosterCardMovie[];
     userMovies: UserMovies;

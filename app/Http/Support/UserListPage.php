@@ -3,12 +3,12 @@
 namespace App\Http\Support;
 
 use App\Enums\ListFilter;
-use App\Enums\MovieListSort;
+use App\Enums\ListSort;
 use App\Enums\ProgressState;
 use App\Enums\SortDirection;
 use App\Enums\Surface;
 use App\Enums\TitleKind;
-use App\Enums\UserMovieList;
+use App\Enums\UserList;
 use App\Models\Movie;
 use App\Models\Title;
 use App\Models\TvShow;
@@ -39,14 +39,14 @@ use Inertia\ScrollMetadata;
  *
  * @phpstan-type TvShowFacts array{watchlisted: bool, watched: bool, watchedDate: ?string, state: string, watchedCount: int, total: int}
  */
-class UserMovieListPage
+class UserListPage
 {
     /** @var CursorPaginator<int, Title>|null */
     private ?CursorPaginator $titles = null;
 
     private ?int $count = null;
 
-    public function __construct(private User $user, private UserMovieList $list, private MovieListSort $sort, private ListFilter $filter, private DiscoverBuilder $discover, private Ratings $ratings, private ProgressSummaries $progress) {}
+    public function __construct(private User $user, private UserList $list, private ListSort $sort, private ListFilter $filter, private DiscoverBuilder $discover, private Ratings $ratings, private ProgressSummaries $progress) {}
 
     /** The whole list's size, whatever the filter, Removed Movies included. */
     private function count(): int
@@ -55,7 +55,7 @@ class UserMovieListPage
     }
 
     /** @return array<string, mixed> */
-    public function movies(): array
+    public function titles(): array
     {
         $page = $this->page();
         $titles = $this->typed($page->getCollection());
@@ -107,7 +107,7 @@ class UserMovieListPage
     /** @return list<Card> */
     public function trending(): array
     {
-        $movies = $this->list === UserMovieList::Watchlist && $this->count() === 0 ? $this->discover->storedTrending() : [];
+        $movies = $this->list === UserList::Watchlist && $this->count() === 0 ? $this->discover->storedTrending() : [];
         if ($movies === []) {
             return [];
         }
@@ -236,7 +236,7 @@ class UserMovieListPage
             ->where('user_episodes.user_id', $this->user->id)->whereNotNull('titles.title')
             ->groupBy('episodes.title_id')->select('episodes.title_id')->selectRaw('max(user_episodes.watched_at) as entry_date');
 
-        $parts = array_map(fn (TitleKind $kind): QueryBuilder => $kind === TitleKind::TvShow && $this->list === UserMovieList::Watched ? $episodes() : $facts($kind), $kinds);
+        $parts = array_map(fn (TitleKind $kind): QueryBuilder => $kind === TitleKind::TvShow && $this->list === UserList::Watched ? $episodes() : $facts($kind), $kinds);
         $entries = array_shift($parts) ?? DB::table('user_titles')->whereRaw('false')->select('title_id')->selectRaw('user_titles.'.$column.' as entry_date');
 
         foreach ($parts as $part) {
@@ -255,9 +255,9 @@ class UserMovieListPage
     private function orderedTitles(array $kinds): Builder
     {
         $expression = match ($this->sort) {
-            MovieListSort::Title => '(titles.title COLLATE movie_title)',
-            MovieListSort::NewestRelease => "COALESCE(movie_details.release_date, tv_show_details.first_air_date, '-infinity'::date)",
-            MovieListSort::OldestRelease => "COALESCE(movie_details.release_date, tv_show_details.first_air_date, 'infinity'::date)",
+            ListSort::Title => '(titles.title COLLATE movie_title)',
+            ListSort::NewestRelease => "COALESCE(movie_details.release_date, tv_show_details.first_air_date, '-infinity'::date)",
+            ListSort::OldestRelease => "COALESCE(movie_details.release_date, tv_show_details.first_air_date, 'infinity'::date)",
             default => 'entries.entry_date',
         };
 

@@ -31,7 +31,7 @@ test('each sort uses the full key, ignores title case and accents, and puts unda
 
     $this->actingAs($user)->get(route('watchlist', ['sort' => $sort]))->assertOk()->assertInertia(fn (Assert $page) => $page
         ->where('sort', $sort)
-        ->where('movies.data', fn ($cards) => collect($cards)->pluck('tmdbId')->all() === $expected));
+        ->where('titles.data', fn ($cards) => collect($cards)->pluck('tmdbId')->all() === $expected));
 })->with([
     'recently added' => ['recently-added', [1, 4, 3, 2]],
     'oldest added' => ['oldest-added', [2, 3, 4, 1]],
@@ -50,8 +50,8 @@ test('cursor pages never skip Movies after earlier cards and the boundary card a
         UserMovie::factory()->for($user)->for($movie)->create(['watchlisted_at' => '2026-01-01']);
     }
     $first = $this->actingAs($user)->get(route('watchlist', ['sort' => $sort]))->assertOk();
-    $cards = collect($first->viewData('page')['props']['movies']['data']);
-    $nextUrl = $first->viewData('page')['props']['movies']['next_page_url'];
+    $cards = collect($first->viewData('page')['props']['titles']['data']);
+    $nextUrl = $first->viewData('page')['props']['titles']['next_page_url'];
     expect($cards)->toHaveCount(48);
     expect($nextUrl)->toContain('cursor=');
 
@@ -60,12 +60,12 @@ test('cursor pages never skip Movies after earlier cards and the boundary card a
     }
 
     $next = $this->get($nextUrl)->assertOk();
-    $remaining = collect($next->viewData('page')['props']['movies']['data']);
+    $remaining = collect($next->viewData('page')['props']['titles']['data']);
     expect($remaining)->toHaveCount(3);
     expect($cards->pluck('tmdbId')->intersect($remaining->pluck('tmdbId')))->toBeEmpty();
-    expect($next->viewData('page')['props']['movies']['next_cursor'])->toBeNull();
-    expect($first->viewData('page')['scrollProps']['movies']['pageName'])->toBe('cursor');
-    expect($first->viewData('page')['mergeProps'])->toContain('movies.data');
+    expect($next->viewData('page')['props']['titles']['next_cursor'])->toBeNull();
+    expect($first->viewData('page')['scrollProps']['titles']['pageName'])->toBe('cursor');
+    expect($first->viewData('page')['mergeProps'])->toContain('titles.data');
     if ($sort === 'recently-added') {
         expect($nextUrl)->not->toContain('sort=');
     }
@@ -91,9 +91,9 @@ test('cards use one batched ratings lookup and prefer IMDb while keeping poster-
     });
 
     $this->actingAs($user)->get('/watchlist')->assertInertia(fn (Assert $page) => $page
-        ->where('movies.data.0.ratings', [])
-        ->where('movies.data.1.posterPath', null)
-        ->where('movies.data.1.ratings.0.source', 'imdb'));
+        ->where('titles.data.0.ratings', [])
+        ->where('titles.data.1.posterPath', null)
+        ->where('titles.data.1.ratings.0.source', 'imdb'));
 
     expect($ratingQueries)->toHaveCount(2);
 });
@@ -107,7 +107,7 @@ test('an empty Watchlist suggests cached Trending without making Catalog request
 
     $this->actingAs(User::factory()->create())->get('/watchlist')->assertOk()->assertInertia(fn (Assert $page) => $page
         ->where('userMovies', [])
-        ->where('movies.data', [])
+        ->where('titles.data', [])
         ->has('trending', $hasTrending ? 6 : 0));
 
     expect($source->sectionCalls)->toBe($calls);
@@ -125,8 +125,8 @@ test('the Watchlist shows only the signed-in users saved Movies, newest first, w
         ->assertInertia(fn (Assert $page) => $page->component('Watchlist')
             ->where('sort', 'recently-added')
             ->where('userMovies', fn ($facts) => collect($facts)->where('watchlisted', true)->count() === 3)
-            ->where('movies.data', fn ($cards) => collect($cards)->pluck('tmdbId')->all() === [$recent->movie->tmdb_id, $old->movie->tmdb_id])
-            ->where('movies.data.0.href', $recent->movie->canonicalUrl(Surface::Watchlist))
+            ->where('titles.data', fn ($cards) => collect($cards)->pluck('tmdbId')->all() === [$recent->movie->tmdb_id, $old->movie->tmdb_id])
+            ->where('titles.data.0.href', $recent->movie->canonicalUrl(Surface::Watchlist))
             ->where('userMovies.'.$recent->movie->tmdb_id.'.watchedDate', '2025-12-01T00:00:00.000000Z'));
 });
 
@@ -139,6 +139,6 @@ test('a restored Movie can be opened at its cursor in every sort without reveali
     $response = $this->get(route('watchlist', ['sort' => $sort, 'restore' => $facts->movie->tmdb_id]))->assertRedirect();
     $this->get($response->headers->get('Location'))->assertOk()->assertInertia(fn (Assert $page) => $page
         ->where('sort', $sort)
-        ->where('movies.data.0.tmdbId', $facts->movie->tmdb_id));
+        ->where('titles.data.0.tmdbId', $facts->movie->tmdb_id));
     $this->get(route('watchlist', ['restore' => $other->movie->tmdb_id]))->assertRedirect(route('watchlist'));
 })->with(['recently-added', 'oldest-added', 'title', 'newest-release', 'oldest-release']);

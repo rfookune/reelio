@@ -25,7 +25,7 @@ test('Watched sorts by its own dates, folded titles, or full release dates with 
 
     $this->actingAs($user)->get(route('watched', ['sort' => $sort]))->assertOk()->assertInertia(fn (Assert $page) => $page
         ->where('sort', $sort)
-        ->where('movies.data', fn ($cards) => collect($cards)->pluck('tmdbId')->all() === $expected));
+        ->where('titles.data', fn ($cards) => collect($cards)->pluck('tmdbId')->all() === $expected));
 })->with([
     'recently watched' => ['recently-watched', [1, 4, 3, 2]],
     'oldest watched' => ['oldest-watched', [2, 3, 4, 1]],
@@ -44,19 +44,19 @@ test('Watched cursor paging never skips Movies after records on the preceding pa
         UserMovie::factory()->for($user)->for($movie)->watched()->create(['watched_at' => '2026-01-01']);
     }
     $first = $this->actingAs($user)->get(route('watched', ['sort' => $sort]))->assertOk();
-    $cards = collect($first->viewData('page')['props']['movies']['data']);
-    $nextUrl = $first->viewData('page')['props']['movies']['next_page_url'];
+    $cards = collect($first->viewData('page')['props']['titles']['data']);
+    $nextUrl = $first->viewData('page')['props']['titles']['next_page_url'];
     expect($cards)->toHaveCount(48);
     foreach ([$cards->first(), $cards->last()] as $card) {
         $this->delete(route('movies.watched.destroy', ['tmdbId' => $card['tmdbId']]), ['source' => 'watched'])->assertRedirect();
     }
 
     $next = $this->get($nextUrl)->assertOk();
-    $remaining = collect($next->viewData('page')['props']['movies']['data']);
+    $remaining = collect($next->viewData('page')['props']['titles']['data']);
     expect($remaining)->toHaveCount(3);
     expect($cards->pluck('tmdbId')->intersect($remaining->pluck('tmdbId')))->toBeEmpty();
-    expect($next->viewData('page')['props']['movies']['next_cursor'])->toBeNull();
-    expect($first->viewData('page')['scrollProps']['movies']['pageName'])->toBe('cursor');
+    expect($next->viewData('page')['props']['titles']['next_cursor'])->toBeNull();
+    expect($first->viewData('page')['scrollProps']['titles']['pageName'])->toBe('cursor');
     if ($sort === 'recently-watched') {
         expect($nextUrl)->not->toContain('sort=');
     }
@@ -73,8 +73,8 @@ test('Watched shows only the signed-in users watched Movies newest first, includ
     $this->actingAs($user)->get('/watched')->assertOk()->assertHeader('X-Robots-Tag', 'noindex')
         ->assertInertia(fn (Assert $page) => $page->component('Watched')
             ->where('sort', 'recently-watched')
-            ->where('movies.data', fn ($cards) => collect($cards)->pluck('tmdbId')->all() === [$recent->movie->tmdb_id, $old->movie->tmdb_id])
-            ->where('movies.data.0.href', $recent->movie->canonicalUrl(Surface::Watched))
+            ->where('titles.data', fn ($cards) => collect($cards)->pluck('tmdbId')->all() === [$recent->movie->tmdb_id, $old->movie->tmdb_id])
+            ->where('titles.data.0.href', $recent->movie->canonicalUrl(Surface::Watched))
             ->where('userMovies.'.$recent->movie->tmdb_id, ['watchlisted' => true, 'watched' => true, 'watchedDate' => '2026-02-01T00:00:00.000000Z'])
             ->where('trending', []));
 });
@@ -82,7 +82,7 @@ test('Watched shows only the signed-in users watched Movies newest first, includ
 test('an empty Watched page has no suggestions or Movies from another user', function () {
     UserMovie::factory()->watched()->create();
     $this->actingAs(User::factory()->create())->get('/watched')->assertOk()->assertInertia(fn (Assert $page) => $page
-        ->component('Watched')->where('movies.data', [])->where('userMovies', [])->where('trending', []));
+        ->component('Watched')->where('titles.data', [])->where('userMovies', [])->where('trending', []));
 });
 
 test('a restored Watched card uses its own cursor and cannot reveal a different users Movie or an unwatched Movie', function (string $sort) {
@@ -94,7 +94,7 @@ test('a restored Watched card uses its own cursor and cannot reveal a different 
 
     $response = $this->get(route('watched', ['sort' => $sort, 'restore' => $facts->movie->tmdb_id]))->assertRedirect();
     $this->get($response->headers->get('Location'))->assertOk()->assertInertia(fn (Assert $page) => $page
-        ->where('sort', $sort)->where('movies.data.0.tmdbId', $facts->movie->tmdb_id));
+        ->where('sort', $sort)->where('titles.data.0.tmdbId', $facts->movie->tmdb_id));
     $this->get(route('watched', ['restore' => $unwatched->movie->tmdb_id]))->assertRedirect(route('watched'));
     $this->get(route('watched', ['restore' => $other->movie->tmdb_id]))->assertRedirect(route('watched'));
 })->with(['recently-watched', 'oldest-watched', 'title', 'newest-release', 'oldest-release']);

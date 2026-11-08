@@ -185,8 +185,8 @@ function undo(
         data: { action },
         produce: () => restored,
         onSuccess: (component) => {
-            const movies = usePage().props.movies as
-                | { data: { tmdbId: number }[] }
+            const titles = usePage().props.titles as
+                | { data: { kind?: 'movie' | 'tv'; tmdbId: number }[] }
                 | undefined;
             const unavailableMovies = usePage().props.unavailableMovies as
                 | { tmdbId: number }[]
@@ -194,7 +194,9 @@ function undo(
             if (
                 ((component === 'Watchlist' && restored.watchlisted) ||
                     (component === 'Watched' && restored.watched)) &&
-                !movies?.data.some((movie) => movie.tmdbId === tmdbId) &&
+                !titles?.data.some(
+                    (card) => card.kind !== 'tv' && card.tmdbId === tmdbId,
+                ) &&
                 !unavailableMovies?.some((movie) => movie.tmdbId === tmdbId)
             ) {
                 revealUserMovieCard(tmdbId, restoreFocus);
@@ -211,15 +213,26 @@ function revealUserMovieCard(tmdbId: number, restoreFocus: () => void): void {
     const route = isWatched ? watchedPage : watchlistPage;
     const defaultSort = isWatched ? 'recently-watched' : 'recently-added';
     const sort = usePage().props.sort as string;
+    const filter = usePage().props.filter as string;
     router.get(
         route.url(),
-        { restore: tmdbId, ...(sort === defaultSort ? {} : { sort }) },
+        {
+            restore: tmdbId,
+            ...(sort === defaultSort ? {} : { sort }),
+            ...(filter === 'all' ? {} : { filter }),
+        },
         {
             preserveState: true,
             preserveScroll: true,
             replace: true,
-            reset: ['movies'],
-            only: ['movies', 'unavailableMovies', 'userMovies', 'trending'],
+            reset: ['titles'],
+            only: [
+                'titles',
+                'filter',
+                'unavailableMovies',
+                'userMovies',
+                'trending',
+            ],
             onSuccess: restoreFocus,
         },
     );

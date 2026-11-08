@@ -28,9 +28,9 @@ test('Removed Movies are a separate unpaginated group with only the viewers own 
                 'href' => $removed[0]->movie->canonicalUrl(Surface::from($list)),
                 'date' => $expectedDate,
             ])
-            ->has('movies.data', 1)
-            ->where('movies.data.0.tmdbId', $available->movie->tmdb_id)
-            ->where('movies.next_cursor', null)
+            ->has('titles.data', 1)
+            ->where('titles.data.0.tmdbId', $available->movie->tmdb_id)
+            ->where('titles.next_cursor', null)
             ->has('userMovies', 50)
             ->where('trending', []));
     }

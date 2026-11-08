@@ -152,7 +152,7 @@ it('keeps focus on the Watchlist heading when the last loaded card leaves a late
     }
     $this->actingAs($user);
     $response = $this->get('/watchlist?sort=title');
-    $query = parse_url($response->viewData('page')['props']['movies']['next_page_url'], PHP_URL_QUERY);
+    $query = parse_url($response->viewData('page')['props']['titles']['next_page_url'], PHP_URL_QUERY);
 
     $page = visitWithCsp('/watchlist?'.$query);
     $page->click('[data-slot="bookmark-toggle"]')->assertSee('Watchlist · 48')->assertNoJavaScriptErrors();

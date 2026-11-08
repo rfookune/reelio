@@ -2,7 +2,7 @@
 
 namespace App\Http\Support;
 
-use App\Enums\UserMovieList;
+use App\Enums\UserList;
 use App\Models\Genre;
 use App\Models\Movie;
 use App\Models\User;
@@ -58,6 +58,6 @@ class MoviePicker
         return Movie::query()->whereNotNull('title')->whereIn('id', UserMovie::query()
             ->select('title_id')
             ->whereBelongsTo($this->user)
-            ->whereNotNull(UserMovieList::Watchlist->dateColumn()));
+            ->whereNotNull(UserList::Watchlist->dateColumn()));
     }
 }

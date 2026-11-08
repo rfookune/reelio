@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import UserMovieList from '@/components/movie/UserMovieList.vue';
-import type { UserMovieListPageProps } from '@/types';
+import UserList from '@/components/movie/UserList.vue';
+import type { UserListPageProps } from '@/types';
 
-defineProps<UserMovieListPageProps>();
+defineProps<UserListPageProps>();
 </script>
 
 <template>
-    <UserMovieList v-bind="$props" collection="watchlist" />
+    <UserList v-bind="$props" collection="watchlist" />
 </template>

@@ -27,7 +27,7 @@ test('the Watchlist lists TV Shows beside Movies in every sort, a TV Show\'s rel
     }
 
     $this->actingAs($user)->get(route('watchlist', ['sort' => $sort]))->assertOk()->assertInertia(fn (Assert $page) => $page
-        ->where('movies.data', fn ($cards) => collect($cards)->pluck('key')->all() === $expected));
+        ->where('titles.data', fn ($cards) => collect($cards)->pluck('key')->all() === $expected));
 })->with([
     'recently added' => ['recently-added', ['1', 'tv:4', '3', 'tv:2']],
     'oldest added' => ['oldest-added', ['tv:2', '3', 'tv:4', '1']],
@@ -42,7 +42,7 @@ test('a TV Show card has its kind, key, Name, first-air year, canonical link and
     $tvShow->update(['poster_path' => '/chernobyl.jpg']);
 
     $this->actingAs($user)->get(route('watchlist'))->assertInertia(fn (Assert $page) => $page
-        ->where('movies.data.0', [
+        ->where('titles.data.0', [
             'kind' => 'tv',
             'key' => 'tv:7',
             'tmdbId' => 7,
@@ -60,7 +60,7 @@ test('a Movie and a TV Show with one catalog id are two cards', function () {
     listedTvShow($user, 5, 'Same id', null, '2026-01-01');
 
     $this->actingAs($user)->get(route('watchlist'))->assertInertia(fn (Assert $page) => $page
-        ->where('movies.data', fn ($cards) => collect($cards)->pluck('key')->sort()->values()->all() === ['5', 'tv:5'])
+        ->where('titles.data', fn ($cards) => collect($cards)->pluck('key')->sort()->values()->all() === ['5', 'tv:5'])
     );
 });
 
@@ -71,9 +71,9 @@ test('with TV Shows off, the Watchlist hides them and a bookmarked TV Shows filt
     config(['catalog.tv_shows.enabled' => false]);
 
     $this->actingAs($user)->get(route('watchlist'))->assertInertia(fn (Assert $page) => $page
-        ->has('movies.data', 1)->where('movies.data.0.kind', 'movie')->where('userTvShows', []));
+        ->has('titles.data', 1)->where('titles.data.0.kind', 'movie')->where('userTvShows', []));
     $this->get(route('watchlist', ['filter' => 'tv-shows']))->assertOk()->assertInertia(fn (Assert $page) => $page
-        ->where('filter', 'all')->has('movies.data', 1)->where('movies.data.0.kind', 'movie'));
+        ->where('filter', 'all')->has('titles.data', 1)->where('titles.data.0.kind', 'movie'));
 });
 
 test('the filter keeps one kind, defaults to both, and unknown or non-text filters are rejected', function () {
@@ -83,10 +83,10 @@ test('the filter keeps one kind, defaults to both, and unknown or non-text filte
     $this->actingAs($user);
 
     $this->get(route('watchlist', ['filter' => 'movies']))->assertInertia(fn (Assert $page) => $page
-        ->where('filter', 'movies')->where('movies.data', fn ($cards) => collect($cards)->pluck('key')->all() === ['1']));
+        ->where('filter', 'movies')->where('titles.data', fn ($cards) => collect($cards)->pluck('key')->all() === ['1']));
     $this->get(route('watchlist', ['filter' => 'tv-shows']))->assertInertia(fn (Assert $page) => $page
-        ->where('filter', 'tv-shows')->where('movies.data', fn ($cards) => collect($cards)->pluck('key')->all() === ['tv:2']));
-    $this->get(route('watchlist'))->assertInertia(fn (Assert $page) => $page->where('filter', 'all')->has('movies.data', 2));
+        ->where('filter', 'tv-shows')->where('titles.data', fn ($cards) => collect($cards)->pluck('key')->all() === ['tv:2']));
+    $this->get(route('watchlist'))->assertInertia(fn (Assert $page) => $page->where('filter', 'all')->has('titles.data', 2));
     $this->get(route('watchlist', ['filter' => 'documentaries']))->assertUnprocessable();
     $this->get(route('watchlist', ['filter' => ['movies']]))->assertUnprocessable();
 });
@@ -100,16 +100,16 @@ test('the next page keeps the filter and the sort, and no card is repeated or sk
     $this->actingAs($user);
 
     $first = $this->get(route('watchlist', ['sort' => 'oldest-added']))->assertOk();
-    $nextUrl = $first->viewData('page')['props']['movies']['next_page_url'];
+    $nextUrl = $first->viewData('page')['props']['titles']['next_page_url'];
     $second = $this->get($nextUrl)->assertOk();
-    $keys = collect($first->viewData('page')['props']['movies']['data'])->pluck('key')->merge(collect($second->viewData('page')['props']['movies']['data'])->pluck('key'));
+    $keys = collect($first->viewData('page')['props']['titles']['data'])->pluck('key')->merge(collect($second->viewData('page')['props']['titles']['data'])->pluck('key'));
 
     expect($nextUrl)->toContain('sort=oldest-added')
         ->and($keys)->toHaveCount(60)->and($keys->unique())->toHaveCount(60);
 
     $filtered = $this->get(route('watchlist', ['filter' => 'tv-shows']))->assertOk();
-    expect($filtered->viewData('page')['props']['movies']['data'])->toHaveCount(30)
-        ->and($filtered->viewData('page')['props']['movies']['next_page_url'])->toBeNull();
+    expect($filtered->viewData('page')['props']['titles']['data'])->toHaveCount(30)
+        ->and($filtered->viewData('page')['props']['titles']['next_page_url'])->toBeNull();
 });
 
 test('Watched lists a TV Show once an Episode is watched, ordered by its latest Episode Watched date beside Movies', function () {
@@ -126,10 +126,10 @@ test('Watched lists a TV Show once an Episode is watched, ordered by its latest 
     episodeOf($other, User::factory()->create(), '2026-04-01');
 
     $this->actingAs($user)->get(route('watched'))->assertOk()->assertInertia(fn (Assert $page) => $page
-        ->where('movies.data', fn ($cards) => collect($cards)->pluck('key')->all() === ['tv:2', 'tv:3', '1'])
-        ->where('movies.data.0.href', $first->canonicalUrl()));
+        ->where('titles.data', fn ($cards) => collect($cards)->pluck('key')->all() === ['tv:2', 'tv:3', '1'])
+        ->where('titles.data.0.href', $first->canonicalUrl()));
     $this->get(route('watched', ['sort' => 'oldest-watched']))->assertInertia(fn (Assert $page) => $page
-        ->where('movies.data', fn ($cards) => collect($cards)->pluck('key')->all() === ['1', 'tv:3', 'tv:2']));
+        ->where('titles.data', fn ($cards) => collect($cards)->pluck('key')->all() === ['1', 'tv:3', 'tv:2']));
 });
 
 test('a TV Show with only a Special watched is on Watched, and one only on the Watchlist is not', function () {
@@ -140,7 +140,7 @@ test('a TV Show with only a Special watched is on Watched, and one only on the W
     listedTvShow($user, 3, 'Watchlist only', null, '2026-01-01');
 
     $this->actingAs($user)->get(route('watched'))->assertInertia(fn (Assert $page) => $page
-        ->where('movies.data', fn ($cards) => collect($cards)->pluck('key')->all() === ['tv:2'])
+        ->where('titles.data', fn ($cards) => collect($cards)->pluck('key')->all() === ['tv:2'])
         ->where('userTvShows.2.watched', true)
         ->where('userTvShows.2.state', 'Not started')
         ->where('userTvShows.2.total', 1)
@@ -154,8 +154,8 @@ test('a TV Show on the Watchlist and Watched appears on both, and Completed leav
     episodeOf($tvShow);
     $this->actingAs($user);
 
-    $this->get(route('watchlist'))->assertInertia(fn (Assert $page) => $page->has('movies.data', 1));
-    $this->get(route('watched'))->assertInertia(fn (Assert $page) => $page->has('movies.data', 1)
+    $this->get(route('watchlist'))->assertInertia(fn (Assert $page) => $page->has('titles.data', 1));
+    $this->get(route('watched'))->assertInertia(fn (Assert $page) => $page->has('titles.data', 1)
         ->where('userTvShows.2', ['watchlisted' => true, 'watched' => true, 'watchedDate' => '2026-01-05T00:00:00.000000Z', 'state' => 'In progress', 'watchedCount' => 1, 'total' => 2]));
 });
 
@@ -187,8 +187,8 @@ test('a TV Show without details is left to the removed-title work, in none of th
     UserTitle::query()->create(['user_id' => $user->id, 'title_id' => $tvShow->id, 'watchlisted_at' => now()]);
 
     $this->actingAs($user)->get(route('watchlist'))->assertInertia(fn (Assert $page) => $page
-        ->where('movies.data', [])->where('userTvShows', [])->where('unavailableMovies', []));
-    $this->get(route('watched'))->assertInertia(fn (Assert $page) => $page->where('movies.data', []));
+        ->where('titles.data', [])->where('userTvShows', [])->where('unavailableMovies', []));
+    $this->get(route('watched'))->assertInertia(fn (Assert $page) => $page->where('titles.data', []));
 });
 
 test('a TV Show without details does not hide the Watchlist suggestions', function () {
@@ -206,7 +206,7 @@ test('an empty Watchlist keeps its suggestions, but an empty filter does not nee
     listedTvShow($user, 2, 'Show', null, '2026-01-01');
 
     $this->actingAs($user)->get(route('watchlist', ['filter' => 'movies']))->assertOk()->assertInertia(fn (Assert $page) => $page
-        ->where('movies.data', [])->where('trending', []));
+        ->where('titles.data', [])->where('trending', []));
 });
 
 test('a restored Movie is found with its own kind, whatever TV Show shares its id', function () {
@@ -216,6 +216,16 @@ test('a restored Movie is found with its own kind, whatever TV Show shares its i
     $this->actingAs($user);
 
     $response = $this->get(route('watchlist', ['restore' => 9, 'sort' => 'oldest-added']))->assertRedirect();
-    $this->get($response->headers->get('Location'))->assertInertia(fn (Assert $page) => $page->where('movies.data.0.key', '9'));
+    $this->get($response->headers->get('Location'))->assertInertia(fn (Assert $page) => $page->where('titles.data.0.key', '9'));
     expect($movie->movie->canonicalUrl(Surface::Watchlist))->not->toBeEmpty();
+});
+
+test('a restored Movie keeps the filter of the page it is revealed on', function () {
+    $user = User::factory()->create();
+    UserMovie::factory()->for($user)->for(Movie::factory()->state(['tmdb_id' => 9]))->create();
+    $this->actingAs($user);
+
+    $location = $this->get(route('watchlist', ['restore' => 9, 'filter' => 'movies']))->assertRedirect()->headers->get('Location');
+
+    expect($location)->toContain('filter=movies')->toContain('cursor=');
 });

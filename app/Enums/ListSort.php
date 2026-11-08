@@ -3,10 +3,10 @@
 namespace App\Enums;
 
 /**
- * How a Watchlist or Watched page orders its Movies; the value is the `sort` query parameter. Which sorts a page
- * accepts, and its default, depend on the list (see `UserMovieList`).
+ * How a Watchlist or Watched page orders its Movies and TV Shows; the value is the `sort` query parameter. Which sorts a page
+ * accepts, and its default, depend on the list (see `UserList`).
  */
-enum MovieListSort: string
+enum ListSort: string
 {
     case RecentlyAdded = 'recently-added';
     case OldestAdded = 'oldest-added';

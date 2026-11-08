@@ -12,12 +12,12 @@ import {
     markAsWatched,
     setWatchlist,
 } from '@/lib/userMovieActions';
-import type { UserMovieList } from '@/types';
+import type { UserList } from '@/types';
 
 const props = defineProps<{
     tmdbId: number;
     title: string | null;
-    collection: UserMovieList;
+    collection: UserList;
     unavailable?: boolean;
     /** A TV Show's menu leaves its actions to the page, which confirms a mark and sends them as TV Show ones. */
     tvShow?: boolean;

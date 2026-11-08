@@ -6,7 +6,7 @@ import MoviePicker from '@/components/movie/MoviePicker.vue';
 import PosterCard from '@/components/movie/PosterCard.vue';
 import PosterCardSkeleton from '@/components/movie/PosterCardSkeleton.vue';
 import type { PosterCardMovie } from '@/components/movie/PosterCard.vue';
-import UserMovieCardMenu from '@/components/movie/UserMovieCardMenu.vue';
+import UserListCardMenu from '@/components/movie/UserListCardMenu.vue';
 import TvShowMarkDialog from '@/components/tv-show/TvShowMarkDialog.vue';
 import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -15,14 +15,12 @@ import { useTvShowListActions } from '@/composables/useTvShowListActions';
 import { search, watched, watchlist } from '@/routes';
 import type {
     ListFilter,
-    UserMovieList,
-    UserMovieListPageProps,
+    UserList,
+    UserListPageProps,
     UserTvShowFacts,
 } from '@/types';
 
-const props = defineProps<
-    UserMovieListPageProps & { collection: UserMovieList }
->();
+const props = defineProps<UserListPageProps & { collection: UserList }>();
 const isWatchlist = computed(() => props.collection === 'watchlist');
 const title = computed(() => (isWatchlist.value ? 'Watchlist' : 'Watched'));
 const fact = computed(() => (isWatchlist.value ? 'watchlisted' : 'watched'));
@@ -93,7 +91,7 @@ function cardKey(card: PosterCardMovie): string {
 }
 
 const cards = computed(() =>
-    props.movies.data.filter((card) => cardFacts(card)?.[fact.value]),
+    props.titles.data.filter((card) => cardFacts(card)?.[fact.value]),
 );
 const { busy: tvBusy, markAsWatched, clearWatched } = useTvShowListActions();
 const markingTvShow = ref<PosterCardMovie | null>(null);
@@ -191,11 +189,11 @@ function visitList(sort: string, filter: ListFilter): void {
         {
             replace: true,
             preserveState: true,
-            reset: ['movies'],
+            reset: ['titles'],
             only: [
                 'sort',
                 'filter',
-                'movies',
+                'titles',
                 'unavailableMovies',
                 'trending',
                 'userMovies',
@@ -401,7 +399,7 @@ const showMoreParams = {
                         :show-bookmark="false"
                     >
                         <template #controls>
-                            <UserMovieCardMenu
+                            <UserListCardMenu
                                 :tmdb-id="movie.tmdbId"
                                 :title="movie.title"
                                 :collection="collection"
@@ -420,8 +418,8 @@ const showMoreParams = {
             </ul>
         </section>
         <InfiniteScroll
-            v-if="movies.data.length > 0"
-            data="movies"
+            v-if="titles.data.length > 0"
+            data="titles"
             manual
             :params="showMoreParams"
             :items-element="() => list"
@@ -466,7 +464,7 @@ const showMoreParams = {
                                     }"
                                 />
                             </div>
-                            <UserMovieCardMenu
+                            <UserListCardMenu
                                 :tmdb-id="movie.tmdbId"
                                 :title="movie.title"
                                 :collection="collection"
