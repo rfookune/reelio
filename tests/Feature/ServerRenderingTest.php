@@ -27,6 +27,15 @@ test('Discover and Movie pages are rendered on the server', function () {
     expect(renderedComponents())->toBe(['Discover', 'movies/Show']);
 });
 
+test('the Login and Register pages are rendered on the server', function () {
+    Http::fake(['127.0.0.1:13714/render' => Http::response(['head' => [], 'body' => '<div></div>'])]);
+
+    $this->get(route('login'));
+    $this->get(route('register'));
+
+    expect(renderedComponents())->toBe(['auth/Login', 'auth/Register']);
+});
+
 test('the About, Privacy, Terms and Accessibility pages are rendered on the server', function (string $name) {
     Http::fake(['127.0.0.1:13714/render' => Http::response(['head' => [], 'body' => '<div></div>'])]);
     Route::middleware('web')->get("/{$name}-page", fn () => inertia('Discover'))->name($name);
@@ -36,11 +45,10 @@ test('the About, Privacy, Terms and Accessibility pages are rendered on the serv
     expect(renderedComponents())->toBe(['Discover']);
 })->with(['about', 'privacy', 'terms', 'accessibility']);
 
-test('Search, auth, Watchlist, Watched and settings pages are not rendered on the server', function () {
+test('Search, the other auth pages, Watchlist, Watched and settings pages are not rendered on the server', function () {
     Http::fake();
     $this->get(route('search', ['q' => 'matrix']));
-    $this->get(route('login'));
-    $this->get(route('register'));
+    $this->get(route('password.request'));
     $this->actingAs(User::factory()->create());
     $this->get(route('watchlist'));
     $this->get(route('watched'));
@@ -67,9 +75,9 @@ test('SSR is off for every page when it is switched off', function () {
 
 test('a route added to the SSR list is rendered on the server without becoming indexable', function () {
     Http::fake(['127.0.0.1:13714/render' => Http::response(['head' => [], 'body' => '<div></div>'])]);
-    config(['seo.ssr_routes' => [...config('seo.ssr_routes'), 'login'], 'seo.indexing' => true]);
+    config(['seo.ssr_routes' => [...config('seo.ssr_routes'), 'password.request'], 'seo.indexing' => true]);
 
-    $response = $this->get(route('login'));
+    $response = $this->get(route('password.request'));
 
-    expect(renderedComponents())->toBe(['auth/Login'])->and($response->headers->get('X-Robots-Tag'))->toBe('noindex');
+    expect(renderedComponents())->toBe(['auth/ForgotPassword'])->and($response->headers->get('X-Robots-Tag'))->toBe('noindex');
 });
