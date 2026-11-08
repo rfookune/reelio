@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { BookmarkCheck, BookmarkPlus } from "@lucide/vue";
-import { computed } from "vue";
-import { Button } from "@/components/ui/button";
-import { setWatchlist } from "@/lib/userMovieActions";
-import type { UserMovieActionSource, UserMovieFacts } from "@/types";
+import { BookmarkCheck, BookmarkPlus } from '@lucide/vue';
+import { computed } from 'vue';
+import { Button } from '@/components/ui/button';
+import { setWatchlist } from '@/lib/userMovieActions';
+import type { UserMovieActionSource, UserMovieFacts } from '@/types';
 
 const props = defineProps<{
     tmdbId: number;
@@ -37,6 +37,6 @@ const watchlisted = computed(() => props.facts?.watchlisted ?? false);
             aria-hidden="true"
         />
         <BookmarkPlus v-else aria-hidden="true" />
-        {{ watchlisted ? "On your Watchlist" : "Add to Watchlist" }}
+        {{ watchlisted ? 'On your Watchlist' : 'Add to Watchlist' }}
     </Button>
 </template>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { crewGroups } from "@/lib/crew";
-import type { CrewMember } from "@/lib/crew";
+import { computed } from 'vue';
+import { crewGroups } from '@/lib/crew';
+import type { CrewMember } from '@/lib/crew';
 
 /** The people who directed, wrote and produced the movie, as text under their group, each with their job. */
 const props = defineProps<{ crew: CrewMember[] }>();
@@ -33,7 +33,7 @@ const groups = computed(() => crewGroups(props.crew));
                     >
                         <span class="font-medium">{{ person.name }}</span>
                         <span class="text-muted">
-                            · {{ person.jobs.join(", ") }}</span
+                            · {{ person.jobs.join(', ') }}</span
                         >
                     </li>
                 </ul>
