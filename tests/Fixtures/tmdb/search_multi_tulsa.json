@@ -1,0 +1,457 @@
+{
+    "page": 1,
+    "results": [
+        {
+            "adult": false,
+            "backdrop_path": "/mNHRGO1gFpR2CYZdANe72kcKq7G.jpg",
+            "id": 153312,
+            "name": "Tulsa King",
+            "original_name": "Tulsa King",
+            "overview": "New York mafia capo Dwight \"The General\" Manfredi is released from prison after 25 years and exiled by his boss to set up shop in Tulsa, Oklahoma. Realizing that his mob family may not have his best interests in mind, Dwight slowly builds a crew.",
+            "poster_path": "/y13WOeZ2rz2Ezpws0RJ0I8sQpG4.jpg",
+            "media_type": "tv",
+            "original_language": "en",
+            "genre_ids": [
+                80,
+                18,
+                35
+            ],
+            "popularity": 239.3036,
+            "first_air_date": "2022-11-13",
+            "softcore": false,
+            "vote_average": 8.3,
+            "vote_count": 2917,
+            "origin_country": [
+                "US"
+            ]
+        },
+        {
+            "adult": false,
+            "id": 1507362,
+            "name": "Tulsa",
+            "original_name": "Tulsa",
+            "media_type": "person",
+            "popularity": 0.1062,
+            "gender": 0,
+            "known_for_department": "Sound",
+            "profile_path": null,
+            "known_for": [
+                {
+                    "adult": false,
+                    "backdrop_path": "/s2EKgooFVbUBsjGIb54nZEwbFLE.jpg",
+                    "id": 331460,
+                    "title": "The Romantic Exiles",
+                    "original_title": "Los exiliados románticos",
+                    "overview": "Vito, Luis and Francesco are three Spanish friends around thirty who travel by van to Paris for no apparent reason, just looking for a reunion with their respective ancient, idyllic and yet ephemeral love affairs, perhaps with the only mission of surprising themselves and continue to still feel alive.",
+                    "poster_path": "/9XNBQpcmfmmvWg7AgQA7ZErj9e6.jpg",
+                    "media_type": "movie",
+                    "original_language": "es",
+                    "genre_ids": [
+                        18,
+                        10749
+                    ],
+                    "popularity": 0.5948,
+                    "release_date": "2015-09-11",
+                    "softcore": false,
+                    "video": false,
+                    "vote_average": 5.2,
+                    "vote_count": 17
+                }
+            ]
+        },
+        {
+            "adult": false,
+            "backdrop_path": "/oKYwUvy11gDi4eKon8rPFXRs31p.jpg",
+            "id": 104083,
+            "title": "Tulsa",
+            "original_title": "Tulsa",
+            "overview": "It's Tulsa, Oklahoma at the start of the oil boom and Cherokee Lansing's rancher father is killed in a fight with the Tanner Oil Company. Cherokee plans revenge by bringing in her own wells with the help of oil expert Brad Brady and childhood friend Jim Redbird. When the oil and the money start gushing in, both Brad and Jim want to protect the land but Cherokee has different ideas. What started out as revenge for her father's death has turned into an obsession for wealth and power.",
+            "poster_path": "/mQMWt7KormvYxsbjcHwNpAuNi2p.jpg",
+            "media_type": "movie",
+            "original_language": "en",
+            "genre_ids": [
+                18
+            ],
+            "popularity": 1.2635,
+            "release_date": "1949-04-13",
+            "softcore": false,
+            "video": false,
+            "vote_average": 6.3,
+            "vote_count": 28
+        },
+        {
+            "adult": false,
+            "backdrop_path": "/p3aqJBY3caWQH13EU2NFppZ6rYq.jpg",
+            "id": 717676,
+            "title": "Tulsa",
+            "original_title": "Tulsa",
+            "overview": "A desperate marine biker’s life is turned upside-down when he is united with the sassy 9-year-old daughter he never knew existed.",
+            "poster_path": "/bCGcTlYllZZjNyxVUw0U6ndq2rs.jpg",
+            "media_type": "movie",
+            "original_language": "en",
+            "genre_ids": [
+                35,
+                18
+            ],
+            "popularity": 0.8226,
+            "release_date": "2020-08-21",
+            "softcore": false,
+            "video": false,
+            "vote_average": 6.4,
+            "vote_count": 22
+        },
+        {
+            "adult": false,
+            "id": 4613812,
+            "name": "Tulsa Saumamao",
+            "original_name": "Tulsa Saumamao",
+            "media_type": "person",
+            "popularity": 0.0254,
+            "gender": 0,
+            "known_for_department": "Acting",
+            "profile_path": null,
+            "known_for": [
+                {
+                    "adult": false,
+                    "backdrop_path": null,
+                    "id": 1263901,
+                    "title": "The Great South",
+                    "original_title": "The Great South",
+                    "overview": "Two best friends must navigate the tough streets of South Auckland to buy a bottle of milk.",
+                    "poster_path": "/A2VwHvpeVHnPlMm9OCAfHc1jq21.jpg",
+                    "media_type": "movie",
+                    "original_language": "en",
+                    "genre_ids": [
+                        18,
+                        80,
+                        28
+                    ],
+                    "popularity": 0.1703,
+                    "release_date": "2024-08-03",
+                    "softcore": false,
+                    "video": false,
+                    "vote_average": 0,
+                    "vote_count": 0
+                }
+            ]
+        },
+        {
+            "adult": false,
+            "backdrop_path": null,
+            "id": 1460428,
+            "title": "Tulsa",
+            "original_title": "Tulsa",
+            "overview": "Stereo photos of 1950s-era cocktail parties are transformed into an intense visual playland.",
+            "poster_path": "/7sPIxFdR2KknrpyAOX5Ip89JhyM.jpg",
+            "media_type": "movie",
+            "original_language": "en",
+            "genre_ids": [],
+            "popularity": 0.1186,
+            "release_date": "2025-04-18",
+            "softcore": false,
+            "video": false,
+            "vote_average": 7,
+            "vote_count": 1
+        },
+        {
+            "adult": false,
+            "id": 4726042,
+            "name": "Tulsa Walpurgis",
+            "original_name": "Tulsa Walpurgis",
+            "media_type": "person",
+            "popularity": 0.0254,
+            "gender": 0,
+            "known_for_department": "Acting",
+            "profile_path": "/vq4vwB1PsT1igYy1FauMjGUSd9U.jpg",
+            "known_for": [
+                {
+                    "adult": false,
+                    "backdrop_path": "/7eFZZT0jeAMl18REexz58ujtLLg.jpg",
+                    "id": 253407,
+                    "name": "Acartonada: El desafío",
+                    "original_name": "Acartonada: El desafío",
+                    "overview": "Reality tv drag contest focused on the contestants' craftsmanship and creativity.",
+                    "poster_path": "/tqVCKISBGI82DU5kE4iQFxebIDp.jpg",
+                    "media_type": "tv",
+                    "original_language": "es",
+                    "genre_ids": [
+                        10764
+                    ],
+                    "popularity": 0.2796,
+                    "first_air_date": "2024-04-25",
+                    "softcore": false,
+                    "vote_average": 10,
+                    "vote_count": 1,
+                    "origin_country": [
+                        "MX"
+                    ]
+                }
+            ]
+        },
+        {
+            "adult": false,
+            "backdrop_path": null,
+            "id": 1673301,
+            "title": "TULSA",
+            "original_title": "TULSA",
+            "overview": "A short film by Jon Jost",
+            "poster_path": null,
+            "media_type": "movie",
+            "original_language": "en",
+            "genre_ids": [],
+            "popularity": 0.1052,
+            "release_date": "2019-02-28",
+            "softcore": false,
+            "video": false,
+            "vote_average": 0,
+            "vote_count": 0
+        },
+        {
+            "adult": false,
+            "backdrop_path": "/AXGq5mxfNFSFANjZsqwPUnb6TO.jpg",
+            "id": 118991,
+            "title": "Keys to Tulsa",
+            "original_title": "Keys to Tulsa",
+            "overview": "Richter Boudreau is on a bad streak: Languishing in the shadow of his celebrity mother, he loses his job as a film critic for the town paper, and now he's been approached with a dangerous proposition that ultimately leads to blackmail. Richter's friend Ronnie ropes him into a scheme to steal the inheritance of his wife, Vicky.",
+            "poster_path": "/g3Y1t6AXTVyRrz2DOIGsBeeA3YB.jpg",
+            "media_type": "movie",
+            "original_language": "en",
+            "genre_ids": [
+                80,
+                18,
+                53
+            ],
+            "popularity": 0.8676,
+            "release_date": "1997-04-11",
+            "softcore": false,
+            "video": false,
+            "vote_average": 4.6,
+            "vote_count": 35
+        },
+        {
+            "adult": false,
+            "backdrop_path": "/yUHTM9lfYK8vy2stEFCYIfhiP9v.jpg",
+            "id": 1538712,
+            "title": "Tulsa Terrors",
+            "original_title": "Tulsa Terrors",
+            "overview": "Tulsa Terrors follows the direct-to-home-video movie boom of the late 1980s, which began in part due to some tenacious Oklahomans. \"Thanks to RSU TV – northeastern Oklahoma’s public-television station – and its senior producer-director, Bryan Crain, I was recently able to co-produce and direct a documentary that I’ve been itching to do for a long time. I was on the scene as a Tulsa World entertainment writer at the time, so I was lucky enough to have witnessed firsthand the start of the whole phenomenon and how it impacted home entertainment across the country and even the world.",
+            "poster_path": "/2NVRCCkxVyY6WphAG0AiC4ISB0C.jpg",
+            "media_type": "movie",
+            "original_language": "en",
+            "genre_ids": [
+                99,
+                27
+            ],
+            "popularity": 0.1995,
+            "release_date": "2025-08-27",
+            "softcore": false,
+            "video": false,
+            "vote_average": 0,
+            "vote_count": 0
+        },
+        {
+            "adult": false,
+            "backdrop_path": "/8ceczrRjTcqIBHSmBE7v5lJplES.jpg",
+            "id": 442592,
+            "title": "The Tulsa Kid",
+            "original_title": "The Tulsa Kid",
+            "overview": "A protegee of notorious outlaw Montana (Beery), young Tom Benton decides to stay on the good side of the Law upon reaching maturity. Montana, however, has no such inclination to reform, the result being a climactic gun duel between the ageing gunman and his former pupil.",
+            "poster_path": "/r6IaUXcRnHZFe9DFttbg2Z0G01n.jpg",
+            "media_type": "movie",
+            "original_language": "en",
+            "genre_ids": [
+                37
+            ],
+            "popularity": 0.4049,
+            "release_date": "1940-08-16",
+            "softcore": false,
+            "video": false,
+            "vote_average": 6.5,
+            "vote_count": 2
+        },
+        {
+            "adult": false,
+            "backdrop_path": "/ozEYQ3G2GtUFIjpKpptTQn2kotx.jpg",
+            "id": 834962,
+            "title": "Tulsa Burning: The 1921 Race Massacre",
+            "original_title": "Tulsa Burning: The 1921 Race Massacre",
+            "overview": "Executive produced by NBA superstar and philanthropist Russell Westbrook, and directed by Peabody and Emmy-Award® winning director Stanley Nelson (“Freedom Riders”) and Peabody and duPont-Award winner Marco Williams (“Two Towns of Jasper”), the documentary commemorates the 100th anniversary of the horrific Tulsa Race Massacre of 1921, one of the worst acts of racial violence in American history, and calls attention to the previously ignored but necessary repair of a town once devastated.",
+            "poster_path": "/AkEWbIwNiGnodenkWqXS4ktZAtP.jpg",
+            "media_type": "movie",
+            "original_language": "en",
+            "genre_ids": [
+                99
+            ],
+            "popularity": 0.7428,
+            "release_date": "2021-05-30",
+            "softcore": false,
+            "video": false,
+            "vote_average": 6.6,
+            "vote_count": 5
+        },
+        {
+            "adult": false,
+            "backdrop_path": null,
+            "id": 1355527,
+            "title": "Tulsa: Ron Padgett",
+            "original_title": "Tulsa: Ron Padgett",
+            "overview": "Ron Padgett (1942- ) is a poet and editor whose artistic career took off during his teenaged years in Tulsa, Oklahoma. There, along with Joe Brainard and Dick Gallup, he produced The White Dove Review, an art and culture magazine. Both Padgett and Brainard serendipitously moved together to New York City, where Padgett studied at Columbia University under the tutelage of Kenneth Koch and interacted with various Beat poets. He has taught poetry at various schools in the City, edited volumes such as the Full Court Press and Teachers & Writers Magazine and written volumes of poetry including 2013’s Collected Poems which won the Los Angeles Times Book Prize. He also wrote “memoirs” of both Brainard and fellow Tulsan Ted Berrigan.",
+            "poster_path": null,
+            "media_type": "movie",
+            "original_language": "en",
+            "genre_ids": [
+                99
+            ],
+            "popularity": 0.1266,
+            "release_date": "2016-04-26",
+            "softcore": false,
+            "video": false,
+            "vote_average": 0,
+            "vote_count": 0
+        },
+        {
+            "adult": false,
+            "backdrop_path": "/gHguPi8LMIFnpO9fscreDJlUGNL.jpg",
+            "id": 834221,
+            "title": "Tulsa: The Fire and the Forgotten",
+            "original_title": "Tulsa: The Fire and the Forgotten",
+            "overview": "Learn about the 1921 Tulsa Race Massacre, on the one hundredth anniversary of the crime, and how the community of Tulsa is coming to terms with its past, present, and future.",
+            "poster_path": "/9AhdfI2512VEq7mzx6aFj7GZipa.jpg",
+            "media_type": "movie",
+            "original_language": "en",
+            "genre_ids": [
+                99
+            ],
+            "popularity": 0.2855,
+            "release_date": "2021-05-31",
+            "softcore": false,
+            "video": false,
+            "vote_average": 6,
+            "vote_count": 1
+        },
+        {
+            "adult": false,
+            "backdrop_path": "/oD7869GRQQG2w43K03YY1KfqHug.jpg",
+            "id": 836040,
+            "title": "Tulsa 1921: An American Tragedy",
+            "original_title": "Tulsa 1921: An American Tragedy",
+            "overview": "One hundred years ago today, in Tulsa, Oklahoma, a Black teenage shoe shiner named Dick Rowland stepped onto an elevator being operated by a 17-year-old White girl. Wild allegations about what happened on that elevator between the two teens would lead to one of the most notorious massacres in American history.  Rowland was arrested the next morning, and the Tulsa Tribune printed an incendiary article claiming that the young man had attempted to “assault” the girl. A white mob descended on the courthouse, demanding that Rowland be turned over to them.  Armed Black men showed up to defend Rowland and prevent him from being lynched. Gunfire soon erupted. It would lead to what would become known as the Tulsa Massacre, as White people began to shoot Black people on sight.",
+            "poster_path": "/dLKvAscxtjv6guZFkavDt7deXvE.jpg",
+            "media_type": "movie",
+            "original_language": "en",
+            "genre_ids": [
+                99
+            ],
+            "popularity": 0.2733,
+            "release_date": "2021-06-01",
+            "softcore": false,
+            "video": false,
+            "vote_average": 0,
+            "vote_count": 0
+        },
+        {
+            "adult": false,
+            "backdrop_path": null,
+            "id": 593593,
+            "title": "Take Me Back to Tulsa",
+            "original_title": "Take Me Back to Tulsa",
+            "overview": "Tex Williams and Spade Cooley's Western Dance Gang sing \"Take Me Back to Tulsa\".",
+            "poster_path": null,
+            "media_type": "movie",
+            "original_language": "en",
+            "genre_ids": [
+                10402
+            ],
+            "popularity": 0.28,
+            "release_date": "1944-08-08",
+            "softcore": false,
+            "video": false,
+            "vote_average": 7,
+            "vote_count": 1
+        },
+        {
+            "adult": false,
+            "backdrop_path": "/9zvOBQZeIqGJjggVOjbIYXpnHjk.jpg",
+            "id": 721314,
+            "title": "Hanson: Tulsa, Tokyo & the Middle of Nowhere",
+            "original_title": "Hanson: Tulsa, Tokyo & the Middle of Nowhere",
+            "overview": "The \"MMMBopping\" bubblegum brothers perform candy-coated pop songs and cause juvenile mischief on and off stage during their first-ever world tour. Through the United States, Canada, Europe, Asia and all the way Down Under to Australia, the three blond brothers are as enthusiastically sweet as ever, enchanting international audiences with songs like \"MMMBop\" and \"Where's The Love,\" hanging with supermodel Cindy Crawford, and just hanging out like siblings do.",
+            "poster_path": "/swtNoIdT7ujPgMIwyNnxjqud2g6.jpg",
+            "media_type": "movie",
+            "original_language": "en",
+            "genre_ids": [
+                10402,
+                99
+            ],
+            "popularity": 0.7351,
+            "release_date": "1997-11-17",
+            "softcore": false,
+            "video": true,
+            "vote_average": 0,
+            "vote_count": 0
+        },
+        {
+            "adult": false,
+            "backdrop_path": "/eKAf9x1OMy4E70kia6TQp3cC0cv.jpg",
+            "id": 795411,
+            "title": "Rise Again: Tulsa and the Red Summer",
+            "original_title": "Rise Again: Tulsa and the Red Summer",
+            "overview": "Comes one hundred years from the two-day Tulsa Massacre in 1921 that led to the murder of as many as 300 Black people and left as many as 10,000 homeless and displaced.",
+            "poster_path": "/1OTUvVuuP3XtvnutkTtUZaFbGhL.jpg",
+            "media_type": "movie",
+            "original_language": "en",
+            "genre_ids": [
+                99
+            ],
+            "popularity": 0.5306,
+            "release_date": "2021-06-18",
+            "softcore": false,
+            "video": false,
+            "vote_average": 8,
+            "vote_count": 2
+        },
+        {
+            "adult": false,
+            "backdrop_path": "/cny9TIE8o8Laci5m5zotCX2Ti96.jpg",
+            "id": 641635,
+            "title": "The Tulsa Lynching of 1921: A Hidden Story",
+            "original_title": "The Tulsa Lynching of 1921: A Hidden Story",
+            "overview": "Documents the race riot of 1921 and the destruction of the African-American community of Greenwood in Tulsa, Oklahoma. With testimony by eyewitnesses and background accounts by historians.",
+            "poster_path": "/1ggBfSFjGYBAn0HwDJyJCfMTsLa.jpg",
+            "media_type": "movie",
+            "original_language": "en",
+            "genre_ids": [
+                99
+            ],
+            "popularity": 0.7908,
+            "release_date": "2000-05-31",
+            "softcore": false,
+            "video": false,
+            "vote_average": 9,
+            "vote_count": 1
+        },
+        {
+            "adult": false,
+            "backdrop_path": "/4hpedIRkwxh0ZzZAnnlfU0bZzOv.jpg",
+            "id": 1637190,
+            "title": "Station 20 - A Tulsa Fire Documentary",
+            "original_title": "Station 20 - A Tulsa Fire Documentary",
+            "overview": "Embark on a ride alongside Tulsa Fire Station 20 with Captain Jason Morgan and Firefighter Garrett Richardson as they navigate a typical day filled with adrenaline, compassion, and community service. Witness firsthand the challenges and rewards of life as a firefighter, experiencing their dedication and impact on Tulsa.  This documentary is a tribute to the brave men of Station 20, who selflessly put their lives on the line every day. ‍",
+            "poster_path": "/1fEW8XWJwB6EHvYRXVPoeikbvKz.jpg",
+            "media_type": "movie",
+            "original_language": "en",
+            "genre_ids": [
+                99,
+                18
+            ],
+            "popularity": 0.196,
+            "release_date": "2024-02-14",
+            "softcore": false,
+            "video": false,
+            "vote_average": 0,
+            "vote_count": 0
+        }
+    ],
+    "total_pages": 2,
+    "total_results": 34
+}

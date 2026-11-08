@@ -8,8 +8,8 @@
 
 **Status:** ready-for-human
 
-- [ ] The returning TV Show fixture holds the details with all five appended sub-requests, plus one response per Season
-- [ ] A Season 0 response and an unaired or undated Episode are present in the fixtures
-- [ ] A small Ended TV Show fixture is recorded
-- [ ] A `search/multi` fixture with both `movie` and `tv` results is recorded
-- [ ] No token or personal data appears in any fixture
+- [x] The returning TV Show fixture holds the details with all five appended sub-requests, plus one response per Season
+- [x] A Season 0 response and an unaired or undated Episode are present in the fixtures
+- [x] A small Ended TV Show fixture is recorded
+- [x] A `search/multi` fixture with both `movie` and `tv` results is recorded
+- [x] No token or personal data appears in any fixture
