@@ -1,12 +1,12 @@
 <?php
 
+use App\Enums\TitleKind;
 use App\Enums\UserTitleAction;
 use App\Http\Controllers\AvailabilityLinkController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\CspReportController;
 use App\Http\Controllers\DiscoverController;
 use App\Http\Controllers\EpisodeWatchedController;
-use App\Http\Controllers\MovieCastController;
 use App\Http\Controllers\MovieController;
 use App\Http\Controllers\MovieEntryController;
 use App\Http\Controllers\MoviePickerController;
@@ -15,8 +15,8 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SearchRatingsController;
 use App\Http\Controllers\SeasonWatchedController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\TitleCastController;
 use App\Http\Controllers\TvShowAvailabilityLinkController;
-use App\Http\Controllers\TvShowCastController;
 use App\Http\Controllers\TvShowController;
 use App\Http\Controllers\TvShowEntryController;
 use App\Http\Controllers\TvShowUndoController;
@@ -61,7 +61,7 @@ Route::scopeBindings()->middleware('throttle:user-movie-actions')->group(functio
 Route::get('tv-shows/tmdb/{tmdbId}/watch', TvShowAvailabilityLinkController::class)->whereNumber('tmdbId')->name('tv-shows.watch');
 Route::get('tv-shows/tmdb/{tmdbId}', TvShowEntryController::class)->whereNumber('tmdbId')->name('tv-shows.entry');
 Route::get('tv-shows/{slug}-{id}', [TvShowController::class, 'show'])->where('slug', '[^/]+')->whereNumber('id')->name('tv-shows.show');
-Route::get('tv-shows/{slug}-{id}/casts', TvShowCastController::class)->where('slug', '[^/]+')->whereNumber('id')->name('tv-shows.cast');
+Route::get('tv-shows/{slug}-{id}/casts', TitleCastController::class)->defaults('kind', TitleKind::TvShow->value)->where('slug', '[^/]+')->whereNumber('id')->name('tv-shows.cast');
 
 Route::get('movies/tmdb/{tmdbId}', MovieEntryController::class)->whereNumber('tmdbId')->name('movies.entry');
 
@@ -74,7 +74,7 @@ Route::middleware('throttle:user-movie-actions')->group(function () {
 });
 Route::get('movies/{id}/watch', AvailabilityLinkController::class)->whereNumber('id')->name('movies.watch');
 Route::get('movies/{slug}-{id}', [MovieController::class, 'show'])->where('slug', '[^/]+')->whereNumber('id')->name('movies.show');
-Route::get('movies/{slug}-{id}/casts', MovieCastController::class)->where('slug', '[^/]+')->whereNumber('id')->name('movies.cast');
+Route::get('movies/{slug}-{id}/casts', TitleCastController::class)->defaults('kind', TitleKind::Movie->value)->where('slug', '[^/]+')->whereNumber('id')->name('movies.cast');
 
 Route::put('country', CountryController::class)->name('country.update');
 

@@ -69,7 +69,7 @@ class MovieParser
             directors: $this->crewNames($data['credits'] ?? [], ['Director']),
             writers: $this->crewNames($data['credits'] ?? [], ['Writer', 'Screenplay']),
             cast: $this->appends->cast($data['credits'] ?? []),
-            crew: $this->crew($data['credits'] ?? []),
+            crew: $this->appends->crew($data['credits'] ?? []),
             certification: $usRelease['certification'] ?? null,
             usReleaseDate: $usRelease['date'] ?? null,
             usDigitalReleaseDate: $this->usDigitalReleaseDate($data),
@@ -242,30 +242,6 @@ class MovieParser
         }
 
         return array_values(array_unique($names));
-    }
-
-    /**
-     * The directors, writers and producers, one entry per person and job, ordered by MovieDetails::CREW_JOBS and then
-     * by TMDB's own order.
-     *
-     * @param  array<string, mixed>  $credits
-     * @return list<array{id: int, name: string, job: string}>
-     */
-    private function crew(array $credits): array
-    {
-        $crew = [];
-
-        foreach ((array) ($credits['crew'] ?? []) as $member) {
-            if (! is_array($member) || ! is_int($member['id'] ?? null) || ! is_string($member['name'] ?? null) || ! in_array($member['job'] ?? null, MovieDetails::CREW_JOBS, true)) {
-                continue;
-            }
-
-            $crew["{$member['id']}:{$member['job']}"] ??= ['id' => $member['id'], 'name' => $member['name'], 'job' => $member['job']];
-        }
-
-        $order = array_flip(MovieDetails::CREW_JOBS);
-
-        return array_values(collect($crew)->sortBy(fn (array $member): int => $order[$member['job']])->all());
     }
 
     /**

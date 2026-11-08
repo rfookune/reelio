@@ -2,7 +2,7 @@
 
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
-use App\Services\Catalog\Sources\Details\MovieDetails;
+use App\Services\Catalog\Enums\CrewJob;
 use App\Services\Catalog\Sources\SourceMisconfigured;
 use App\Services\Catalog\Sources\SourceUnavailable;
 use App\Services\Catalog\Sources\Tmdb\TmdbCatalogSource;
@@ -42,7 +42,7 @@ test('returns an ended TV Show with neutral metadata and every Episode', functio
     ]);
     expect($tvShow->cast[0])->toBe(['id' => 15440, 'name' => 'Jared Harris', 'character' => 'Valery Legasov', 'profilePath' => '/r9nIq0jPz1oBm4WwtlZhqlsX8p0.jpg', 'episodeCount' => 5]);
     expect($tvShow->crew)->not->toBeEmpty()->each->toHaveKeys(['id', 'name', 'job']);
-    expect(collect($tvShow->crew)->pluck('job')->unique()->diff(MovieDetails::CREW_JOBS))->toBeEmpty();
+    expect(collect($tvShow->crew)->pluck('job')->unique()->diff(CrewJob::names()))->toBeEmpty();
     expect($tvShow->seasons)->toHaveCount(1);
     expect($tvShow->seasons[0])->toMatchArray(['tmdbId' => 119454, 'number' => 1, 'episodeCount' => 5]);
     expect($tvShow->seasons[0]->episodes)->toHaveCount(5);

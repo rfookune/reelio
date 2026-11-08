@@ -17,14 +17,14 @@ test('the full cast page lists the whole billed cast without recording a view', 
     $this->get("/movies/avengers-doomsday-{$movie->id}/casts")
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('movies/Cast')
+            ->component('titles/Cast')->where('kind', 'movie')
             ->where('canonicalUrl', route('movies.cast', ['slug' => 'avengers-doomsday', 'id' => $movie->id]))
-            ->where('movieUrl', route('movies.show', ['slug' => 'avengers-doomsday', 'id' => $movie->id]))
-            ->where('movie.title', 'Avengers: Doomsday')
-            ->where('movie.year', 2026)
-            ->where('movie.cast', $cast)
-            ->where('movie.crew', [])
-            ->where('movie.detailsUnavailable', false));
+            ->where('titleUrl', route('movies.show', ['slug' => 'avengers-doomsday', 'id' => $movie->id]))
+            ->where('title.name', 'Avengers: Doomsday')
+            ->where('title.year', 2026)
+            ->where('title.cast', $cast)
+            ->where('title.crew', [])
+            ->where('title.detailsUnavailable', false));
 
     $this->assertDatabaseHas('titles', ['id' => $movie->id, 'last_viewed_at' => '2026-11-01 00:00:00']);
     Queue::assertNothingPushed();
@@ -55,9 +55,9 @@ test('with no cached details and the source down, the full cast is flagged unava
     $this->get(route('movies.cast', ['slug' => $movie->slug, 'id' => $movie->id]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('movie.detailsUnavailable', true)
-            ->where('movie.cast', [])
-            ->where('movie.crew', []));
+            ->where('title.detailsUnavailable', true)
+            ->where('title.cast', [])
+            ->where('title.crew', []));
 });
 
 test('the full cast page carries the directors, writers and producers', function () {
@@ -69,7 +69,7 @@ test('the full cast page carries the directors, writers and producers', function
     fakeCatalogKnowing(sourceDetailsFor($movie, crew: $crew));
 
     $this->get(route('movies.cast', ['slug' => $movie->slug, 'id' => $movie->id]))
-        ->assertInertia(fn (Assert $page) => $page->where('movie.crew', $crew));
+        ->assertInertia(fn (Assert $page) => $page->where('title.crew', $crew));
 });
 
 test('a TV Show id cannot open the Movie full-cast page', function () {

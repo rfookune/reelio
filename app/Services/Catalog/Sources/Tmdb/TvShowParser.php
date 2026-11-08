@@ -129,7 +129,7 @@ class TvShowParser
             voteCount: isset($data['vote_count']) ? (int) $data['vote_count'] : null,
             imdbId: $data['external_ids']['imdb_id'] ?? null, genres: array_map(fn (array $genre): array => ['id' => (int) $genre['id'], 'name' => $genre['name']], array_values($data['genres'] ?? [])),
             creators: array_column($data['created_by'] ?? [], 'name'), networks: array_column($data['networks'] ?? [], 'name'),
-            cast: $this->appends->aggregateCast($data['aggregate_credits'] ?? []), crew: $this->appends->aggregateCrew($data['aggregate_credits'] ?? []), certification: $certification,
+            cast: $this->appends->aggregateCast($data['aggregate_credits'] ?? []), crew: $this->appends->crew($data['aggregate_credits'] ?? []), certification: $certification,
             trailer: $this->appends->trailer($data['videos'] ?? [], $language, ($data['first_air_date'] ?? null) ?: null),
             availability: $this->appends->availability($data['watch/providers'] ?? []), seasons: $seasons,
         );

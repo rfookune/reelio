@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import type { CastMember } from '@/components/movie/CastGrid.vue';
-import FullCast from '@/components/movie/FullCast.vue';
+import FullCast from '@/components/shared/FullCast.vue';
 import type { CrewMember } from '@/lib/crew';
 
 defineProps<{
+    kind: 'movie' | 'tv';
     canonicalUrl: string;
-    movieUrl: string;
+    titleUrl: string;
     imageBaseUrl: string;
-    movie: {
-        title: string | null;
+    title: {
+        name: string | null;
         year: number | null;
         cast: CastMember[];
         crew: CrewMember[];
@@ -20,9 +21,9 @@ defineProps<{
 <template>
     <FullCast
         :canonical-url="canonicalUrl"
-        :title-url="movieUrl"
-        noun="Movie"
+        :title-url="titleUrl"
+        :noun="kind === 'tv' ? 'TV show' : 'Movie'"
         :image-base-url="imageBaseUrl"
-        :title="movie"
+        :title="title"
     />
 </template>

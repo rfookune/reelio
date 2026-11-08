@@ -36,14 +36,14 @@ test('the full cast page lists the whole series-wide cast and crew without recor
     $this->get(route('tv-shows.cast', ['slug' => $tvShow->slug, 'id' => $tvShow->id]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('tv-shows/Cast')
+            ->component('titles/Cast')->where('kind', 'tv')
             ->where('canonicalUrl', route('tv-shows.cast', ['slug' => $tvShow->slug, 'id' => $tvShow->id]))
-            ->where('tvShowUrl', route('tv-shows.show', ['slug' => $tvShow->slug, 'id' => $tvShow->id]))
-            ->where('tvShow.title', 'Chernobyl')
-            ->where('tvShow.year', 2019)
-            ->where('tvShow.cast', tvCast(30))
-            ->where('tvShow.crew', $crew)
-            ->where('tvShow.detailsUnavailable', false));
+            ->where('titleUrl', route('tv-shows.show', ['slug' => $tvShow->slug, 'id' => $tvShow->id]))
+            ->where('title.name', 'Chernobyl')
+            ->where('title.year', 2019)
+            ->where('title.cast', tvCast(30))
+            ->where('title.crew', $crew)
+            ->where('title.detailsUnavailable', false));
 
     $this->assertDatabaseHas('titles', ['id' => $tvShow->id, 'last_viewed_at' => '2026-11-01 00:00:00']);
     Queue::assertNothingPushed();
@@ -66,7 +66,7 @@ test('a stale slug permanently redirects to the full cast page', function () {
 test('the full cast page of a Removed TV Show is the title-less 410', function () {
     $tvShow = TvShow::factory()->removed()->create();
 
-    $this->get("/tv-shows/tv-show-{$tvShow->id}/casts")->assertGone()->assertInertia(fn (Assert $page) => $page->component('Error')->where('title', 'This TV show is no longer available.')->missing('tvShow'));
+    $this->get("/tv-shows/tv-show-{$tvShow->id}/casts")->assertGone()->assertInertia(fn (Assert $page) => $page->component('Error')->where('title', 'This TV show is no longer available.')->missing('titleUrl')->missing('kind'));
 });
 
 test('a TV Show without details is refreshed before its slug is checked', function () {
@@ -93,7 +93,7 @@ test('with stored details but no cached cast and the source down, the panel is f
 
     $this->get(route('tv-shows.cast', ['slug' => $tvShow->slug, 'id' => $tvShow->id]))
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->where('tvShow.detailsUnavailable', true)->where('tvShow.cast', [])->where('tvShow.crew', []));
+        ->assertInertia(fn (Assert $page) => $page->where('title.detailsUnavailable', true)->where('title.cast', [])->where('title.crew', []));
 });
 
 test('the full cast page is not found for a missing TV Show, a Movie, or with the TV flag off', function () {

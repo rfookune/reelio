@@ -2,8 +2,8 @@
 
 namespace App\Services\Catalog\Sources\Tmdb;
 
+use App\Services\Catalog\Enums\CrewJob;
 use App\Services\Catalog\Enums\OfferType;
-use App\Services\Catalog\Sources\Details\MovieDetails;
 
 class AppendedDataParser
 {
@@ -66,13 +66,14 @@ class AppendedDataParser
     }
 
     /**
-     * A TV Show's series-wide crew from `aggregate_credits`: the directors, writers and producers, one entry per
-     * person and job, ordered by MovieDetails::CREW_JOBS and then by TMDB's own order.
+     * The directors, writers and producers, one entry per person and job, ordered by CrewJob and then by TMDB's own
+     * order. Reads a Movie's `credits`, where each crew entry has one `job`, and a TV Show's `aggregate_credits`,
+     * where each has a list of `jobs`.
      *
      * @param  array<string, mixed>  $credits
      * @return list<array{id: int, name: string, job: string}>
      */
-    public function aggregateCrew(array $credits): array
+    public function crew(array $credits): array
     {
         $crew = [];
 
@@ -81,16 +82,25 @@ class AppendedDataParser
                 continue;
             }
 
-            foreach ((array) ($member['jobs'] ?? []) as $job) {
-                if (is_array($job) && in_array($job['job'] ?? null, MovieDetails::CREW_JOBS, true)) {
-                    $crew["{$member['id']}:{$job['job']}"] ??= ['id' => $member['id'], 'name' => $member['name'], 'job' => $job['job']];
-                }
+            foreach ($this->keptJobs($member) as $job) {
+                $crew["{$member['id']}:{$job->value}"] ??= ['id' => $member['id'], 'name' => $member['name'], 'job' => $job->value];
             }
         }
 
-        $order = array_flip(MovieDetails::CREW_JOBS);
+        return array_values(collect($crew)->sortBy(fn (array $member): int => CrewJob::from($member['job'])->position())->all());
+    }
 
-        return array_values(collect($crew)->sortBy(fn (array $member): int => $order[$member['job']])->all());
+    /**
+     * @param  array<string, mixed>  $member
+     * @return list<CrewJob>
+     */
+    private function keptJobs(array $member): array
+    {
+        $names = isset($member['jobs'])
+            ? array_column(array_filter((array) $member['jobs'], is_array(...)), 'job')
+            : [$member['job'] ?? null];
+
+        return array_values(array_filter(array_map(fn (mixed $name): ?CrewJob => is_string($name) ? CrewJob::tryFrom($name) : null, $names)));
     }
 
     /**

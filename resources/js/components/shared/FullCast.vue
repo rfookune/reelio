@@ -30,7 +30,7 @@ const props = defineProps<{
     noun: string;
     imageBaseUrl: string;
     title: {
-        title: string | null;
+        name: string | null;
         year: number | null;
         cast: CastMember[];
         crew: CrewMember[];
@@ -49,7 +49,7 @@ const matches = computed(() => castMatching(props.title.cast, filter.value));
 
 <template>
     <div class="flex flex-col gap-8 py-8">
-        <Head :title="`Full cast · ${title.title ?? noun}`">
+        <Head :title="`Full cast · ${title.name ?? noun}`">
             <link rel="canonical" :href="canonicalUrl" />
         </Head>
 
@@ -71,7 +71,7 @@ const matches = computed(() => castMatching(props.title.cast, filter.value));
                                     :href="titleUrl"
                                     data-slot="back-to-title"
                                 >
-                                    {{ title.title ?? noun
+                                    {{ title.name ?? noun
                                     }}<template v-if="title.year">
                                         ({{ title.year }})</template
                                     >
