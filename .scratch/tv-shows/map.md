@@ -23,12 +23,12 @@ A buildable spec at `.scratch/tv-shows/spec.md` for adding TV Shows to Reelio, w
 - [What TMDB offers for TV Shows](issues/02-tmdb-tv-data-shape.md): TV Show, Season and Episode details exist; Availability at TV Show and Season level only; about 1 + one request per Season to fetch a whole TV Show; findings are on the throwaway branch `research/tv-shows-tmdb-data-shape`.
 - [Shared title model or a parallel TV Show model](issues/01-shared-title-or-parallel-tv-show-model.md): a shared `titles` base with a kind, detail tables per kind and `Title` as the base model; Movie URLs unchanged; migrations edited in place; see [ADR 0002](../../docs/adr/0002-shared-title-base-for-movies-and-tv-shows.md).
 - [What Watched means for a TV Show](issues/03-what-watched-means-for-a-tv-show.md): Episode-level Watched facts with a derived TV Show state (Not started, In progress, Completed); Season and TV Show bulk actions with one Undo; the TV Show leaves the Watchlist on Completed and never returns on its own.
+- [How much Episode data to store and when to refresh it](issues/04-episode-data-volume-and-refresh.md): minimal Season and Episode fields matched by TMDB id; one all-or-nothing full fetch per TV Show (details plus every Season, concurrently in-request); scheduled by TMDB status (airing 3 days, ended 30 days); Title-level purge and 170-day cap guard clear Seasons and Episodes but keep rows; vanished Episodes are marked removed, not deleted; `catalog.tv_shows.enabled` flag (default off) hides TV Shows but never stops the licence rules.
 
 ## Not yet specified
 
 - URLs and routes for TV Shows, and how existing Movie routes, canonical URLs and the entry route relate.
-- Refresh and rate-limit behaviour for TV Shows and their Episodes (follows the data-volume decision).
-- What a Removed TV Show looks like (the shared `removed_at` on Title makes it a Removed Title question; the glossary term is open).
+- What a Removed TV Show looks like for users and in the glossary (the shared `removed_at` on Title makes it a Removed Title question; the refresh rule is settled in the Episode data ticket).
 - Events and analytics for TV Show actions, and how the metrics report treats them.
 - Test strategy: browser journeys and the accessibility sweep for the new pages.
 - Whether the Movie picker's Watchlist page changes once TV Shows sit on the Watchlist (the picker itself stays Movies-only).
