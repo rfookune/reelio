@@ -101,6 +101,8 @@ describe('the Movie page rendered on the server', () => {
         expect(html).toContain('data-slot="user-rating"');
         expect(html).toMatch(/data-slot="rating-trigger"[^>]*>.*Rate\s/s);
         expect(html).not.toContain('data-slot="rating-chip"');
+        expect(html).toContain('text-yellow-400');
+        expect(html).not.toContain('data-slot="rating-dialog"');
     });
 
     it('shows a signed-in viewer their rating, labelled, with a clear control', async () => {

@@ -192,6 +192,7 @@ const jsonLd = computed(() =>
                     <UserRating
                         v-if="user"
                         :title-id="tvShow.id"
+                        :title="tvShow.title"
                         :rating="userRating"
                     />
                 </div>

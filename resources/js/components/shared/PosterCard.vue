@@ -131,7 +131,7 @@ const title = computed(
                 class="flex items-center gap-1 text-foreground"
             >
                 <Star
-                    class="size-3.5 fill-current text-accent"
+                    class="size-3.5 fill-yellow-400 text-yellow-400"
                     aria-hidden="true"
                 />
                 <span>

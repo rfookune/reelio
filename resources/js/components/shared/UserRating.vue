@@ -1,31 +1,41 @@
 <script setup lang="ts">
 import { useHttp } from '@inertiajs/vue3';
 import { Star, X } from '@lucide/vue';
-import { nextTick, onBeforeUnmount, ref, useId, watch } from 'vue';
+import { nextTick, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { announce } from '@/composables/useAnnouncer';
 import { update } from '@/routes/titles/rating';
 
 /**
  * The signed-in viewer's own rating of a Title, set apart from the External ratings. Unrated, a "Rate" button opens a
- * 1–10 slider panel; rated, a chip reads "Your rating 7/10" (opening the same panel to change it) with a × that clears.
- * Changes show at once and roll back, with a toast, if the server refuses them. Guests are not shown this control.
+ * dialog named for the Title; rated, a chip reads "Your rating 7/10" (opening the same dialog to change it) with a ×
+ * that clears. The dialog holds ten stars: choosing the Nth rates the Title N out of 10 and closes it, every star up
+ * to the Nth showing filled. Changes show at once and roll back, with a toast, if the server refuses them. Guests
+ * are not shown this control.
  */
 const props = defineProps<{
     titleId: number;
+    /** The Title's name, which heads the dialog. */
+    title: string | null;
     /** The saved rating, or null when unrated. */
     rating: number | null;
 }>();
 
-const DEFAULT_DRAFT = 5;
+const STARS = Array.from({ length: 10 }, (_, index) => index + 1);
 const current = ref<number | null>(props.rating);
-const draft = ref<number>(props.rating ?? DEFAULT_DRAFT);
+/** The star under the pointer or with focus, previewed as filled up to it. */
+const preview = ref<number | null>(null);
 const open = ref(false);
 const root = ref<HTMLElement | null>(null);
-const slider = ref<HTMLInputElement | null>(null);
-const panelId = `user-rating-panel-${useId()}`;
-const sliderId = `user-rating-slider-${useId()}`;
+const stars = ref<HTMLElement | null>(null);
 let latestSave = 0;
 const http = useHttp<{ rating: number | null }>({ rating: null });
 
@@ -36,11 +46,13 @@ watch(
     },
 );
 
-async function openPanel(): Promise<void> {
-    draft.value = current.value ?? DEFAULT_DRAFT;
-    open.value = true;
-    await nextTick();
-    slider.value?.focus();
+/** The star that takes focus when the group is tabbed into: the rated one, else the first. */
+function tabStop(): number {
+    return current.value ?? 1;
+}
+
+function focusStar(value: number): void {
+    stars.value?.querySelector<HTMLElement>(`[data-star="${value}"]`)?.focus();
 }
 
 /** Focuses whichever trigger is shown once the DOM has caught up, since rating or clearing swaps it. */
@@ -52,39 +64,36 @@ function focusTrigger(): void {
     );
 }
 
-function closePanel(returnFocus: boolean): void {
-    open.value = false;
+function onOpenAutoFocus(event: Event): void {
+    event.preventDefault();
+    focusStar(tabStop());
+}
 
-    if (returnFocus) {
-        focusTrigger();
+/** The trigger that opened the dialog may have been swapped by the save, so focus is returned by hand. */
+function onCloseAutoFocus(event: Event): void {
+    event.preventDefault();
+    focusTrigger();
+}
+
+function onStarKeydown(event: KeyboardEvent, value: number): void {
+    const next = {
+        ArrowRight: Math.min(10, value + 1),
+        ArrowUp: Math.min(10, value + 1),
+        ArrowLeft: Math.max(1, value - 1),
+        ArrowDown: Math.max(1, value - 1),
+        Home: 1,
+        End: 10,
+    }[event.key];
+
+    if (next !== undefined) {
+        event.preventDefault();
+        focusStar(next);
     }
 }
 
-/** Tabbing out of the control closes the panel, so it is never left floating over the page. */
-function onFocusOut(event: FocusEvent): void {
-    const next = event.relatedTarget as Node | null;
-
-    if (open.value && next && !root.value?.contains(next)) {
-        closePanel(false);
-    }
+function isFilled(value: number): boolean {
+    return value <= (preview.value ?? current.value ?? 0);
 }
-
-function onDocumentPointerDown(event: PointerEvent): void {
-    if (open.value && !root.value?.contains(event.target as Node)) {
-        closePanel(false);
-    }
-}
-
-watch(open, (isOpen) => {
-    if (isOpen) {
-        document.addEventListener('pointerdown', onDocumentPointerDown);
-    } else {
-        document.removeEventListener('pointerdown', onDocumentPointerDown);
-    }
-});
-onBeforeUnmount(() =>
-    document.removeEventListener('pointerdown', onDocumentPointerDown),
-);
 
 function save(value: number | null): void {
     const previous = current.value;
@@ -118,9 +127,9 @@ function save(value: number | null): void {
         .catch(revert);
 }
 
-function saveDraft(): void {
-    save(draft.value);
-    closePanel(true);
+function rate(value: number): void {
+    save(value);
+    open.value = false;
 }
 
 function clear(): void {
@@ -130,28 +139,24 @@ function clear(): void {
 </script>
 
 <template>
-    <div
-        ref="root"
-        data-slot="user-rating"
-        class="relative"
-        @keydown.esc.stop="open && closePanel(true)"
-        @focusout="onFocusOut"
-    >
+    <div ref="root" data-slot="user-rating" class="relative">
         <div
             v-if="current !== null"
             data-slot="rating-chip"
             class="flex h-10 items-center gap-1 rounded-md border border-control bg-surface pr-1 pl-3 text-sm"
         >
-            <Star class="size-4 fill-current text-accent" aria-hidden="true" />
+            <Star
+                class="size-4 fill-yellow-400 text-yellow-400"
+                aria-hidden="true"
+            />
             <button
                 type="button"
                 data-slot="rating-trigger"
                 aria-haspopup="dialog"
                 :aria-expanded="open"
-                :aria-controls="panelId"
                 :aria-label="`Your rating: ${current} out of 10. Change`"
                 class="ml-1 rounded-sm"
-                @click="open ? closePanel(false) : openPanel()"
+                @click="open = true"
             >
                 Your rating
                 <span class="font-semibold tabular-nums">{{ current }}</span
@@ -176,52 +181,63 @@ function clear(): void {
             data-slot="rating-trigger"
             aria-haspopup="dialog"
             :aria-expanded="open"
-            :aria-controls="panelId"
-            @click="open ? closePanel(false) : openPanel()"
+            @click="open = true"
         >
-            <Star class="text-muted" aria-hidden="true" />
+            <Star class="text-yellow-400" aria-hidden="true" />
             Rate
         </Button>
 
-        <div
-            v-if="open"
-            :id="panelId"
-            role="dialog"
-            aria-label="Your rating"
-            data-slot="rating-panel"
-            class="fixed inset-x-4 bottom-4 z-20 flex flex-col gap-3 rounded-lg border border-control bg-surface p-4 shadow-lg sm:absolute sm:inset-x-auto sm:top-full sm:bottom-auto sm:left-0 sm:mt-2 sm:w-72"
-        >
-            <label :for="sliderId" class="text-sm font-medium"
-                >Your rating</label
+        <Dialog v-model:open="open">
+            <DialogContent
+                data-slot="rating-dialog"
+                class="sm:max-w-md"
+                @open-auto-focus="onOpenAutoFocus"
+                @close-auto-focus="onCloseAutoFocus"
             >
-            <div class="flex items-center gap-3">
-                <input
-                    :id="sliderId"
-                    ref="slider"
-                    v-model.number="draft"
-                    type="range"
-                    min="1"
-                    max="10"
-                    step="1"
-                    :aria-valuetext="`${draft} out of 10`"
-                    class="h-6 min-w-0 flex-1 accent-primary"
-                    @keydown.enter.prevent="saveDraft"
-                />
-                <output
-                    :for="sliderId"
-                    aria-hidden="true"
-                    class="w-10 text-right text-lg font-semibold tabular-nums"
-                    >{{ draft }}<span class="text-sm text-muted">/10</span>
-                </output>
-            </div>
-            <Button
-                type="button"
-                data-slot="save-rating"
-                class="self-end"
-                @click="saveDraft"
-            >
-                Save
-            </Button>
-        </div>
+                <DialogHeader>
+                    <DialogTitle>{{ title ?? 'Your rating' }}</DialogTitle>
+                    <DialogDescription>
+                        Your rating:
+                        <span class="tabular-nums"
+                            >{{ preview ?? current ?? '–' }}/10</span
+                        >
+                    </DialogDescription>
+                </DialogHeader>
+                <div
+                    ref="stars"
+                    role="radiogroup"
+                    aria-label="Your rating"
+                    class="flex justify-center gap-0.5"
+                    @mouseleave="preview = null"
+                >
+                    <button
+                        v-for="value in STARS"
+                        :key="value"
+                        type="button"
+                        role="radio"
+                        :data-star="value"
+                        :aria-checked="value === current"
+                        :aria-label="`${value} out of 10`"
+                        :tabindex="value === tabStop() ? 0 : -1"
+                        class="flex size-8 items-center justify-center rounded-md sm:size-9"
+                        @mouseenter="preview = value"
+                        @focus="preview = value"
+                        @blur="preview = null"
+                        @keydown="onStarKeydown($event, value)"
+                        @click="rate(value)"
+                    >
+                        <Star
+                            class="size-6 sm:size-7"
+                            :class="
+                                isFilled(value)
+                                    ? 'fill-yellow-400 text-yellow-400'
+                                    : 'text-muted'
+                            "
+                            aria-hidden="true"
+                        />
+                    </button>
+                </div>
+            </DialogContent>
+        </Dialog>
     </div>
 </template>

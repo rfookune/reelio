@@ -20,7 +20,7 @@ const props = defineProps<{
     tmdbId: number;
     facts: UserMovieFacts | undefined;
     /** The Title's id and the viewer's User rating of it; absent for guests, who get no rating control. */
-    rating?: { titleId: number; value: number | null };
+    rating?: { titleId: number; title: string | null; value: number | null };
 }>();
 
 const formatShortDate = useShortDate();
@@ -115,6 +115,7 @@ onUpdated(() => {
         <UserRating
             v-if="rating"
             :title-id="rating.titleId"
+            :title="rating.title"
             :rating="rating.value"
         />
 

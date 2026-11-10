@@ -158,7 +158,11 @@ onBeforeUnmount(() => {
                     :facts="userMovies[movie.tmdbId]"
                     :rating="
                         user
-                            ? { titleId: movie.id, value: userRating }
+                            ? {
+                                  titleId: movie.id,
+                                  title: movie.title,
+                                  value: userRating,
+                              }
                             : undefined
                     "
                 />
