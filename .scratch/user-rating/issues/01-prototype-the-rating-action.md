@@ -34,6 +34,7 @@ The control is a **Rate button that opens a slider panel**, placed in the **acti
 - **Rejected for the rated state:** an outlined star and score (too quiet), a solid accent pill (outweighs the primary actions) and a score with a ten-pip meter (repeats what the number says).
 
 Not settled by the prototype, to decide when building ticket 04:
+
 - The panel's Clear link duplicates the chip's ×; recommend dropping it from the panel.
 - Phone width, keyboard and screen-reader behaviour were not exercised.
 - The TV Show page has Season and Episode controls, so its placement needs its own decision.
