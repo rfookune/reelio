@@ -216,3 +216,48 @@ test('a guest cannot queue a mark on a Removed TV Show', function () {
 
     $this->putJson(tvShowWatchedUrl($tvShow))->assertStatus(410)->assertSessionMissing('user_movie_actions.pending');
 });
+
+test('TV Show Watched changes and Undo preserve the current User rating', function (string $scope, string $method, ?int $rating) {
+    $this->travelTo('2026-11-09 12:00:00');
+    $user = User::factory()->create();
+    $tvShow = TvShow::factory()->create();
+    $watchlistedAt = $method === 'putJson' ? '2026-11-01 12:00:00' : null;
+    $episode = episodeOf($tvShow, $method === 'deleteJson' ? $user : null, '2026-11-02 12:00:00');
+    UserTitle::query()->create([
+        'user_id' => $user->id, 'title_id' => $tvShow->id, 'rating' => 5, 'watchlisted_at' => $watchlistedAt,
+    ]);
+    $url = match ($scope) {
+        'episode' => route('tv-shows.episodes.watched.update', ['tvShow' => $tvShow->id, 'season' => $episode->season_id, 'episode' => $episode->id]),
+        'season' => route('tv-shows.seasons.watched.update', ['tvShow' => $tvShow->id, 'season' => $episode->season_id]),
+        'TV Show' => route('tv-shows.watched.update', ['tmdbId' => $tvShow->tmdb_id]),
+    };
+    $this->actingAs($user);
+
+    $token = $this->{$method}($url)->assertOk()->assertJsonPath('progress.state', $method === 'putJson' ? 'Completed' : 'Not started')->json('undoToken');
+
+    $this->assertDatabaseHas('user_titles', [
+        'user_id' => $user->id, 'title_id' => $tvShow->id, 'rating' => 5,
+        'watchlisted_at' => null, 'watched_at' => null,
+    ]);
+    $this->putJson(route('titles.rating.update', ['title' => $tvShow->id]), ['rating' => $rating])->assertNoContent();
+
+    $this->postJson(route('tv-shows.undo', ['tmdbId' => $tvShow->tmdb_id]), ['token' => $token])
+        ->assertOk()->assertJsonPath('watchlisted', $watchlistedAt !== null)
+        ->assertJsonPath('progress.state', $method === 'putJson' ? 'Not started' : 'Completed');
+
+    if ($rating === null && $watchlistedAt === null) {
+        $this->assertDatabaseMissing('user_titles', ['user_id' => $user->id, 'title_id' => $tvShow->id]);
+    } else {
+        $this->assertDatabaseHas('user_titles', [
+            'user_id' => $user->id, 'title_id' => $tvShow->id, 'rating' => $rating,
+            'watchlisted_at' => $watchlistedAt, 'watched_at' => null,
+        ]);
+    }
+    if ($method === 'putJson') {
+        $this->assertDatabaseMissing('user_episodes', ['user_id' => $user->id, 'episode_id' => $episode->id]);
+    } else {
+        $this->assertDatabaseHas('user_episodes', [
+            'user_id' => $user->id, 'episode_id' => $episode->id, 'watched_at' => '2026-11-02 12:00:00',
+        ]);
+    }
+})->with(['episode', 'season', 'TV Show'])->with(['putJson', 'deleteJson'])->with(['changed rating' => 9, 'cleared rating' => null]);

@@ -199,3 +199,29 @@ test('failed or expired TV Watchlist guest replay leaves no facts and still sign
     $this->assertAuthenticatedAs($user);
     $this->assertDatabaseCount('user_titles', 0);
 })->with(['expired', 'outage', 'disabled', 'removed']);
+
+test('TV Show Watchlist Undo preserves the current User rating', function (string $method, ?string $watchlistedAt, ?int $rating) {
+    $this->travelTo('2026-11-09 12:00:00');
+    $user = User::factory()->create();
+    $tvShow = TvShow::factory()->create();
+    UserTitle::query()->create([
+        'user_id' => $user->id, 'title_id' => $tvShow->id, 'rating' => 5, 'watchlisted_at' => $watchlistedAt,
+    ]);
+    $this->actingAs($user);
+    $token = $this->{$method}("/tv-shows/tmdb/{$tvShow->tmdb_id}/watchlist", ['source' => 'tv-show'])->assertOk()->json('undoToken');
+    $this->assertDatabaseHas('user_titles', ['user_id' => $user->id, 'title_id' => $tvShow->id, 'rating' => 5]);
+    $this->putJson(route('titles.rating.update', ['title' => $tvShow->id]), ['rating' => $rating])->assertNoContent();
+
+    $this->postJson(route('tv-shows.undo', ['tmdbId' => $tvShow->tmdb_id]), ['token' => $token])
+        ->assertOk()->assertJsonPath('watchlisted', $watchlistedAt !== null);
+
+    if ($rating === null && $watchlistedAt === null) {
+        $this->assertDatabaseMissing('user_titles', ['user_id' => $user->id, 'title_id' => $tvShow->id]);
+    } else {
+        $this->assertDatabaseHas('user_titles', [
+            'user_id' => $user->id, 'title_id' => $tvShow->id, 'rating' => $rating,
+            'watchlisted_at' => $watchlistedAt, 'watched_at' => null,
+        ]);
+    }
+})->with(['add' => ['putJson', null], 'remove' => ['deleteJson', '2026-11-01 12:00:00']])
+    ->with(['changed rating' => 9, 'cleared rating' => null]);

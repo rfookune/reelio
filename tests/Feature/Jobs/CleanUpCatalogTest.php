@@ -6,7 +6,10 @@ use App\Models\Availability;
 use App\Models\Genre;
 use App\Models\Movie;
 use App\Models\StreamingService;
+use App\Models\TvShow;
+use App\Models\User;
 use App\Models\UserMovie;
+use App\Models\UserTitle;
 use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
@@ -148,3 +151,41 @@ test('a full batch hands the rest to the next run, which stops once nothing is l
 
     Queue::assertNotPushed(CleanUpCatalog::class);
 });
+
+test('unviewed Titles held only by a User rating are not purged', function (string $kind, bool $removed) {
+    $this->travelTo('2026-11-09 12:00:00');
+    $factory = $removed ? $kind::factory()->removed() : $kind::factory();
+    $held = $factory->create(['last_viewed_at' => now()->subDays(100)]);
+    $unheld = $factory->create(['last_viewed_at' => now()->subDays(100)]);
+    $user = User::factory()->create();
+    UserTitle::query()->create(['user_id' => $user->id, 'title_id' => $held->id, 'rating' => 8]);
+
+    CleanUpCatalog::dispatch();
+
+    $this->assertModelExists($held);
+    $this->assertModelMissing($unheld);
+    $this->assertDatabaseHas('user_titles', [
+        'user_id' => $user->id, 'title_id' => $held->id, 'rating' => 8,
+        'watchlisted_at' => null, 'watched_at' => null,
+    ]);
+})->with([Movie::class, TvShow::class])->with(['available' => false, 'Removed Title' => true]);
+
+test('the cap clears Catalog data but preserves unviewed Titles held only by a User rating', function (string $kind) {
+    $this->travelTo('2026-11-09 12:00:00');
+    $title = $kind::factory()->create([
+        'synced_at' => now()->subDays(171), 'last_viewed_at' => now()->subDays(100),
+    ]);
+    $user = User::factory()->create();
+    UserTitle::query()->create(['user_id' => $user->id, 'title_id' => $title->id, 'rating' => 6]);
+    config(['catalog.tv_shows.enabled' => false]);
+
+    CleanUpCatalog::dispatch();
+
+    $this->assertDatabaseHas('titles', [
+        'id' => $title->id, 'title' => null, 'synced_at' => null, 'removed_at' => null,
+    ]);
+    $this->assertDatabaseHas('user_titles', [
+        'user_id' => $user->id, 'title_id' => $title->id, 'rating' => 6,
+        'watchlisted_at' => null, 'watched_at' => null,
+    ]);
+})->with([Movie::class, TvShow::class]);

@@ -128,3 +128,37 @@ test('empty strings clear a User rating while preserving the other facts', funct
         'watchlisted_at' => '2026-11-01 12:00:00', 'watched_at' => null,
     ]);
 })->with([Movie::class, TvShow::class])->with(['empty' => '', 'whitespace' => '  ']);
+
+test('removing a Movie from Watchlist or Watched leaves its User rating alone', function (string $fact, string $dateColumn) {
+    $user = User::factory()->create();
+    $movie = Movie::factory()->create();
+    UserTitle::query()->create([
+        'user_id' => $user->id, 'title_id' => $movie->id, 'rating' => 8,
+        $dateColumn => '2026-11-01 12:00:00',
+    ]);
+
+    $this->actingAs($user)->delete(route('movies.'.$fact.'.destroy', ['tmdbId' => $movie->tmdb_id]), ['source' => 'movie'])
+        ->assertRedirect()->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('user_titles', [
+        'user_id' => $user->id, 'title_id' => $movie->id, 'rating' => 8,
+        'watchlisted_at' => null, 'watched_at' => null,
+    ]);
+})->with(['Watchlist' => ['watchlist', 'watchlisted_at'], 'Watched' => ['watched', 'watched_at']]);
+
+test('removing a TV Show from the Watchlist leaves a rating-only row', function () {
+    $user = User::factory()->create();
+    $tvShow = TvShow::factory()->create();
+    UserTitle::query()->create([
+        'user_id' => $user->id, 'title_id' => $tvShow->id, 'rating' => 8,
+        'watchlisted_at' => '2026-11-01 12:00:00',
+    ]);
+
+    $this->actingAs($user)->deleteJson(route('tv-shows.watchlist.destroy', ['tmdbId' => $tvShow->tmdb_id]), ['source' => 'tv-show'])
+        ->assertOk()->assertJsonPath('watchlisted', false);
+
+    $this->assertDatabaseHas('user_titles', [
+        'user_id' => $user->id, 'title_id' => $tvShow->id, 'rating' => 8,
+        'watchlisted_at' => null, 'watched_at' => null,
+    ]);
+});

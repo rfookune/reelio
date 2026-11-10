@@ -4,7 +4,10 @@ use App\Jobs\BuildDiscover;
 use App\Models\Availability;
 use App\Models\Genre;
 use App\Models\Movie;
+use App\Models\TvShow;
+use App\Models\User;
 use App\Models\UserMovie;
+use App\Models\UserTitle;
 use App\Services\Catalog\Discover\DiscoverBuilder;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
@@ -66,3 +69,20 @@ test('catalog:purge works through every Movie, however many batches they take', 
 
     expect(Movie::query()->whereNotNull('synced_at')->count())->toBe(0);
 });
+
+test('catalog purge keeps Titles and User ratings when a rating is the only fact', function (string $kind) {
+    $title = $kind::factory()->create();
+    $user = User::factory()->create();
+    UserTitle::query()->create(['user_id' => $user->id, 'title_id' => $title->id, 'rating' => 9]);
+    config(['catalog.tv_shows.enabled' => false]);
+
+    $this->artisan('catalog:purge --force')->assertSuccessful();
+
+    $this->assertDatabaseHas('titles', [
+        'id' => $title->id, 'title' => null, 'synced_at' => null, 'removed_at' => null,
+    ]);
+    $this->assertDatabaseHas('user_titles', [
+        'user_id' => $user->id, 'title_id' => $title->id, 'rating' => 9,
+        'watchlisted_at' => null, 'watched_at' => null,
+    ]);
+})->with([Movie::class, TvShow::class]);

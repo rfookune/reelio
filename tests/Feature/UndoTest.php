@@ -265,3 +265,33 @@ test('an action can be undone for thirty minutes', function (int $minutes, bool 
     'at thirty minutes' => [30, true],
     'after thirty minutes' => [31, false],
 ]);
+
+test('Undo restores Movie dates without restoring or rejecting a changed User rating', function (string $method, string $fact, string $action, ?string $watchlistedAt, ?string $watchedAt, ?int $rating) {
+    $this->travelTo('2026-11-09 12:00:00');
+    $user = User::factory()->create();
+    $movie = Movie::factory()->create();
+    UserMovie::factory()->for($user)->for($movie)->create([
+        'watchlisted_at' => $watchlistedAt, 'watched_at' => $watchedAt, 'rating' => 5,
+    ]);
+    $this->actingAs($user);
+    $this->{$method}("/movies/tmdb/{$movie->tmdb_id}/{$fact}", ['source' => 'movie'])->assertRedirect()->assertSessionHasNoErrors();
+    $this->assertDatabaseHas('user_titles', ['user_id' => $user->id, 'title_id' => $movie->id, 'rating' => 5]);
+    $this->putJson(route('titles.rating.update', ['title' => $movie->id]), ['rating' => $rating])->assertNoContent();
+
+    $this->post(route('movies.undo', ['tmdbId' => $movie->tmdb_id]), ['action' => $action])
+        ->assertRedirect()->assertSessionHasNoErrors();
+
+    if ($rating === null && $watchlistedAt === null && $watchedAt === null) {
+        $this->assertDatabaseMissing('user_titles', ['user_id' => $user->id, 'title_id' => $movie->id]);
+    } else {
+        $this->assertDatabaseHas('user_titles', [
+            'user_id' => $user->id, 'title_id' => $movie->id, 'rating' => $rating,
+            'watchlisted_at' => $watchlistedAt, 'watched_at' => $watchedAt,
+        ]);
+    }
+})->with([
+    'add to Watchlist' => ['put', 'watchlist', 'add_to_watchlist', null, null],
+    'remove from Watchlist' => ['delete', 'watchlist', 'remove_from_watchlist', '2026-11-01 12:00:00', null],
+    'mark Watched' => ['put', 'watched', 'mark_as_watched', null, null],
+    'clear Watched' => ['delete', 'watched', 'clear_watched', null, '2026-11-02 12:00:00'],
+])->with(['changed rating' => 9, 'cleared rating' => null]);

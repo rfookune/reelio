@@ -3,8 +3,10 @@
 use App\Enums\Surface;
 use App\Http\Exceptions\TitleRemoved;
 use App\Models\Movie;
+use App\Models\TvShow;
 use App\Models\User;
 use App\Models\UserMovie;
+use App\Models\UserTitle;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('Removed Movies are a separate unpaginated group with only the viewers own dates', function (string $list, string $expectedDate) {
@@ -76,3 +78,30 @@ test('clearing a Removed Movie hides it from that list and Undo restores its ori
     'Watchlist' => ['watchlist', 'remove_from_watchlist', '2026-10-02T12:00:00.000000Z'],
     'Watched' => ['watched', 'clear_watched', '2026-10-01T12:00:00.000000Z'],
 ]);
+
+test('a Title removed by the Catalog source keeps every users rating', function (string $kind) {
+    $this->travelTo('2026-11-09 12:00:00');
+    $title = $kind::factory()->create(['synced_at' => now()->subDays(2)]);
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    UserTitle::query()->create(['user_id' => $user->id, 'title_id' => $title->id, 'rating' => 8]);
+    UserTitle::query()->create([
+        'user_id' => $otherUser->id, 'title_id' => $title->id, 'rating' => 3,
+        'watchlisted_at' => '2026-11-01 12:00:00',
+    ]);
+    fakeCatalogKnowing();
+
+    $this->actingAs($user)->get($title->canonicalUrl())->assertGone();
+
+    $this->assertDatabaseHas('titles', [
+        'id' => $title->id, 'removed_at' => '2026-11-09 12:00:00', 'synced_at' => null, 'title' => null,
+    ]);
+    $this->assertDatabaseHas('user_titles', [
+        'user_id' => $user->id, 'title_id' => $title->id, 'rating' => 8,
+        'watchlisted_at' => null, 'watched_at' => null,
+    ]);
+    $this->assertDatabaseHas('user_titles', [
+        'user_id' => $otherUser->id, 'title_id' => $title->id, 'rating' => 3,
+        'watchlisted_at' => '2026-11-01 12:00:00', 'watched_at' => null,
+    ]);
+})->with([Movie::class, TvShow::class]);
