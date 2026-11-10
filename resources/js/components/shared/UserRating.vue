@@ -18,7 +18,7 @@ import { update } from '@/routes/titles/rating';
 /**
  * The signed-in viewer's own rating of a Title, set apart from the External ratings. Unrated, a "Rate" button opens a
  * dialog named for the Title; rated, a chip reads "Your rating 7/10" (opening the same dialog to change it) with a ×
- * that clears. The dialog holds ten stars: choosing the Nth fills every star up to it and shows N/10, and the Rate
+ * that clears. The dialog holds ten stars: choosing the Nth fills every star up to it and shows N in a bubble below it, and the Rate
  * button confirms it (Cancel or Escape change nothing). Changes show at once and roll back, with a toast, if the server refuses them. Guests
  * are not shown this control.
  */
@@ -217,7 +217,7 @@ function clear(): void {
                     ref="stars"
                     role="radiogroup"
                     aria-label="Your rating"
-                    class="flex justify-center gap-0.5"
+                    class="flex justify-center gap-0.5 pb-7"
                     @mouseleave="preview = null"
                 >
                     <button
@@ -229,13 +229,20 @@ function clear(): void {
                         :aria-checked="value === draft"
                         :aria-label="`${value} out of 10`"
                         :tabindex="value === tabStop() ? 0 : -1"
-                        class="flex size-8 items-center justify-center rounded-md sm:size-9"
+                        class="relative flex size-8 items-center justify-center rounded-md sm:size-9"
                         @mouseenter="preview = value"
                         @focus="preview = value"
                         @blur="preview = null"
                         @keydown="onStarKeydown($event, value)"
                         @click="draft = value"
                     >
+                        <span
+                            v-if="value === (preview ?? draft)"
+                            data-slot="rating-value"
+                            aria-hidden="true"
+                            class="absolute -bottom-7 left-1/2 -translate-x-1/2 rounded-md bg-foreground px-1.5 py-0.5 text-xs font-semibold text-background tabular-nums"
+                            >{{ value }}</span
+                        >
                         <Star
                             class="size-6 sm:size-7"
                             :class="
@@ -247,14 +254,7 @@ function clear(): void {
                         />
                     </button>
                 </div>
-                <DialogFooter class="flex-row items-center justify-between">
-                    <p
-                        data-slot="rating-value"
-                        aria-hidden="true"
-                        class="text-sm text-muted tabular-nums"
-                    >
-                        {{ preview ?? draft ?? '–' }}/10
-                    </p>
+                <DialogFooter class="flex-row justify-end">
                     <div class="flex gap-2">
                         <Button
                             type="button"
