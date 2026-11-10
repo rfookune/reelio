@@ -19,7 +19,7 @@ A film Reelio shows, identified by Reelio's own id and linked to its Catalog sou
 _Avoid_: Film, provider movie
 
 **Removed Movie**:
-A Movie the Catalog source no longer has; Reelio keeps users' Watchlist and Watched facts about it but can show none of its details.
+A Movie the Catalog source no longer has; Reelio keeps users' Watchlist, Watched and User rating facts about it but can show none of its details.
 _Avoid_: Shell, dropped movie, deleted movie
 
 **Removed Title**:
@@ -101,6 +101,10 @@ A TV Show of which a user has watched some Episodes but is not Completed.
 **Completed**:
 A TV Show whose every aired Episode in the numbered Seasons a user has watched.
 _Avoid_: Finished, watched
+
+**User rating**:
+A user's own score for a Movie or a TV Show, a whole number from 1 to 10, given at any time and independently of the Watchlist and Watched. Only that user sees it; it is not an External rating.
+_Avoid_: Local rating, my score, review, community rating
 
 **Movie picker**:
 Chooses one Movie at random from a user's Watchlist, optionally narrowed by genre.
