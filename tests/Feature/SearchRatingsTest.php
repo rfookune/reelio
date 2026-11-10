@@ -146,3 +146,14 @@ test('with TV Shows off, TV Shows are not looked up', function () {
 
     expect($source->tvImdbIdCalls)->toBe([]);
 });
+
+test('asking for the ratings of a Browse page, which has no query, looks nothing up', function () {
+    config(['ratings.sources.imdb.enabled' => true]);
+    $source = new FakeCatalogSource(browsePages: [[movieListing(1)]], imdbIds: [1 => 'tt0000001']);
+    app()->instance(CatalogSource::class, $source);
+    app(CatalogSearch::class)->browse(1);
+
+    $this->getJson(route('search.ratings'))->assertOk()->assertExactJson(['ratings' => []]);
+
+    expect($source->imdbIdCalls)->toBe([]);
+});

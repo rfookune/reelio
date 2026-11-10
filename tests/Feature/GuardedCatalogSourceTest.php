@@ -140,6 +140,18 @@ test('interactive section calls share the breaker', function () {
         ->and($guarded->section(SectionQuery::of(SectionKind::Trending), 1, new CatalogContext(profile: CatalogProfile::Background))->listings)->toBe([]);
 });
 
+test('interactive Browse calls share the breaker', function () {
+    $inner = new FakeCatalogSource(failing: true);
+    $guarded = new GuardedCatalogSource($inner, new CacheKey);
+
+    foreach (range(1, 5) as $ignored) {
+        expect(fn () => $guarded->browse(1, new CatalogContext))->toThrow(SourceUnavailable::class);
+    }
+
+    expect(fn () => $guarded->browse(1, new CatalogContext))->toThrow(SourceUnavailable::class)
+        ->and($inner->browseCalls)->toHaveCount(5);
+});
+
 test('IMDb id lookups go through the breaker and the live throttle like any interactive call', function () {
     $inner = new FakeCatalogSource(failing: true);
     $guarded = new GuardedCatalogSource($inner, new CacheKey);

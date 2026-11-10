@@ -12,6 +12,7 @@ use App\Services\Catalog\Sources\SourceUnavailable;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
 use App\Services\Ratings\TmdbRatingId;
+use Closure;
 use Illuminate\Support\Facades\Cache;
 
 class CatalogSearch
@@ -29,7 +30,35 @@ class CatalogSearch
     public function search(string $query, int $page): CatalogResult
     {
         $context = new CatalogContext(config('catalog.language'));
-        $key = $this->searchKey($query, $page, $context);
+
+        return $this->read($this->searchKey($query, $page, $context), $context, fn (): SearchResults => $this->source->search($query, $page, $context));
+    }
+
+    /**
+     * One page of Browse, the Movies the source lists most popular first, read and cached as a page of a search is,
+     * under its own key and the same `search` freshness settings.
+     *
+     * @return CatalogResult<SearchResults>
+     */
+    public function browse(int $page): CatalogResult
+    {
+        $context = new CatalogContext(config('catalog.language'));
+
+        return $this->read($this->browseKey($page, $context), $context, fn (): SearchResults => $this->source->browse($page, $context));
+    }
+
+    /** A Browse page from the cache alone, fresh or stale, without asking the source; null when there is none. */
+    public function cachedBrowse(int $page): ?SearchResults
+    {
+        return $this->cachedSearchEntry($this->browseKey($page, new CatalogContext(config('catalog.language'))))['results'] ?? null;
+    }
+
+    /**
+     * @param  Closure(): SearchResults  $fetch
+     * @return CatalogResult<SearchResults>
+     */
+    private function read(string $key, CatalogContext $context, Closure $fetch): CatalogResult
+    {
         $cached = $this->cachedSearchEntry($key);
 
         if ($cached !== null && $cached['fetchedAt'] > now()->subSeconds(config('catalog.search.fresh_seconds'))->getTimestamp()) {
@@ -37,7 +66,7 @@ class CatalogSearch
         }
 
         try {
-            $results = $this->source->search($query, $page, $context);
+            $results = $fetch();
         } catch (SourceUnavailable $exception) {
             $this->misconfiguration->reportIfMisconfigured($exception, $context);
 
@@ -57,6 +86,11 @@ class CatalogSearch
     public function cachedSearch(string $query, int $page): ?SearchResults
     {
         return $this->cachedSearchEntry($this->searchKey($query, $page, new CatalogContext(config('catalog.language'))))['results'] ?? null;
+    }
+
+    private function browseKey(int $page, CatalogContext $context): string
+    {
+        return $this->keys->build('browse', ['page' => $page], $context);
     }
 
     private function searchKey(string $query, int $page, CatalogContext $context): string

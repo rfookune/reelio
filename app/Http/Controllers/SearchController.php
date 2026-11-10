@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
 use App\Http\Support\SearchPage;
-use App\Services\Catalog\Discover\DiscoverBuilder;
 use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Search\ImdbIdLookup;
 use App\Services\Ratings\Enums\RatingSourceName;
@@ -15,14 +14,15 @@ use Inertia\ScrollMetadata;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Search: title search for everyone, with the query and page in the URL. Results load a page at a time, merged
- * into those already shown, and `userMovies` merges with them. The page is client-rendered and `noindex`.
+ * Search: title search for everyone, with the query and page in the URL, and Browse of Popular Movies while there
+ * is no query. Results load a page at a time, merged into those already shown, and `userMovies` merges with
+ * them. The page is client-rendered and `noindex`.
  */
 class SearchController extends Controller
 {
-    public function __invoke(Request $request, CatalogSearch $catalogSearch, ImdbIdLookup $imdbIds, DiscoverBuilder $discover, Ratings $ratings, RecordEvent $recordEvent): Response
+    public function __invoke(Request $request, CatalogSearch $catalogSearch, ImdbIdLookup $imdbIds, Ratings $ratings, RecordEvent $recordEvent): Response
     {
-        $page = SearchPage::fromRequest($request, $catalogSearch, $imdbIds, $discover, $ratings, $recordEvent);
+        $page = SearchPage::fromRequest($request, $catalogSearch, $imdbIds, $ratings, $recordEvent);
 
         $response = Inertia::render('Search', [
             'imageBaseUrl' => config('catalog.image_base_url'),
@@ -33,8 +33,7 @@ class SearchController extends Controller
             'includesTvShows' => (bool) config('catalog.tv_shows.enabled'),
             'results' => Inertia::scroll(fn (): array => $page->results(), metadata: fn (): ScrollMetadata => $page->scrollMetadata())->matchOn('data.key'),
             'totalResults' => fn (): ?int => $page->totalResults(),
-            'status' => fn (): ?string => $page->status(),
-            'trending' => fn (): array => $page->trending(),
+            'status' => fn (): string => $page->status(),
             'userMovies' => Inertia::merge(fn (): array => $page->userMovies()),
             'userTvShows' => Inertia::merge(fn (): array => $page->userTvShows()),
         ])->toResponse($request);

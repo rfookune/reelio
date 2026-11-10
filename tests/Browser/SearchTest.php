@@ -13,12 +13,13 @@ use Illuminate\Support\Facades\RateLimiter;
  * Binds a fake source that finds the given pages and knows every Movie on them.
  *
  * @param  array<string, list<list<MovieListing>>>  $searches
+ * @param  list<list<MovieListing>>  $browsePages
  */
-function fakeBrowserSearch(array $searches): FakeCatalogSource
+function fakeBrowserSearch(array $searches, array $browsePages = []): FakeCatalogSource
 {
     config(['catalog.image_base_url' => '/test-images/']);
-    $movies = collect($searches)->flatten(2)->map(fn (MovieListing $listing): MovieDetails => new MovieDetails(tmdbId: $listing->tmdbId, title: $listing->title))->unique('tmdbId')->values()->all();
-    $source = new FakeCatalogSource($movies, searches: $searches);
+    $movies = collect([...$searches, ...$browsePages])->flatten(2)->map(fn (MovieListing $listing): MovieDetails => new MovieDetails(tmdbId: $listing->tmdbId, title: $listing->title))->unique('tmdbId')->values()->all();
+    $source = new FakeCatalogSource($movies, searches: $searches, browsePages: $browsePages);
     app()->instance(CatalogSource::class, $source);
 
     return $source;
@@ -71,6 +72,21 @@ function recordShownResults(): string
         })()
         JS;
 }
+
+it('lists Popular Movies while nothing is typed, and a search by Name replaces them', function () {
+    fakeBrowserSearch(['inter' => [[movieListing(7, title: 'Inter movie')]]], [movieListings(1, 20), movieListings(21, 25)]);
+
+    $page = visitWithCsp('/search');
+
+    $page->assertSeeIn('[data-slot=search-results]', 'Popular movies')
+        ->assertDontSee('Trending this week');
+    expect($page->script('document.querySelectorAll("[data-slot=search-results] [data-slot=poster-card]").length'))->toBe(20);
+
+    $page->typeSlowly('#search-query', 'inter', 60)
+        ->assertSeeIn('[data-slot=search-results]', '1 result')
+        ->assertDontSee('Popular movies')
+        ->assertNoJavaScriptErrors();
+});
 
 it('searches once the typing pauses, not on every keystroke', function () {
     $source = fakeBrowserSearch(['inter' => [movieListings(1, 20), movieListings(21, 25)]]);

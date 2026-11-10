@@ -28,6 +28,9 @@ class FakeCatalogSource implements CatalogSource
     /** @var list<array{query: string, page: int}> */
     public array $searchCalls = [];
 
+    /** @var list<array{page: int}> */
+    public array $browseCalls = [];
+
     /** @var list<CatalogContext> */
     public array $genreCalls = [];
 
@@ -47,6 +50,7 @@ class FakeCatalogSource implements CatalogSource
      * @param  list<SectionKind|string>  $failingSections  kinds, or `SectionQuery::key()`s
      * @param  array<string, list<list<MovieListing>>>  $searches  each query's result pages
      * @param  list<array{id: int, name: string}>  $genres
+     * @param  list<list<MovieListing>>  $browsePages  the pages of Browse
      * @param  array<int, string|null>  $imdbIds  each Movie's IMDb id by catalog id; a Movie not listed has none
      */
     public function __construct(
@@ -61,6 +65,7 @@ class FakeCatalogSource implements CatalogSource
         public array $failingTvShows = [],
         public array $failingSeasons = [],
         public array $tvImdbIds = [],
+        public array $browsePages = [],
     ) {}
 
     public function tvShow(int $tmdbId, CatalogContext $context): ?TvShowDetails
@@ -140,6 +145,24 @@ class FakeCatalogSource implements CatalogSource
 
         if (! isset($pages[$page - 1])) {
             throw new SourceUnavailable('The Catalog source has no such search page.');
+        }
+
+        return new SearchResults($pages[$page - 1], count($pages), array_sum(array_map(count(...), $pages)));
+    }
+
+    /** Browse with no pages given has one empty page; a page past the last is a failure, as TMDB's 404 is. */
+    public function browse(int $page, CatalogContext $context): SearchResults
+    {
+        $this->browseCalls[] = ['page' => $page];
+
+        if ($this->failing) {
+            throw new SourceUnavailable('The Catalog source is unavailable.');
+        }
+
+        $pages = $this->browsePages ?: [[]];
+
+        if (! isset($pages[$page - 1])) {
+            throw new SourceUnavailable('The Catalog source has no such browse page.');
         }
 
         return new SearchResults($pages[$page - 1], count($pages), array_sum(array_map(count(...), $pages)));

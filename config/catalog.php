@@ -114,7 +114,7 @@ return [
         'stale_seconds' => 86400,
 
         /*
-         * Shorter queries show Trending instead of searching; longer ones are cut.
+         * Shorter queries show Browse instead of searching; longer ones are cut.
          */
         'minimum_query_length' => 2,
         'maximum_query_length' => 100,

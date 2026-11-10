@@ -530,6 +530,52 @@ test('adult, malformed and duplicate listings are dropped, and unsafe image path
         ->and($page->listings[0]->releaseDate)->toBeNull();
 });
 
+test('a Browse page asks for the Movie discover list by popularity, with no text query and no adult listings', function () {
+    config(['catalog.tmdb.token' => 'test-read-token']);
+    Http::fake(['https://api.themoviedb.org/3/discover/movie?*' => Http::response(['page' => 3, 'total_pages' => 9, 'total_results' => 170, 'results' => [
+        ['id' => 1, 'title' => 'Kept', 'poster_path' => '/kept.jpg', 'release_date' => '2026-01-01', 'vote_average' => 7.5, 'vote_count' => 100],
+    ]])]);
+
+    $results = app(TmdbCatalogSource::class)->browse(3, new CatalogContext('en-US'));
+
+    expect($results->totalPages)->toBe(9)
+        ->and($results->totalResults)->toBe(170)
+        ->and(array_map(fn (MovieListing $listing): int => $listing->tmdbId, $results->listings))->toBe([1]);
+    Http::assertSentCount(1);
+    Http::assertSent(fn (Request $request) => $request->hasHeader('Authorization', 'Bearer test-read-token') && queryOf($request) === [
+        'page' => '3',
+        'language' => 'en-US',
+        'include_adult' => 'false',
+        'sort_by' => 'popularity.desc',
+    ]);
+});
+
+test('a Browse page drops adult, malformed and repeated listings and clears unsafe image paths', function () {
+    Http::fake(['https://api.themoviedb.org/3/discover/movie?*' => Http::response(['page' => 1, 'total_pages' => 2, 'total_results' => 40, 'results' => [
+        ['id' => 1, 'title' => 'Kept', 'poster_path' => '/kept.jpg', 'backdrop_path' => 'javascript:alert(1)'],
+        ['id' => 2, 'title' => 'Adult', 'adult' => true],
+        ['id' => 'three', 'title' => 'Bad id'],
+        'not a listing',
+        ['id' => 1, 'title' => 'Repeated'],
+    ]])]);
+
+    $results = app(TmdbCatalogSource::class)->browse(1, new CatalogContext);
+
+    expect(array_map(fn (MovieListing $listing): int => $listing->tmdbId, $results->listings))->toBe([1])
+        ->and($results->listings[0]->backdropPath)->toBeNull();
+});
+
+test('a Browse page fails explicitly on unsuccessful or malformed responses', function (array $body, int $status) {
+    Http::fake(['https://api.themoviedb.org/3/discover/movie?*' => Http::response($body, $status)]);
+
+    expect(fn () => app(TmdbCatalogSource::class)->browse(1, new CatalogContext))->toThrow(SourceUnavailable::class);
+})->with([
+    'not found' => [[], 404],
+    'server error' => [[], 500],
+    'no results' => [['page' => 1, 'total_pages' => 1, 'total_results' => 0], 200],
+    'no result count' => [['page' => 1, 'total_pages' => 1, 'results' => []], 200],
+]);
+
 test('a section fails explicitly on unsuccessful or malformed responses', function (array $body, int $status) {
     Http::fake(['https://api.themoviedb.org/3/movie/top_rated?*' => Http::response($body, $status)]);
 

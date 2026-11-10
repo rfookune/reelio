@@ -11,8 +11,6 @@ use App\Models\TvShow;
 use App\Models\User;
 use App\Models\UserTitle;
 use App\Services\Catalog\CatalogResult;
-use App\Services\Catalog\Discover\DiscoverBuilder;
-use App\Services\Catalog\Discover\DiscoverMovie;
 use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Search\ImdbIdLookup;
 use App\Services\Catalog\Sources\CatalogSource;
@@ -27,15 +25,15 @@ use Illuminate\Support\Str;
 use Inertia\ScrollMetadata;
 
 /**
- * The Search page's props for one response, asking the Catalog for the search at most once. A query shorter than
- * `search.minimum_query_length` isn't searched. Trending, from the stored Discover payload, shows when there is no
- * search, no result or no answer. Each Movie links to its canonical URL when it has a row, else to the entry route,
+ * The Search page's props for one response, asking the Catalog for the search, or for Browse when there is none, at
+ * most once. A query shorter than `search.minimum_query_length` isn't searched, and the page lists Browse's Popular
+ * Movies instead, a page at a time, as it lists a search's results. Each Movie links to its canonical URL when it has a row, else to the entry route,
  * both with the `search` referrer, and shows one External rating: IMDb when its IMDb id is known, from its row or
  * remembered, and rated, else TMDB. The ids not known are looked up afterwards, by `lookedUpRatings()`.
  * Results hold TV Shows beside Movies, each by its kind and catalog id (`key`: the catalog id, or `tv:` and it for a
  * TV Show), linking through its own entry route; with TV Shows off they are dropped. A TV Show has no Movie
  * Watchlist toggle, so `userMovies` covers Movies only and `userTvShows` carries their Watchlist fact alone.
- * A results page records `title_searched`; a reload of `userMovies` alone records nothing and asks no source.
+ * A search's results page records `title_searched`; a reload of `userMovies` alone records nothing and asks no source.
  *
  * @phpstan-type Card array{tmdbId: int, title: ?string, year: ?int, posterPath: ?string, ratings: list<array{source: string, name: string, value: float, voteCount: int}>, href: string}
  * @phpstan-type SearchCard array{kind: string, key: string, tmdbId: int, title: ?string, year: ?int, posterPath: ?string, ratings: list<array{source: string, name: string, value: float, voteCount: int}>, href: string, seasonCount?: ?int}
@@ -57,13 +55,9 @@ class SearchPage
     /** @var array<int, list<ExternalRating>>|null keyed by catalog id */
     private ?array $tvShowRatings = null;
 
-    /** @var list<DiscoverMovie>|null */
-    private ?array $trendingMovies = null;
-
     public function __construct(
         private CatalogSearch $catalogSearch,
         private ImdbIdLookup $imdbIds,
-        private DiscoverBuilder $discover,
         private Ratings $ratingSources,
         private RecordEvent $recordEvent,
         private ?User $user,
@@ -77,12 +71,11 @@ class SearchPage
      * characters, and its `page`, kept from 1 to the source's last page. A reload of `userMovies` alone, as after
      * a Watchlist action, reads the search from the cache only.
      */
-    public static function fromRequest(Request $request, CatalogSearch $catalogSearch, ImdbIdLookup $imdbIds, DiscoverBuilder $discover, Ratings $ratingSources, RecordEvent $recordEvent): self
+    public static function fromRequest(Request $request, CatalogSearch $catalogSearch, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
         return new self(
             $catalogSearch,
             $imdbIds,
-            $discover,
             $ratingSources,
             $recordEvent,
             $request->user(),
@@ -96,9 +89,9 @@ class SearchPage
      * The page asked for by the Search page's lookups of the IMDb ratings: the request's query and page, read as
      * `fromRequest()` reads them, from the cache alone. It searches nothing and records nothing.
      */
-    public static function cachedFromRequest(Request $request, CatalogSearch $catalogSearch, ImdbIdLookup $imdbIds, DiscoverBuilder $discover, Ratings $ratingSources, RecordEvent $recordEvent): self
+    public static function cachedFromRequest(Request $request, CatalogSearch $catalogSearch, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
-        return new self($catalogSearch, $imdbIds, $discover, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), readsCacheOnly: true);
+        return new self($catalogSearch, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), readsCacheOnly: true);
     }
 
     /** The request's `q`, trimmed of Unicode whitespace and cut to `search.maximum_query_length` characters. */
@@ -123,22 +116,23 @@ class SearchPage
         return $request->header('X-Inertia-Partial-Component') === 'Search' && $request->header('X-Inertia-Partial-Data') === 'userMovies';
     }
 
+    /** Whether the query is long enough to search by Name; if not, the page is Browse. */
     public function isSearching(): bool
     {
         return mb_strlen($this->query) >= config('catalog.search.minimum_query_length');
     }
 
     /**
-     * The page's results. A signed-in viewer's first page records `title_searched` with the query's length and the
-     * result count, never its text.
+     * The page's results, a search's or Browse's. A signed-in viewer's first page of a search records `title_searched` with the
+     * query's length and the result count, never its text.
      *
      * @return array{data: list<array{kind: string, key: string, tmdbId: int, title: ?string, year: ?int, posterPath: ?string, ratings: list<array{source: string, name: string, value: float, voteCount: int}>, href: string, seasonCount?: ?int, page: int}>}
      */
     public function results(): array
     {
-        $results = $this->search()?->value;
+        $results = $this->pageResult()->value;
 
-        if ($results !== null && $this->page === 1) {
+        if ($this->isSearching() && $results !== null && $this->page === 1) {
             $this->recordEvent->handle($this->user, AnalyticsEvent::TitleSearched, ['query_length' => mb_strlen($this->query), 'result_count' => count($this->listings())]);
         }
 
@@ -188,17 +182,17 @@ class SearchPage
      */
     public function scrollMetadata(): ScrollMetadata
     {
-        $result = $this->search();
+        $result = $this->pageResult();
 
-        if ($result !== null && $result->isUnavailable() && $this->page > 1) {
+        if ($result->isUnavailable() && $this->page > 1) {
             return new ScrollMetadata('page', $this->page, $this->page, $this->page);
         }
 
-        $lastPage = min($result?->value->totalPages ?? 0, CatalogSource::LAST_SOURCE_PAGE);
+        $lastPage = min($result->value->totalPages ?? 0, CatalogSource::LAST_SOURCE_PAGE);
 
         return new ScrollMetadata(
             'page',
-            $this->isSearching() && $this->page > 1 ? $this->page - 1 : null,
+            $this->page > 1 ? $this->page - 1 : null,
             $this->page < $lastPage ? $this->page + 1 : null,
             $this->page,
         );
@@ -206,19 +200,13 @@ class SearchPage
 
     public function totalResults(): ?int
     {
-        return $this->search()?->value?->totalResults;
+        return $this->pageResult()->value?->totalResults;
     }
 
-    /** `fresh`, `stale` or `unavailable`; null with no search. */
-    public function status(): ?string
+    /** `fresh`, `stale` or `unavailable`. */
+    public function status(): string
     {
-        return $this->search()?->status->value;
-    }
-
-    /** @return list<SearchCard> */
-    public function trending(): array
-    {
-        return array_map(fn (DiscoverMovie $movie): array => $this->card(TitleKind::Movie, $movie->tmdbId, $movie->title, $movie->releaseDate, $movie->posterPath), $this->trendingMovies());
+        return $this->pageResult()->status->value;
     }
 
     /**
@@ -251,41 +239,26 @@ class SearchPage
     }
 
     /**
-     * The search, asked for once; from the cache alone when only `userMovies` is reloaded, and unavailable when
-     * the cache has nothing.
+     * The search, or Browse when there is no query, asked for once; from the cache alone when only `userMovies` is
+     * reloaded, and unavailable when the cache has nothing.
      *
-     * @return CatalogResult<SearchResults>|null
+     * @return CatalogResult<SearchResults>
      */
-    private function search(): ?CatalogResult
+    private function pageResult(): CatalogResult
     {
-        if (! $this->isSearching()) {
-            return null;
-        }
-
         if ($this->readsCacheOnly) {
-            $cached = $this->catalogSearch->cachedSearch($this->query, $this->page);
+            $cached = $this->isSearching() ? $this->catalogSearch->cachedSearch($this->query, $this->page) : $this->catalogSearch->cachedBrowse($this->page);
 
             return $this->result ??= $cached === null ? CatalogResult::unavailable() : CatalogResult::stale($cached);
         }
 
-        return $this->result ??= $this->catalogSearch->search($this->query, $this->page);
-    }
-
-    /** @return list<DiscoverMovie> */
-    private function trendingMovies(): array
-    {
-        $result = $this->search();
-
-        return $this->trendingMovies ??= $result === null || $result->isUnavailable() || $result->value?->totalResults === 0 ? $this->discover->storedTrending() : [];
+        return $this->result ??= $this->isSearching() ? $this->catalogSearch->search($this->query, $this->page) : $this->catalogSearch->browse($this->page);
     }
 
     /** @return list<int> */
     private function catalogIds(): array
     {
-        return array_values(array_unique([
-            ...array_map(fn (MovieListing $listing): int => $listing->tmdbId, array_filter($this->listings(), fn (MovieListing $listing): bool => $listing->kind === TitleKind::Movie)),
-            ...array_map(fn (DiscoverMovie $movie): int => $movie->tmdbId, $this->trendingMovies()),
-        ]));
+        return array_values(array_unique(array_map(fn (MovieListing $listing): int => $listing->tmdbId, array_filter($this->listings(), fn (MovieListing $listing): bool => $listing->kind === TitleKind::Movie))));
     }
 
     /** @return SearchCard */
@@ -323,7 +296,7 @@ class SearchPage
      */
     private function listings(): array
     {
-        $listings = $this->search()?->value->listings ?? [];
+        $listings = $this->pageResult()->value->listings ?? [];
 
         return config('catalog.tv_shows.enabled') ? $listings : array_values(array_filter($listings, fn (MovieListing $listing): bool => $listing->kind === TitleKind::Movie));
     }
@@ -368,10 +341,8 @@ class SearchPage
     /** @return array<int, list<ExternalRating>> keyed by catalog id */
     private function ratings(): array
     {
-        $trendingImdbIds = collect($this->trendingMovies())->mapWithKeys(fn (DiscoverMovie $movie): array => [$movie->tmdbId => $movie->imdbId]);
-
         return $this->ratings ??= RatingsByCatalogId::for($this->ratingSources, $this->withRememberedImdbIds(collect($this->catalogIds())->mapWithKeys(fn (int $tmdbId): array => [
-            $tmdbId => $this->rows()->get($tmdbId)->imdb_id ?? $trendingImdbIds->get($tmdbId),
+            $tmdbId => $this->rows()->get($tmdbId)?->imdb_id,
         ])->all()));
     }
 

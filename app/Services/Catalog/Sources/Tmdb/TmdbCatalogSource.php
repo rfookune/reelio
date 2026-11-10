@@ -12,6 +12,7 @@ use App\Services\Catalog\Sources\Listings\SearchResults;
 use App\Services\Catalog\Sources\Listings\SectionPage;
 use App\Services\Catalog\Sources\Listings\SectionQuery;
 use App\Services\Catalog\Sources\SourceUnavailable;
+use Illuminate\Http\Client\Response;
 
 class TmdbCatalogSource implements CatalogSource
 {
@@ -98,13 +99,34 @@ class TmdbCatalogSource implements CatalogSource
         $response = $this->client->get($includesTvShows ? 'search/multi' : 'search/movie', ['query' => $query, 'page' => $page, 'language' => $context->language, 'include_adult' => 'false'], $context)
             ?? throw new SourceUnavailable('The Catalog source has no such search page.');
         $data = $this->movies->listPage((array) $response->json());
+        $totalResults = $this->totalResults($response);
+
+        return new SearchResults($includesTvShows ? $this->movies->mixedListings($data['results']) : $this->movies->listings($data['results']), $data['total_pages'], $totalResults);
+    }
+
+    /**
+     * One page of Browse from TMDB's Movie discover list, most popular first, with no text query. Adult listings,
+     * listings that aren't well formed and repeats within the page are dropped; an unsafe image path is cleared.
+     */
+    public function browse(int $page, CatalogContext $context): SearchResults
+    {
+        $response = $this->client->get('discover/movie', ['page' => $page, 'language' => $context->language, 'include_adult' => 'false', 'sort_by' => 'popularity.desc'], $context)
+            ?? throw new SourceUnavailable('The Catalog source has no such browse page.');
+        $data = $this->movies->listPage((array) $response->json());
+
+        return new SearchResults($this->movies->listings($data['results']), $data['total_pages'], $this->totalResults($response));
+    }
+
+    /** The response's result count; a missing or invalid one is a failure. */
+    private function totalResults(Response $response): int
+    {
         $totalResults = $response->json('total_results');
 
         if (! is_int($totalResults) || $totalResults < 0) {
             throw new SourceUnavailable('The Catalog source returned an invalid result count.');
         }
 
-        return new SearchResults($includesTvShows ? $this->movies->mixedListings($data['results']) : $this->movies->listings($data['results']), $data['total_pages'], $totalResults);
+        return $totalResults;
     }
 
     /**

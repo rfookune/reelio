@@ -30,9 +30,8 @@ const props = defineProps<{
     includesTvShows: boolean;
     results: { data: SearchResult[] };
     totalResults: number | null;
-    /** How the Catalog answered the search; null with no search. */
-    status: 'fresh' | 'stale' | 'unavailable' | null;
-    trending: PosterCardTitle[];
+    /** How the Catalog answered the search, or Browse while there is no query. */
+    status: 'fresh' | 'stale' | 'unavailable';
     userMovies: UserMovies;
     /** Whether the viewer has each TV Show of the results on their Watchlist, by catalog id. */
     userTvShows: TvShowWatchlistFacts;
@@ -55,6 +54,7 @@ const DEBOUNCE_MILLISECONDS = 300;
 const EAGER_CARDS = 6;
 const SHIMMER_CARDS = 12;
 const CANT_SEARCH = "We can't search right now";
+const CANT_BROWSE = "We can't load movies right now";
 const CANT_LOAD_MORE = "We can't load more results right now";
 const TOO_FAST = "You're going too fast. Try again in a moment.";
 const GRID =
@@ -87,6 +87,10 @@ const wantedQuery = computed(() => {
         ? trimmed
         : '';
 });
+/** Whether the query on the page is long enough to have been searched by Name; if not, the page is Browse. */
+const isSearching = computed(
+    () => Array.from(props.query).length >= props.minimumQueryLength,
+);
 /** The chip chosen; it filters the cards on the page, which the chips' counts are over. */
 const kindFilter = ref<KindFilter>('all');
 const counts = computed(() => kindCounts(props.results.data));
@@ -98,8 +102,12 @@ const emptyKindLabel = computed(() =>
 );
 const settling = computed(() => typing.value || pending.value);
 const hasResults = computed(() => props.results.data.length > 0);
-const firstLoading = computed(
-    () => settling.value && wantedQuery.value !== '' && !hasResults.value,
+const firstLoading = computed(() => settling.value && !hasResults.value);
+/** The line for the page failing as a whole: the search's, or Browse's when the query asked for is too short to search. */
+const failureMessage = computed(() =>
+    Array.from(requestedQuery.value).length >= props.minimumQueryLength
+        ? CANT_SEARCH
+        : CANT_BROWSE,
 );
 /** The search failed as a whole: the visit itself, or the source on the first page. */
 const pageError = computed(() => {
@@ -112,7 +120,7 @@ const pageError = computed(() => {
     }
 
     return props.status === 'unavailable' && !hasResults.value
-        ? CANT_SEARCH
+        ? failureMessage.value
         : null;
 });
 /** "Show more" failed: the visit itself, or the source on a later page, which the button then asks for again. */
@@ -123,24 +131,26 @@ const moreError = computed(
             ? CANT_LOAD_MORE
             : null),
 );
+/** Browse answered with no Movies to list. */
+const browseEmpty = computed(
+    () =>
+        !settling.value &&
+        !isSearching.value &&
+        failure.value === null &&
+        (props.status === 'fresh' || props.status === 'stale') &&
+        !hasResults.value,
+);
 const showsResults = computed(() => hasResults.value && failure.value === null);
 const noResults = computed(
     () =>
         !settling.value &&
+        isSearching.value &&
         failure.value === null &&
         (props.status === 'fresh' || props.status === 'stale') &&
         (props.totalResults === 0 ||
             // A search of every kind counts people too, which the page drops.
             (props.includesTvShows && !hasResults.value)),
 );
-const showsTrending = computed(
-    () =>
-        !firstLoading.value &&
-        !showsResults.value &&
-        failure.value === null &&
-        props.trending.length > 0,
-);
-
 function resultCount(total: number): string {
     return `${new Intl.NumberFormat('en-US').format(total)} ${total === 1 ? 'result' : 'results'}`;
 }
@@ -196,7 +206,6 @@ function visit(query: string, force = false): void {
             'results',
             'totalResults',
             'status',
-            'trending',
             'userMovies',
             'userTvShows',
         ],
@@ -210,12 +219,12 @@ function visit(query: string, force = false): void {
             }
         },
         onHttpException: (response) => {
-            fail(response.status === 429 ? TOO_FAST : CANT_SEARCH);
+            fail(response.status === 429 ? TOO_FAST : failureMessage.value);
 
             return false;
         },
         onNetworkError: () => {
-            fail(CANT_SEARCH);
+            fail(failureMessage.value);
 
             return false;
         },
@@ -247,7 +256,7 @@ function retry(): void {
 function announceSettled(page: typeof props): void {
     announce(
         page.status === 'unavailable'
-            ? CANT_SEARCH
+            ? failureMessage.value
             : `${resultCount(page.totalResults ?? 0)} for '${page.query}'`,
     );
 }
@@ -318,7 +327,10 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
             class="flex max-w-2xl flex-col items-start gap-3 rounded-xl border border-line bg-surface p-6"
         >
             <h2 class="text-lg font-semibold">{{ pageError }}</h2>
-            <p v-if="pageError === CANT_SEARCH" class="text-sm text-muted">
+            <p
+                v-if="pageError === CANT_SEARCH || pageError === CANT_BROWSE"
+                class="text-sm text-muted"
+            >
                 Please try again in a moment.
             </p>
             <Button type="button" :disabled="pending" @click="retry">
@@ -341,6 +353,14 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
             </p>
         </section>
 
+        <p
+            v-if="browseEmpty"
+            data-slot="search-browse-empty"
+            class="text-sm text-muted"
+        >
+            No movies to show right now. Try a search by title.
+        </p>
+
         <ul v-if="firstLoading" data-slot="search-loading" :class="GRID">
             <li v-for="index in SHIMMER_CARDS" :key="index">
                 <PosterCardSkeleton />
@@ -359,10 +379,14 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
                 id="search-results-heading"
                 class="text-sm text-muted tabular-nums"
             >
-                {{ resultCount(totalResults ?? 0) }}
+                {{
+                    isSearching
+                        ? resultCount(totalResults ?? 0)
+                        : 'Popular movies'
+                }}
             </h2>
             <div
-                v-if="includesTvShows"
+                v-if="includesTvShows && isSearching"
                 role="group"
                 aria-label="Filter results by kind"
                 class="flex flex-wrap gap-2"
@@ -477,28 +501,6 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
                     </div>
                 </template>
             </InfiniteScroll>
-        </section>
-
-        <section
-            v-if="showsTrending"
-            data-slot="search-trending"
-            aria-labelledby="search-trending-heading"
-            class="flex flex-col gap-6"
-        >
-            <h2 id="search-trending-heading" class="text-xl font-semibold">
-                Trending this week
-            </h2>
-            <ul :class="GRID">
-                <li v-for="(movie, index) in trending" :key="movie.tmdbId">
-                    <PosterCard
-                        :image-base-url="imageBaseUrl"
-                        :movie="movie"
-                        :facts="userMovies[movie.tmdbId]"
-                        source="search"
-                        :eager="index < EAGER_CARDS"
-                    />
-                </li>
-            </ul>
         </section>
     </div>
 </template>
