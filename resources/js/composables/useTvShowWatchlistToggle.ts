@@ -10,19 +10,23 @@ import undoRoute from '@/actions/App/Http/Controllers/TvShowUndoController';
 /** The `userTvShows` page prop of a page with a Watchlist toggle on its TV Show cards, keyed by catalog id. */
 export type TvShowWatchlistFacts = Record<string, { watchlisted: boolean }>;
 
+/** The surfaces carrying the toggle, which the server records as the action's source. */
+type Source = 'search' | 'watchlist' | 'watched';
+
 type Result = { watchlisted: boolean; undoToken?: string; redirect?: string };
 
 const FAILURE_MESSAGE = "Couldn't save that. Try again.";
 
 /**
- * The Watchlist toggle on a card of a TV Show, by catalog id. The page's `userTvShows` entry changes at once and
+ * The Watchlist toggle on a card of a TV Show, by catalog id. The page's `userTvShows` entry changes at once, keeping
+ * its other facts, and
  * rolls back, with a toast, if the server refuses; the success toast offers Undo. A guest is sent to sign in, and the
  * server applies the action afterwards. One action per TV Show runs at a time.
  */
-export function useTvShowWatchlistToggle(source: 'search') {
+export function useTvShowWatchlistToggle(source: () => Source) {
     const page = usePage();
     const busy = new Set<number>();
-    const http = useHttp<{ source: string }, Result>({ source });
+    const http = useHttp<{ source: string }, Result>({ source: source() });
     const undoHttp = useHttp<{ token: string; undo: string }, Result>({
         token: '',
         undo: '',
@@ -30,13 +34,18 @@ export function useTvShowWatchlistToggle(source: 'search') {
 
     function show(tmdbId: number, watchlisted: boolean): void {
         router.replace({
-            props: (current) => ({
-                ...current,
-                userTvShows: {
-                    ...((current.userTvShows ?? {}) as TvShowWatchlistFacts),
-                    [tmdbId]: { watchlisted },
-                },
-            }),
+            props: (current) => {
+                const facts = (current.userTvShows ??
+                    {}) as TvShowWatchlistFacts;
+
+                return {
+                    ...current,
+                    userTvShows: {
+                        ...facts,
+                        [tmdbId]: { ...facts[tmdbId], watchlisted },
+                    },
+                };
+            },
             preserveScroll: true,
             preserveState: true,
         });
@@ -83,6 +92,7 @@ export function useTvShowWatchlistToggle(source: 'search') {
         }
 
         try {
+            http.source = source();
             const args = { tmdbId };
             const result = watchlisted
                 ? await http.put(addToWatchlist.url(args))

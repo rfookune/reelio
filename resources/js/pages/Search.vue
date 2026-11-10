@@ -38,7 +38,7 @@ const props = defineProps<{
     userTvShows: TvShowWatchlistFacts;
 }>();
 
-const { toggle: toggleTvWatchlist } = useTvShowWatchlistToggle('search');
+const { toggle: toggleTvWatchlist } = useTvShowWatchlistToggle(() => 'search');
 
 const { withLookedUpRatings, isLookingUp } = useLookedUpRatings(
     () => props.query,

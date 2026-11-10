@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
 import { useShortDate } from '@/composables/useShortDate';
 import { useTvShowListActions } from '@/composables/useTvShowListActions';
+import { useTvShowWatchlistToggle } from '@/composables/useTvShowWatchlistToggle';
 import { search, watched, watchlist } from '@/routes';
 import type {
     ListFilter,
@@ -92,6 +93,9 @@ function cardKey(card: PosterCardTitle): string {
 
 const cards = computed(() =>
     props.titles.data.filter((card) => cardFacts(card)?.[fact.value]),
+);
+const { toggle: toggleTvWatchlist } = useTvShowWatchlistToggle(
+    () => props.collection,
 );
 const {
     busy: tvBusy,
@@ -468,6 +472,14 @@ const showMoreParams = {
                         "
                         :source="collection"
                         :eager="index < 6"
+                        :tv-watchlisted="
+                            movie.kind === 'tv'
+                                ? (tvFacts(movie)?.watchlisted ?? false)
+                                : undefined
+                        "
+                        @toggle-tv-watchlist="
+                            toggleTvWatchlist(movie.tmdbId, $event)
+                        "
                     >
                         <template #controls>
                             <div
