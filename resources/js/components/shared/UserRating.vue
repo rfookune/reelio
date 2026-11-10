@@ -247,31 +247,32 @@ function clear(): void {
                         />
                     </button>
                 </div>
-                <p
-                    data-slot="rating-value"
-                    aria-hidden="true"
-                    class="text-center text-2xl font-semibold tabular-nums"
-                >
-                    {{ preview ?? draft ?? '–'
-                    }}<span class="text-base font-normal text-muted">/10</span>
-                </p>
-                <DialogFooter>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        data-slot="cancel-rating"
-                        @click="open = false"
+                <DialogFooter class="flex-row items-center justify-between">
+                    <p
+                        data-slot="rating-value"
+                        aria-hidden="true"
+                        class="text-sm text-muted tabular-nums"
                     >
-                        Cancel
-                    </Button>
-                    <Button
-                        type="button"
-                        data-slot="save-rating"
-                        :disabled="draft === null"
-                        @click="confirm"
-                    >
-                        Rate
-                    </Button>
+                        {{ preview ?? draft ?? '–' }}/10
+                    </p>
+                    <div class="flex gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            data-slot="cancel-rating"
+                            @click="open = false"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="button"
+                            data-slot="save-rating"
+                            :disabled="draft === null"
+                            @click="confirm"
+                        >
+                            Rate
+                        </Button>
+                    </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
