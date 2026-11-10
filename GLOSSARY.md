@@ -42,6 +42,14 @@ _Avoid_: Score, critic rating, primary rating
 The public homepage of curated Movie sections, the same for every visitor.
 _Avoid_: Home feed, browse, explore
 
+**Release stage**:
+Where a Movie is in its release, in a visitor's country: In theater, At home or Coming soon; estimated from its release dates, not from showtimes. A TV Show has none.
+_Avoid_: Status, release status, availability
+
+**Browse**:
+Finding Titles by narrowing them with filters (Streaming service, genre, Release stage and so on) instead of searching by Name; Browse and a search by Name are never combined.
+_Avoid_: Discover, explore, filter search
+
 ### TV data
 
 **TV Show**:
@@ -59,7 +67,7 @@ _Avoid_: Installment, chapter
 ### Streaming
 
 **Streaming service**:
-A platform where a Movie can be watched, such as Netflix or Apple TV.
+A platform where a Movie or a TV Show can be watched, such as Netflix or Apple TV.
 _Avoid_: Provider, streaming provider, platform
 
 **Availability**:
