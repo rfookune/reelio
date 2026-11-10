@@ -380,3 +380,29 @@ test('Search results and Trending carry no User rating, even for a Movie the vie
         ->has('trending', 10)
         ->where('trending', fn ($cards) => collect($cards)->every(fn ($card) => ! array_key_exists('userRating', $card))));
 });
+
+test('Search carries the viewer\'s Watchlist fact for every TV Show in the results, including those with no row yet', function () {
+    $user = User::factory()->create();
+    $listed = TvShow::factory()->create(['tmdb_id' => 5]);
+    $unlisted = TvShow::factory()->create(['tmdb_id' => 6]);
+    UserTitle::query()->create(['user_id' => $user->id, 'title_id' => $listed->id, 'watchlisted_at' => '2026-11-01 12:00:00']);
+    UserTitle::query()->create(['user_id' => $user->id, 'title_id' => $unlisted->id, 'rating' => 8]);
+    fakeSearchWithTrending(['inter' => [[
+        movieListing(5, kind: TitleKind::TvShow), movieListing(6, kind: TitleKind::TvShow), movieListing(7, kind: TitleKind::TvShow), movieListing(5),
+    ]]]);
+
+    $this->actingAs($user)->get(route('search', ['q' => 'inter']))->assertInertia(fn (Assert $page) => $page
+        ->where('userTvShows', [5 => ['watchlisted' => true], 6 => ['watchlisted' => false], 7 => ['watchlisted' => false]]));
+    auth()->logout();
+    $this->get(route('search', ['q' => 'inter']))->assertInertia(fn (Assert $page) => $page
+        ->where('userTvShows.5.watchlisted', false));
+});
+
+test('another user\'s TV Show Watchlist never shows in a viewer\'s Search', function () {
+    [$owner, $viewer] = User::factory()->count(2)->create();
+    $tvShow = TvShow::factory()->create(['tmdb_id' => 5]);
+    UserTitle::query()->create(['user_id' => $owner->id, 'title_id' => $tvShow->id, 'watchlisted_at' => '2026-11-01 12:00:00']);
+    fakeSearchWithTrending(['inter' => [[movieListing(5, kind: TitleKind::TvShow)]]]);
+
+    $this->actingAs($viewer)->get(route('search', ['q' => 'inter']))->assertInertia(fn (Assert $page) => $page->where('userTvShows.5.watchlisted', false));
+});

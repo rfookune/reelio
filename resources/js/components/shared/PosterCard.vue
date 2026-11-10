@@ -48,9 +48,17 @@ const props = withDefaults(
         showBookmark?: boolean;
         /** The card's ratings are still being looked up, so a placeholder shows where they go. */
         ratingPending?: boolean;
+        /** A TV Show card's Watchlist state, which gives it a toggle that emits `toggle-tv-watchlist`. */
+        tvWatchlisted?: boolean;
     }>(),
-    { eager: false, showBookmark: true, ratingPending: false },
+    {
+        eager: false,
+        showBookmark: true,
+        ratingPending: false,
+        tvWatchlisted: undefined,
+    },
 );
+const emit = defineEmits<{ toggleTvWatchlist: [watchlisted: boolean] }>();
 
 const isTvShow = computed(() => props.movie.kind === 'tv');
 const title = computed(
@@ -84,7 +92,9 @@ const title = computed(
                 {{ tvBadgeLabel(movie.seasonCount) }}
             </span>
             <div
-                v-if="showBookmark && !isTvShow"
+                v-if="
+                    showBookmark && (!isTvShow || tvWatchlisted !== undefined)
+                "
                 class="absolute top-1.5 right-1.5"
             >
                 <BookmarkToggle
@@ -92,7 +102,9 @@ const title = computed(
                     :title="title"
                     :facts="facts"
                     :source="source"
+                    :watchlisted="isTvShow ? tvWatchlisted : undefined"
                     variant="floating"
+                    @toggle="emit('toggleTvWatchlist', $event)"
                 />
             </div>
             <slot name="controls" />

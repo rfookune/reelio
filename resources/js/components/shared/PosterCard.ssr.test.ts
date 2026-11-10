@@ -19,7 +19,10 @@ const card: PosterCardTitle = {
     href: '/movies/heat/1',
 };
 
-function render(movie: PosterCardTitle): Promise<string> {
+function render(
+    movie: PosterCardTitle,
+    props: { showBookmark?: boolean; tvWatchlisted?: boolean } = {},
+): Promise<string> {
     return renderToString(
         createSSRApp({
             render: () =>
@@ -29,6 +32,7 @@ function render(movie: PosterCardTitle): Promise<string> {
                     facts: undefined,
                     source: 'watchlist',
                     showBookmark: false,
+                    ...props,
                 }),
         }),
     );
@@ -52,4 +56,30 @@ describe('PosterCard', () => {
             expect(html).not.toContain('Your rating');
         },
     );
+
+    describe('Watchlist toggle on a TV Show', () => {
+        const tvShow: PosterCardTitle = { ...card, kind: 'tv', title: 'Dark' };
+
+        it('is offered once the card is given its Watchlist state', async () => {
+            const off = await render(tvShow, {
+                showBookmark: true,
+                tvWatchlisted: false,
+            });
+            const on = await render(tvShow, {
+                showBookmark: true,
+                tvWatchlisted: true,
+            });
+
+            expect(off).toContain('aria-label="Add Dark to Watchlist"');
+            expect(off).toContain('aria-pressed="false"');
+            expect(on).toContain('aria-label="Remove Dark from Watchlist"');
+            expect(on).toContain('aria-pressed="true"');
+        });
+
+        it('is absent without a Watchlist state, as on the lists', async () => {
+            const html = await render(tvShow, { showBookmark: true });
+
+            expect(html).not.toContain('bookmark-toggle');
+        });
+    });
 });

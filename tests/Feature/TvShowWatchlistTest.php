@@ -225,3 +225,15 @@ test('TV Show Watchlist Undo preserves the current User rating', function (strin
     }
 })->with(['add' => ['putJson', null], 'remove' => ['deleteJson', '2026-11-01 12:00:00']])
     ->with(['changed rating' => 9, 'cleared rating' => null]);
+
+test('a TV Show is added to and removed from the Watchlist from Search, recording that source', function () {
+    $user = User::factory()->create();
+    $tvShow = TvShow::factory()->create();
+
+    $this->actingAs($user)->putJson("/tv-shows/tmdb/{$tvShow->tmdb_id}/watchlist", ['source' => 'search'])
+        ->assertOk()->assertJsonPath('watchlisted', true);
+    $this->assertDatabaseHas('user_titles', ['user_id' => $user->id, 'title_id' => $tvShow->id]);
+    $this->deleteJson("/tv-shows/tmdb/{$tvShow->tmdb_id}/watchlist", ['source' => 'search'])
+        ->assertOk()->assertJsonPath('watchlisted', false);
+    $this->assertDatabaseMissing('user_titles', ['user_id' => $user->id]);
+});

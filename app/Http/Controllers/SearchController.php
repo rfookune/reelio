@@ -36,6 +36,7 @@ class SearchController extends Controller
             'status' => fn (): ?string => $page->status(),
             'trending' => fn (): array => $page->trending(),
             'userMovies' => Inertia::merge(fn (): array => $page->userMovies()),
+            'userTvShows' => Inertia::merge(fn (): array => $page->userTvShows()),
         ])->toResponse($request);
         $response->headers->set('X-Robots-Tag', 'noindex');
 

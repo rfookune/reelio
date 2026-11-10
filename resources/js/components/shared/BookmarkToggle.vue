@@ -5,21 +5,39 @@ import { setWatchlist } from '@/lib/userMovieActions';
 import type { UserMovieActionSource, UserMovieFacts } from '@/types';
 
 /**
- * The compact Watchlist toggle: at the end of a list row, or floating on a card's poster on a solid chip, filled
+ * The compact Watchlist toggle, of a Movie unless given its own `watchlisted` state: at the end of a list row, or floating on a card's poster on a solid chip, filled
  * with the accent when the Movie is on the Watchlist.
  */
 const props = withDefaults(
     defineProps<{
         tmdbId: number;
         title: string;
-        facts: UserMovieFacts | undefined;
+        facts?: UserMovieFacts | undefined;
         source: UserMovieActionSource;
         variant?: 'row' | 'floating';
+        /** A controlled toggle, as for a TV Show: it shows this state and asks the parent to change it. */
+        watchlisted?: boolean;
     }>(),
-    { variant: 'row' },
+    { variant: 'row', facts: undefined, watchlisted: undefined },
+);
+const emit = defineEmits<{ toggle: [watchlisted: boolean] }>();
+
+const watchlisted = computed(
+    () => props.watchlisted ?? props.facts?.watchlisted ?? false,
 );
 
-const watchlisted = computed(() => props.facts?.watchlisted ?? false);
+function toggle(event: MouseEvent): void {
+    if (props.watchlisted === undefined) {
+        setWatchlist(
+            props.tmdbId,
+            !watchlisted.value,
+            props.source,
+            event.currentTarget as HTMLElement,
+        );
+    } else {
+        emit('toggle', !watchlisted.value);
+    }
+}
 </script>
 
 <template>
@@ -49,14 +67,7 @@ const watchlisted = computed(() => props.facts?.watchlisted ?? false);
                           : 'text-muted hover:text-foreground',
                   ]
         "
-        @click="
-            setWatchlist(
-                tmdbId,
-                !watchlisted,
-                source,
-                $event.currentTarget as HTMLElement,
-            )
-        "
+        @click="toggle"
     >
         <BookmarkCheck
             v-if="watchlisted"

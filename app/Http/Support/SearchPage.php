@@ -9,6 +9,7 @@ use App\Enums\TitleKind;
 use App\Models\Movie;
 use App\Models\TvShow;
 use App\Models\User;
+use App\Models\UserTitle;
 use App\Services\Catalog\CatalogResult;
 use App\Services\Catalog\Discover\DiscoverBuilder;
 use App\Services\Catalog\Discover\DiscoverMovie;
@@ -33,7 +34,7 @@ use Inertia\ScrollMetadata;
  * remembered, and rated, else TMDB. The ids not known are looked up afterwards, by `lookedUpRatings()`.
  * Results hold TV Shows beside Movies, each by its kind and catalog id (`key`: the catalog id, or `tv:` and it for a
  * TV Show), linking through its own entry route; with TV Shows off they are dropped. A TV Show has no Movie
- * Watchlist toggle, so `userMovies` covers Movies only.
+ * Watchlist toggle, so `userMovies` covers Movies only and `userTvShows` carries their Watchlist fact alone.
  * A results page records `title_searched`; a reload of `userMovies` alone records nothing and asks no source.
  *
  * @phpstan-type Card array{tmdbId: int, title: ?string, year: ?int, posterPath: ?string, ratings: list<array{source: string, name: string, value: float, voteCount: int}>, href: string}
@@ -230,6 +231,23 @@ class SearchPage
         $none = ['watchlisted' => false, 'watched' => false, 'watchedDate' => null];
 
         return array_replace(array_fill_keys($this->catalogIds(), $none), UserMovies::for($this->user, $this->rows()));
+    }
+
+    /**
+     * Whether the viewer has each TV Show shown on their Watchlist, keyed by catalog id, including TV Shows with no row yet.
+     *
+     * @return array<int, array{watchlisted: bool}>
+     */
+    public function userTvShows(): array
+    {
+        $rows = $this->tvShowRows();
+        $watchlisted = $this->user === null || $rows->isEmpty() ? collect() : UserTitle::query()
+            ->whereBelongsTo($this->user)->whereIn('title_id', $rows->pluck('id'))->whereNotNull('watchlisted_at')
+            ->pluck('title_id')->flip();
+
+        return collect($this->tvShowCatalogIds())->mapWithKeys(fn (int $tmdbId): array => [
+            $tmdbId => ['watchlisted' => $rows->has($tmdbId) && $watchlisted->has($rows->get($tmdbId)->id)],
+        ])->all();
     }
 
     /**

@@ -8,6 +8,8 @@ import PosterCardSkeleton from '@/components/shared/PosterCardSkeleton.vue';
 import { Button } from '@/components/ui/button';
 import { announce } from '@/composables/useAnnouncer';
 import { useLookedUpRatings } from '@/composables/useLookedUpRatings';
+import { useTvShowWatchlistToggle } from '@/composables/useTvShowWatchlistToggle';
+import type { TvShowWatchlistFacts } from '@/composables/useTvShowWatchlistToggle';
 import { cardKey, filterByKind, kindCounts } from '@/lib/searchKinds';
 import type { CardKind, KindFilter } from '@/lib/searchKinds';
 import { search } from '@/routes';
@@ -32,7 +34,11 @@ const props = defineProps<{
     status: 'fresh' | 'stale' | 'unavailable' | null;
     trending: PosterCardTitle[];
     userMovies: UserMovies;
+    /** Whether the viewer has each TV Show of the results on their Watchlist, by catalog id. */
+    userTvShows: TvShowWatchlistFacts;
 }>();
+
+const { toggle: toggleTvWatchlist } = useTvShowWatchlistToggle('search');
 
 const { withLookedUpRatings, isLookingUp } = useLookedUpRatings(
     () => props.query,
@@ -141,7 +147,7 @@ function resultCount(total: number): string {
 
 /** Each "Show more" reloads `userMovies` and `status` with the page, and reports a failed visit inline. */
 const showMoreParams = {
-    only: ['userMovies', 'status'],
+    only: ['userMovies', 'userTvShows', 'status'],
     onStart: () => {
         moreFailure.value = null;
     },
@@ -192,8 +198,9 @@ function visit(query: string, force = false): void {
             'status',
             'trending',
             'userMovies',
+            'userTvShows',
         ],
-        reset: ['results', 'userMovies'],
+        reset: ['results', 'userMovies', 'userTvShows'],
         onStart: () => {
             pending.value = true;
         },
@@ -420,9 +427,18 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
                                     ? undefined
                                     : userMovies[movie.tmdbId]
                             "
+                            :tv-watchlisted="
+                                movie.kind === 'tv'
+                                    ? (userTvShows[movie.tmdbId]?.watchlisted ??
+                                      false)
+                                    : undefined
+                            "
                             source="search"
                             :eager="index < EAGER_CARDS"
                             :rating-pending="isLookingUp(movie)"
+                            @toggle-tv-watchlist="
+                                toggleTvWatchlist(movie.tmdbId, $event)
+                            "
                         />
                     </li>
                 </ul>
