@@ -70,8 +70,6 @@ test('invalid User ratings are refused without changing the saved rating', funct
     'text' => [['rating' => 'great']],
     'boolean' => [['rating' => true]],
     'array' => [['rating' => [8]]],
-    'empty string' => [['rating' => '']],
-    'whitespace' => [['rating' => '  ']],
 ]);
 
 test('guests cannot set or clear a User rating or leave a pending action', function (?int $rating) {
@@ -114,3 +112,19 @@ test('rating a missing Title returns not found and writes nothing', function () 
 
     $this->assertDatabaseEmpty('user_titles');
 });
+
+test('empty strings clear a User rating while preserving the other facts', function (string $kind, string $rating) {
+    $user = User::factory()->create();
+    $title = $kind::factory()->create();
+    UserTitle::query()->create([
+        'user_id' => $user->id, 'title_id' => $title->id, 'rating' => 7,
+        'watchlisted_at' => '2026-11-01 12:00:00',
+    ]);
+
+    $this->actingAs($user)->putJson("/titles/{$title->id}/rating", ['rating' => $rating])->assertNoContent();
+
+    $this->assertDatabaseHas('user_titles', [
+        'user_id' => $user->id, 'title_id' => $title->id, 'rating' => null,
+        'watchlisted_at' => '2026-11-01 12:00:00', 'watched_at' => null,
+    ]);
+})->with([Movie::class, TvShow::class])->with(['empty' => '', 'whitespace' => '  ']);

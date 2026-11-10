@@ -31,10 +31,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance']);
 
-        $middleware->convertEmptyStringsToNull(except: [
-            fn (Request $request): bool => $request->is('titles/*/rating'),
-        ]);
-
         $middleware->prepend(SecurityHeaders::class);
 
         $middleware->web(append: [
