@@ -215,10 +215,11 @@ it('has no level 1 accessibility issues on :scenario at :width px in the :appear
         };
         $page->assertSeeIn('[data-slot="tv-show-progress"]', $state);
         if (str_ends_with($scenario, '-closed')) {
-            $page->click('section[aria-labelledby="seasons-heading"] > details > summary')
-                ->assertNotPresent('section[aria-labelledby="seasons-heading"] > details[open]');
+            $page->click('[data-slot="season-toggle"][aria-expanded="true"]')
+                ->assertNotPresent('[data-slot="season-toggle"][aria-expanded="true"]')
+                ->assertPresent('[data-slot="season-toggle"][aria-expanded="false"]');
         } else {
-            $page->assertPresent('section[aria-labelledby="seasons-heading"] > details[open]');
+            $page->assertPresent('[data-slot="season-toggle"][aria-expanded="true"]');
         }
     }
     if (in_array($scenario, ['watchlist-tv', 'watched-tv'], true)) {

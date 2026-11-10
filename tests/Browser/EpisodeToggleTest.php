@@ -134,3 +134,22 @@ it('marks the next Episode from the Up next card and moves on to the one after',
         ->assertNoJavaScriptErrors();
     $this->assertDatabaseCount('user_episodes', 2);
 });
+
+it('opens and closes a Season with Episodes and gives an upcoming Season no toggle', function () {
+    config(['catalog.tv_shows.enabled' => true]);
+    $tvShow = TvShow::factory()->create(['tmdb_id' => 87108, 'slug' => 'chernobyl']);
+    app()->instance(CatalogSource::class, new FakeCatalogSource(tvShows: [new TvShowDetails(
+        87108, title: 'Chernobyl', seasons: [
+            new SeasonDetails(100, 1, episodes: [new EpisodeDetails(200, 1, 1, name: 'One', overview: 'What happens.', airDate: '2019-05-06')]),
+            new SeasonDetails(101, 2),
+        ],
+    )]));
+    $this->actingAs(User::factory()->create());
+
+    $page = visitWithCsp($tvShow->canonicalUrl());
+    $page->assertSee('What happens.')->assertCount('[data-slot="season-toggle"]', 1)->assertSee('Upcoming')
+        ->click('[data-slot="season-toggle"]')->assertDontSee('What happens.')
+        ->assertAttribute('[data-slot="season-toggle"]', 'aria-expanded', 'false')
+        ->click('[data-slot="season-toggle"]')->assertSee('What happens.')
+        ->assertAttribute('[data-slot="season-toggle"]', 'aria-expanded', 'true')->assertNoJavaScriptErrors();
+});

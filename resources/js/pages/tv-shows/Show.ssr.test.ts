@@ -196,12 +196,43 @@ describe('TV Show progress, Seasons and Episodes rendered on the server', () => 
         expect(html).toContain('data-slot="completed-chip"');
     });
 
-    it('shows each Season header with a horizontal progress bar and its bulk actions', async () => {
+    it('shows each Season header with a horizontal progress bar and the bulk actions beside its toggle', async () => {
         const html = await renderTvShow([], [], 0, inProgress);
         expect(html).toMatch(/<progress[^>]*aria-label="Season 1 watched"/);
         expect(html).not.toContain('<circle');
-        expect(html).toContain('aria-label="Mark Season 1 as watched"');
-        expect(html).toContain('aria-label="Clear Season 1"');
+        const seasonToggle = html.match(
+            /<button[^>]*data-slot="season-toggle"[^>]*>(.*?)<\/button>/,
+        );
+        expect(seasonToggle?.[0]).toContain('aria-expanded="true"');
+        expect(seasonToggle?.[1]).toContain('Season 1');
+        expect(seasonToggle?.[1]).not.toContain('data-slot="season-mark"');
+        expect(html).toMatch(
+            /data-slot="season-mark"[^>]*aria-label="Mark watched, Season 1"[^>]*>(?:<!--\[-->)?\s*Mark watched\s*(?:<!--\]-->)?</,
+        );
+        expect(html).toMatch(
+            /data-slot="season-clear"[^>]*aria-label="Clear all, Season 1"[^>]*>(?:<!--\[-->)?\s*Clear all\s*(?:<!--\]-->)?</,
+        );
+    });
+
+    it('shows an upcoming Season with no Episodes as a plain card with no toggle', async () => {
+        const html = await renderTvShow([], [], 0, {
+            ...inProgress,
+            seasons: [
+                ...inProgress.seasons,
+                {
+                    id: 2,
+                    number: 2,
+                    name: null,
+                    total: 0,
+                    watched: 0,
+                    episodes: [],
+                },
+            ],
+        });
+        expect(html).toContain('Season 2');
+        expect(html).toContain('Upcoming');
+        expect(html.match(/data-slot="season-toggle"/g)).toHaveLength(1);
+        expect(html.match(/data-slot="season-mark"/g)).toHaveLength(1);
     });
 
     it('shows the Episode number when unwatched and a check when watched', async () => {
@@ -215,10 +246,10 @@ describe('TV Show progress, Seasons and Episodes rendered on the server', () => 
         expect(html).toContain('aria-pressed="true"');
     });
 
-    it('keeps Episode overviews behind a disclosure so they stay spoiler-safe', async () => {
+    it('shows Episode overviews as plain text with no disclosure', async () => {
         const html = await renderTvShow([], [], 0, inProgress);
-        expect(html).toMatch(
-            /<details[^>]*>\s*<summary[^>]*>\s*Episode overview/,
-        );
+        expect(html).toContain('A spoiler.');
+        expect(html).not.toContain('Episode overview');
+        expect(html).not.toContain('<details');
     });
 });
