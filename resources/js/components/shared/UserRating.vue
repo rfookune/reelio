@@ -8,6 +8,7 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
+    DialogFooter,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
@@ -17,8 +18,8 @@ import { update } from '@/routes/titles/rating';
 /**
  * The signed-in viewer's own rating of a Title, set apart from the External ratings. Unrated, a "Rate" button opens a
  * dialog named for the Title; rated, a chip reads "Your rating 7/10" (opening the same dialog to change it) with a ×
- * that clears. The dialog holds ten stars: choosing the Nth rates the Title N out of 10 and closes it, every star up
- * to the Nth showing filled. Changes show at once and roll back, with a toast, if the server refuses them. Guests
+ * that clears. The dialog holds ten stars: choosing the Nth fills every star up to it and shows N/10, and the Rate
+ * button confirms it (Cancel or Escape change nothing). Changes show at once and roll back, with a toast, if the server refuses them. Guests
  * are not shown this control.
  */
 const props = defineProps<{
@@ -33,6 +34,8 @@ const STARS = Array.from({ length: 10 }, (_, index) => index + 1);
 const current = ref<number | null>(props.rating);
 /** The star under the pointer or with focus, previewed as filled up to it. */
 const preview = ref<number | null>(null);
+/** The star chosen in the open dialog, not yet confirmed. */
+const draft = ref<number | null>(null);
 const open = ref(false);
 const root = ref<HTMLElement | null>(null);
 const stars = ref<HTMLElement | null>(null);
@@ -46,10 +49,17 @@ watch(
     },
 );
 
-/** The star that takes focus when the group is tabbed into: the rated one, else the first. */
+/** The star that takes focus when the group is tabbed into: the chosen one, else the first. */
 function tabStop(): number {
-    return current.value ?? 1;
+    return draft.value ?? 1;
 }
+
+watch(open, (isOpen) => {
+    if (isOpen) {
+        draft.value = current.value;
+        preview.value = null;
+    }
+});
 
 function focusStar(value: number): void {
     stars.value?.querySelector<HTMLElement>(`[data-star="${value}"]`)?.focus();
@@ -92,7 +102,7 @@ function onStarKeydown(event: KeyboardEvent, value: number): void {
 }
 
 function isFilled(value: number): boolean {
-    return value <= (preview.value ?? current.value ?? 0);
+    return value <= (preview.value ?? draft.value ?? 0);
 }
 
 function save(value: number | null): void {
@@ -127,8 +137,11 @@ function save(value: number | null): void {
         .catch(revert);
 }
 
-function rate(value: number): void {
-    save(value);
+function confirm(): void {
+    if (draft.value !== null && draft.value !== current.value) {
+        save(draft.value);
+    }
+
     open.value = false;
 }
 
@@ -196,11 +209,8 @@ function clear(): void {
             >
                 <DialogHeader>
                     <DialogTitle>{{ title ?? 'Your rating' }}</DialogTitle>
-                    <DialogDescription>
-                        Your rating:
-                        <span class="tabular-nums"
-                            >{{ preview ?? current ?? '–' }}/10</span
-                        >
+                    <DialogDescription class="sr-only">
+                        Choose a rating from 1 to 10, then confirm it.
                     </DialogDescription>
                 </DialogHeader>
                 <div
@@ -216,7 +226,7 @@ function clear(): void {
                         type="button"
                         role="radio"
                         :data-star="value"
-                        :aria-checked="value === current"
+                        :aria-checked="value === draft"
                         :aria-label="`${value} out of 10`"
                         :tabindex="value === tabStop() ? 0 : -1"
                         class="flex size-8 items-center justify-center rounded-md sm:size-9"
@@ -224,7 +234,7 @@ function clear(): void {
                         @focus="preview = value"
                         @blur="preview = null"
                         @keydown="onStarKeydown($event, value)"
-                        @click="rate(value)"
+                        @click="draft = value"
                     >
                         <Star
                             class="size-6 sm:size-7"
@@ -237,6 +247,32 @@ function clear(): void {
                         />
                     </button>
                 </div>
+                <p
+                    data-slot="rating-value"
+                    aria-hidden="true"
+                    class="text-center text-2xl font-semibold tabular-nums"
+                >
+                    {{ preview ?? draft ?? '–'
+                    }}<span class="text-base font-normal text-muted">/10</span>
+                </p>
+                <DialogFooter>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        data-slot="cancel-rating"
+                        @click="open = false"
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        type="button"
+                        data-slot="save-rating"
+                        :disabled="draft === null"
+                        @click="confirm"
+                    >
+                        Rate
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     </div>
