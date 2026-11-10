@@ -7,7 +7,7 @@
 **Status:** ready-for-agent
 
 - [ ] The page carries the signed-in user's rating (or none) and no other user's
-- [ ] The control follows the design chosen in ticket 01 and sets, changes and clears the rating
+- [ ] The control follows the design chosen in ticket 01 (a Rate button in the actions row opening a slider panel; once rated, a Watched-style chip with a × that clears) and sets, changes and clears the rating
 - [ ] Unrated is visibly different from a low rating
 - [ ] "Your rating" is labelled and distinct from the External ratings
 - [ ] The control works with the keyboard and a screen reader, and on a phone width

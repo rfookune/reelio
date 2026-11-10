@@ -48,7 +48,7 @@ A signed-in user can give any Movie or TV Show a **User rating**: a whole number
 - **Action.** One authenticated action sets or clears the signed-in user's rating for a Title, taking the Title and a value (1–10 or `null`). It never takes a user id; the user is always the signed-in one. It is used for both Movies and TV Shows. Validation rejects anything but an integer 1–10 or `null`.
 - **Display.** The Movie and TV Show pages carry a control to set, change and clear the rating, and show "Your rating" apart from the External ratings. Watchlist and Watched card lists show the user's rating when present. Search and Discover show External ratings only. The signed-in user's rating is never sent to anyone else.
 - **Guests.** The control is not rendered for guests and the action is refused for them. This is not a pending guest action; nothing is remembered or applied after login.
-- **UI shape.** The visual form of the control is deliberately undecided; see the prototype ticket. Implementation of the real control waits for that outcome.
+- **UI shape.** Decided by the prototype ([ticket 01](issues/01-prototype-the-rating-action.md)): a Rate button in the actions row that opens a 1–10 slider panel, and a Watched-style chip with a one-tap clear once rated.
 - **Schema change.** One additive migration; no existing data changes.
 
 ## Testing Decisions

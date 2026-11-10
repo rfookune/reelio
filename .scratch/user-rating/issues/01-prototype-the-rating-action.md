@@ -2,7 +2,7 @@
 
 Type: prototype
 Blocked by: none
-Status: ready-for-agent
+Status: resolved
 
 ## Question
 
@@ -25,4 +25,18 @@ Open design questions for the prototype to answer:
 
 ## Answer
 
-(To be filled in when the prototype is resolved: the chosen design and why, then set `Status: resolved`.)
+The control is a **Rate button that opens a slider panel**, placed in the **actions row** after the Watchlist and Watched actions, with the rated state shown as a **Watched-style chip with a one-tap clear**.
+
+- **Unrated:** an outlined "Rate" button with a grey star. There is no "Your rating" label above it; the button is explicit enough. It must never look like a score.
+- **Rated:** a chip with a filled accent star, "Rated **7**/10" and a × button, mirroring the Watched chip. Clicking the text reopens the panel to change the value; the × clears the rating in one tap.
+- **Panel:** a native 1–10 slider with the current value shown, and Save. It closes on Escape and on an outside click.
+- **Placement:** the actions row won over beside the External ratings, a sidebar card and a floating button, because the rating belongs with the user's other personal actions and does not crowd the hero or overlap content.
+- **Rejected for the rated state:** an outlined star and score (too quiet), a solid accent pill (outweighs the primary actions) and a score with a ten-pip meter (repeats what the number says).
+
+Not settled by the prototype, to decide when building ticket 04:
+- The panel's Clear link duplicates the chip's ×; recommend dropping it from the panel.
+- Phone width, keyboard and screen-reader behaviour were not exercised.
+- The TV Show page has Season and Episode controls, so its placement needs its own decision.
+- The accent colour is shared with other controls; a distinct colour was not tried.
+
+The prototype itself is on the throwaway branch `prototype/user-rating-action` (last commit `f2b75f7`); it is not on `main`.
