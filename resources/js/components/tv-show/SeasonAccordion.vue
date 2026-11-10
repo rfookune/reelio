@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Check } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
 import type {
     Episode,
@@ -11,9 +12,13 @@ defineEmits<{
     markSeason: [season: Season];
     clearSeason: [season: Season];
 }>();
+
+const seasonName = (season: Season): string =>
+    season.number === 0 ? 'Specials' : `Season ${season.number}`;
 </script>
+
 <template>
-    <section aria-labelledby="seasons-heading" class="flex flex-col gap-4">
+    <section aria-labelledby="seasons-heading" class="flex flex-col gap-3">
         <h2 id="seasons-heading" class="text-xl font-semibold">
             Seasons and Episodes
         </h2>
@@ -31,31 +36,29 @@ defineEmits<{
             class="rounded-xl border border-line bg-surface"
         >
             <summary
-                class="cursor-pointer p-4 focus-visible:outline-2 focus-visible:outline-offset-2"
+                class="flex cursor-pointer flex-col gap-3 p-4 focus-visible:outline-2 focus-visible:outline-offset-2"
             >
-                <span class="font-semibold">{{
-                    season.number === 0 ? 'Specials' : `Season ${season.number}`
-                }}</span>
-                <span class="ml-3 text-sm text-muted">{{
-                    season.total === 0
-                        ? 'Upcoming'
-                        : `${season.watched} of ${season.total} watched`
-                }}</span>
-                <span
-                    v-if="season.number === 0"
-                    class="mt-1 block text-sm text-muted"
-                    >Specials do not count toward progress.</span
-                >
+                <span>
+                    <span class="block font-semibold">{{
+                        seasonName(season)
+                    }}</span>
+                    <span class="block text-sm text-muted">{{
+                        season.total === 0
+                            ? 'Upcoming'
+                            : `${season.watched} of ${season.total} watched`
+                    }}</span>
+                    <span
+                        v-if="season.number === 0"
+                        class="block text-sm text-muted"
+                        >Specials do not count toward progress.</span
+                    >
+                </span>
                 <progress
                     v-if="season.total > 0"
                     :value="season.watched"
                     :max="season.total"
-                    :aria-label="
-                        season.number === 0
-                            ? 'Specials watched'
-                            : `Season ${season.number} watched`
-                    "
-                    class="mt-2 block h-1 w-full accent-primary"
+                    :aria-label="`${seasonName(season)} watched`"
+                    class="h-1.5 w-full overflow-hidden rounded-full bg-raised accent-primary [&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-raised [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-primary"
                 />
             </summary>
             <div
@@ -67,6 +70,7 @@ defineEmits<{
                     type="button"
                     size="sm"
                     data-slot="season-mark"
+                    :aria-label="`Mark ${seasonName(season)} as watched`"
                     :disabled="busy || season.watched === season.total"
                     @click="$emit('markSeason', season)"
                 >
@@ -78,6 +82,7 @@ defineEmits<{
                     size="sm"
                     variant="outline"
                     data-slot="season-clear"
+                    :aria-label="`Clear ${seasonName(season)}`"
                     :disabled="busy || season.watched === 0"
                     @click="$emit('clearSeason', season)"
                 >
@@ -96,21 +101,28 @@ defineEmits<{
                         :aria-label="`Episode ${episode.number}: ${episode.name ?? 'Unnamed Episode'}`"
                         :aria-pressed="episode.watchedDate !== null"
                         :disabled="busy || !episode.markable"
-                        class="hover:bg-canvas flex size-10 shrink-0 items-center justify-center rounded-full border border-line text-lg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50"
+                        class="flex size-10 shrink-0 items-center justify-center rounded-full border text-sm font-semibold tabular-nums transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
                         :class="
                             episode.watchedDate
-                                ? 'bg-primary text-primary-foreground'
-                                : ''
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : episode.markable
+                                  ? 'border-line hover:border-primary'
+                                  : 'border-dashed border-line text-muted'
                         "
                         @click="$emit('toggle', season, episode)"
                     >
-                        <span aria-hidden="true">{{
-                            episode.watchedDate ? '✓' : '○'
+                        <Check
+                            v-if="episode.watchedDate"
+                            class="size-5"
+                            :stroke-width="3"
+                            aria-hidden="true"
+                        />
+                        <span v-else aria-hidden="true">{{
+                            episode.number ?? '·'
                         }}</span>
                     </button>
                     <div class="min-w-0 flex-1">
                         <p class="font-medium">
-                            {{ episode.number }}.
                             {{ episode.name ?? 'Unnamed Episode' }}
                         </p>
                         <p class="text-sm text-muted">

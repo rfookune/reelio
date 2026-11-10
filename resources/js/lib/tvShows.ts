@@ -1,3 +1,9 @@
+import type {
+    Episode,
+    Season,
+    WatchedProgress,
+} from '@/composables/useTvShowActions';
+
 export function tvShowYearRange(
     first: string | null,
     last: string | null,
@@ -64,4 +70,22 @@ export function tvShowJsonLd(tvShow: {
         ...(tvShow.description ? { description: tvShow.description } : {}),
         url: tvShow.url,
     };
+}
+
+/**
+ * The first aired, unwatched Episode of the numbered Seasons, which Specials never offer, with the Season it is in.
+ * Null when everything aired is watched.
+ */
+export function nextUp(
+    progress: WatchedProgress,
+): { season: Season; episode: Episode } | null {
+    for (const season of progress.seasons) {
+        if (season.number === 0) continue;
+        const episode = season.episodes.find(
+            (candidate) => candidate.markable && candidate.watchedDate === null,
+        );
+        if (episode) return { season, episode };
+    }
+
+    return null;
 }

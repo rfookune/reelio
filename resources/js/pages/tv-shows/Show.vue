@@ -4,6 +4,7 @@ import { computed, ref } from 'vue';
 import { BookmarkCheck, BookmarkPlus } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
 import SeasonAccordion from '@/components/tv-show/SeasonAccordion.vue';
+import UpNextCard from '@/components/tv-show/UpNextCard.vue';
 import TvShowMarkDialog from '@/components/tv-show/TvShowMarkDialog.vue';
 import { useTvShowActions } from '@/composables/useTvShowActions';
 import type { WatchedProgress } from '@/composables/useTvShowActions';
@@ -19,7 +20,12 @@ import TrailerPlayer from '@/components/shared/TrailerPlayer.vue';
 import type { Trailer } from '@/components/shared/TrailerPlayer.vue';
 import TvShowDetailsCard from '@/components/tv-show/TvShowDetailsCard.vue';
 import { describeMovie, shareImage } from '@/lib/seo';
-import { tvShowJsonLd, tvShowTitle, tvShowYearRange } from '@/lib/tvShows';
+import {
+    nextUp,
+    tvShowJsonLd,
+    tvShowTitle,
+    tvShowYearRange,
+} from '@/lib/tvShows';
 const props = defineProps<{
     progress: WatchedProgress;
     watchlisted: boolean;
@@ -70,6 +76,7 @@ const {
     () => props.watchlisted,
     () => props.tvShow,
 );
+const upNext = computed(() => nextUp(progress.value));
 const confirmingMark = ref(false);
 async function confirmMark() {
     await markTvShow();
@@ -179,6 +186,13 @@ const jsonLd = computed(() =>
                         Mark as watched
                     </Button>
                 </div>
+                <UpNextCard
+                    v-if="upNext"
+                    :season="upNext.season"
+                    :episode="upNext.episode"
+                    :busy="busy"
+                    @mark="toggle(upNext.season, upNext.episode)"
+                />
                 <div
                     data-slot="tv-show-progress"
                     class="flex flex-col gap-2"

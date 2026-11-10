@@ -111,3 +111,26 @@ it('confirms a whole-TV Show mark in a focus-trapped dialog that Escape and Canc
         ->assertSee('TV show marked as watched')->assertSee('2 of 2 Episodes watched')->assertNoJavaScriptErrors();
     $this->assertDatabaseCount('user_episodes', 2);
 });
+
+it('marks the next Episode from the Up next card and moves on to the one after', function () {
+    config(['catalog.tv_shows.enabled' => true]);
+    $tvShow = TvShow::factory()->create(['tmdb_id' => 87108, 'slug' => 'chernobyl']);
+    app()->instance(CatalogSource::class, new FakeCatalogSource(tvShows: [new TvShowDetails(
+        87108, title: 'Chernobyl', seasons: [new SeasonDetails(100, 1, episodes: [
+            new EpisodeDetails(200, 1, 1, name: '1:23:45', airDate: '2019-05-06'),
+            new EpisodeDetails(201, 1, 2, name: 'Please Remain Calm', airDate: '2019-05-13'),
+        ])],
+    )]));
+    $this->actingAs(User::factory()->create());
+
+    $page = visitWithCsp($tvShow->canonicalUrl());
+    $page->assertSeeIn('[data-slot="up-next"]', 'S1·E1 · 1:23:45')
+        ->click('[data-slot="up-next-mark"]')->assertSee('Episode marked as watched')
+        ->assertSeeIn('[data-slot="up-next"]', 'S1·E2 · Please Remain Calm')
+        ->assertAttribute('[data-slot="episode-toggle"][aria-label^="Episode 1:"]', 'aria-pressed', 'true')
+        ->assertSee('1 of 2 Episodes watched')
+        ->click('[data-slot="up-next-mark"]')->assertSee('2 of 2 Episodes watched')
+        ->assertNotPresent('[data-slot="up-next"]')->assertSeeIn('[data-slot="completed-chip"]', 'Completed')
+        ->assertNoJavaScriptErrors();
+    $this->assertDatabaseCount('user_episodes', 2);
+});

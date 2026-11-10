@@ -3,6 +3,7 @@ import { createSSRApp, h } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import type { ExternalRating } from '@/components/ExternalRatings.vue';
 import type { CastMember } from '@/components/casts/CastGrid.vue';
+import type { WatchedProgress } from '@/composables/useTvShowActions';
 import Show from '@/pages/tv-shows/Show.vue';
 
 vi.mock('@inertiajs/vue3', async (importOriginal) => ({
@@ -17,19 +18,20 @@ async function renderTvShow(
     ratings: ExternalRating[] = [],
     cast: CastMember[] = [],
     castCount = cast.length,
+    progress: WatchedProgress = {
+        state: 'Not started',
+        total: 0,
+        watched: 0,
+        defaultOpenSeasonId: null,
+        seasons: [],
+    },
 ): Promise<string> {
     return renderToString(
         createSSRApp({
             render: () =>
                 h(Show, {
                     watchlisted: false,
-                    progress: {
-                        state: 'Not started',
-                        total: 0,
-                        watched: 0,
-                        defaultOpenSeasonId: null,
-                        seasons: [],
-                    },
+                    progress,
                     canonicalUrl: 'https://reelio.test/tv-shows/chernobyl-1',
                     castUrl: 'https://reelio.test/tv-shows/chernobyl-1/casts',
                     imageBaseUrl: 'https://image.tmdb.org/t/p',
@@ -125,6 +127,98 @@ describe('TV Show cast rendered on the server', () => {
         expect(more).toContain('Full cast (13)');
         expect(more).toContain(
             'href="https://reelio.test/tv-shows/chernobyl-1/casts"',
+        );
+    });
+});
+
+describe('TV Show progress, Seasons and Episodes rendered on the server', () => {
+    const episode = (id: number, number: number, watched: boolean) => ({
+        id,
+        number,
+        name: `Title ${number}`,
+        overview: 'A spoiler.',
+        airDate: '2019-05-06',
+        runtime: 60,
+        markable: true,
+        watchedDate: watched ? '2026-01-01' : null,
+    });
+    const inProgress: WatchedProgress = {
+        state: 'In progress',
+        total: 3,
+        watched: 1,
+        defaultOpenSeasonId: 1,
+        seasons: [
+            {
+                id: 1,
+                number: 1,
+                name: null,
+                total: 3,
+                watched: 1,
+                episodes: [
+                    episode(1, 1, true),
+                    episode(2, 2, false),
+                    episode(3, 3, false),
+                ],
+            },
+        ],
+    };
+    const toggle = (html: string, label: string): string =>
+        html.match(
+            new RegExp(
+                `<button[^>]*aria-label="${label}[^"]*"[^>]*>(.*?)</button>`,
+            ),
+        )?.[1] ?? '';
+
+    it('leads with the next Episode to watch and its one-tap Mark watched', async () => {
+        const html = await renderTvShow([], [], 0, inProgress);
+        expect(html).toContain('Up next');
+        expect(html).toContain('S1·E2');
+        expect(html).toContain('Title 2');
+        expect(html).toContain('data-slot="up-next-mark"');
+        expect(html).toContain('1 of 3 Episodes watched');
+    });
+
+    it('has no Up next once the TV Show is Completed', async () => {
+        const html = await renderTvShow([], [], 0, {
+            ...inProgress,
+            state: 'Completed',
+            watched: 3,
+            seasons: inProgress.seasons.map((season) => ({
+                ...season,
+                watched: 3,
+                episodes: season.episodes.map((e) => ({
+                    ...e,
+                    watchedDate: '2026-01-01',
+                })),
+            })),
+        });
+        expect(html).not.toContain('Up next');
+        expect(html).toContain('data-slot="completed-chip"');
+    });
+
+    it('shows each Season header with a horizontal progress bar and its bulk actions', async () => {
+        const html = await renderTvShow([], [], 0, inProgress);
+        expect(html).toMatch(/<progress[^>]*aria-label="Season 1 watched"/);
+        expect(html).not.toContain('<circle');
+        expect(html).toContain('aria-label="Mark Season 1 as watched"');
+        expect(html).toContain('aria-label="Clear Season 1"');
+    });
+
+    it('shows the Episode number when unwatched and a check when watched', async () => {
+        const html = await renderTvShow([], [], 0, inProgress);
+        const watched = toggle(html, 'Episode 1:');
+        const unwatched = toggle(html, 'Episode 2:');
+        expect(watched).toContain('<svg');
+        expect(watched).not.toContain('>1<');
+        expect(unwatched).toContain('>2<');
+        expect(unwatched).not.toContain('<svg');
+        expect(html).toContain('aria-pressed="true"');
+    });
+
+    it('keeps Episode overviews behind a disclosure so they stay spoiler-safe', async () => {
+        const html = await renderTvShow([], [], 0, inProgress);
+        expect(html).toMatch(
+            /<details[^>]*>\s*<summary[^>]*>\s*Episode overview/,
         );
     });
 });
