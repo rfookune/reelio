@@ -24,6 +24,7 @@ use App\Http\Controllers\TvShowWatchedController;
 use App\Http\Controllers\TvShowWatchlistController;
 use App\Http\Controllers\UndoController;
 use App\Http\Controllers\UserListController;
+use App\Http\Controllers\UserRatingController;
 use App\Http\Controllers\WatchedController;
 use App\Http\Controllers\WatchlistController;
 use App\Http\Middleware\StorePendingGuestAction;
@@ -75,6 +76,9 @@ Route::middleware('throttle:user-movie-actions')->group(function () {
 Route::get('movies/{id}/watch', AvailabilityLinkController::class)->whereNumber('id')->name('movies.watch');
 Route::get('movies/{slug}-{id}', [MovieController::class, 'show'])->where('slug', '[^/]+')->whereNumber('id')->name('movies.show');
 Route::get('movies/{slug}-{id}/casts', TitleCastController::class)->defaults('kind', TitleKind::Movie->value)->where('slug', '[^/]+')->whereNumber('id')->name('movies.cast');
+
+Route::put('titles/{title}/rating', [UserRatingController::class, 'update'])
+    ->middleware(['auth', 'throttle:user-movie-actions'])->whereNumber('title')->name('titles.rating.update');
 
 Route::put('country', CountryController::class)->name('country.update');
 

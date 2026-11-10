@@ -11,13 +11,14 @@ use Illuminate\Support\Facades\DB;
 use LogicException;
 
 /**
- * A user's facts about one Title: on their Watchlist since the Date added, and Watched on the Watched date. Each
- * is independent, and a row holding neither doesn't exist.
+ * A user's independent facts about one Title: Date added, Watched date and User rating.
+ * A row holding none of these doesn't exist.
  *
  * @property CarbonImmutable|null $watchlisted_at
+ * @property int|null $rating
  * @property CarbonImmutable|null $watched_at
  */
-#[Fillable(['user_id', 'title_id', 'watchlisted_at', 'watched_at'])]
+#[Fillable(['user_id', 'title_id', 'watchlisted_at', 'watched_at', 'rating'])]
 class UserTitle extends Model
 {
     protected $table = 'user_titles';
@@ -44,6 +45,7 @@ class UserTitle extends Model
         return [
             'watchlisted_at' => 'immutable_datetime',
             'watched_at' => 'immutable_datetime',
+            'rating' => 'integer',
         ];
     }
 
@@ -51,7 +53,7 @@ class UserTitle extends Model
      * Changes a user's facts about a Title under the row's lock, so concurrent actions on the same Title run one
      * after the other and each sees what the last one left. With no row, an empty one is inserted and locked
      * first, whether or not a concurrent action inserted it already; if another action deletes it before the lock
-     * is taken, the insert is tried again. Afterwards the row is saved, or deleted when it holds neither fact, so
+     * is taken, the insert is tried again. Afterwards the row is saved, or deleted when it holds none of the three facts, so
      * an empty row never outlives the transaction. Returns the facts before and after, as timestamps that compare
      * equal when nothing changed.
      *
@@ -72,7 +74,7 @@ class UserTitle extends Model
 
             $before = $row->snapshot();
             $apply($row);
-            $row->watchlisted_at === null && $row->watched_at === null ? $row->delete() : $row->save();
+            $row->watchlisted_at === null && $row->watched_at === null && $row->rating === null ? $row->delete() : $row->save();
 
             return ['before' => $before, 'after' => $row->snapshot()];
         });
@@ -80,7 +82,7 @@ class UserTitle extends Model
 
     /**
      * Puts a user's facts about a Title back to `$restored`, under the row's lock as `change()` takes it, but only
-     * if they still stand at `$expected`. Facts held in neither leave no row. Returns whether they did.
+     * if they still stand at `$expected`. Restoring no date facts preserves a row with a User rating. Returns whether they did.
      *
      * @param  array{watchlisted_at: ?string, watched_at: ?string}  $expected
      * @param  array{watchlisted_at: ?string, watched_at: ?string}  $restored
