@@ -51,6 +51,7 @@ test('a TV Show card has its kind, key, Name, first-air year, canonical link and
             'posterPath' => '/chernobyl.jpg',
             'ratings' => [],
             'href' => $tvShow->canonicalUrl(Surface::Watchlist),
+            'userRating' => null,
         ]));
 });
 

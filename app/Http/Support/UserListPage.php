@@ -14,6 +14,7 @@ use App\Models\Title;
 use App\Models\TvShow;
 use App\Models\User;
 use App\Models\UserMovie;
+use App\Models\UserTitle;
 use App\Services\Catalog\Discover\DiscoverBuilder;
 use App\Services\Catalog\Discover\DiscoverMovie;
 use App\Services\Ratings\ExternalRating;
@@ -38,6 +39,7 @@ use Inertia\ScrollMetadata;
  * @phpstan-import-type Card from SearchPage
  * @phpstan-import-type SearchCard from SearchPage
  *
+ * @phpstan-type ListCard array{kind: string, key: string, tmdbId: int, title: ?string, year: ?int, posterPath: ?string, ratings: list<array{source: string, name: string, value: float, voteCount: int}>, href: string, userRating: ?int}
  * @phpstan-type TvShowFacts array{watchlisted: bool, watched: bool, watchedDate: ?string, state: string, watchedCount: int, total: int}
  */
 class UserListPage
@@ -61,8 +63,24 @@ class UserListPage
         $page = $this->page();
         $titles = $this->typed($page->getCollection());
         $ratings = $titles->isEmpty() ? [] : $this->ratings->ratingsFor($titles->values());
+        $userRatings = $this->userRatingsFor($titles);
 
-        return array_replace($page->toArray(), ['data' => $titles->map(fn (Title $title): array => $this->card($title, $ratings[$title->id] ?? []))->values()->all()]);
+        return array_replace($page->toArray(), ['data' => $titles->map(fn (Title $title): array => $this->card($title, $ratings[$title->id] ?? [], $userRatings[$title->id] ?? null))->values()->all()]);
+    }
+
+    /**
+     * The signed-in user's own rating of each rated Title, keyed by Title id.
+     *
+     * @param  Collection<int, Movie|TvShow>  $titles
+     * @return array<int, int>
+     */
+    private function userRatingsFor(Collection $titles): array
+    {
+        if ($titles->isEmpty()) {
+            return [];
+        }
+
+        return UserTitle::query()->whereBelongsTo($this->user)->whereIn('title_id', $titles->pluck('id'))->whereNotNull('rating')->pluck('rating', 'title_id')->all();
     }
 
     public function scrollMetadata(): ScrollMetadata
@@ -311,9 +329,9 @@ class UserListPage
 
     /**
      * @param  list<ExternalRating>  $ratings
-     * @return SearchCard
+     * @return ListCard
      */
-    private function card(Movie|TvShow $title, array $ratings): array
+    private function card(Movie|TvShow $title, array $ratings, ?int $userRating): array
     {
         $isTvShow = $title instanceof TvShow;
 
@@ -326,6 +344,7 @@ class UserListPage
             'posterPath' => $title->poster_path,
             'ratings' => array_map(fn (ExternalRating $rating): array => $rating->toArray(), $ratings),
             'href' => $title->canonicalUrl($this->list->surface()),
+            'userRating' => $userRating,
         ];
     }
 }

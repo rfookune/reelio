@@ -7,6 +7,7 @@ use App\Models\Movie;
 use App\Models\TvShow;
 use App\Models\User;
 use App\Models\UserMovie;
+use App\Models\UserTitle;
 use App\Services\Catalog\Discover\DiscoverBuilder;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Search\CatalogSearch;
@@ -364,3 +365,18 @@ test('title search counts both kinds shown on page one and excludes disabled TV 
     Queue::assertPushed(RecordAnalyticsEvent::class, fn ($job) => $job->name === 'title_searched' && $job->properties === ['query_length' => 5, 'result_count' => $count]);
     Queue::assertPushed(RecordAnalyticsEvent::class, 1);
 })->with([[true, 2], [false, 1]]);
+
+test('Search results and Trending carry no User rating, even for a Movie the viewer rated', function () {
+    $user = User::factory()->create();
+    $movie = Movie::factory()->create(['tmdb_id' => 1]);
+    UserTitle::query()->create(['user_id' => $user->id, 'title_id' => $movie->id, 'rating' => 8]);
+    fakeSearchWithTrending(['inter' => [[movieListing(1), movieListing(2)]]]);
+
+    $this->actingAs($user)->get(route('search', ['q' => 'inter']))->assertInertia(fn (Assert $page) => $page
+        ->has('results.data', 2)
+        ->missing('userRating')
+        ->where('results.data', fn ($cards) => collect($cards)->every(fn ($card) => ! array_key_exists('userRating', $card))));
+    $this->actingAs($user)->get(route('search'))->assertInertia(fn (Assert $page) => $page
+        ->has('trending', 10)
+        ->where('trending', fn ($cards) => collect($cards)->every(fn ($card) => ! array_key_exists('userRating', $card))));
+});

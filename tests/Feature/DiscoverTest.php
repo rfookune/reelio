@@ -5,6 +5,7 @@ use App\Jobs\BuildDiscover;
 use App\Models\Movie;
 use App\Models\User;
 use App\Models\UserMovie;
+use App\Models\UserTitle;
 use App\Services\Catalog\Discover\DiscoverBuilder;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Sources\CatalogSource;
@@ -130,4 +131,17 @@ test('with no movie data at all, Discover still renders, with nothing to show', 
         ->where('hero', null)
         ->where('sections', []));
     Queue::assertNotPushed(BuildDiscover::class);
+});
+
+test('Discover cards carry no User rating, even for a Movie the viewer rated', function () {
+    Queue::fake([BuildDiscover::class]);
+    $user = User::factory()->create();
+    $movie = Movie::factory()->create(['tmdb_id' => 2]);
+    UserTitle::query()->create(['user_id' => $user->id, 'title_id' => $movie->id, 'rating' => 8]);
+    fakeDiscoverSource(['trending' => [movieListings(1, 10)], 'popular' => [movieListings(11, 20)], 'top_rated' => [movieListings(21, 30)]]);
+    app(DiscoverBuilder::class)->build(CatalogProfile::Background);
+
+    $response = $this->actingAs($user)->get(route('home'))->assertOk();
+
+    expect(json_encode($response->viewData('page')['props']))->not->toContain('userRating');
 });

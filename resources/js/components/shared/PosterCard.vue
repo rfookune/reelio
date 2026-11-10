@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { Star } from '@lucide/vue';
 import { computed } from 'vue';
 import ExternalRatings from '@/components/ExternalRatings.vue';
 import type { ExternalRating } from '@/components/ExternalRatings.vue';
@@ -27,12 +28,14 @@ export type PosterCardTitle = {
     /** The ratings in display order; the card shows the first. */
     ratings: ExternalRating[];
     href: string;
+    /** The signed-in viewer's own rating, on their Watchlist and Watched cards only; null or absent when unrated. */
+    userRating?: number | null;
 };
 
 /**
  * The poster card: the poster (or missing-poster tile) with the Watchlist toggle floating on it, the title clamped
  * to 2 lines, the year when known and one External rating. Poster and title share one link target, so the card is
- * one tab stop plus the toggle.
+ * one tab stop plus the toggle. On the viewer's own lists a card also shows "Your rating" when they have rated it.
  */
 const props = withDefaults(
     defineProps<{
@@ -110,6 +113,23 @@ const title = computed(
                 compact
                 :pending="ratingPending"
             />
+            <p
+                v-if="movie.userRating != null"
+                data-slot="user-rating"
+                class="flex items-center gap-1 text-foreground"
+            >
+                <Star
+                    class="size-3.5 fill-current text-accent"
+                    aria-hidden="true"
+                />
+                <span>
+                    Your rating
+                    <span class="font-semibold tabular-nums">{{
+                        movie.userRating
+                    }}</span
+                    ><span class="text-muted">/10</span>
+                </span>
+            </p>
             <slot name="date" />
         </div>
     </article>
