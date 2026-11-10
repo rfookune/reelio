@@ -9,7 +9,10 @@ import Show from '@/pages/tv-shows/Show.vue';
 vi.mock('@inertiajs/vue3', async (importOriginal) => ({
     ...(await importOriginal<typeof import('@inertiajs/vue3')>()),
     usePage: () => ({
-        props: { seo: { card: 'https://reelio.test/og-card.png' } },
+        props: {
+            auth: { user: null },
+            seo: { card: 'https://reelio.test/og-card.png' },
+        },
     }),
     Head: { render: () => null },
 }));
@@ -31,6 +34,7 @@ async function renderTvShow(
             render: () =>
                 h(Show, {
                     watchlisted: false,
+                    userRating: null,
                     progress,
                     canonicalUrl: 'https://reelio.test/tv-shows/chernobyl-1',
                     castUrl: 'https://reelio.test/tv-shows/chernobyl-1/casts',

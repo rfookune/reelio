@@ -1,8 +1,10 @@
 import { renderToString } from '@vue/server-renderer';
 import { createSSRApp, h } from 'vue';
 import type { Component } from 'vue';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Show from '@/pages/movies/Show.vue';
+
+const viewer = vi.hoisted(() => ({ user: null as { id: number } | null }));
 
 /* The Inertia page and head manager belong to the app around the page, which the SSR server supplies. */
 vi.mock('@inertiajs/vue3', async (importOriginal) => ({
@@ -10,7 +12,7 @@ vi.mock('@inertiajs/vue3', async (importOriginal) => ({
     usePage: () => ({
         props: {
             name: 'Reelio',
-            auth: { user: null },
+            auth: viewer,
             seo: {
                 url: 'https://reelio.test/',
                 card: 'https://reelio.test/og-card.png',
@@ -21,13 +23,14 @@ vi.mock('@inertiajs/vue3', async (importOriginal) => ({
 }));
 
 /** Renders the Movie page the way the SSR server does, with the props the controller sends. */
-async function renderMovie(): Promise<string> {
+async function renderMovie(userRating: number | null = null): Promise<string> {
     const props = {
         canonicalUrl: 'https://reelio.test/movies/interstellar-1',
         castUrl: 'https://reelio.test/movies/interstellar-1/casts',
         imageBaseUrl: 'https://image.tmdb.org/t/p',
         whereToWatch: { groups: [], country: 'US', unavailable: false },
         userMovies: {},
+        userRating,
         movie: {
             id: 1,
             tmdbId: 157336,
@@ -73,11 +76,39 @@ async function renderMovie(): Promise<string> {
 }
 
 describe('the Movie page rendered on the server', () => {
+    beforeEach(() => {
+        viewer.user = null;
+    });
+
     it('contains the cast and the Director', async () => {
         const html = await renderMovie();
 
         expect(html).toContain('Matthew McConaughey');
         expect(html).toContain('Anne Hathaway');
         expect(html).toContain('Christopher Nolan');
+    });
+
+    it('offers a guest no rating control', async () => {
+        viewer.user = null;
+
+        expect(await renderMovie()).not.toContain('data-slot="user-rating"');
+    });
+
+    it('offers a signed-in viewer a Rate button when unrated', async () => {
+        viewer.user = { id: 1 };
+        const html = await renderMovie(null);
+
+        expect(html).toContain('data-slot="user-rating"');
+        expect(html).toMatch(/data-slot="rating-trigger"[^>]*>.*Rate\s/s);
+        expect(html).not.toContain('data-slot="rating-chip"');
+    });
+
+    it('shows a signed-in viewer their rating, labelled, with a clear control', async () => {
+        viewer.user = { id: 1 };
+        const html = await renderMovie(3);
+
+        expect(html).toContain('data-slot="rating-chip"');
+        expect(html).toContain('Your rating');
+        expect(html).toContain('aria-label="Clear your rating"');
     });
 });

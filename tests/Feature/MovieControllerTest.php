@@ -4,6 +4,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Jobs\RecordAnalyticsEvent;
 use App\Models\Movie;
 use App\Models\User;
+use App\Models\UserTitle;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\FakeCatalogSource;
@@ -217,4 +218,30 @@ test('a 404 from the source is an answer, not an outage: the Movie is gone rathe
     $movie = Movie::factory()->create();
 
     $this->get(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]))->assertGone();
+});
+
+test('the movie page carries only the signed-in viewer\'s User rating', function () {
+    [$owner, $other] = User::factory()->count(2)->create();
+    $movie = Movie::factory()->create();
+    $unrated = Movie::factory()->create();
+    fakeCatalogKnowing($movie, $unrated);
+    UserTitle::query()->create(['user_id' => $owner->id, 'title_id' => $movie->id, 'rating' => 7]);
+    $url = route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]);
+
+    $this->actingAs($owner)->get($url)->assertInertia(fn (Assert $page) => $page->where('userRating', 7));
+    $this->actingAs($other)->get($url)->assertInertia(fn (Assert $page) => $page->where('userRating', null));
+    $this->actingAs($owner)->get(route('movies.show', ['slug' => $unrated->slug, 'id' => $unrated->id]))
+        ->assertInertia(fn (Assert $page) => $page->where('userRating', null));
+    auth()->logout();
+    $this->get($url)->assertInertia(fn (Assert $page) => $page->where('userRating', null));
+});
+
+test('the movie page carries the User rating of a Title that is on neither list', function () {
+    $user = User::factory()->create();
+    $movie = Movie::factory()->create();
+    fakeCatalogKnowing($movie);
+    UserTitle::query()->create(['user_id' => $user->id, 'title_id' => $movie->id, 'rating' => 1]);
+
+    $this->actingAs($user)->get(route('movies.show', ['slug' => $movie->slug, 'id' => $movie->id]))
+        ->assertInertia(fn (Assert $page) => $page->where('userRating', 1)->where('userMovies.'.$movie->tmdb_id.'.watchlisted', false));
 });

@@ -2,6 +2,7 @@
 import { Check, CircleCheckBig, X } from '@lucide/vue';
 import { computed, onBeforeUpdate, onUpdated, ref } from 'vue';
 import WatchlistButton from '@/components/movie/WatchlistButton.vue';
+import UserRating from '@/components/shared/UserRating.vue';
 import { Button } from '@/components/ui/button';
 import { useShortDate } from '@/composables/useShortDate';
 import { clearWatched, markAsWatched } from '@/lib/userMovieActions';
@@ -18,6 +19,8 @@ import type { UserMovieFacts } from '@/types';
 const props = defineProps<{
     tmdbId: number;
     facts: UserMovieFacts | undefined;
+    /** The Title's id and the viewer's User rating of it; absent for guests, who get no rating control. */
+    rating?: { titleId: number; value: number | null };
 }>();
 
 const formatShortDate = useShortDate();
@@ -108,6 +111,12 @@ onUpdated(() => {
             <Check aria-hidden="true" />
             Mark as watched
         </Button>
+
+        <UserRating
+            v-if="rating"
+            :title-id="rating.titleId"
+            :rating="rating.value"
+        />
 
         <p
             v-if="watchedDateLabel !== null && watchlisted"

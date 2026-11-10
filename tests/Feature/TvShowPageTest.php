@@ -3,6 +3,8 @@
 use App\Models\Movie;
 use App\Models\Season;
 use App\Models\TvShow;
+use App\Models\User;
+use App\Models\UserTitle;
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\Details\EpisodeDetails;
@@ -275,4 +277,17 @@ test('a removed TV Show clears its source data while preserving row identities a
 
     $this->get($url)->assertGone();
     expect($source->tvShowCalls)->toHaveCount(2);
+});
+
+test('the TV Show page carries only the signed-in viewer\'s User rating', function () {
+    [$owner, $other] = User::factory()->count(2)->create();
+    $tvShow = TvShow::factory()->create(['tmdb_id' => 87108, 'slug' => 'chernobyl', 'synced_at' => now()]);
+    tvPageSource();
+    UserTitle::query()->create(['user_id' => $owner->id, 'title_id' => $tvShow->id, 'rating' => 9]);
+    $url = route('tv-shows.show', ['slug' => 'chernobyl', 'id' => $tvShow->id]);
+
+    $this->actingAs($owner)->get($url)->assertOk()->assertInertia(fn (Assert $page) => $page->where('userRating', 9));
+    $this->actingAs($other)->get($url)->assertInertia(fn (Assert $page) => $page->where('userRating', null));
+    auth()->logout();
+    $this->get($url)->assertInertia(fn (Assert $page) => $page->where('userRating', null));
 });

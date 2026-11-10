@@ -11,6 +11,7 @@ use App\Http\Support\UserMovies;
 use App\Http\Support\VisitorCountry;
 use App\Http\Support\WhereToWatch;
 use App\Models\Movie;
+use App\Models\UserTitle;
 use App\Services\Catalog\Catalog;
 use App\Services\Catalog\CatalogResult;
 use App\Services\Catalog\Sources\Details\MovieDetails;
@@ -61,6 +62,7 @@ class MovieController extends Controller
             'canonicalUrl' => $movie->canonicalUrl(),
             'castUrl' => route('movies.cast', ['slug' => $movie->slug ?? 'movie', 'id' => $movie->id]),
             'userMovies' => UserMovies::for($request->user(), [$movie]),
+            'userRating' => UserTitle::ratingFor($request->user(), $movie),
             'movie' => fn (): array => $this->movie($movie, $details->result(), $ratings),
         ]);
     }

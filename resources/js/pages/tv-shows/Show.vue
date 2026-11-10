@@ -4,6 +4,7 @@ import { computed, ref } from 'vue';
 import { BookmarkCheck, BookmarkPlus } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
 import SeasonAccordion from '@/components/tv-show/SeasonAccordion.vue';
+import UserRating from '@/components/shared/UserRating.vue';
 import UpNextCard from '@/components/tv-show/UpNextCard.vue';
 import TvShowMarkDialog from '@/components/tv-show/TvShowMarkDialog.vue';
 import { useTvShowActions } from '@/composables/useTvShowActions';
@@ -29,6 +30,8 @@ import {
 const props = defineProps<{
     progress: WatchedProgress;
     watchlisted: boolean;
+    /** The signed-in viewer's own rating of the TV Show, or null. */
+    userRating: number | null;
     canonicalUrl: string;
     castUrl: string;
     whereToWatch: WhereToWatchBlock;
@@ -61,6 +64,7 @@ const props = defineProps<{
     };
 }>();
 const page = usePage();
+const user = computed(() => page.props.auth.user);
 const {
     progress,
     watchlisted,
@@ -185,6 +189,11 @@ const jsonLd = computed(() =>
                     >
                         Mark as watched
                     </Button>
+                    <UserRating
+                        v-if="user"
+                        :title-id="tvShow.id"
+                        :rating="userRating"
+                    />
                 </div>
                 <UpNextCard
                     v-if="upNext"

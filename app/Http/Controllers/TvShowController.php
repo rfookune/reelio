@@ -10,6 +10,7 @@ use App\Http\Exceptions\TitleRemoved;
 use App\Http\Support\VisitorCountry;
 use App\Http\Support\WhereToWatch;
 use App\Models\Movie;
+use App\Models\UserTitle;
 use App\Services\Catalog\Catalog;
 use App\Services\Catalog\Enums\CatalogStatus;
 use App\Services\Ratings\ExternalRating;
@@ -59,6 +60,7 @@ class TvShowController extends Controller
         return Inertia::render('tv-shows/Show', [
             'whereToWatch' => fn (): array => WhereToWatch::for($tvShow, VisitorCountry::resolve($request), $result->status === CatalogStatus::Stale),
             'watchlisted' => $tvShow->isWatchlistedBy($request->user()),
+            'userRating' => UserTitle::ratingFor($request->user(), $tvShow),
             'progress' => $progress->for($tvShow, $request->user()),
             'canonicalUrl' => $tvShow->canonicalUrl(),
             'castUrl' => route('tv-shows.cast', ['slug' => $tvShow->slug, 'id' => $tvShow->id]),

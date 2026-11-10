@@ -49,6 +49,12 @@ class UserTitle extends Model
         ];
     }
 
+    /** The user's rating of the Title, or null when unrated or when there is no user. */
+    public static function ratingFor(?User $user, Title $title): ?int
+    {
+        return $user === null ? null : static::query()->whereBelongsTo($user)->whereBelongsTo($title, 'title')->value('rating');
+    }
+
     /**
      * Changes a user's facts about a Title under the row's lock, so concurrent actions on the same Title run one
      * after the other and each sees what the last one left. With no row, an empty one is inserted and locked

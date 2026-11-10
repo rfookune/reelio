@@ -23,6 +23,8 @@ const props = defineProps<{
     imageBaseUrl: string;
     whereToWatch: WhereToWatchBlock;
     userMovies: UserMovies;
+    /** The signed-in viewer's own rating of the Movie, or null. */
+    userRating: number | null;
     movie: {
         id: number;
         tmdbId: number;
@@ -52,6 +54,7 @@ const props = defineProps<{
 const glowUrl = (width: 780 | 1280) =>
     tmdbImageUrl(props.imageBaseUrl, width, props.movie.backdropPath ?? '');
 const page = usePage();
+const user = computed(() => page.props.auth.user);
 const title = computed(() => movieTitle(props.movie.title, props.movie.year));
 const description = computed(() =>
     describeMovie(
@@ -153,6 +156,11 @@ onBeforeUnmount(() => {
                 <MovieActions
                     :tmdb-id="movie.tmdbId"
                     :facts="userMovies[movie.tmdbId]"
+                    :rating="
+                        user
+                            ? { titleId: movie.id, value: userRating }
+                            : undefined
+                    "
                 />
             </template>
         </TitleHero>
