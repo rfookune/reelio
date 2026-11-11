@@ -4,8 +4,7 @@ use App\Enums\TitleKind;
 use App\Jobs\RecordAnalyticsEvent;
 use App\Models\Movie;
 use App\Models\User;
-use App\Services\Catalog\Search\BrowseGenres;
-use App\Services\Catalog\Search\BrowseStreamingServices;
+use App\Services\Catalog\Search\BrowseOptions;
 use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\FakeCatalogSource;
@@ -178,7 +177,7 @@ test('only a Browse page already browsed is read, with the genre it was narrowed
     config(['ratings.sources.imdb.enabled' => true]);
     $source = new FakeCatalogSource(browsePages: [[movieListing(1)]], genres: [['id' => 35, 'name' => 'Comedy']], imdbIds: [1 => 'tt0000001']);
     app()->instance(CatalogSource::class, $source);
-    app(BrowseGenres::class)->for(TitleKind::Movie);
+    app(BrowseOptions::class)->genres(TitleKind::Movie);
     app(CatalogSearch::class)->browse(TitleKind::Movie, 1);
 
     $this->getJson(route('search.ratings', ['genre' => 35]))->assertOk()->assertExactJson(['ratings' => []]);
@@ -190,7 +189,7 @@ test('the ratings of a Browse page narrowed by a genre are those of that page', 
     config(['ratings.sources.imdb.enabled' => true]);
     $source = new FakeCatalogSource(browsePages: [[movieListing(1)]], genres: [['id' => 35, 'name' => 'Comedy']], imdbIds: [1 => 'tt0000001']);
     app()->instance(CatalogSource::class, $source);
-    app(BrowseGenres::class)->for(TitleKind::Movie);
+    app(BrowseOptions::class)->genres(TitleKind::Movie);
     app(CatalogSearch::class)->browse(TitleKind::Movie, 1, new BrowseFilters(genreId: 35));
     app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000001', 8.1, 5000);
 
@@ -211,7 +210,7 @@ test('the ratings of a Browse page narrowed by Streaming services are those of t
     config(['ratings.sources.imdb.enabled' => true]);
     $source = new FakeCatalogSource(browsePages: [[movieListing(1)]], imdbIds: [1 => 'tt0000001'], streamingServices: ['US' => [['id' => 8, 'name' => 'Netflix']]]);
     app()->instance(CatalogSource::class, $source);
-    app(BrowseStreamingServices::class)->for(TitleKind::Movie, 'US');
+    app(BrowseOptions::class)->streamingServices(TitleKind::Movie, 'US');
     app(CatalogSearch::class)->browse(TitleKind::Movie, 1, new BrowseFilters(streamingServiceIds: [8], country: 'US'));
     app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000001', 8.1, 5000);
 

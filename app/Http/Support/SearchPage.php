@@ -11,8 +11,7 @@ use App\Models\TvShow;
 use App\Models\User;
 use App\Models\UserTitle;
 use App\Services\Catalog\CatalogResult;
-use App\Services\Catalog\Search\BrowseGenres;
-use App\Services\Catalog\Search\BrowseStreamingServices;
+use App\Services\Catalog\Search\BrowseOptions;
 use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Search\ImdbIdLookup;
 use App\Services\Catalog\Sources\CatalogSource;
@@ -75,8 +74,7 @@ class SearchPage
     /** @param  list<int>  $requestedStreamingServices */
     public function __construct(
         private CatalogSearch $catalogSearch,
-        private BrowseGenres $browseGenres,
-        private BrowseStreamingServices $browseStreamingServices,
+        private BrowseOptions $browseOptions,
         private ImdbIdLookup $imdbIds,
         private Ratings $ratingSources,
         private RecordEvent $recordEvent,
@@ -96,12 +94,11 @@ class SearchPage
      * characters, and its `page`, kept from 1 to the source's last page. A reload of `userMovies` alone, as after
      * a Watchlist action, reads the search from the cache only.
      */
-    public static function fromRequest(Request $request, CatalogSearch $catalogSearch, BrowseGenres $browseGenres, BrowseStreamingServices $browseStreamingServices, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
+    public static function fromRequest(Request $request, CatalogSearch $catalogSearch, BrowseOptions $browseOptions, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
         return new self(
             $catalogSearch,
-            $browseGenres,
-            $browseStreamingServices,
+            $browseOptions,
             $imdbIds,
             $ratingSources,
             $recordEvent,
@@ -121,9 +118,9 @@ class SearchPage
      * The page asked for by the Search page's lookups of the IMDb ratings: the request's query and page, read as
      * `fromRequest()` reads them, from the cache alone. It searches nothing and records nothing.
      */
-    public static function cachedFromRequest(Request $request, CatalogSearch $catalogSearch, BrowseGenres $browseGenres, BrowseStreamingServices $browseStreamingServices, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
+    public static function cachedFromRequest(Request $request, CatalogSearch $catalogSearch, BrowseOptions $browseOptions, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
-        return new self($catalogSearch, $browseGenres, $browseStreamingServices, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), self::genreFrom($request), BrowseSort::fromRequestValue($request->query('sort')), VisitorCountry::resolve($request)->code, self::streamingServicesFrom($request), readsCacheOnly: true);
+        return new self($catalogSearch, $browseOptions, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), self::genreFrom($request), BrowseSort::fromRequestValue($request->query('sort')), VisitorCountry::resolve($request)->code, self::streamingServicesFrom($request), readsCacheOnly: true);
     }
 
     /** The request's `q`, trimmed of Unicode whitespace and cut to `search.maximum_query_length` characters. */
@@ -390,7 +387,7 @@ class SearchPage
      */
     private function streamingServicesOf(TitleKind $kind): array
     {
-        return $this->readsCacheOnly ? $this->browseStreamingServices->cachedFor($kind, $this->country) : $this->browseStreamingServices->for($kind, $this->country);
+        return $this->readsCacheOnly ? $this->browseOptions->cachedStreamingServices($kind, $this->country) : $this->browseOptions->streamingServices($kind, $this->country);
     }
 
     /**
@@ -428,7 +425,7 @@ class SearchPage
      */
     private function genresOf(TitleKind $kind): array
     {
-        return $this->readsCacheOnly ? $this->browseGenres->cachedFor($kind) : $this->browseGenres->for($kind);
+        return $this->readsCacheOnly ? $this->browseOptions->cachedGenres($kind) : $this->browseOptions->genres($kind);
     }
 
     /**

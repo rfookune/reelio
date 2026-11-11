@@ -4,8 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
 use App\Http\Support\SearchPage;
-use App\Services\Catalog\Search\BrowseGenres;
-use App\Services\Catalog\Search\BrowseStreamingServices;
+use App\Services\Catalog\Search\BrowseOptions;
 use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Search\ImdbIdLookup;
 use App\Services\Ratings\Ratings;
@@ -21,9 +20,9 @@ use Illuminate\Http\Request;
  */
 class SearchRatingsController extends Controller
 {
-    public function __invoke(Request $request, CatalogSearch $catalogSearch, BrowseGenres $browseGenres, BrowseStreamingServices $browseStreamingServices, ImdbIdLookup $imdbIds, Ratings $ratings, RecordEvent $recordEvent): JsonResponse
+    public function __invoke(Request $request, CatalogSearch $catalogSearch, BrowseOptions $browseOptions, ImdbIdLookup $imdbIds, Ratings $ratings, RecordEvent $recordEvent): JsonResponse
     {
-        $page = SearchPage::cachedFromRequest($request, $catalogSearch, $browseGenres, $browseStreamingServices, $imdbIds, $ratings, $recordEvent);
+        $page = SearchPage::cachedFromRequest($request, $catalogSearch, $browseOptions, $imdbIds, $ratings, $recordEvent);
 
         return response()->json(['ratings' => (object) $page->lookedUpRatings()])->header('X-Robots-Tag', 'noindex');
     }
