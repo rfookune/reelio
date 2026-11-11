@@ -6,6 +6,7 @@ use App\Enums\TitleKind;
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\Details\TvShowDetails;
+use App\Services\Catalog\Sources\Listings\BrowseFilters;
 use App\Services\Catalog\Sources\Listings\SearchResults;
 use App\Services\Catalog\Sources\Listings\SectionPage;
 use App\Services\Catalog\Sources\Listings\SectionQuery;
@@ -27,9 +28,10 @@ interface CatalogSource
 
     /**
      * One page of Browse for a kind, the Movies or TV Shows the source's discover list gives, most popular first; no
-     * text query is sent. A missing page is a failure, not an empty answer.
+     * text query is sent. A missing page is a failure, not an empty answer. The filters are applied by the source,
+     * and have already been checked against what it offers.
      */
-    public function browse(TitleKind $kind, int $page, CatalogContext $context): SearchResults;
+    public function browse(TitleKind $kind, int $page, CatalogContext $context, BrowseFilters $filters = new BrowseFilters): SearchResults;
 
     /**
      * The Movie's IMDb title id, which a list or a search doesn't carry; null when the source has none for it, or
@@ -41,9 +43,10 @@ interface CatalogSource
     public function tvImdbId(int $tmdbId, CatalogContext $context): ?string;
 
     /**
-     * The source's whole list of Movie genres. An empty or malformed list is a failure, not an empty answer.
+     * The source's whole list of genres for a kind, Movies unless asked otherwise. An empty or malformed list is a
+     * failure, not an empty answer.
      *
      * @return list<array{id: int, name: string}>
      */
-    public function genres(CatalogContext $context): array;
+    public function genres(CatalogContext $context, TitleKind $kind = TitleKind::Movie): array;
 }

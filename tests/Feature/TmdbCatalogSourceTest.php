@@ -5,6 +5,7 @@ use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Enums\CrewJob;
 use App\Services\Catalog\Enums\SectionKind;
+use App\Services\Catalog\Sources\Listings\BrowseFilters;
 use App\Services\Catalog\Sources\Listings\MovieListing;
 use App\Services\Catalog\Sources\Listings\SectionQuery;
 use App\Services\Catalog\Sources\SourceMisconfigured;
@@ -608,6 +609,42 @@ test('a TV Shows Browse page fails explicitly on unsuccessful or malformed respo
 })->with([
     'not found' => [[], 404],
     'no result count' => [['page' => 1, 'total_pages' => 1, 'results' => []], 200],
+]);
+
+test('a Browse page narrowed by a genre sends it as the genre to discover, for each kind', function (TitleKind $kind, string $path) {
+    Http::fake(["https://api.themoviedb.org/3/{$path}?*" => Http::response(['page' => 1, 'total_pages' => 1, 'total_results' => 0, 'results' => []])]);
+
+    app(TmdbCatalogSource::class)->browse($kind, 1, new CatalogContext('en-US'), new BrowseFilters(genreId: 35));
+
+    Http::assertSent(fn (Request $request) => queryOf($request) === [
+        'page' => '1',
+        'language' => 'en-US',
+        'include_adult' => 'false',
+        'sort_by' => 'popularity.desc',
+        'with_genres' => '35',
+    ]);
+})->with([
+    'Movies' => [TitleKind::Movie, 'discover/movie'],
+    'TV Shows' => [TitleKind::TvShow, 'discover/tv'],
+]);
+
+test('the genre list is read from the list of the kind asked for', function (TitleKind $kind, string $path) {
+    Http::fake(["https://api.themoviedb.org/3/{$path}?*" => Http::response(['genres' => [['id' => 18, 'name' => 'Drama']]])]);
+
+    expect(app(TmdbCatalogSource::class)->genres(new CatalogContext('en-US'), $kind))->toBe([['id' => 18, 'name' => 'Drama']]);
+    Http::assertSentCount(1);
+})->with([
+    'Movies' => [TitleKind::Movie, 'genre/movie/list'],
+    'TV Shows' => [TitleKind::TvShow, 'genre/tv/list'],
+]);
+
+test('the TV genre list fails explicitly on an empty or unsuccessful response', function (array $body, int $status) {
+    Http::fake(['https://api.themoviedb.org/3/genre/tv/list?*' => Http::response($body, $status)]);
+
+    expect(fn () => app(TmdbCatalogSource::class)->genres(new CatalogContext, TitleKind::TvShow))->toThrow(SourceUnavailable::class);
+})->with([
+    'not found' => [[], 404],
+    'empty list' => [['genres' => []], 200],
 ]);
 
 test('a section fails explicitly on unsuccessful or malformed responses', function (array $body, int $status) {

@@ -8,6 +8,7 @@ use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\CatalogResult;
 use App\Services\Catalog\MisconfigurationReporter;
 use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\Listings\BrowseFilters;
 use App\Services\Catalog\Sources\Listings\SearchResults;
 use App\Services\Catalog\Sources\SourceUnavailable;
 use App\Services\Ratings\Enums\RatingSourceName;
@@ -37,21 +38,21 @@ class CatalogSearch
 
     /**
      * One page of Browse for a kind, the Movies or TV Shows the source lists most popular first, read and cached as
-     * a page of a search is, under a key of its own for each kind and the same `search` freshness settings.
+     * a page of a search is, under a key of its own for each kind and set of filters and the same `search` freshness settings.
      *
      * @return CatalogResult<SearchResults>
      */
-    public function browse(TitleKind $kind, int $page): CatalogResult
+    public function browse(TitleKind $kind, int $page, BrowseFilters $filters = new BrowseFilters): CatalogResult
     {
         $context = new CatalogContext(config('catalog.language'));
 
-        return $this->read($this->browseKey($kind, $page, $context), $context, fn (): SearchResults => $this->source->browse($kind, $page, $context));
+        return $this->read($this->browseKey($kind, $page, $filters, $context), $context, fn (): SearchResults => $this->source->browse($kind, $page, $context, $filters));
     }
 
     /** A Browse page from the cache alone, fresh or stale, without asking the source; null when there is none. */
-    public function cachedBrowse(TitleKind $kind, int $page): ?SearchResults
+    public function cachedBrowse(TitleKind $kind, int $page, BrowseFilters $filters = new BrowseFilters): ?SearchResults
     {
-        return $this->cachedSearchEntry($this->browseKey($kind, $page, new CatalogContext(config('catalog.language'))))['results'] ?? null;
+        return $this->cachedSearchEntry($this->browseKey($kind, $page, $filters, new CatalogContext(config('catalog.language'))))['results'] ?? null;
     }
 
     /**
@@ -89,9 +90,9 @@ class CatalogSearch
         return $this->cachedSearchEntry($this->searchKey($query, $page, new CatalogContext(config('catalog.language'))))['results'] ?? null;
     }
 
-    private function browseKey(TitleKind $kind, int $page, CatalogContext $context): string
+    private function browseKey(TitleKind $kind, int $page, BrowseFilters $filters, CatalogContext $context): string
     {
-        return $this->keys->build('browse', ['kind' => $kind->value, 'page' => $page], $context);
+        return $this->keys->build('browse', ['kind' => $kind->value, 'page' => $page, 'filters' => $filters->cacheKey()], $context);
     }
 
     private function searchKey(string $query, int $page, CatalogContext $context): string

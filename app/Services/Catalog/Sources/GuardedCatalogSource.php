@@ -8,6 +8,7 @@ use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\Details\TvShowDetails;
+use App\Services\Catalog\Sources\Listings\BrowseFilters;
 use App\Services\Catalog\Sources\Listings\SearchResults;
 use App\Services\Catalog\Sources\Listings\SectionPage;
 use App\Services\Catalog\Sources\Listings\SectionQuery;
@@ -45,9 +46,9 @@ class GuardedCatalogSource implements CatalogSource
         return $this->guard($context, fn (): SearchResults => $this->inner->search($query, $page, $context));
     }
 
-    public function browse(TitleKind $kind, int $page, CatalogContext $context): SearchResults
+    public function browse(TitleKind $kind, int $page, CatalogContext $context, BrowseFilters $filters = new BrowseFilters): SearchResults
     {
-        return $this->guard($context, fn (): SearchResults => $this->inner->browse($kind, $page, $context));
+        return $this->guard($context, fn (): SearchResults => $this->inner->browse($kind, $page, $context, $filters));
     }
 
     public function imdbId(int $tmdbId, CatalogContext $context): ?string
@@ -61,9 +62,9 @@ class GuardedCatalogSource implements CatalogSource
     }
 
     /** @return list<array{id: int, name: string}> */
-    public function genres(CatalogContext $context): array
+    public function genres(CatalogContext $context, TitleKind $kind = TitleKind::Movie): array
     {
-        return $this->guard($context, fn (): array => $this->inner->genres($context));
+        return $this->guard($context, fn (): array => $this->inner->genres($context, $kind));
     }
 
     /**

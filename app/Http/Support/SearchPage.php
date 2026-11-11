@@ -11,9 +11,11 @@ use App\Models\TvShow;
 use App\Models\User;
 use App\Models\UserTitle;
 use App\Services\Catalog\CatalogResult;
+use App\Services\Catalog\Search\BrowseGenres;
 use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Search\ImdbIdLookup;
 use App\Services\Catalog\Sources\CatalogSource;
+use App\Services\Catalog\Sources\Listings\BrowseFilters;
 use App\Services\Catalog\Sources\Listings\MovieListing;
 use App\Services\Catalog\Sources\Listings\SearchResults;
 use App\Services\Ratings\Enums\RatingSourceName;
@@ -28,7 +30,9 @@ use Inertia\ScrollMetadata;
  * The Search page's props for one response, asking the Catalog for the search, or for Browse when there is none, at
  * most once. A query shorter than `search.minimum_query_length` isn't searched, and the page lists Browse's Popular
  * Movies, or TV Shows when the request's `tab` is `tv` and they are switched on, a page at a time, as it lists a
- * search's results; the tab is ignored in a search by Name. Each Movie links to its canonical URL when it has a row, else to the entry route,
+ * search's results; the tab is ignored in a search by Name. Browse can be narrowed by a genre of the tab's list, the
+ * request's `genre`: an id the tab doesn't offer is carried over to the tab's genre of the same name, if it has one,
+ * and any other value is ignored, so only an offered id reaches the source. A search by Name takes no filters. Each Movie links to its canonical URL when it has a row, else to the entry route,
  * both with the `search` referrer, and shows one External rating: IMDb when its IMDb id is known, from its row or
  * remembered, and rated, else TMDB. The ids not known are looked up afterwards, by `lookedUpRatings()`.
  * Results hold TV Shows beside Movies, each by its kind and catalog id (`key`: the catalog id, or `tv:` and it for a
@@ -56,8 +60,14 @@ class SearchPage
     /** @var array<int, list<ExternalRating>>|null keyed by catalog id */
     private ?array $tvShowRatings = null;
 
+    private ?BrowseFilters $filters = null;
+
+    /** @var list<array{id: int, name: string}>|null */
+    private ?array $tabGenres = null;
+
     public function __construct(
         private CatalogSearch $catalogSearch,
+        private BrowseGenres $browseGenres,
         private ImdbIdLookup $imdbIds,
         private Ratings $ratingSources,
         private RecordEvent $recordEvent,
@@ -65,6 +75,7 @@ class SearchPage
         public readonly string $query,
         public readonly int $page,
         public readonly TitleKind $browseKind = TitleKind::Movie,
+        private ?int $requestedGenre = null,
         private bool $readsCacheOnly = false,
     ) {}
 
@@ -73,10 +84,11 @@ class SearchPage
      * characters, and its `page`, kept from 1 to the source's last page. A reload of `userMovies` alone, as after
      * a Watchlist action, reads the search from the cache only.
      */
-    public static function fromRequest(Request $request, CatalogSearch $catalogSearch, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
+    public static function fromRequest(Request $request, CatalogSearch $catalogSearch, BrowseGenres $browseGenres, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
         return new self(
             $catalogSearch,
+            $browseGenres,
             $imdbIds,
             $ratingSources,
             $recordEvent,
@@ -84,6 +96,7 @@ class SearchPage
             self::queryFrom($request),
             self::pageFrom($request),
             self::tabFrom($request),
+            self::genreFrom($request),
             self::reloadsUserMoviesOnly($request),
         );
     }
@@ -92,9 +105,9 @@ class SearchPage
      * The page asked for by the Search page's lookups of the IMDb ratings: the request's query and page, read as
      * `fromRequest()` reads them, from the cache alone. It searches nothing and records nothing.
      */
-    public static function cachedFromRequest(Request $request, CatalogSearch $catalogSearch, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
+    public static function cachedFromRequest(Request $request, CatalogSearch $catalogSearch, BrowseGenres $browseGenres, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
-        return new self($catalogSearch, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), readsCacheOnly: true);
+        return new self($catalogSearch, $browseGenres, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), self::genreFrom($request), readsCacheOnly: true);
     }
 
     /** The request's `q`, trimmed of Unicode whitespace and cut to `search.maximum_query_length` characters. */
@@ -109,6 +122,14 @@ class SearchPage
     private static function tabFrom(Request $request): TitleKind
     {
         return $request->query('tab') === TitleKind::TvShow->value && config('catalog.tv_shows.enabled') ? TitleKind::TvShow : TitleKind::Movie;
+    }
+
+    /** The request's `genre` when it is a plain id of nine digits at most, else null; whether it is offered is checked later. */
+    private static function genreFrom(Request $request): ?int
+    {
+        $genre = $request->query('genre');
+
+        return is_string($genre) && ctype_digit($genre) && strlen($genre) <= 9 ? (int) $genre : null;
     }
 
     /** The request's `page`, kept from 1 to the source's last page. */
@@ -212,6 +233,23 @@ class SearchPage
         return $this->pageResult()->value?->totalResults;
     }
 
+    /**
+     * The genres the tab offers, in the source's order, a search by Name included so that choosing one can leave it;
+     * none while the source's list is unavailable.
+     *
+     * @return list<array{id: int, name: string}>
+     */
+    public function genres(): array
+    {
+        return $this->tabGenres ??= $this->genresOf($this->browseKind);
+    }
+
+    /** The genre Browse is narrowed to, null for none, and always null in a search by Name. */
+    public function genre(): ?int
+    {
+        return $this->filters()->genreId;
+    }
+
     /** `fresh`, `stale` or `unavailable`. */
     public function status(): string
     {
@@ -248,6 +286,52 @@ class SearchPage
     }
 
     /**
+     * The filters of this request, none in a search by Name, each checked against what the source offers.
+     */
+    private function filters(): BrowseFilters
+    {
+        return $this->filters ??= new BrowseFilters($this->isSearching() ? null : $this->requestedGenreOnTab());
+    }
+
+    /**
+     * The request's `genre` as the tab's own genre id: the id when the tab offers it, else the id of the tab's genre
+     * with the same name as that id has in the other kind's list, else null. A value that isn't a plain id, and
+     * any while the tab's list is unavailable, is ignored.
+     */
+    private function requestedGenreOnTab(): ?int
+    {
+        $id = $this->requestedGenre;
+        $genres = $this->genres();
+
+        if ($id === null || $genres === []) {
+            return null;
+        }
+
+        if (array_find($genres, fn (array $genre): bool => $genre['id'] === $id) !== null) {
+            return $id;
+        }
+
+        if (! config('catalog.tv_shows.enabled')) {
+            return null;
+        }
+
+        $otherGenres = $this->genresOf($this->browseKind === TitleKind::Movie ? TitleKind::TvShow : TitleKind::Movie);
+        $name = array_find($otherGenres, fn (array $genre): bool => $genre['id'] === $id)['name'] ?? null;
+
+        return array_find($genres, fn (array $genre): bool => $genre['name'] === $name)['id'] ?? null;
+    }
+
+    /**
+     * A kind's genres, from the cache alone when only `userMovies` is reloaded.
+     *
+     * @return list<array{id: int, name: string}>
+     */
+    private function genresOf(TitleKind $kind): array
+    {
+        return $this->readsCacheOnly ? $this->browseGenres->cachedFor($kind) : $this->browseGenres->for($kind);
+    }
+
+    /**
      * The search, or Browse when there is no query, asked for once; from the cache alone when only `userMovies` is
      * reloaded, and unavailable when the cache has nothing.
      *
@@ -256,12 +340,12 @@ class SearchPage
     private function pageResult(): CatalogResult
     {
         if ($this->readsCacheOnly) {
-            $cached = $this->isSearching() ? $this->catalogSearch->cachedSearch($this->query, $this->page) : $this->catalogSearch->cachedBrowse($this->browseKind, $this->page);
+            $cached = $this->isSearching() ? $this->catalogSearch->cachedSearch($this->query, $this->page) : $this->catalogSearch->cachedBrowse($this->browseKind, $this->page, $this->filters());
 
             return $this->result ??= $cached === null ? CatalogResult::unavailable() : CatalogResult::stale($cached);
         }
 
-        return $this->result ??= $this->isSearching() ? $this->catalogSearch->search($this->query, $this->page) : $this->catalogSearch->browse($this->browseKind, $this->page);
+        return $this->result ??= $this->isSearching() ? $this->catalogSearch->search($this->query, $this->page) : $this->catalogSearch->browse($this->browseKind, $this->page, $this->filters());
     }
 
     /** @return list<int> */

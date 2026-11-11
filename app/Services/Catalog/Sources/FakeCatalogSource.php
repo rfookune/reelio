@@ -7,6 +7,7 @@ use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\SectionKind;
 use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\Details\TvShowDetails;
+use App\Services\Catalog\Sources\Listings\BrowseFilters;
 use App\Services\Catalog\Sources\Listings\MovieListing;
 use App\Services\Catalog\Sources\Listings\SearchResults;
 use App\Services\Catalog\Sources\Listings\SectionPage;
@@ -32,6 +33,9 @@ class FakeCatalogSource implements CatalogSource
     /** @var list<array{kind: string, page: int}> */
     public array $browseCalls = [];
 
+    /** @var list<BrowseFilters> the filters of each Browse read, beside `browseCalls` */
+    public array $browseFilters = [];
+
     /** @var list<CatalogContext> */
     public array $genreCalls = [];
 
@@ -53,6 +57,7 @@ class FakeCatalogSource implements CatalogSource
      * @param  list<array{id: int, name: string}>  $genres
      * @param  list<list<MovieListing>>  $browsePages  the pages of Browse for Movies
      * @param  list<list<MovieListing>>  $tvBrowsePages  the pages of Browse for TV Shows
+     * @param  list<array{id: int, name: string}>  $tvGenres
      * @param  array<int, string|null>  $imdbIds  each Movie's IMDb id by catalog id; a Movie not listed has none
      */
     public function __construct(
@@ -69,6 +74,7 @@ class FakeCatalogSource implements CatalogSource
         public array $tvImdbIds = [],
         public array $browsePages = [],
         public array $tvBrowsePages = [],
+        public array $tvGenres = [],
     ) {}
 
     public function tvShow(int $tmdbId, CatalogContext $context): ?TvShowDetails
@@ -154,9 +160,10 @@ class FakeCatalogSource implements CatalogSource
     }
 
     /** Browse with no pages given has one empty page; a page past the last is a failure, as TMDB's 404 is. */
-    public function browse(TitleKind $kind, int $page, CatalogContext $context): SearchResults
+    public function browse(TitleKind $kind, int $page, CatalogContext $context, BrowseFilters $filters = new BrowseFilters): SearchResults
     {
         $this->browseCalls[] = ['kind' => $kind->value, 'page' => $page];
+        $this->browseFilters[] = $filters;
 
         if ($this->failing) {
             throw new SourceUnavailable('The Catalog source is unavailable.');
@@ -194,14 +201,15 @@ class FakeCatalogSource implements CatalogSource
     }
 
     /** @return list<array{id: int, name: string}> */
-    public function genres(CatalogContext $context): array
+    public function genres(CatalogContext $context, TitleKind $kind = TitleKind::Movie): array
     {
         $this->genreCalls[] = $context;
+        $genres = $kind === TitleKind::TvShow ? $this->tvGenres : $this->genres;
 
-        if ($this->failing) {
+        if ($this->failing || $genres === []) {
             throw new SourceUnavailable('The Catalog source is unavailable.');
         }
 
-        return $this->genres;
+        return $genres;
     }
 }

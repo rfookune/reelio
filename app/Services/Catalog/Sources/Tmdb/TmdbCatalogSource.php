@@ -9,6 +9,7 @@ use App\Services\Catalog\Enums\SectionKind;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\Details\TvShowDetails;
+use App\Services\Catalog\Sources\Listings\BrowseFilters;
 use App\Services\Catalog\Sources\Listings\SearchResults;
 use App\Services\Catalog\Sources\Listings\SectionPage;
 use App\Services\Catalog\Sources\Listings\SectionQuery;
@@ -110,9 +111,10 @@ class TmdbCatalogSource implements CatalogSource
      * listings, listings that aren't well formed and repeats within the page are dropped; an unsafe image path is
      * cleared.
      */
-    public function browse(TitleKind $kind, int $page, CatalogContext $context): SearchResults
+    public function browse(TitleKind $kind, int $page, CatalogContext $context, BrowseFilters $filters = new BrowseFilters): SearchResults
     {
-        $response = $this->client->get($kind === TitleKind::TvShow ? 'discover/tv' : 'discover/movie', ['page' => $page, 'language' => $context->language, 'include_adult' => 'false', 'sort_by' => 'popularity.desc'], $context)
+        $narrowedBy = $filters->genreId === null ? [] : ['with_genres' => $filters->genreId];
+        $response = $this->client->get($kind === TitleKind::TvShow ? 'discover/tv' : 'discover/movie', ['page' => $page, 'language' => $context->language, 'include_adult' => 'false', 'sort_by' => 'popularity.desc', ...$narrowedBy], $context)
             ?? throw new SourceUnavailable('The Catalog source has no such browse page.');
         $data = $this->movies->listPage((array) $response->json());
 
@@ -163,9 +165,9 @@ class TmdbCatalogSource implements CatalogSource
      *
      * @return list<array{id: int, name: string}>
      */
-    public function genres(CatalogContext $context): array
+    public function genres(CatalogContext $context, TitleKind $kind = TitleKind::Movie): array
     {
-        $response = $this->client->get('genre/movie/list', ['language' => $context->language], $context)
+        $response = $this->client->get($kind === TitleKind::TvShow ? 'genre/tv/list' : 'genre/movie/list', ['language' => $context->language], $context)
             ?? throw new SourceUnavailable('The Catalog source has no genre list.');
 
         return $this->movies->genres((array) $response->json());

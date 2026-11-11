@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
 use App\Http\Support\SearchPage;
+use App\Services\Catalog\Search\BrowseGenres;
 use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Search\ImdbIdLookup;
 use App\Services\Ratings\Enums\RatingSourceName;
@@ -20,9 +21,9 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class SearchController extends Controller
 {
-    public function __invoke(Request $request, CatalogSearch $catalogSearch, ImdbIdLookup $imdbIds, Ratings $ratings, RecordEvent $recordEvent): Response
+    public function __invoke(Request $request, CatalogSearch $catalogSearch, BrowseGenres $browseGenres, ImdbIdLookup $imdbIds, Ratings $ratings, RecordEvent $recordEvent): Response
     {
-        $page = SearchPage::fromRequest($request, $catalogSearch, $imdbIds, $ratings, $recordEvent);
+        $page = SearchPage::fromRequest($request, $catalogSearch, $browseGenres, $imdbIds, $ratings, $recordEvent);
 
         $response = Inertia::render('Search', [
             'imageBaseUrl' => config('catalog.image_base_url'),
@@ -32,6 +33,8 @@ class SearchController extends Controller
             'looksUpImdbRatings' => RatingSourceName::Imdb->isEnabled(),
             'includesTvShows' => (bool) config('catalog.tv_shows.enabled'),
             'tab' => $page->browseKind->value,
+            'genres' => fn (): array => $page->genres(),
+            'genre' => fn (): ?int => $page->genre(),
             'results' => Inertia::scroll(fn (): array => $page->results(), metadata: fn (): ScrollMetadata => $page->scrollMetadata())->matchOn('data.key'),
             'totalResults' => fn (): ?int => $page->totalResults(),
             'status' => fn (): string => $page->status(),

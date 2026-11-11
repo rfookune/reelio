@@ -81,6 +81,22 @@ function accessibilitySweepUrl(string $scenario): string
 
             return '/search?q=inter';
         })(),
+        'search-browse-filtered' => (function (): string {
+            app()->instance(CatalogSource::class, new FakeCatalogSource(
+                browsePages: [movieListings(1, 8)],
+                genres: [['id' => 28, 'name' => 'Action'], ['id' => 35, 'name' => 'Comedy']],
+                tvGenres: [['id' => 9035, 'name' => 'Comedy']],
+            ));
+
+            return '/search?genre=35';
+        })(),
+        'search-browse-no-matches' => (function (): string {
+            app()->instance(CatalogSource::class, new FakeCatalogSource(
+                genres: [['id' => 28, 'name' => 'Action'], ['id' => 35, 'name' => 'Comedy']],
+            ));
+
+            return '/search?genre=35';
+        })(),
         'search-tv-results' => (function (): string {
             app()->instance(CatalogSource::class, new FakeCatalogSource(searches: ['chernobyl' => [[
                 movieListing(87108, title: 'Chernobyl', kind: TitleKind::TvShow, posterPath: null),
@@ -247,7 +263,7 @@ it('has no level 1 accessibility issues on :scenario at :width px in the :appear
     }
 })->with(function () {
     $scenarios = [
-        'discover', 'search-empty', 'search-results', 'search-no-results', 'movie', 'removed-movie',
+        'discover', 'search-empty', 'search-browse-filtered', 'search-browse-no-matches', 'search-results', 'search-no-results', 'movie', 'removed-movie',
         'tv-not-started-open', 'tv-not-started-closed', 'tv-in-progress-open', 'tv-in-progress-closed', 'tv-completed-open', 'tv-completed-closed',
         'tv-full-cast', 'search-tv-results', 'watchlist-tv', 'watched-tv', 'removed-tv',
         'watchlist-empty', 'watchlist-full', 'watched', 'picker', 'login', 'register', 'forgot-password',

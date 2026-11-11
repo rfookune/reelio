@@ -15,12 +15,14 @@ use Illuminate\Support\Facades\RateLimiter;
  * @param  array<string, list<list<MovieListing>>>  $searches
  * @param  list<list<MovieListing>>  $browsePages
  * @param  list<list<MovieListing>>  $tvBrowsePages
+ * @param  list<array{id: int, name: string}>  $genres
+ * @param  list<array{id: int, name: string}>  $tvGenres
  */
-function fakeBrowserSearch(array $searches, array $browsePages = [], array $tvBrowsePages = []): FakeCatalogSource
+function fakeBrowserSearch(array $searches, array $browsePages = [], array $tvBrowsePages = [], array $genres = [], array $tvGenres = []): FakeCatalogSource
 {
     config(['catalog.image_base_url' => '/test-images/']);
     $movies = collect([...$searches, ...$browsePages, ...$tvBrowsePages])->flatten(2)->map(fn (MovieListing $listing): MovieDetails => new MovieDetails(tmdbId: $listing->tmdbId, title: $listing->title))->unique('tmdbId')->values()->all();
-    $source = new FakeCatalogSource($movies, searches: $searches, browsePages: $browsePages, tvBrowsePages: $tvBrowsePages);
+    $source = new FakeCatalogSource($movies, searches: $searches, browsePages: $browsePages, tvBrowsePages: $tvBrowsePages, genres: $genres, tvGenres: $tvGenres);
     app()->instance(CatalogSource::class, $source);
 
     return $source;
@@ -107,13 +109,108 @@ it('browses TV Shows from the other tab, keeping the tab in the URL, and a searc
     $page->typeSlowly('#search-query', 'inter', 60)
         ->assertSeeIn('[data-slot=search-results]', '1 result')
         ->assertMissing('[data-browse-tab]');
-    expect($page->url())->toEndWith('/search?q=inter');
+    expect($page->url())->toEndWith('/search?q=inter&tab=tv');
 
     $page->fill('#search-query', '')
         ->assertSeeIn('[data-slot=search-results]', 'Popular TV shows')
         ->assertAttribute('[data-browse-tab=tv]', 'aria-pressed', 'true')
         ->assertNoJavaScriptErrors();
     expect($page->url())->toEndWith('/search?tab=tv');
+});
+
+it('lists Browse cards with no rating placeholder, since only a search by Name looks IMDb ratings up', function () {
+    config(['ratings.sources.imdb.enabled' => true]);
+    fakeBrowserSearch([], [movieListings(1, 3)]);
+
+    visitWithCsp('/search')->assertPresent('[data-slot=search-results] [data-slot=poster-card]')
+        ->assertNotPresent('[data-slot=ratings-pending]')
+        ->assertNoJavaScriptErrors();
+});
+
+it('narrows Browse by genre, counts and clears the filter, and Back restores the previous one', function () {
+    $source = fakeBrowserSearch([], [movieListings(1, 3)], [], [['id' => 28, 'name' => 'Action'], ['id' => 35, 'name' => 'Comedy']]);
+
+    $page = visitWithCsp('/search');
+
+    $page->assertPresent('#browse-genre')->assertMissing('[data-slot=search-filter-count]');
+    $page->select('#browse-genre', '35')
+        ->assertSeeIn('[data-slot=search-filter-count]', '1 filter active')
+        ->assertSeeIn('[data-slot=search-results]', 'Popular movies')
+        ->assertNoJavaScriptErrors();
+
+    expect($page->url())->toEndWith('/search?genre=35')
+        ->and($page->script('document.querySelector("#browse-genre").value'))->toBe('35')
+        ->and(array_map(fn ($filters) => $filters->genreId, $source->browseFilters))->toBe([null, 35]);
+
+    $page->select('#browse-genre', '28')->wait(1);
+    expect($page->url())->toEndWith('/search?genre=28');
+
+    $page->script('history.back()');
+    $page->wait(1);
+    expect($page->url())->toEndWith('/search?genre=35')
+        ->and($page->script('document.querySelector("#browse-genre").value'))->toBe('35');
+
+    $page->click('[data-slot=search-clear-filters]')
+        ->assertMissing('[data-slot=search-filter-count]')
+        ->assertNoJavaScriptErrors();
+    expect($page->url())->toEndWith('/search')
+        ->and($page->script('document.querySelector("#browse-genre").value'))->toBe('');
+});
+
+it('keeps a genre across tabs only when the other tab has one of that name, and a Name clears the filters', function () {
+    fakeBrowserSearch(
+        ['inter' => [[movieListing(7, title: 'Inter movie')]]],
+        [movieListings(1, 3)],
+        [[movieListing(51, title: 'Show 51', kind: TitleKind::TvShow)]],
+        [['id' => 28, 'name' => 'Action'], ['id' => 35, 'name' => 'Comedy']],
+        [['id' => 9035, 'name' => 'Comedy'], ['id' => 10759, 'name' => 'Action & Adventure']],
+    );
+
+    $page = visitWithCsp('/search?genre=35');
+
+    $page->click('[data-browse-tab=tv]')->assertSeeIn('[data-slot=search-results]', 'Popular TV shows');
+    expect($page->script('document.querySelector("#browse-genre").value'))->toBe('9035')
+        ->and($page->script('[...document.querySelectorAll("#browse-genre option")].map((option) => option.textContent.trim())'))->toBe(['Any genre', 'Comedy', 'Action & Adventure']);
+
+    $page->select('#browse-genre', '10759')->assertSeeIn('[data-slot=search-filter-count]', '1 filter active');
+    $page->click('[data-browse-tab=movie]')->assertSeeIn('[data-slot=search-results]', 'Popular movies')
+        ->assertMissing('[data-slot=search-filter-count]');
+    expect($page->script('document.querySelector("#browse-genre").value'))->toBe('');
+
+    $page->select('#browse-genre', '35')->assertSeeIn('[data-slot=search-filter-count]', '1 filter active');
+    $page->typeSlowly('#search-query', 'inter', 60)
+        ->assertSeeIn('[data-slot=search-results]', '1 result')
+        ->assertMissing('[data-slot=search-filter-count]');
+    expect($page->url())->toEndWith('/search?q=inter')
+        ->and($page->script('document.querySelector("#browse-genre").value'))->toBe('');
+
+    $page->fill('#search-query', '')->assertSeeIn('[data-slot=search-results]', 'Popular movies')
+        ->assertMissing('[data-slot=search-filter-count]');
+});
+
+it('choosing a genre replaces a typed Name with Browse', function () {
+    fakeBrowserSearch(['inter' => [[movieListing(7, title: 'Inter movie')]]], [movieListings(1, 3)], [], [['id' => 35, 'name' => 'Comedy']]);
+
+    $page = visitWithCsp('/search?q=inter');
+
+    $page->assertSeeIn('[data-slot=search-results]', '1 result')->assertPresent('#browse-genre');
+    $page->select('#browse-genre', '35')
+        ->assertSeeIn('[data-slot=search-filter-count]', '1 filter active')
+        ->assertSeeIn('[data-slot=search-results]', 'Popular movies');
+    expect($page->script('document.querySelector("#search-query").value'))->toBe('')
+        ->and($page->url())->toEndWith('/search?genre=35');
+});
+
+it('shows a no-match message with a way out when the genre matches nothing', function () {
+    fakeBrowserSearch([], [movieListings(1, 3)], [], [['id' => 35, 'name' => 'Comedy']]);
+    $page = visitWithCsp('/search');
+    app()->instance(CatalogSource::class, new FakeCatalogSource(browsePages: [[]], genres: [['id' => 35, 'name' => 'Comedy']]));
+
+    $page->select('#browse-genre', '35')
+        ->assertSee('No movies match these filters')
+        ->click('[data-slot=search-no-matches] button')
+        ->assertMissing('[data-slot=search-no-matches]')
+        ->assertNoJavaScriptErrors();
 });
 
 it('searches once the typing pauses, not on every keystroke', function () {

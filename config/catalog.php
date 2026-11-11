@@ -114,6 +114,12 @@ return [
         'stale_seconds' => 86400,
 
         /*
+         * Browse's genre lists, one for Movies and one for TV Shows, are read from the cache for this long, then
+         * from the source again.
+         */
+        'genres_seconds' => 86400,
+
+        /*
          * Shorter queries show Browse instead of searching; longer ones are cut.
          */
         'minimum_query_length' => 2,

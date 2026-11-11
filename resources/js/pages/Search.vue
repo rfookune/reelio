@@ -6,6 +6,7 @@ import PosterCard from '@/components/shared/PosterCard.vue';
 import type { PosterCardTitle } from '@/components/shared/PosterCard.vue';
 import PosterCardSkeleton from '@/components/shared/PosterCardSkeleton.vue';
 import { Button } from '@/components/ui/button';
+import { NativeSelect } from '@/components/ui/native-select';
 import { announce } from '@/composables/useAnnouncer';
 import { useLookedUpRatings } from '@/composables/useLookedUpRatings';
 import { useTvShowWatchlistToggle } from '@/composables/useTvShowWatchlistToggle';
@@ -30,6 +31,10 @@ const props = defineProps<{
     includesTvShows: boolean;
     /** The Browse tab shown while there is no query: Movies, or TV Shows when they are switched on. */
     tab: CardKind;
+    /** The genres the tab offers; none while searching by Name or while the Catalog can't list them. */
+    genres: { id: number; name: string }[];
+    /** The genre Browse is narrowed to, or null. */
+    genre: number | null;
     results: { data: SearchResult[] };
     totalResults: number | null;
     /** How the Catalog answered the search, or Browse while there is no query. */
@@ -44,7 +49,10 @@ const { toggle: toggleTvWatchlist } = useTvShowWatchlistToggle(() => 'search');
 const { withLookedUpRatings, isLookingUp } = useLookedUpRatings(
     () => props.query,
     () => props.results.data,
-    () => props.looksUpImdbRatings,
+    // Only a search by Name has its IMDb ratings looked up, so only its cards wait for them.
+    () =>
+        props.looksUpImdbRatings &&
+        Array.from(props.query).length >= props.minimumQueryLength,
 );
 
 const BROWSE_TABS: { value: CardKind; label: string }[] = [
@@ -73,8 +81,8 @@ const requestedQuery = ref(props.query);
 /** Typed since the last search was asked for. */
 const typing = ref(false);
 const pending = ref(false);
-/** A tab was chosen and its first page hasn't arrived, so the other tab's list isn't shown meanwhile. */
-const tabLoading = ref(false);
+/** A tab or filter was chosen and its first page hasn't arrived, so the list it replaces isn't shown meanwhile. */
+const replacingList = ref(false);
 /** Why the latest query visit failed without a page: the 429 line or the error line. */
 const failure = ref<string | null>(null);
 /** Why the latest "Show more" failed without a page. */
@@ -103,6 +111,9 @@ const browseTab = ref(props.tab);
 const browseNoun = computed(() =>
     browseTab.value === 'tv' ? 'TV shows' : 'movies',
 );
+/** The genre chosen; it follows the page's while Browse shows, which Back and forward change. */
+const genreChoice = ref<number | null>(props.genre);
+const activeFilterCount = computed(() => (genreChoice.value === null ? 0 : 1));
 const cantBrowse = computed(
     () => `We can't load ${browseNoun.value} right now`,
 );
@@ -118,7 +129,7 @@ const emptyKindLabel = computed(() =>
 const settling = computed(() => typing.value || pending.value);
 const hasResults = computed(() => props.results.data.length > 0);
 const firstLoading = computed(
-    () => settling.value && (!hasResults.value || tabLoading.value),
+    () => settling.value && (!hasResults.value || replacingList.value),
 );
 /** The line for the page failing as a whole: the search's, or Browse's when the query asked for is too short to search. */
 const failureMessage = computed(() =>
@@ -194,9 +205,10 @@ const showMoreParams = {
  * Searches for the query, replacing the history entry, so Back leaves Search rather than stepping through
  * keystrokes. A visit cancels the one in flight, and the results and `userMovies` start afresh rather than
  * merging. Resetting makes it a partial reload, so it names every prop the query changes. The query last asked
- * for isn't asked again unless its answer was a failure, or `force` says to.
+ * for isn't asked again unless its answer was a failure, or `force` says to. A tab or filter chosen adds a history
+ * entry instead (`replace` off), so Back restores the previous ones.
  */
-function visit(query: string, force = false): void {
+function visit(query: string, force = false, replace = true): void {
     clearTimeout(debounceTimer);
     typing.value = false;
 
@@ -214,20 +226,28 @@ function visit(query: string, force = false): void {
     failure.value = null;
     moreFailure.value = null;
 
-    const params =
-        query !== ''
-            ? { q: query }
-            : browseTab.value === 'tv'
-              ? { tab: browseTab.value }
-              : {};
+    if (query !== '') {
+        genreChoice.value = null;
+    }
+
+    // The tab goes along with a Name too, which ignores it, so the genres offered stay those of the tab.
+    const params: { q?: string; tab?: CardKind; genre?: number } = {
+        ...(query === '' ? {} : { q: query }),
+        ...(browseTab.value === 'tv' ? { tab: browseTab.value } : {}),
+        ...(query === '' && genreChoice.value !== null
+            ? { genre: genreChoice.value }
+            : {}),
+    };
 
     router.get(search.url(), params, {
-        replace: true,
+        replace,
         preserveState: true,
         preserveScroll: true,
         only: [
             'query',
             'tab',
+            'genres',
+            'genre',
             'results',
             'totalResults',
             'status',
@@ -241,6 +261,8 @@ function visit(query: string, force = false): void {
         onSuccess: (page) => {
             if (query !== '') {
                 announceSettled(page.props as unknown as typeof props);
+            } else {
+                announceBrowsed(page.props as unknown as typeof props);
             }
         },
         onHttpException: (response) => {
@@ -256,7 +278,7 @@ function visit(query: string, force = false): void {
         onFinish: () => {
             if (visitNumber === latestVisit) {
                 pending.value = false;
-                tabLoading.value = false;
+                replacingList.value = false;
             }
         },
     });
@@ -269,8 +291,44 @@ function chooseTab(tab: CardKind): void {
     }
 
     browseTab.value = tab;
-    tabLoading.value = true;
-    visit('', true);
+    replacingList.value = true;
+    visit('', true, false);
+}
+
+/** Browses with the genre chosen, or none: it replaces a typed Name, and its first page replaces the list. */
+function chooseGenre(genre: number | null): void {
+    genreChoice.value = genre;
+    clearFilterVisit();
+}
+
+/** The genre picked in the select, `Any genre` being none. */
+function onGenreChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+
+    chooseGenre(value === '' ? null : Number(value));
+}
+
+/** Drops every filter and browses again. */
+function clearFilters(): void {
+    genreChoice.value = null;
+    clearFilterVisit();
+}
+
+function clearFilterVisit(): void {
+    text.value = '';
+    replacingList.value = true;
+    visit('', true, false);
+}
+
+/** Announces a settled Browse page: what is shown, or that it failed. */
+function announceBrowsed(page: typeof props): void {
+    const genre = page.genres.find((option) => option.id === page.genre);
+
+    announce(
+        page.status === 'unavailable'
+            ? failureMessage.value
+            : `Showing popular ${page.tab === 'tv' ? 'TV shows' : 'movies'}${genre === undefined ? '' : ` in ${genre.name}`}`,
+    );
 }
 
 function fail(message: string): void {
@@ -299,13 +357,34 @@ function announceSettled(page: typeof props): void {
 }
 
 watch(text, () => {
-    typing.value = true;
     clearTimeout(debounceTimer);
+
+    // Text that asks for nothing new, as when a filter empties the input, isn't waited on.
+    if (
+        wantedQuery.value === requestedQuery.value &&
+        failure.value === null &&
+        props.status !== 'unavailable'
+    ) {
+        typing.value = false;
+
+        return;
+    }
+
+    typing.value = true;
     debounceTimer = setTimeout(
         () => visit(wantedQuery.value),
         DEBOUNCE_MILLISECONDS,
     );
 });
+
+watch(
+    () => props.genre,
+    (genre) => {
+        if (!isSearching.value) {
+            genreChoice.value = genre;
+        }
+    },
+);
 
 watch(
     () => props.tab,
@@ -388,6 +467,54 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
             </Button>
         </div>
 
+        <div
+            v-if="genres.length > 0"
+            role="group"
+            aria-label="Filters"
+            data-slot="search-filters"
+            class="flex flex-wrap items-end gap-x-4 gap-y-3"
+        >
+            <div class="flex w-full flex-col gap-1.5 sm:w-56">
+                <label for="browse-genre" class="text-sm text-muted"
+                    >Genre</label
+                >
+                <NativeSelect
+                    id="browse-genre"
+                    touch
+                    :value="genreChoice ?? ''"
+                    @change="onGenreChange"
+                >
+                    <option value="">Any genre</option>
+                    <option
+                        v-for="option in genres"
+                        :key="option.id"
+                        :value="option.id"
+                        :selected="option.id === genreChoice"
+                    >
+                        {{ option.name }}
+                    </option>
+                </NativeSelect>
+            </div>
+            <p
+                v-if="activeFilterCount > 0 && !replacingList"
+                data-slot="search-filter-count"
+                class="text-sm text-muted tabular-nums"
+            >
+                {{ activeFilterCount }}
+                {{ activeFilterCount === 1 ? 'filter' : 'filters' }} active
+            </p>
+            <Button
+                v-if="activeFilterCount > 0"
+                type="button"
+                variant="ghost"
+                size="sm"
+                data-slot="search-clear-filters"
+                @click="clearFilters"
+            >
+                Clear filters
+            </Button>
+        </div>
+
         <section
             v-if="pageError !== null"
             data-slot="search-unavailable"
@@ -420,8 +547,24 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
             </p>
         </section>
 
+        <section
+            v-if="browseEmpty && activeFilterCount > 0"
+            data-slot="search-no-matches"
+            class="flex flex-col items-start gap-2"
+        >
+            <h2 class="text-lg font-semibold">
+                No {{ browseNoun }} match these filters
+            </h2>
+            <p class="text-sm text-muted">
+                Try a different genre, or clear the filters
+            </p>
+            <Button type="button" variant="outline" @click="clearFilters">
+                Clear filters
+            </Button>
+        </section>
+
         <p
-            v-if="browseEmpty"
+            v-else-if="browseEmpty"
             data-slot="search-browse-empty"
             class="text-sm text-muted"
         >
