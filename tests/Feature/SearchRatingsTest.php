@@ -199,9 +199,9 @@ test('the ratings of a Browse page narrowed by a genre are those of that page', 
 test('the ratings of a Browse page in a chosen sort are those of that page', function () {
     config(['ratings.sources.imdb.enabled' => true]);
     app()->instance(CatalogSource::class, new FakeCatalogSource(browsePages: [[movieListing(1)]], imdbIds: [1 => 'tt0000001']));
-    app(CatalogSearch::class)->browse(TitleKind::Movie, 1, new BrowseFilters(requestedSort: BrowseSort::Newest));
+    app(CatalogSearch::class)->browse(TitleKind::Movie, 1, new BrowseFilters(requestedSort: BrowseSort::TopRated));
     app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000001', 8.1, 5000);
 
-    $this->getJson(route('search.ratings', ['sort' => 'newest']))->assertOk()->assertJsonPath('ratings.1.0.value', 8.1);
+    $this->getJson(route('search.ratings', ['sort' => 'top_rated']))->assertOk()->assertJsonPath('ratings.1.0.value', 8.1);
     $this->getJson(route('search.ratings'))->assertOk()->assertExactJson(['ratings' => []]);
 });

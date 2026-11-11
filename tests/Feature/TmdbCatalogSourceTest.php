@@ -756,10 +756,8 @@ test('a Browse page sends the sort to discover for each kind, with a vote floor 
 })->with([
     'Movies, Popular' => [TitleKind::Movie, 'discover/movie', BrowseSort::Popular, ['sort_by' => 'popularity.desc']],
     'Movies, Top rated' => [TitleKind::Movie, 'discover/movie', BrowseSort::TopRated, ['sort_by' => 'vote_average.desc', 'vote_count.gte' => '250']],
-    'Movies, Newest' => [TitleKind::Movie, 'discover/movie', BrowseSort::Newest, ['sort_by' => 'primary_release_date.desc']],
     'TV Shows, Popular' => [TitleKind::TvShow, 'discover/tv', BrowseSort::Popular, ['sort_by' => 'popularity.desc']],
     'TV Shows, Top rated' => [TitleKind::TvShow, 'discover/tv', BrowseSort::TopRated, ['sort_by' => 'vote_average.desc', 'vote_count.gte' => '250']],
-    'TV Shows, Newest' => [TitleKind::TvShow, 'discover/tv', BrowseSort::Newest, ['sort_by' => 'first_air_date.desc']],
 ]);
 
 test('a Browse page with no sort chosen takes the default of its filters', function () {

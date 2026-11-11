@@ -43,9 +43,9 @@ test('an explicit sort wins over the default, with or without a filter', functio
     expect(askedSorts($source))->toBe([$sort]);
 })->with([
     'Top rated, unfiltered' => [['sort' => 'top_rated'], 'top_rated'],
-    'Newest, unfiltered' => [['sort' => 'newest'], 'newest'],
+    'Popular, unfiltered' => [['sort' => 'popular'], 'popular'],
     'Popular, filtered' => [['sort' => 'popular', 'genre' => 35], 'popular'],
-    'Newest, filtered' => [['sort' => 'newest', 'genre' => 35], 'newest'],
+    'Top rated, filtered' => [['sort' => 'top_rated', 'genre' => 35], 'top_rated'],
 ]);
 
 test('an unknown sort falls back to the default', function (mixed $sort, array $filter, string $default) {
@@ -60,26 +60,26 @@ test('an unknown sort falls back to the default', function (mixed $sort, array $
     'unknown, unfiltered' => ['best', [], 'popular'],
     'unknown, filtered' => ['best', ['genre' => 35], 'top_rated'],
     'wrong case' => ['TOP_RATED', [], 'popular'],
-    'a list' => [['newest'], [], 'popular'],
+    'a list' => [['top_rated'], [], 'popular'],
     'empty' => ['', [], 'popular'],
 ]);
 
 test('each sort is its own cached Browse page', function () {
     $source = fakeSortedBrowse();
 
-    $this->get(route('search', ['sort' => 'newest']))->assertOk();
-    $this->get(route('search', ['sort' => 'newest']))->assertOk();
     $this->get(route('search', ['sort' => 'top_rated']))->assertOk();
+    $this->get(route('search', ['sort' => 'top_rated']))->assertOk();
+    $this->get(route('search', ['sort' => 'popular', 'genre' => 35]))->assertOk();
     $this->get(route('search'))->assertOk();
 
-    expect(askedSorts($source))->toBe(['newest', 'top_rated', 'popular']);
+    expect(askedSorts($source))->toBe(['top_rated', 'popular', 'popular']);
 });
 
 test('a search by Name takes no sort', function () {
     $source = fakeSortedBrowse();
     $source->searches = ['inter' => [movieListings(7, 8)]];
 
-    $this->get(route('search', ['q' => 'inter', 'sort' => 'newest']))->assertInertia(fn (Assert $page) => $page
+    $this->get(route('search', ['q' => 'inter', 'sort' => 'top_rated']))->assertInertia(fn (Assert $page) => $page
         ->where('sort', 'popular')
         ->where('explicitSort', null));
 

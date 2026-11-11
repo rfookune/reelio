@@ -115,7 +115,7 @@ class TmdbCatalogSource implements CatalogSource
     public function browse(TitleKind $kind, int $page, CatalogContext $context, BrowseFilters $filters = new BrowseFilters): SearchResults
     {
         $narrowedBy = $filters->genreId === null ? [] : ['with_genres' => $filters->genreId];
-        $response = $this->client->get($kind === TitleKind::TvShow ? 'discover/tv' : 'discover/movie', ['page' => $page, 'language' => $context->language, 'include_adult' => 'false', ...$this->sortParameters($kind, $filters->sort()), ...$narrowedBy], $context)
+        $response = $this->client->get($kind === TitleKind::TvShow ? 'discover/tv' : 'discover/movie', ['page' => $page, 'language' => $context->language, 'include_adult' => 'false', ...$this->sortParameters($filters->sort()), ...$narrowedBy], $context)
             ?? throw new SourceUnavailable('The Catalog source has no such browse page.');
         $data = $this->movies->listPage((array) $response->json());
 
@@ -124,19 +124,15 @@ class TmdbCatalogSource implements CatalogSource
 
     /**
      * The discover parameters of a sort. Top rated ranks by score among Titles with at least
-     * `search.top_rated_minimum_votes` votes, so a few perfect votes don't win; Newest orders by release date, or
-     * first air date for a TV Show.
+     * `search.top_rated_minimum_votes` votes, so a few perfect votes don't win.
      *
      * @return array<string, string|int>
      */
-    private function sortParameters(TitleKind $kind, BrowseSort $sort): array
+    private function sortParameters(BrowseSort $sort): array
     {
-        $dateField = $kind === TitleKind::TvShow ? 'first_air_date' : 'primary_release_date';
-
         return match ($sort) {
             BrowseSort::Popular => ['sort_by' => 'popularity.desc'],
             BrowseSort::TopRated => ['sort_by' => 'vote_average.desc', 'vote_count.gte' => config('catalog.search.top_rated_minimum_votes')],
-            BrowseSort::Newest => ['sort_by' => "{$dateField}.desc"],
         };
     }
 

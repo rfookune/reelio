@@ -10,7 +10,6 @@ enum BrowseSort: string
 {
     case TopRated = 'top_rated';
     case Popular = 'popular';
-    case Newest = 'newest';
 
     /** The order for filters that name none: Popular while nothing narrows Browse, Top rated once something does. */
     public static function defaultFor(BrowseFilters $filters): self

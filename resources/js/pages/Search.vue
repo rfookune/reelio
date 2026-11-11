@@ -16,12 +16,11 @@ import type { CardKind, KindFilter } from '@/lib/searchKinds';
 import { search } from '@/routes';
 import type { UserMovies } from '@/types';
 
-type SortValue = 'top_rated' | 'popular' | 'newest';
+type SortValue = 'top_rated' | 'popular';
 
 const SORT_OPTIONS: { value: SortValue; label: string; noun: string }[] = [
     { value: 'top_rated', label: 'Top rated', noun: 'top rated' },
     { value: 'popular', label: 'Popular', noun: 'popular' },
-    { value: 'newest', label: 'Newest', noun: 'newest' },
 ];
 
 /** A result card, and the page of the search it is on. */
