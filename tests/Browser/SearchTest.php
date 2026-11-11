@@ -129,23 +129,20 @@ it('narrows Browse by genre, counts and clears the filter, and Back restores the
         ->assertSeeIn('[data-slot=search-results]', 'Top rated movies')
         ->assertNoJavaScriptErrors();
 
-    expect($page->url())->toEndWith('/search?genre=35')
-        ->and($page->script('document.querySelector("#browse-genre").value'))->toBe('35')
-        ->and(array_map(fn ($filters) => $filters->genreId, $source->browseFilters))->toBe([null, 35]);
+    $page->assertQueryStringHas('genre', '35')->assertValue('#browse-genre', '35');
+    expect(array_map(fn ($filters) => $filters->genreId, $source->browseFilters))->toBe([null, 35]);
 
-    $page->select('#browse-genre', '28')->wait(1);
-    expect($page->url())->toEndWith('/search?genre=28');
+    $page->select('#browse-genre', '28')->assertQueryStringHas('genre', '28');
 
     $page->script('history.back()');
-    $page->wait(1);
-    expect($page->url())->toEndWith('/search?genre=35')
-        ->and($page->script('document.querySelector("#browse-genre").value'))->toBe('35');
+    $page->assertQueryStringHas('genre', '35')->assertValue('#browse-genre', '35');
 
     $page->click('[data-slot=search-clear-filters]')
         ->assertMissing('[data-slot=search-filter-count]')
+        ->assertQueryStringMissing('genre')
+        ->assertPathIs('/search')
+        ->assertValue('#browse-genre', '')
         ->assertNoJavaScriptErrors();
-    expect($page->url())->toEndWith('/search')
-        ->and($page->script('document.querySelector("#browse-genre").value'))->toBe('');
 });
 
 it('keeps a genre across tabs only when the other tab has one of that name, and a Name clears the filters', function () {
