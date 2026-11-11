@@ -27,7 +27,7 @@ interface CatalogSource
     public function search(string $query, int $page, CatalogContext $context): SearchResults;
 
     /**
-     * One page of Browse for a kind, the Movies or TV Shows the source's discover list gives, most popular first; no
+     * One page of Browse for a kind, the Movies or TV Shows the source's discover list gives, in the filters' sort order; no
      * text query is sent. A missing page is a failure, not an empty answer. The filters are applied by the source,
      * and have already been checked against what it offers.
      */

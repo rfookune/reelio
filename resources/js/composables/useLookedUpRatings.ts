@@ -13,8 +13,13 @@ type SearchCard = {
     page: number;
 };
 
-/** What names a page of results to the server: a search's query, or a Browse page's tab and genre. */
-export type LookupScope = { q: string; tab: string; genre: string };
+/** What names a page of results to the server: a search's query, or a Browse page's tab, genre and the sort chosen. */
+export type LookupScope = {
+    q: string;
+    tab: string;
+    genre: string;
+    sort: string;
+};
 
 function scopeKey(scope: LookupScope): string {
     return JSON.stringify(scope);
@@ -39,7 +44,7 @@ export function useLookedUpRatings(
     const http = useHttp<
         LookupScope & { page: number },
         { ratings: Record<string, ExternalRating[]> }
-    >({ q: '', tab: '', genre: '', page: 1 });
+    >({ q: '', tab: '', genre: '', sort: '', page: 1 });
     let queue: Promise<void> = Promise.resolve();
 
     const needsLookup = (card: SearchCard): boolean =>
@@ -66,6 +71,7 @@ export function useLookedUpRatings(
                 http.q = named.q;
                 http.tab = named.tab;
                 http.genre = named.genre;
+                http.sort = named.sort;
                 http.page = page;
                 const response = await http.get(ratingsRoute.url());
 

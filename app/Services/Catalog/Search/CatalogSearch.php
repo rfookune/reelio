@@ -37,7 +37,7 @@ class CatalogSearch
     }
 
     /**
-     * One page of Browse for a kind, the Movies or TV Shows the source lists most popular first, read and cached as
+     * One page of Browse for a kind, the Movies or TV Shows the source lists in the filters' sort order, read and cached as
      * a page of a search is, under a key of its own for each kind and set of filters and the same `search` freshness settings.
      *
      * @return CatalogResult<SearchResults>

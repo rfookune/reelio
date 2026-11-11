@@ -16,6 +16,14 @@ import type { CardKind, KindFilter } from '@/lib/searchKinds';
 import { search } from '@/routes';
 import type { UserMovies } from '@/types';
 
+type SortValue = 'top_rated' | 'popular' | 'newest';
+
+const SORT_OPTIONS: { value: SortValue; label: string; noun: string }[] = [
+    { value: 'top_rated', label: 'Top rated', noun: 'top rated' },
+    { value: 'popular', label: 'Popular', noun: 'popular' },
+    { value: 'newest', label: 'Newest', noun: 'newest' },
+];
+
 /** A result card, and the page of the search it is on. */
 type SearchResult = PosterCardTitle & { kind: CardKind; page: number };
 
@@ -35,6 +43,10 @@ const props = defineProps<{
     genres: { id: number; name: string }[];
     /** The genre Browse is narrowed to, or null. */
     genre: number | null;
+    /** The order Browse is in: the one chosen, else the default of the filters. */
+    sort: SortValue;
+    /** The order the URL chose, or null when it chose none. */
+    explicitSort: SortValue | null;
     results: { data: SearchResult[] };
     totalResults: number | null;
     /** How the Catalog answered the search, or Browse while there is no query. */
@@ -54,11 +66,12 @@ function searchesByName(): boolean {
 const { withLookedUpRatings, isLookingUp } = useLookedUpRatings(
     () =>
         searchesByName()
-            ? { q: props.query, tab: '', genre: '' }
+            ? { q: props.query, tab: '', genre: '', sort: '' }
             : {
                   q: '',
                   tab: props.tab,
                   genre: props.genre === null ? '' : String(props.genre),
+                  sort: props.explicitSort ?? '',
               },
     () => props.results.data,
     () => props.looksUpImdbRatings,
@@ -120,6 +133,15 @@ const browseNoun = computed(() =>
 );
 /** The genre chosen; it follows the page's while Browse shows, which Back and forward change. */
 const genreChoice = ref<number | null>(props.genre);
+/** The sort chosen, null for the default of the filters; it follows the page's while Browse shows. */
+const sortChoice = ref<SortValue | null>(props.explicitSort);
+/** The sort the select shows: the one chosen, else the page's default. */
+const shownSort = computed(() => sortChoice.value ?? props.sort);
+const shownSortLabel = computed(
+    () =>
+        SORT_OPTIONS.find((option) => option.value === shownSort.value)
+            ?.label ?? 'Popular',
+);
 const activeFilterCount = computed(() => (genreChoice.value === null ? 0 : 1));
 const cantBrowse = computed(
     () => `We can't load ${browseNoun.value} right now`,
@@ -238,11 +260,19 @@ function visit(query: string, force = false, replace = true): void {
     }
 
     // The tab goes along with a Name too, which ignores it, so the genres offered stay those of the tab.
-    const params: { q?: string; tab?: CardKind; genre?: number } = {
+    const params: {
+        q?: string;
+        tab?: CardKind;
+        genre?: number;
+        sort?: SortValue;
+    } = {
         ...(query === '' ? {} : { q: query }),
         ...(browseTab.value === 'tv' ? { tab: browseTab.value } : {}),
         ...(query === '' && genreChoice.value !== null
             ? { genre: genreChoice.value }
+            : {}),
+        ...(query === '' && sortChoice.value !== null
+            ? { sort: sortChoice.value }
             : {}),
     };
 
@@ -255,6 +285,8 @@ function visit(query: string, force = false, replace = true): void {
             'tab',
             'genres',
             'genre',
+            'sort',
+            'explicitSort',
             'results',
             'totalResults',
             'status',
@@ -315,7 +347,13 @@ function onGenreChange(event: Event): void {
     chooseGenre(value === '' ? null : Number(value));
 }
 
-/** Drops every filter and browses again. */
+/** The sort picked in the select; like a filter, it leaves a search by Name. */
+function onSortChange(event: Event): void {
+    sortChoice.value = (event.target as HTMLSelectElement).value as SortValue;
+    clearFilterVisit();
+}
+
+/** Drops every filter and browses again; the sort chosen stays. */
 function clearFilters(): void {
     genreChoice.value = null;
     clearFilterVisit();
@@ -330,11 +368,12 @@ function clearFilterVisit(): void {
 /** Announces a settled Browse page: what is shown, or that it failed. */
 function announceBrowsed(page: typeof props): void {
     const genre = page.genres.find((option) => option.id === page.genre);
+    const order = SORT_OPTIONS.find((option) => option.value === page.sort);
 
     announce(
         page.status === 'unavailable'
             ? failureMessage.value
-            : `Showing popular ${page.tab === 'tv' ? 'TV shows' : 'movies'}${genre === undefined ? '' : ` in ${genre.name}`}`,
+            : `Showing ${order?.noun ?? 'popular'} ${page.tab === 'tv' ? 'TV shows' : 'movies'}${genre === undefined ? '' : ` in ${genre.name}`}`,
     );
 }
 
@@ -389,6 +428,15 @@ watch(
     (genre) => {
         if (!isSearching.value) {
             genreChoice.value = genre;
+        }
+    },
+);
+
+watch(
+    () => props.explicitSort,
+    (sort) => {
+        if (!isSearching.value) {
+            sortChoice.value = sort;
         }
     },
 );
@@ -502,6 +550,26 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
                     </option>
                 </NativeSelect>
             </div>
+            <div class="flex w-full flex-col gap-1.5 sm:w-44">
+                <label for="browse-sort" class="text-sm text-muted"
+                    >Sort by</label
+                >
+                <NativeSelect
+                    id="browse-sort"
+                    touch
+                    :value="shownSort"
+                    @change="onSortChange"
+                >
+                    <option
+                        v-for="option in SORT_OPTIONS"
+                        :key="option.value"
+                        :value="option.value"
+                        :selected="option.value === shownSort"
+                    >
+                        {{ option.label }}
+                    </option>
+                </NativeSelect>
+            </div>
             <p
                 v-if="activeFilterCount > 0 && !replacingList"
                 data-slot="search-filter-count"
@@ -599,7 +667,7 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
                 {{
                     isSearching
                         ? resultCount(totalResults ?? 0)
-                        : `Popular ${browseNoun}`
+                        : `${shownSortLabel} ${browseNoun}`
                 }}
             </h2>
             <div

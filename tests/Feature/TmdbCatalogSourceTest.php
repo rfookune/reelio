@@ -6,6 +6,7 @@ use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Enums\CrewJob;
 use App\Services\Catalog\Enums\SectionKind;
 use App\Services\Catalog\Sources\Listings\BrowseFilters;
+use App\Services\Catalog\Sources\Listings\BrowseSort;
 use App\Services\Catalog\Sources\Listings\MovieListing;
 use App\Services\Catalog\Sources\Listings\SectionQuery;
 use App\Services\Catalog\Sources\SourceMisconfigured;
@@ -614,7 +615,7 @@ test('a TV Shows Browse page fails explicitly on unsuccessful or malformed respo
 test('a Browse page narrowed by a genre sends it as the genre to discover, for each kind', function (TitleKind $kind, string $path) {
     Http::fake(["https://api.themoviedb.org/3/{$path}?*" => Http::response(['page' => 1, 'total_pages' => 1, 'total_results' => 0, 'results' => []])]);
 
-    app(TmdbCatalogSource::class)->browse($kind, 1, new CatalogContext('en-US'), new BrowseFilters(genreId: 35));
+    app(TmdbCatalogSource::class)->browse($kind, 1, new CatalogContext('en-US'), new BrowseFilters(genreId: 35, requestedSort: BrowseSort::Popular));
 
     Http::assertSent(fn (Request $request) => queryOf($request) === [
         'page' => '1',
@@ -743,4 +744,28 @@ test('a TV Show\'s IMDb id comes from the TV external ids', function () {
     Http::fake(['https://api.themoviedb.org/3/tv/5/external_ids*' => Http::response(['id' => 5, 'imdb_id' => 'tt0000005'])]);
 
     expect(app(TmdbCatalogSource::class)->tvImdbId(5, new CatalogContext('en-US')))->toBe('tt0000005');
+});
+
+test('a Browse page sends the sort to discover for each kind, with a vote floor for Top rated', function (TitleKind $kind, string $path, BrowseSort $sort, array $expected) {
+    config(['catalog.search.top_rated_minimum_votes' => 250]);
+    Http::fake(["https://api.themoviedb.org/3/{$path}?*" => Http::response(['page' => 1, 'total_pages' => 1, 'total_results' => 0, 'results' => []])]);
+
+    app(TmdbCatalogSource::class)->browse($kind, 1, new CatalogContext('en-US'), new BrowseFilters(requestedSort: $sort));
+
+    Http::assertSent(fn (Request $request) => queryOf($request) === ['page' => '1', 'language' => 'en-US', 'include_adult' => 'false', ...$expected]);
+})->with([
+    'Movies, Popular' => [TitleKind::Movie, 'discover/movie', BrowseSort::Popular, ['sort_by' => 'popularity.desc']],
+    'Movies, Top rated' => [TitleKind::Movie, 'discover/movie', BrowseSort::TopRated, ['sort_by' => 'vote_average.desc', 'vote_count.gte' => '250']],
+    'Movies, Newest' => [TitleKind::Movie, 'discover/movie', BrowseSort::Newest, ['sort_by' => 'primary_release_date.desc']],
+    'TV Shows, Popular' => [TitleKind::TvShow, 'discover/tv', BrowseSort::Popular, ['sort_by' => 'popularity.desc']],
+    'TV Shows, Top rated' => [TitleKind::TvShow, 'discover/tv', BrowseSort::TopRated, ['sort_by' => 'vote_average.desc', 'vote_count.gte' => '250']],
+    'TV Shows, Newest' => [TitleKind::TvShow, 'discover/tv', BrowseSort::Newest, ['sort_by' => 'first_air_date.desc']],
+]);
+
+test('a Browse page with no sort chosen takes the default of its filters', function () {
+    Http::fake(['https://api.themoviedb.org/3/discover/movie?*' => Http::response(['page' => 1, 'total_pages' => 1, 'total_results' => 0, 'results' => []])]);
+
+    app(TmdbCatalogSource::class)->browse(TitleKind::Movie, 1, new CatalogContext('en-US'), new BrowseFilters(genreId: 35));
+
+    Http::assertSent(fn (Request $request) => ($query = queryOf($request)) && $query['sort_by'] === 'vote_average.desc' && isset($query['vote_count.gte']));
 });

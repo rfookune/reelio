@@ -126,7 +126,7 @@ it('narrows Browse by genre, counts and clears the filter, and Back restores the
     $page->assertPresent('#browse-genre')->assertMissing('[data-slot=search-filter-count]');
     $page->select('#browse-genre', '35')
         ->assertSeeIn('[data-slot=search-filter-count]', '1 filter active')
-        ->assertSeeIn('[data-slot=search-results]', 'Popular movies')
+        ->assertSeeIn('[data-slot=search-results]', 'Top rated movies')
         ->assertNoJavaScriptErrors();
 
     expect($page->url())->toEndWith('/search?genre=35')
@@ -159,7 +159,7 @@ it('keeps a genre across tabs only when the other tab has one of that name, and 
 
     $page = visitWithCsp('/search?genre=35');
 
-    $page->click('[data-browse-tab=tv]')->assertSeeIn('[data-slot=search-results]', 'Popular TV shows');
+    $page->click('[data-browse-tab=tv]')->assertSeeIn('[data-slot=search-results]', 'Top rated TV shows');
     expect($page->script('document.querySelector("#browse-genre").value'))->toBe('9035')
         ->and($page->script('[...document.querySelectorAll("#browse-genre option")].map((option) => option.textContent.trim())'))->toBe(['Any genre', 'Comedy', 'Action & Adventure']);
 
@@ -187,7 +187,7 @@ it('choosing a genre replaces a typed Name with Browse', function () {
     $page->assertSeeIn('[data-slot=search-results]', '1 result')->assertPresent('#browse-genre');
     $page->select('#browse-genre', '35')
         ->assertSeeIn('[data-slot=search-filter-count]', '1 filter active')
-        ->assertSeeIn('[data-slot=search-results]', 'Popular movies');
+        ->assertSeeIn('[data-slot=search-results]', 'Top rated movies');
     expect($page->script('document.querySelector("#search-query").value'))->toBe('')
         ->and($page->url())->toEndWith('/search?genre=35');
 });

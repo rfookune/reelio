@@ -10,6 +10,7 @@ use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\Details\TvShowDetails;
 use App\Services\Catalog\Sources\Listings\BrowseFilters;
+use App\Services\Catalog\Sources\Listings\BrowseSort;
 use App\Services\Catalog\Sources\Listings\SearchResults;
 use App\Services\Catalog\Sources\Listings\SectionPage;
 use App\Services\Catalog\Sources\Listings\SectionQuery;
@@ -107,18 +108,36 @@ class TmdbCatalogSource implements CatalogSource
     }
 
     /**
-     * One page of Browse from TMDB's Movie or TV discover list, most popular first, with no text query. Adult
+     * One page of Browse from TMDB's Movie or TV discover list in the filters' sort order, with no text query. Adult
      * listings, listings that aren't well formed and repeats within the page are dropped; an unsafe image path is
      * cleared.
      */
     public function browse(TitleKind $kind, int $page, CatalogContext $context, BrowseFilters $filters = new BrowseFilters): SearchResults
     {
         $narrowedBy = $filters->genreId === null ? [] : ['with_genres' => $filters->genreId];
-        $response = $this->client->get($kind === TitleKind::TvShow ? 'discover/tv' : 'discover/movie', ['page' => $page, 'language' => $context->language, 'include_adult' => 'false', 'sort_by' => 'popularity.desc', ...$narrowedBy], $context)
+        $response = $this->client->get($kind === TitleKind::TvShow ? 'discover/tv' : 'discover/movie', ['page' => $page, 'language' => $context->language, 'include_adult' => 'false', ...$this->sortParameters($kind, $filters->sort()), ...$narrowedBy], $context)
             ?? throw new SourceUnavailable('The Catalog source has no such browse page.');
         $data = $this->movies->listPage((array) $response->json());
 
         return new SearchResults($kind === TitleKind::TvShow ? $this->movies->tvListings($data['results']) : $this->movies->listings($data['results']), $data['total_pages'], $this->totalResults($response));
+    }
+
+    /**
+     * The discover parameters of a sort. Top rated ranks by score among Titles with at least
+     * `search.top_rated_minimum_votes` votes, so a few perfect votes don't win; Newest orders by release date, or
+     * first air date for a TV Show.
+     *
+     * @return array<string, string|int>
+     */
+    private function sortParameters(TitleKind $kind, BrowseSort $sort): array
+    {
+        $dateField = $kind === TitleKind::TvShow ? 'first_air_date' : 'primary_release_date';
+
+        return match ($sort) {
+            BrowseSort::Popular => ['sort_by' => 'popularity.desc'],
+            BrowseSort::TopRated => ['sort_by' => 'vote_average.desc', 'vote_count.gte' => config('catalog.search.top_rated_minimum_votes')],
+            BrowseSort::Newest => ['sort_by' => "{$dateField}.desc"],
+        };
     }
 
     /** The response's result count; a missing or invalid one is a failure. */

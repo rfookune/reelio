@@ -15,7 +15,7 @@ use Inertia\ScrollMetadata;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Search: title search for everyone, with the query and page in the URL, and Browse of Popular Movies while there
+ * Search: title search for everyone, with the query and page in the URL, and Browse while there
  * is no query. Results load a page at a time, merged into those already shown, and `userMovies` merges with
  * them. The page is client-rendered and `noindex`.
  */
@@ -35,6 +35,8 @@ class SearchController extends Controller
             'tab' => $page->browseKind->value,
             'genres' => fn (): array => $page->genres(),
             'genre' => fn (): ?int => $page->genre(),
+            'sort' => fn (): string => $page->sort()->value,
+            'explicitSort' => fn (): ?string => $page->explicitSort()?->value,
             'results' => Inertia::scroll(fn (): array => $page->results(), metadata: fn (): ScrollMetadata => $page->scrollMetadata())->matchOn('data.key'),
             'totalResults' => fn (): ?int => $page->totalResults(),
             'status' => fn (): string => $page->status(),

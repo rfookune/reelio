@@ -120,6 +120,12 @@ return [
         'genres_seconds' => 86400,
 
         /*
+         * Browse sorted by Top rated only ranks Titles with at least this many votes, so that a Title with a few
+         * perfect votes doesn't win.
+         */
+        'top_rated_minimum_votes' => 300,
+
+        /*
          * Shorter queries show Browse instead of searching; longer ones are cut.
          */
         'minimum_query_length' => 2,

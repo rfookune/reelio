@@ -16,6 +16,7 @@ use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Search\ImdbIdLookup;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\Listings\BrowseFilters;
+use App\Services\Catalog\Sources\Listings\BrowseSort;
 use App\Services\Catalog\Sources\Listings\MovieListing;
 use App\Services\Catalog\Sources\Listings\SearchResults;
 use App\Services\Ratings\Enums\RatingSourceName;
@@ -32,7 +33,8 @@ use Inertia\ScrollMetadata;
  * Movies, or TV Shows when the request's `tab` is `tv` and they are switched on, a page at a time, as it lists a
  * search's results; the tab is ignored in a search by Name. Browse can be narrowed by a genre of the tab's list, the
  * request's `genre`: an id the tab doesn't offer is carried over to the tab's genre of the same name, if it has one,
- * and any other value is ignored, so only an offered id reaches the source. A search by Name takes no filters. Each Movie links to its canonical URL when it has a row, else to the entry route,
+ * and any other value is ignored, so only an offered id reaches the source. Browse is sorted by the request's `sort` when it
+ * is one of the offered values, else by the default of its filters. A search by Name takes no filters or sort. Each Movie links to its canonical URL when it has a row, else to the entry route,
  * both with the `search` referrer, and shows one External rating: IMDb when its IMDb id is known, from its row or
  * remembered, and rated, else TMDB. The ids not known are looked up afterwards, by `lookedUpRatings()`.
  * Results hold TV Shows beside Movies, each by its kind and catalog id (`key`: the catalog id, or `tv:` and it for a
@@ -76,6 +78,7 @@ class SearchPage
         public readonly int $page,
         public readonly TitleKind $browseKind = TitleKind::Movie,
         private ?int $requestedGenre = null,
+        private ?BrowseSort $requestedSort = null,
         private bool $readsCacheOnly = false,
     ) {}
 
@@ -97,6 +100,7 @@ class SearchPage
             self::pageFrom($request),
             self::tabFrom($request),
             self::genreFrom($request),
+            BrowseSort::fromRequestValue($request->query('sort')),
             self::reloadsUserMoviesOnly($request),
         );
     }
@@ -107,7 +111,7 @@ class SearchPage
      */
     public static function cachedFromRequest(Request $request, CatalogSearch $catalogSearch, BrowseGenres $browseGenres, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
-        return new self($catalogSearch, $browseGenres, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), self::genreFrom($request), readsCacheOnly: true);
+        return new self($catalogSearch, $browseGenres, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), self::genreFrom($request), BrowseSort::fromRequestValue($request->query('sort')), readsCacheOnly: true);
     }
 
     /** The request's `q`, trimmed of Unicode whitespace and cut to `search.maximum_query_length` characters. */
@@ -250,6 +254,18 @@ class SearchPage
         return $this->filters()->genreId;
     }
 
+    /** The order Browse is in: the request's `sort` when it is an offered one, else the default of the filters. */
+    public function sort(): BrowseSort
+    {
+        return $this->filters()->sort();
+    }
+
+    /** The order the request chose, null when it chose none, and always null in a search by Name. */
+    public function explicitSort(): ?BrowseSort
+    {
+        return $this->filters()->requestedSort;
+    }
+
     /** `fresh`, `stale` or `unavailable`. */
     public function status(): string
     {
@@ -290,7 +306,7 @@ class SearchPage
      */
     private function filters(): BrowseFilters
     {
-        return $this->filters ??= new BrowseFilters($this->isSearching() ? null : $this->requestedGenreOnTab());
+        return $this->filters ??= $this->isSearching() ? new BrowseFilters : new BrowseFilters($this->requestedGenreOnTab(), $this->requestedSort);
     }
 
     /**
