@@ -46,13 +46,22 @@ const props = defineProps<{
 
 const { toggle: toggleTvWatchlist } = useTvShowWatchlistToggle(() => 'search');
 
+/** Whether the page shows a search by Name, its query being long enough to search; if not, it is Browse. */
+function searchesByName(): boolean {
+    return Array.from(props.query).length >= props.minimumQueryLength;
+}
+
 const { withLookedUpRatings, isLookingUp } = useLookedUpRatings(
-    () => props.query,
-    () => props.results.data,
-    // Only a search by Name has its IMDb ratings looked up, so only its cards wait for them.
     () =>
-        props.looksUpImdbRatings &&
-        Array.from(props.query).length >= props.minimumQueryLength,
+        searchesByName()
+            ? { q: props.query, tab: '', genre: '' }
+            : {
+                  q: '',
+                  tab: props.tab,
+                  genre: props.genre === null ? '' : String(props.genre),
+              },
+    () => props.results.data,
+    () => props.looksUpImdbRatings,
 );
 
 const BROWSE_TABS: { value: CardKind; label: string }[] = [
@@ -103,9 +112,7 @@ const wantedQuery = computed(() => {
         : '';
 });
 /** Whether the query on the page is long enough to have been searched by Name; if not, the page is Browse. */
-const isSearching = computed(
-    () => Array.from(props.query).length >= props.minimumQueryLength,
-);
+const isSearching = computed(searchesByName);
 /** The Browse tab chosen; it follows the page's, which Back and forward change. */
 const browseTab = ref(props.tab);
 const browseNoun = computed(() =>

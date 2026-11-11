@@ -118,15 +118,6 @@ it('browses TV Shows from the other tab, keeping the tab in the URL, and a searc
     expect($page->url())->toEndWith('/search?tab=tv');
 });
 
-it('lists Browse cards with no rating placeholder, since only a search by Name looks IMDb ratings up', function () {
-    config(['ratings.sources.imdb.enabled' => true]);
-    fakeBrowserSearch([], [movieListings(1, 3)]);
-
-    visitWithCsp('/search')->assertPresent('[data-slot=search-results] [data-slot=poster-card]')
-        ->assertNotPresent('[data-slot=ratings-pending]')
-        ->assertNoJavaScriptErrors();
-});
-
 it('narrows Browse by genre, counts and clears the filter, and Back restores the previous one', function () {
     $source = fakeBrowserSearch([], [movieListings(1, 3)], [], [['id' => 28, 'name' => 'Action'], ['id' => 35, 'name' => 'Comedy']]);
 
@@ -385,6 +376,34 @@ it('looks up the IMDb ratings of each further page as it is shown, and none a se
 
     expect(array_count_values(array_column($source->imdbIdCalls, 'tmdbId')))->each->toBe(1)
         ->and(array_column($source->imdbIdCalls, 'tmdbId'))->toContain(21)->toHaveCount(21);
+});
+
+it('fills in the IMDb ratings of Browse cards after render, on the Movies tab, the TV Shows tab and with a genre chosen', function () {
+    config(['ratings.sources.imdb.enabled' => true]);
+    app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000001', 8.1, 5000);
+    app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000099', 9.2, 700);
+    $source = fakeBrowserSearch([], [[movieListing(1, voteAverage: 7.5)]], [[movieListing(2, title: 'Chernobyl', kind: TitleKind::TvShow, voteAverage: 8.5)]], [['id' => 35, 'name' => 'Comedy']], [['id' => 9035, 'name' => 'Comedy']]);
+    $source->imdbIds = [1 => 'tt0000001'];
+    $source->tvImdbIds = [2 => 'tt0000099'];
+
+    $page = visitWithCsp('/search');
+    $page->wait(1)
+        ->assertSeeIn('[data-tmdb-id="1"] [data-slot="external-rating"]', 'IMDb')
+        ->assertSeeIn('[data-tmdb-id="1"] [data-slot="external-rating"]', '8.1')
+        ->assertMissing('[data-slot="ratings-pending"]');
+
+    $page->script(delayRatingsRequests(1500));
+    $page->click('[data-browse-tab=tv]')
+        ->assertPresent('[data-tmdb-id="2"] [data-slot="ratings-pending"]')
+        ->wait(2)
+        ->assertSeeIn('[data-tmdb-id="2"] [data-slot="external-rating"]', 'IMDb')
+        ->assertSeeIn('[data-tmdb-id="2"] [data-slot="external-rating"]', '9.2')
+        ->assertMissing('[data-slot="ratings-pending"]');
+
+    $page->select('#browse-genre', '9035')->wait(2)
+        ->assertSeeIn('[data-tmdb-id="2"] [data-slot="external-rating"]', 'IMDb')
+        ->assertMissing('[data-slot="ratings-pending"]')
+        ->assertNoJavaScriptErrors();
 });
 
 it('shows TV Shows beside Movies, filters them with the chips, and fills in a TV Show\'s IMDb rating after render', function () {

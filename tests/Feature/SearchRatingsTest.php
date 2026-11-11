@@ -4,9 +4,11 @@ use App\Enums\TitleKind;
 use App\Jobs\RecordAnalyticsEvent;
 use App\Models\Movie;
 use App\Models\User;
+use App\Services\Catalog\Search\BrowseGenres;
 use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\FakeCatalogSource;
+use App\Services\Catalog\Sources\Listings\BrowseFilters;
 use App\Services\Catalog\Sources\Listings\MovieListing;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
@@ -147,13 +149,48 @@ test('with TV Shows off, TV Shows are not looked up', function () {
     expect($source->tvImdbIdCalls)->toBe([]);
 });
 
-test('asking for the ratings of a Browse page, which has no query, looks nothing up', function () {
+test('the IMDb ratings of a Browse page are looked up for the tab it was browsed on', function (string $tab, array $parameters, string $key, float $value) {
     config(['ratings.sources.imdb.enabled' => true]);
-    $source = new FakeCatalogSource(browsePages: [[movieListing(1)]], imdbIds: [1 => 'tt0000001']);
+    $source = new FakeCatalogSource(
+        browsePages: [[movieListing(1)]],
+        tvBrowsePages: [[movieListing(1, kind: TitleKind::TvShow)]],
+        imdbIds: [1 => 'tt0000001'],
+        tvImdbIds: [1 => 'tt0000099'],
+    );
     app()->instance(CatalogSource::class, $source);
     app(CatalogSearch::class)->browse(TitleKind::Movie, 1);
+    app(CatalogSearch::class)->browse(TitleKind::TvShow, 1);
+    app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000001', 8.1, 5000);
+    app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000099', 9.2, 700);
 
-    $this->getJson(route('search.ratings'))->assertOk()->assertExactJson(['ratings' => []]);
+    $this->getJson(route('search.ratings', $parameters))->assertOk()
+        ->assertJsonPath("ratings.{$key}.0.source", 'imdb')
+        ->assertJsonPath("ratings.{$key}.0.value", $value)
+        ->assertJsonCount(1, 'ratings');
+})->with([
+    'Movies' => ['movie', [], '1', 8.1],
+    'TV Shows' => ['tv', ['tab' => 'tv'], 'tv:1', 9.2],
+]);
 
-    expect($source->imdbIdCalls)->toBe([]);
+test('only a Browse page already browsed is read, with the genre it was narrowed by', function () {
+    config(['ratings.sources.imdb.enabled' => true]);
+    $source = new FakeCatalogSource(browsePages: [[movieListing(1)]], genres: [['id' => 35, 'name' => 'Comedy']], imdbIds: [1 => 'tt0000001']);
+    app()->instance(CatalogSource::class, $source);
+    app(BrowseGenres::class)->for(TitleKind::Movie);
+    app(CatalogSearch::class)->browse(TitleKind::Movie, 1);
+
+    $this->getJson(route('search.ratings', ['genre' => 35]))->assertOk()->assertExactJson(['ratings' => []]);
+
+    expect($source->imdbIdCalls)->toBe([])->and($source->browseCalls)->toHaveCount(1);
+});
+
+test('the ratings of a Browse page narrowed by a genre are those of that page', function () {
+    config(['ratings.sources.imdb.enabled' => true]);
+    $source = new FakeCatalogSource(browsePages: [[movieListing(1)]], genres: [['id' => 35, 'name' => 'Comedy']], imdbIds: [1 => 'tt0000001']);
+    app()->instance(CatalogSource::class, $source);
+    app(BrowseGenres::class)->for(TitleKind::Movie);
+    app(CatalogSearch::class)->browse(TitleKind::Movie, 1, new BrowseFilters(genreId: 35));
+    app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000001', 8.1, 5000);
+
+    $this->getJson(route('search.ratings', ['genre' => 35]))->assertOk()->assertJsonPath('ratings.1.0.value', 8.1);
 });
