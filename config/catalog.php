@@ -120,6 +120,17 @@ return [
         'genres_seconds' => 86400,
 
         /*
+         * Browse's lists of Streaming services, one for each country and kind, are read from the cache for this
+         * long, then from the source again.
+         */
+        'streaming_services_seconds' => 86400,
+
+        /*
+         * The most Streaming services a Browse request can ask for at once; any others are ignored.
+         */
+        'maximum_streaming_services' => 8,
+
+        /*
          * Browse sorted by Top rated only ranks Titles with at least this many votes, so that a Title with a few
          * perfect votes doesn't win.
          */

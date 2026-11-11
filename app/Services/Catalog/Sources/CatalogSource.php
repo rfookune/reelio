@@ -49,4 +49,12 @@ interface CatalogSource
      * @return list<array{id: int, name: string}>
      */
     public function genres(CatalogContext $context, TitleKind $kind = TitleKind::Movie): array;
+
+    /**
+     * The Streaming services offering a kind in the context's country (`region`), in the source's display order,
+     * most prominent first. An empty or malformed list is a failure, not an empty answer.
+     *
+     * @return list<array{id: int, name: string}>
+     */
+    public function streamingServices(CatalogContext $context, TitleKind $kind): array;
 }

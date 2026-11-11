@@ -5,7 +5,9 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import PosterCard from '@/components/shared/PosterCard.vue';
 import type { PosterCardTitle } from '@/components/shared/PosterCard.vue';
 import PosterCardSkeleton from '@/components/shared/PosterCardSkeleton.vue';
+import StreamingServiceCheckbox from '@/components/shared/StreamingServiceCheckbox.vue';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
 import { announce } from '@/composables/useAnnouncer';
 import { useLookedUpRatings } from '@/composables/useLookedUpRatings';
@@ -17,6 +19,9 @@ import { search } from '@/routes';
 import type { UserMovies } from '@/types';
 
 type SortValue = 'top_rated' | 'popular';
+
+/** How many Streaming services show before "More". */
+const SHOWN_STREAMING_SERVICES = 12;
 
 const SORT_OPTIONS: { value: SortValue; label: string; noun: string }[] = [
     { value: 'top_rated', label: 'Top rated', noun: 'top rated' },
@@ -42,6 +47,12 @@ const props = defineProps<{
     genres: { id: number; name: string }[];
     /** The genre Browse is narrowed to, or null. */
     genre: number | null;
+    /** The Streaming services the tab offers in the visitor's country, most prominent first. */
+    streamingServices: { id: number; name: string }[];
+    /** The ids of the Streaming services Browse is narrowed to, any of them. */
+    selectedStreamingServices: number[];
+    /** The most Streaming services that can be chosen at once. */
+    maximumStreamingServices: number;
     /** The order Browse is in: the one chosen, else the default of the filters. */
     sort: SortValue;
     /** The order the URL chose, or null when it chose none. */
@@ -65,11 +76,12 @@ function searchesByName(): boolean {
 const { withLookedUpRatings, isLookingUp } = useLookedUpRatings(
     () =>
         searchesByName()
-            ? { q: props.query, tab: '', genre: '', sort: '' }
+            ? { q: props.query, tab: '', genre: '', services: '', sort: '' }
             : {
                   q: '',
                   tab: props.tab,
                   genre: props.genre === null ? '' : String(props.genre),
+                  services: props.selectedStreamingServices.join(','),
                   sort: props.explicitSort ?? '',
               },
     () => props.results.data,
@@ -132,6 +144,31 @@ const browseNoun = computed(() =>
 );
 /** The genre chosen; it follows the page's while Browse shows, which Back and forward change. */
 const genreChoice = ref<number | null>(props.genre);
+/** The Streaming services chosen, by id; they follow the page's while Browse shows. */
+const serviceChoices = ref<number[]>([...props.selectedStreamingServices]);
+const topServices = computed(() =>
+    props.streamingServices.slice(0, SHOWN_STREAMING_SERVICES),
+);
+const moreServices = computed(() =>
+    props.streamingServices.slice(SHOWN_STREAMING_SERVICES),
+);
+/** Whether "More" is open: it opens when a service behind it is chosen. */
+const moreServicesOpen = ref(
+    moreServices.value.some((service) =>
+        serviceChoices.value.includes(service.id),
+    ),
+);
+const serviceSearch = ref('');
+const foundMoreServices = computed(() => {
+    const wanted = serviceSearch.value.trim().toLowerCase();
+
+    return moreServices.value.filter((service) =>
+        service.name.toLowerCase().includes(wanted),
+    );
+});
+const atServiceLimit = computed(
+    () => serviceChoices.value.length >= props.maximumStreamingServices,
+);
 /** The sort chosen, null for the default of the filters; it follows the page's while Browse shows. */
 const sortChoice = ref<SortValue | null>(props.explicitSort);
 /** The sort the select shows: the one chosen, else the page's default. */
@@ -141,7 +178,11 @@ const shownSortLabel = computed(
         SORT_OPTIONS.find((option) => option.value === shownSort.value)
             ?.label ?? 'Popular',
 );
-const activeFilterCount = computed(() => (genreChoice.value === null ? 0 : 1));
+const activeFilterCount = computed(
+    () =>
+        (genreChoice.value === null ? 0 : 1) +
+        (serviceChoices.value.length === 0 ? 0 : 1),
+);
 const cantBrowse = computed(
     () => `We can't load ${browseNoun.value} right now`,
 );
@@ -256,6 +297,7 @@ function visit(query: string, force = false, replace = true): void {
 
     if (query !== '') {
         genreChoice.value = null;
+        serviceChoices.value = [];
     }
 
     // The tab goes along with a Name too, which ignores it, so the genres offered stay those of the tab.
@@ -263,12 +305,16 @@ function visit(query: string, force = false, replace = true): void {
         q?: string;
         tab?: CardKind;
         genre?: number;
+        services?: string;
         sort?: SortValue;
     } = {
         ...(query === '' ? {} : { q: query }),
         ...(browseTab.value === 'tv' ? { tab: browseTab.value } : {}),
         ...(query === '' && genreChoice.value !== null
             ? { genre: genreChoice.value }
+            : {}),
+        ...(query === '' && serviceChoices.value.length > 0
+            ? { services: sortedServiceChoices().join(',') }
             : {}),
         ...(query === '' && sortChoice.value !== null
             ? { sort: sortChoice.value }
@@ -284,6 +330,9 @@ function visit(query: string, force = false, replace = true): void {
             'tab',
             'genres',
             'genre',
+            'streamingServices',
+            'selectedStreamingServices',
+            'maximumStreamingServices',
             'sort',
             'explicitSort',
             'results',
@@ -346,6 +395,19 @@ function onGenreChange(event: Event): void {
     chooseGenre(value === '' ? null : Number(value));
 }
 
+/** The chosen services in id order, as the URL keeps them. */
+function sortedServiceChoices(): number[] {
+    return [...serviceChoices.value].sort((a, b) => a - b);
+}
+
+/** Browses with the service added or dropped: it replaces a typed Name, and its first page replaces the list. */
+function toggleService(id: number, chosen: boolean): void {
+    serviceChoices.value = chosen
+        ? [...serviceChoices.value.filter((choice) => choice !== id), id]
+        : serviceChoices.value.filter((choice) => choice !== id);
+    clearFilterVisit();
+}
+
 /** The sort picked in the select; like a filter, it leaves a search by Name. */
 function onSortChange(event: Event): void {
     sortChoice.value = (event.target as HTMLSelectElement).value as SortValue;
@@ -355,6 +417,7 @@ function onSortChange(event: Event): void {
 /** Drops every filter and browses again; the sort chosen stays. */
 function clearFilters(): void {
     genreChoice.value = null;
+    serviceChoices.value = [];
     clearFilterVisit();
 }
 
@@ -368,11 +431,12 @@ function clearFilterVisit(): void {
 function announceBrowsed(page: typeof props): void {
     const genre = page.genres.find((option) => option.id === page.genre);
     const order = SORT_OPTIONS.find((option) => option.value === page.sort);
+    const services = page.selectedStreamingServices.length;
 
     announce(
         page.status === 'unavailable'
             ? failureMessage.value
-            : `Showing ${order?.noun ?? 'popular'} ${page.tab === 'tv' ? 'TV shows' : 'movies'}${genre === undefined ? '' : ` in ${genre.name}`}`,
+            : `Showing ${order?.noun ?? 'popular'} ${page.tab === 'tv' ? 'TV shows' : 'movies'}${genre === undefined ? '' : ` in ${genre.name}`}${services === 0 ? '' : ` on ${services} streaming ${services === 1 ? 'service' : 'services'}`}`,
     );
 }
 
@@ -427,6 +491,23 @@ watch(
     (genre) => {
         if (!isSearching.value) {
             genreChoice.value = genre;
+        }
+    },
+);
+
+watch(
+    () => props.selectedStreamingServices,
+    (services) => {
+        if (!isSearching.value) {
+            serviceChoices.value = [...services];
+
+            if (
+                moreServices.value.some((service) =>
+                    services.includes(service.id),
+                )
+            ) {
+                moreServicesOpen.value = true;
+            }
         }
     },
 );
@@ -522,13 +603,16 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
         </div>
 
         <div
-            v-if="genres.length > 0"
+            v-if="genres.length > 0 || streamingServices.length > 0"
             role="group"
             aria-label="Filters"
             data-slot="search-filters"
             class="flex flex-wrap items-end gap-x-4 gap-y-3"
         >
-            <div class="flex w-full flex-col gap-1.5 sm:w-56">
+            <div
+                v-if="genres.length > 0"
+                class="flex w-full flex-col gap-1.5 sm:w-56"
+            >
                 <label for="browse-genre" class="text-sm text-muted"
                     >Genre</label
                 >
@@ -549,6 +633,100 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
                     </option>
                 </NativeSelect>
             </div>
+            <fieldset
+                v-if="streamingServices.length > 0"
+                data-slot="search-streaming-services"
+                class="flex w-full min-w-0 flex-col gap-2"
+            >
+                <legend class="text-sm text-muted">Streaming service</legend>
+                <p
+                    v-if="atServiceLimit"
+                    data-slot="search-service-limit"
+                    class="text-sm text-muted"
+                >
+                    You can choose up to {{ maximumStreamingServices }}
+                    streaming services; clear one to choose another.
+                </p>
+                <ul class="flex flex-wrap gap-2">
+                    <li
+                        v-for="service in topServices"
+                        :key="service.id"
+                        class="contents"
+                    >
+                        <StreamingServiceCheckbox
+                            :name="service.name"
+                            :checked="serviceChoices.includes(service.id)"
+                            :disabled="
+                                atServiceLimit &&
+                                !serviceChoices.includes(service.id)
+                            "
+                            @change="
+                                (chosen) => toggleService(service.id, chosen)
+                            "
+                        />
+                    </li>
+                </ul>
+                <div v-if="moreServices.length > 0" class="flex flex-col gap-2">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        class="self-start"
+                        data-slot="search-more-services"
+                        :aria-expanded="moreServicesOpen"
+                        aria-controls="more-streaming-services"
+                        @click="moreServicesOpen = !moreServicesOpen"
+                    >
+                        {{ moreServicesOpen ? 'Fewer' : 'More' }}
+                    </Button>
+                    <div
+                        v-show="moreServicesOpen"
+                        id="more-streaming-services"
+                        class="flex flex-col gap-2"
+                    >
+                        <label
+                            for="browse-service-search"
+                            class="text-sm text-muted"
+                            >Find a streaming service</label
+                        >
+                        <Input
+                            id="browse-service-search"
+                            v-model="serviceSearch"
+                            type="search"
+                            autocomplete="off"
+                            class="sm:w-64"
+                        />
+                        <ul class="flex flex-wrap gap-2">
+                            <li
+                                v-for="service in foundMoreServices"
+                                :key="service.id"
+                                class="contents"
+                            >
+                                <StreamingServiceCheckbox
+                                    :name="service.name"
+                                    :checked="
+                                        serviceChoices.includes(service.id)
+                                    "
+                                    :disabled="
+                                        atServiceLimit &&
+                                        !serviceChoices.includes(service.id)
+                                    "
+                                    @change="
+                                        (chosen) =>
+                                            toggleService(service.id, chosen)
+                                    "
+                                />
+                            </li>
+                        </ul>
+                        <p
+                            v-if="foundMoreServices.length === 0"
+                            class="text-sm text-muted"
+                        >
+                            No streaming service matches
+                        </p>
+                    </div>
+                </div>
+            </fieldset>
             <div class="flex w-full flex-col gap-1.5 sm:w-44">
                 <label for="browse-sort" class="text-sm text-muted"
                     >Sort by</label

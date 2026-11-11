@@ -259,6 +259,36 @@ class MovieParser
     }
 
     /**
+     * The Streaming services of a watch provider list, ordered by display priority in the country, then by name.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return list<array{id: int, name: string}>
+     */
+    public function streamingServices(array $payload, string $country): array
+    {
+        try {
+            $data = Validator::make($payload, [
+                'results' => ['required', 'array', 'min:1'],
+                'results.*.provider_id' => ['required', 'integer', 'min:1', 'distinct'],
+                'results.*.provider_name' => ['required', 'string', 'min:1', 'max:255'],
+                'results.*.display_priorities' => ['sometimes', 'nullable', 'array'],
+            ])->validate();
+        } catch (ValidationException $exception) {
+            throw new SourceUnavailable('The Catalog source returned an invalid Streaming service list.', previous: $exception);
+        }
+
+        $services = array_map(fn (array $service): array => [
+            'id' => (int) $service['provider_id'],
+            'name' => $service['provider_name'],
+            'priority' => is_int($service['display_priorities'][$country] ?? null) ? $service['display_priorities'][$country] : PHP_INT_MAX,
+        ], array_values($data['results']));
+
+        usort($services, fn (array $a, array $b): int => [$a['priority'], $a['name']] <=> [$b['priority'], $b['name']]);
+
+        return array_map(fn (array $service): array => ['id' => $service['id'], 'name' => $service['name']], $services);
+    }
+
+    /**
      * @param  array<string, mixed>  $credits
      * @param  list<string>  $jobs
      * @return list<string>

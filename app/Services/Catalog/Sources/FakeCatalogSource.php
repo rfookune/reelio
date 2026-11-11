@@ -39,6 +39,9 @@ class FakeCatalogSource implements CatalogSource
     /** @var list<CatalogContext> */
     public array $genreCalls = [];
 
+    /** @var list<array{kind: string, region: ?string}> */
+    public array $streamingServiceCalls = [];
+
     /** @var list<array{tmdbId: int, context: CatalogContext}> */
     public array $imdbIdCalls = [];
 
@@ -58,6 +61,8 @@ class FakeCatalogSource implements CatalogSource
      * @param  list<list<MovieListing>>  $browsePages  the pages of Browse for Movies
      * @param  list<list<MovieListing>>  $tvBrowsePages  the pages of Browse for TV Shows
      * @param  list<array{id: int, name: string}>  $tvGenres
+     * @param  array<string, list<array{id: int, name: string}>>  $streamingServices  the Streaming services for Movies, by country
+     * @param  array<string, list<array{id: int, name: string}>>  $tvStreamingServices  the Streaming services for TV Shows, by country
      * @param  array<int, string|null>  $imdbIds  each Movie's IMDb id by catalog id; a Movie not listed has none
      */
     public function __construct(
@@ -75,6 +80,8 @@ class FakeCatalogSource implements CatalogSource
         public array $browsePages = [],
         public array $tvBrowsePages = [],
         public array $tvGenres = [],
+        public array $streamingServices = [],
+        public array $tvStreamingServices = [],
     ) {}
 
     public function tvShow(int $tmdbId, CatalogContext $context): ?TvShowDetails
@@ -211,5 +218,18 @@ class FakeCatalogSource implements CatalogSource
         }
 
         return $genres;
+    }
+
+    /** A country with no services given has none, which is a failure, as an empty list from the source is. */
+    public function streamingServices(CatalogContext $context, TitleKind $kind): array
+    {
+        $this->streamingServiceCalls[] = ['kind' => $kind->value, 'region' => $context->region];
+        $services = ($kind === TitleKind::TvShow ? $this->tvStreamingServices : $this->streamingServices)[$context->region] ?? [];
+
+        if ($this->failing || $services === []) {
+            throw new SourceUnavailable('The Catalog source is unavailable.');
+        }
+
+        return $services;
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\RecordEvent;
 use App\Http\Support\SearchPage;
 use App\Services\Catalog\Search\BrowseGenres;
+use App\Services\Catalog\Search\BrowseStreamingServices;
 use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Search\ImdbIdLookup;
 use App\Services\Ratings\Enums\RatingSourceName;
@@ -21,9 +22,9 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class SearchController extends Controller
 {
-    public function __invoke(Request $request, CatalogSearch $catalogSearch, BrowseGenres $browseGenres, ImdbIdLookup $imdbIds, Ratings $ratings, RecordEvent $recordEvent): Response
+    public function __invoke(Request $request, CatalogSearch $catalogSearch, BrowseGenres $browseGenres, BrowseStreamingServices $browseStreamingServices, ImdbIdLookup $imdbIds, Ratings $ratings, RecordEvent $recordEvent): Response
     {
-        $page = SearchPage::fromRequest($request, $catalogSearch, $browseGenres, $imdbIds, $ratings, $recordEvent);
+        $page = SearchPage::fromRequest($request, $catalogSearch, $browseGenres, $browseStreamingServices, $imdbIds, $ratings, $recordEvent);
 
         $response = Inertia::render('Search', [
             'imageBaseUrl' => config('catalog.image_base_url'),
@@ -35,6 +36,9 @@ class SearchController extends Controller
             'tab' => $page->browseKind->value,
             'genres' => fn (): array => $page->genres(),
             'genre' => fn (): ?int => $page->genre(),
+            'streamingServices' => fn (): array => $page->streamingServices(),
+            'selectedStreamingServices' => fn (): array => $page->selectedStreamingServices(),
+            'maximumStreamingServices' => config('catalog.search.maximum_streaming_services'),
             'sort' => fn (): string => $page->sort()->value,
             'explicitSort' => fn (): ?string => $page->explicitSort()?->value,
             'results' => Inertia::scroll(fn (): array => $page->results(), metadata: fn (): ScrollMetadata => $page->scrollMetadata())->matchOn('data.key'),

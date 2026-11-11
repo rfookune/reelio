@@ -5,6 +5,7 @@ use App\Jobs\RecordAnalyticsEvent;
 use App\Models\Movie;
 use App\Models\User;
 use App\Services\Catalog\Search\BrowseGenres;
+use App\Services\Catalog\Search\BrowseStreamingServices;
 use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\FakeCatalogSource;
@@ -204,4 +205,16 @@ test('the ratings of a Browse page in a chosen sort are those of that page', fun
 
     $this->getJson(route('search.ratings', ['sort' => 'top_rated']))->assertOk()->assertJsonPath('ratings.1.0.value', 8.1);
     $this->getJson(route('search.ratings'))->assertOk()->assertExactJson(['ratings' => []]);
+});
+
+test('the ratings of a Browse page narrowed by Streaming services are those of that page, in the visitor\'s country', function () {
+    config(['ratings.sources.imdb.enabled' => true]);
+    $source = new FakeCatalogSource(browsePages: [[movieListing(1)]], imdbIds: [1 => 'tt0000001'], streamingServices: ['US' => [['id' => 8, 'name' => 'Netflix']]]);
+    app()->instance(CatalogSource::class, $source);
+    app(BrowseStreamingServices::class)->for(TitleKind::Movie, 'US');
+    app(CatalogSearch::class)->browse(TitleKind::Movie, 1, new BrowseFilters(streamingServiceIds: [8], country: 'US'));
+    app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000001', 8.1, 5000);
+
+    $this->getJson(route('search.ratings', ['services' => '8']))->assertOk()->assertJsonPath('ratings.1.0.value', 8.1);
+    $this->getJson(route('search.ratings', ['services' => '9']))->assertOk()->assertExactJson(['ratings' => []]);
 });

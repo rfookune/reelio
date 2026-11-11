@@ -67,6 +67,11 @@ class GuardedCatalogSource implements CatalogSource
         return $this->guard($context, fn (): array => $this->inner->genres($context, $kind));
     }
 
+    public function streamingServices(CatalogContext $context, TitleKind $kind): array
+    {
+        return $this->guard($context, fn (): array => $this->inner->streamingServices($context, $kind));
+    }
+
     /**
      * Makes an interactive call through the circuit breaker and the live throttle; a background call goes
      * straight through.

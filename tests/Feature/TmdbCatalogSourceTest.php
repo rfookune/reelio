@@ -767,3 +767,61 @@ test('a Browse page with no sort chosen takes the default of its filters', funct
 
     Http::assertSent(fn (Request $request) => ($query = queryOf($request)) && $query['sort_by'] === 'vote_average.desc' && isset($query['vote_count.gte']));
 });
+
+test('a Browse page narrowed by Streaming services sends them as any-of, with the watch region and only subscription and free offers', function (TitleKind $kind, string $path) {
+    Http::fake(["https://api.themoviedb.org/3/{$path}?*" => Http::response(['page' => 1, 'total_pages' => 1, 'total_results' => 0, 'results' => []])]);
+
+    app(TmdbCatalogSource::class)->browse($kind, 1, new CatalogContext('en-US'), new BrowseFilters(streamingServiceIds: [8, 384], country: 'CA'));
+
+    Http::assertSent(fn (Request $request) => queryOf($request) === [
+        'page' => '1',
+        'language' => 'en-US',
+        'include_adult' => 'false',
+        'sort_by' => 'vote_average.desc',
+        'vote_count.gte' => '300',
+        'with_watch_providers' => '8|384',
+        'watch_region' => 'CA',
+        'with_watch_monetization_types' => 'flatrate|free|ads',
+    ]);
+})->with([
+    'Movies' => [TitleKind::Movie, 'discover/movie'],
+    'TV Shows' => [TitleKind::TvShow, 'discover/tv'],
+]);
+
+test('a Browse page with no Streaming services sends no provider, region or offer parameters', function () {
+    Http::fake(['https://api.themoviedb.org/3/discover/movie?*' => Http::response(['page' => 1, 'total_pages' => 1, 'total_results' => 0, 'results' => []])]);
+
+    app(TmdbCatalogSource::class)->browse(TitleKind::Movie, 1, new CatalogContext('en-US'), new BrowseFilters(country: 'CA'));
+
+    Http::assertSent(fn (Request $request) => array_intersect_key(queryOf($request), array_flip(['with_watch_providers', 'watch_region', 'with_watch_monetization_types'])) === []);
+});
+
+test('the Streaming services are read from the list of the kind asked for, in the country, most prominent there first', function (TitleKind $kind, string $path) {
+    Http::fake(["https://api.themoviedb.org/3/{$path}?*" => Http::response(['results' => [
+        ['provider_id' => 15, 'provider_name' => 'Hulu', 'display_priorities' => ['US' => 9, 'CA' => 1]],
+        ['provider_id' => 8, 'provider_name' => 'Netflix', 'display_priorities' => ['US' => 2, 'CA' => 5]],
+        ['provider_id' => 700, 'provider_name' => 'Zed', 'display_priorities' => ['CA' => 1]],
+        ['provider_id' => 701, 'provider_name' => 'Alpha'],
+    ]])]);
+
+    $services = app(TmdbCatalogSource::class)->streamingServices(new CatalogContext('en-US', 'US'), $kind);
+
+    expect($services)->toBe([['id' => 8, 'name' => 'Netflix'], ['id' => 15, 'name' => 'Hulu'], ['id' => 701, 'name' => 'Alpha'], ['id' => 700, 'name' => 'Zed']]);
+    Http::assertSent(fn (Request $request) => queryOf($request) === ['language' => 'en-US', 'watch_region' => 'US']);
+})->with([
+    'Movies' => [TitleKind::Movie, 'watch/providers/movie'],
+    'TV Shows' => [TitleKind::TvShow, 'watch/providers/tv'],
+]);
+
+test('the Streaming service list fails explicitly on an empty, malformed or unsuccessful response', function (array $body, int $status) {
+    Http::fake(['https://api.themoviedb.org/3/watch/providers/movie?*' => Http::response($body, $status)]);
+
+    expect(fn () => app(TmdbCatalogSource::class)->streamingServices(new CatalogContext('en-US', 'US'), TitleKind::Movie))->toThrow(SourceUnavailable::class);
+})->with([
+    'empty list' => [['results' => []], 200],
+    'missing list' => [[], 200],
+    'no id' => [['results' => [['provider_name' => 'Netflix']]], 200],
+    'no name' => [['results' => [['provider_id' => 8]]], 200],
+    'repeated id' => [['results' => [['provider_id' => 8, 'provider_name' => 'A'], ['provider_id' => 8, 'provider_name' => 'B']]], 200],
+    'server error' => [['results' => []], 500],
+]);

@@ -114,7 +114,10 @@ class TmdbCatalogSource implements CatalogSource
      */
     public function browse(TitleKind $kind, int $page, CatalogContext $context, BrowseFilters $filters = new BrowseFilters): SearchResults
     {
-        $narrowedBy = $filters->genreId === null ? [] : ['with_genres' => $filters->genreId];
+        $narrowedBy = [
+            ...($filters->genreId === null ? [] : ['with_genres' => $filters->genreId]),
+            ...$this->streamingServiceParameters($filters),
+        ];
         $response = $this->client->get($kind === TitleKind::TvShow ? 'discover/tv' : 'discover/movie', ['page' => $page, 'language' => $context->language, 'include_adult' => 'false', ...$this->sortParameters($filters->sort()), ...$narrowedBy], $context)
             ?? throw new SourceUnavailable('The Catalog source has no such browse page.');
         $data = $this->movies->listPage((array) $response->json());
@@ -134,6 +137,25 @@ class TmdbCatalogSource implements CatalogSource
             BrowseSort::Popular => ['sort_by' => 'popularity.desc'],
             BrowseSort::TopRated => ['sort_by' => 'vote_average.desc', 'vote_count.gte' => config('catalog.search.top_rated_minimum_votes')],
         };
+    }
+
+    /**
+     * The discover parameters of the Streaming services: any of them (TMDB's `|`), by subscription or free offer,
+     * which is what Availability counts as a stream or a free offer, in the filters' country. Nothing for none.
+     *
+     * @return array<string, string>
+     */
+    private function streamingServiceParameters(BrowseFilters $filters): array
+    {
+        if ($filters->streamingServiceIds === []) {
+            return [];
+        }
+
+        return [
+            'with_watch_providers' => implode('|', $filters->streamingServiceIds),
+            'watch_region' => $filters->country ?? config('catalog.default_country'),
+            'with_watch_monetization_types' => 'flatrate|free|ads',
+        ];
     }
 
     /** The response's result count; a missing or invalid one is a failure. */
@@ -186,5 +208,18 @@ class TmdbCatalogSource implements CatalogSource
             ?? throw new SourceUnavailable('The Catalog source has no genre list.');
 
         return $this->movies->genres((array) $response->json());
+    }
+
+    /**
+     * The services of the kind's watch provider list for the country, most prominent first by TMDB's display
+     * priority there (those without one last, by name).
+     */
+    public function streamingServices(CatalogContext $context, TitleKind $kind): array
+    {
+        $region = $context->region ?? config('catalog.default_country');
+        $response = $this->client->get($kind === TitleKind::TvShow ? 'watch/providers/tv' : 'watch/providers/movie', ['language' => $context->language, 'watch_region' => $region], $context)
+            ?? throw new SourceUnavailable('The Catalog source has no Streaming service list.');
+
+        return $this->movies->streamingServices((array) $response->json(), $region);
     }
 }

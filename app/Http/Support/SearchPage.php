@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\UserTitle;
 use App\Services\Catalog\CatalogResult;
 use App\Services\Catalog\Search\BrowseGenres;
+use App\Services\Catalog\Search\BrowseStreamingServices;
 use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Search\ImdbIdLookup;
 use App\Services\Catalog\Sources\CatalogSource;
@@ -34,7 +35,8 @@ use Inertia\ScrollMetadata;
  * search's results; the tab is ignored in a search by Name. Browse can be narrowed by a genre of the tab's list, the
  * request's `genre`: an id the tab doesn't offer is carried over to the tab's genre of the same name, if it has one,
  * and any other value is ignored, so only an offered id reaches the source. Browse is sorted by the request's `sort` when it
- * is one of the offered values, else by the default of its filters. A search by Name takes no filters or sort. Each Movie links to its canonical URL when it has a row, else to the entry route,
+ * is one of the offered values, else by the default of its filters. A search by Name takes no filters or sort. Browse can also be narrowed to Titles on any of the request's `services`, the
+ * ids of Streaming services the tab offers in the visitor's country, by subscription or free offer. Each Movie links to its canonical URL when it has a row, else to the entry route,
  * both with the `search` referrer, and shows one External rating: IMDb when its IMDb id is known, from its row or
  * remembered, and rated, else TMDB. The ids not known are looked up afterwards, by `lookedUpRatings()`.
  * Results hold TV Shows beside Movies, each by its kind and catalog id (`key`: the catalog id, or `tv:` and it for a
@@ -67,9 +69,14 @@ class SearchPage
     /** @var list<array{id: int, name: string}>|null */
     private ?array $tabGenres = null;
 
+    /** @var list<array{id: int, name: string}>|null */
+    private ?array $tabStreamingServices = null;
+
+    /** @param  list<int>  $requestedStreamingServices */
     public function __construct(
         private CatalogSearch $catalogSearch,
         private BrowseGenres $browseGenres,
+        private BrowseStreamingServices $browseStreamingServices,
         private ImdbIdLookup $imdbIds,
         private Ratings $ratingSources,
         private RecordEvent $recordEvent,
@@ -79,6 +86,8 @@ class SearchPage
         public readonly TitleKind $browseKind = TitleKind::Movie,
         private ?int $requestedGenre = null,
         private ?BrowseSort $requestedSort = null,
+        private string $country = '',
+        private array $requestedStreamingServices = [],
         private bool $readsCacheOnly = false,
     ) {}
 
@@ -87,11 +96,12 @@ class SearchPage
      * characters, and its `page`, kept from 1 to the source's last page. A reload of `userMovies` alone, as after
      * a Watchlist action, reads the search from the cache only.
      */
-    public static function fromRequest(Request $request, CatalogSearch $catalogSearch, BrowseGenres $browseGenres, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
+    public static function fromRequest(Request $request, CatalogSearch $catalogSearch, BrowseGenres $browseGenres, BrowseStreamingServices $browseStreamingServices, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
         return new self(
             $catalogSearch,
             $browseGenres,
+            $browseStreamingServices,
             $imdbIds,
             $ratingSources,
             $recordEvent,
@@ -101,6 +111,8 @@ class SearchPage
             self::tabFrom($request),
             self::genreFrom($request),
             BrowseSort::fromRequestValue($request->query('sort')),
+            VisitorCountry::resolve($request)->code,
+            self::streamingServicesFrom($request),
             self::reloadsUserMoviesOnly($request),
         );
     }
@@ -109,9 +121,9 @@ class SearchPage
      * The page asked for by the Search page's lookups of the IMDb ratings: the request's query and page, read as
      * `fromRequest()` reads them, from the cache alone. It searches nothing and records nothing.
      */
-    public static function cachedFromRequest(Request $request, CatalogSearch $catalogSearch, BrowseGenres $browseGenres, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
+    public static function cachedFromRequest(Request $request, CatalogSearch $catalogSearch, BrowseGenres $browseGenres, BrowseStreamingServices $browseStreamingServices, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
-        return new self($catalogSearch, $browseGenres, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), self::genreFrom($request), BrowseSort::fromRequestValue($request->query('sort')), readsCacheOnly: true);
+        return new self($catalogSearch, $browseGenres, $browseStreamingServices, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), self::genreFrom($request), BrowseSort::fromRequestValue($request->query('sort')), VisitorCountry::resolve($request)->code, self::streamingServicesFrom($request), readsCacheOnly: true);
     }
 
     /** The request's `q`, trimmed of Unicode whitespace and cut to `search.maximum_query_length` characters. */
@@ -134,6 +146,31 @@ class SearchPage
         $genre = $request->query('genre');
 
         return is_string($genre) && ctype_digit($genre) && strlen($genre) <= 9 ? (int) $genre : null;
+    }
+
+    /**
+     * The ids in the request's `services`, a comma-separated list: the plain ids of nine digits at most, each once,
+     * and no more than a few times the number allowed. Whether they are offered is checked later.
+     *
+     * @return list<int>
+     */
+    private static function streamingServicesFrom(Request $request): array
+    {
+        $services = $request->query('services');
+
+        if (! is_string($services)) {
+            return [];
+        }
+
+        $ids = [];
+
+        foreach (array_slice(explode(',', $services), 0, 50) as $id) {
+            if (ctype_digit($id) && strlen($id) <= 9 && (int) $id > 0) {
+                $ids[] = (int) $id;
+            }
+        }
+
+        return array_values(array_unique($ids));
     }
 
     /** The request's `page`, kept from 1 to the source's last page. */
@@ -248,6 +285,27 @@ class SearchPage
         return $this->tabGenres ??= $this->genresOf($this->browseKind);
     }
 
+    /**
+     * The Streaming services the tab offers in the visitor's country, most prominent first, a search by Name
+     * included so that choosing one can leave it; none while the source's list is unavailable.
+     *
+     * @return list<array{id: int, name: string}>
+     */
+    public function streamingServices(): array
+    {
+        return $this->tabStreamingServices ??= $this->streamingServicesOf($this->browseKind);
+    }
+
+    /**
+     * The Streaming services Browse is narrowed to, by id, none in a search by Name.
+     *
+     * @return list<int>
+     */
+    public function selectedStreamingServices(): array
+    {
+        return $this->filters()->streamingServiceIds;
+    }
+
     /** The genre Browse is narrowed to, null for none, and always null in a search by Name. */
     public function genre(): ?int
     {
@@ -306,7 +364,33 @@ class SearchPage
      */
     private function filters(): BrowseFilters
     {
-        return $this->filters ??= $this->isSearching() ? new BrowseFilters : new BrowseFilters($this->requestedGenreOnTab(), $this->requestedSort);
+        return $this->filters ??= $this->isSearching() ? new BrowseFilters : new BrowseFilters($this->requestedGenreOnTab(), $this->requestedSort, $this->requestedStreamingServicesOnTab(), $this->country);
+    }
+
+    /**
+     * The requested Streaming services the tab offers in the country, once each in id order, the first few by the
+     * most allowed; the rest, and any while the tab's list is unavailable, are ignored. An id is the same service
+     * in both kinds, so a choice stays across tabs where both offer it.
+     *
+     * @return list<int>
+     */
+    private function requestedStreamingServicesOnTab(): array
+    {
+        $offered = array_column($this->streamingServices(), 'id');
+        $selected = array_slice(array_values(array_filter($this->requestedStreamingServices, fn (int $id): bool => in_array($id, $offered, true))), 0, config('catalog.search.maximum_streaming_services'));
+        sort($selected);
+
+        return $selected;
+    }
+
+    /**
+     * A kind's Streaming services in the country, from the cache alone when only `userMovies` is reloaded.
+     *
+     * @return list<array{id: int, name: string}>
+     */
+    private function streamingServicesOf(TitleKind $kind): array
+    {
+        return $this->readsCacheOnly ? $this->browseStreamingServices->cachedFor($kind, $this->country) : $this->browseStreamingServices->for($kind, $this->country);
     }
 
     /**
