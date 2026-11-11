@@ -28,6 +28,8 @@ const props = defineProps<{
     looksUpImdbRatings: boolean;
     /** Whether TV Shows are searched beside Movies, so the results can be filtered by kind. */
     includesTvShows: boolean;
+    /** The Browse tab shown while there is no query: Movies, or TV Shows when they are switched on. */
+    tab: CardKind;
     results: { data: SearchResult[] };
     totalResults: number | null;
     /** How the Catalog answered the search, or Browse while there is no query. */
@@ -45,6 +47,10 @@ const { withLookedUpRatings, isLookingUp } = useLookedUpRatings(
     () => props.looksUpImdbRatings,
 );
 
+const BROWSE_TABS: { value: CardKind; label: string }[] = [
+    { value: 'movie', label: 'Movies' },
+    { value: 'tv', label: 'TV Shows' },
+];
 const KIND_CHIPS: { value: KindFilter; label: string }[] = [
     { value: 'all', label: 'All' },
     { value: 'movie', label: 'Movies' },
@@ -54,7 +60,6 @@ const DEBOUNCE_MILLISECONDS = 300;
 const EAGER_CARDS = 6;
 const SHIMMER_CARDS = 12;
 const CANT_SEARCH = "We can't search right now";
-const CANT_BROWSE = "We can't load movies right now";
 const CANT_LOAD_MORE = "We can't load more results right now";
 const TOO_FAST = "You're going too fast. Try again in a moment.";
 const GRID =
@@ -68,6 +73,8 @@ const requestedQuery = ref(props.query);
 /** Typed since the last search was asked for. */
 const typing = ref(false);
 const pending = ref(false);
+/** A tab was chosen and its first page hasn't arrived, so the other tab's list isn't shown meanwhile. */
+const tabLoading = ref(false);
 /** Why the latest query visit failed without a page: the 429 line or the error line. */
 const failure = ref<string | null>(null);
 /** Why the latest "Show more" failed without a page. */
@@ -91,6 +98,14 @@ const wantedQuery = computed(() => {
 const isSearching = computed(
     () => Array.from(props.query).length >= props.minimumQueryLength,
 );
+/** The Browse tab chosen; it follows the page's, which Back and forward change. */
+const browseTab = ref(props.tab);
+const browseNoun = computed(() =>
+    browseTab.value === 'tv' ? 'TV shows' : 'movies',
+);
+const cantBrowse = computed(
+    () => `We can't load ${browseNoun.value} right now`,
+);
 /** The chip chosen; it filters the cards on the page, which the chips' counts are over. */
 const kindFilter = ref<KindFilter>('all');
 const counts = computed(() => kindCounts(props.results.data));
@@ -102,12 +117,14 @@ const emptyKindLabel = computed(() =>
 );
 const settling = computed(() => typing.value || pending.value);
 const hasResults = computed(() => props.results.data.length > 0);
-const firstLoading = computed(() => settling.value && !hasResults.value);
+const firstLoading = computed(
+    () => settling.value && (!hasResults.value || tabLoading.value),
+);
 /** The line for the page failing as a whole: the search's, or Browse's when the query asked for is too short to search. */
 const failureMessage = computed(() =>
     Array.from(requestedQuery.value).length >= props.minimumQueryLength
         ? CANT_SEARCH
-        : CANT_BROWSE,
+        : cantBrowse.value,
 );
 /** The search failed as a whole: the visit itself, or the source on the first page. */
 const pageError = computed(() => {
@@ -197,12 +214,20 @@ function visit(query: string, force = false): void {
     failure.value = null;
     moreFailure.value = null;
 
-    router.get(search.url(), query === '' ? {} : { q: query }, {
+    const params =
+        query !== ''
+            ? { q: query }
+            : browseTab.value === 'tv'
+              ? { tab: browseTab.value }
+              : {};
+
+    router.get(search.url(), params, {
         replace: true,
         preserveState: true,
         preserveScroll: true,
         only: [
             'query',
+            'tab',
             'results',
             'totalResults',
             'status',
@@ -231,9 +256,21 @@ function visit(query: string, force = false): void {
         onFinish: () => {
             if (visitNumber === latestVisit) {
                 pending.value = false;
+                tabLoading.value = false;
             }
         },
     });
+}
+
+/** Browses the other tab: its first page replaces the list, and the tab is kept in the URL. */
+function chooseTab(tab: CardKind): void {
+    if (tab === browseTab.value) {
+        return;
+    }
+
+    browseTab.value = tab;
+    tabLoading.value = true;
+    visit('', true);
 }
 
 function fail(message: string): void {
@@ -269,6 +306,16 @@ watch(text, () => {
         DEBOUNCE_MILLISECONDS,
     );
 });
+
+watch(
+    () => props.tab,
+    (tab) => {
+        // A search by Name carries no tab; the one chosen is kept for when Browse returns.
+        if (!isSearching.value) {
+            browseTab.value = tab;
+        }
+    },
+);
 
 watch(
     () => props.status,
@@ -321,6 +368,26 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
             </div>
         </form>
 
+        <div
+            v-if="includesTvShows && !isSearching"
+            role="group"
+            aria-label="Browse"
+            class="flex flex-wrap gap-2"
+        >
+            <Button
+                v-for="tabChoice in BROWSE_TABS"
+                :key="tabChoice.value"
+                type="button"
+                size="sm"
+                :variant="browseTab === tabChoice.value ? 'default' : 'outline'"
+                :aria-pressed="browseTab === tabChoice.value"
+                :data-browse-tab="tabChoice.value"
+                @click="chooseTab(tabChoice.value)"
+            >
+                {{ tabChoice.label }}
+            </Button>
+        </div>
+
         <section
             v-if="pageError !== null"
             data-slot="search-unavailable"
@@ -328,7 +395,7 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
         >
             <h2 class="text-lg font-semibold">{{ pageError }}</h2>
             <p
-                v-if="pageError === CANT_SEARCH || pageError === CANT_BROWSE"
+                v-if="pageError === CANT_SEARCH || pageError === cantBrowse"
                 class="text-sm text-muted"
             >
                 Please try again in a moment.
@@ -358,7 +425,7 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
             data-slot="search-browse-empty"
             class="text-sm text-muted"
         >
-            No movies to show right now. Try a search by title.
+            No {{ browseNoun }} to show right now. Try a search by title.
         </p>
 
         <ul v-if="firstLoading" data-slot="search-loading" :class="GRID">
@@ -382,7 +449,7 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
                 {{
                     isSearching
                         ? resultCount(totalResults ?? 0)
-                        : 'Popular movies'
+                        : `Popular ${browseNoun}`
                 }}
             </h2>
             <div

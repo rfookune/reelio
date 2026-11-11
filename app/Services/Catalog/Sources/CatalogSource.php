@@ -2,6 +2,7 @@
 
 namespace App\Services\Catalog\Sources;
 
+use App\Enums\TitleKind;
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\Details\TvShowDetails;
@@ -25,10 +26,10 @@ interface CatalogSource
     public function search(string $query, int $page, CatalogContext $context): SearchResults;
 
     /**
-     * One page of Browse, the Movies the source's discover list gives, most popular first; no text query is sent.
-     * A missing page is a failure, not an empty answer.
+     * One page of Browse for a kind, the Movies or TV Shows the source's discover list gives, most popular first; no
+     * text query is sent. A missing page is a failure, not an empty answer.
      */
-    public function browse(int $page, CatalogContext $context): SearchResults;
+    public function browse(TitleKind $kind, int $page, CatalogContext $context): SearchResults;
 
     /**
      * The Movie's IMDb title id, which a list or a search doesn't carry; null when the source has none for it, or

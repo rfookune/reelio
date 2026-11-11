@@ -536,7 +536,7 @@ test('a Browse page asks for the Movie discover list by popularity, with no text
         ['id' => 1, 'title' => 'Kept', 'poster_path' => '/kept.jpg', 'release_date' => '2026-01-01', 'vote_average' => 7.5, 'vote_count' => 100],
     ]])]);
 
-    $results = app(TmdbCatalogSource::class)->browse(3, new CatalogContext('en-US'));
+    $results = app(TmdbCatalogSource::class)->browse(TitleKind::Movie, 3, new CatalogContext('en-US'));
 
     expect($results->totalPages)->toBe(9)
         ->and($results->totalResults)->toBe(170)
@@ -559,7 +559,7 @@ test('a Browse page drops adult, malformed and repeated listings and clears unsa
         ['id' => 1, 'title' => 'Repeated'],
     ]])]);
 
-    $results = app(TmdbCatalogSource::class)->browse(1, new CatalogContext);
+    $results = app(TmdbCatalogSource::class)->browse(TitleKind::Movie, 1, new CatalogContext);
 
     expect(array_map(fn (MovieListing $listing): int => $listing->tmdbId, $results->listings))->toBe([1])
         ->and($results->listings[0]->backdropPath)->toBeNull();
@@ -568,11 +568,45 @@ test('a Browse page drops adult, malformed and repeated listings and clears unsa
 test('a Browse page fails explicitly on unsuccessful or malformed responses', function (array $body, int $status) {
     Http::fake(['https://api.themoviedb.org/3/discover/movie?*' => Http::response($body, $status)]);
 
-    expect(fn () => app(TmdbCatalogSource::class)->browse(1, new CatalogContext))->toThrow(SourceUnavailable::class);
+    expect(fn () => app(TmdbCatalogSource::class)->browse(TitleKind::Movie, 1, new CatalogContext))->toThrow(SourceUnavailable::class);
 })->with([
     'not found' => [[], 404],
     'server error' => [[], 500],
     'no results' => [['page' => 1, 'total_pages' => 1, 'total_results' => 0], 200],
+    'no result count' => [['page' => 1, 'total_pages' => 1, 'results' => []], 200],
+]);
+
+test('a TV Shows Browse page asks for the TV discover list by popularity and reads each Name and first-air date as a listing\'s title and date', function () {
+    config(['catalog.tmdb.token' => 'test-read-token']);
+    Http::fake(['https://api.themoviedb.org/3/discover/tv?*' => Http::response(['page' => 2, 'total_pages' => 7, 'total_results' => 130, 'results' => [
+        ['id' => 1, 'name' => 'Chernobyl', 'first_air_date' => '2019-05-06', 'poster_path' => '/c.jpg', 'vote_average' => 8.5, 'vote_count' => 100],
+        ['id' => 2, 'name' => 'Adult', 'adult' => true],
+        ['id' => 'three', 'name' => 'Bad id'],
+        'not a listing',
+        ['id' => 1, 'name' => 'Repeated'],
+    ]])]);
+
+    $results = app(TmdbCatalogSource::class)->browse(TitleKind::TvShow, 2, new CatalogContext('en-US'));
+
+    expect($results->totalPages)->toBe(7)
+        ->and($results->totalResults)->toBe(130)
+        ->and($results->listings)->toHaveCount(1)
+        ->and($results->listings[0])->toMatchArray(['tmdbId' => 1, 'title' => 'Chernobyl', 'releaseDate' => '2019-05-06', 'kind' => TitleKind::TvShow, 'voteAverage' => 8.5, 'voteCount' => 100]);
+    Http::assertSentCount(1);
+    Http::assertSent(fn (Request $request) => $request->hasHeader('Authorization', 'Bearer test-read-token') && queryOf($request) === [
+        'page' => '2',
+        'language' => 'en-US',
+        'include_adult' => 'false',
+        'sort_by' => 'popularity.desc',
+    ]);
+});
+
+test('a TV Shows Browse page fails explicitly on unsuccessful or malformed responses', function (array $body, int $status) {
+    Http::fake(['https://api.themoviedb.org/3/discover/tv?*' => Http::response($body, $status)]);
+
+    expect(fn () => app(TmdbCatalogSource::class)->browse(TitleKind::TvShow, 1, new CatalogContext))->toThrow(SourceUnavailable::class);
+})->with([
+    'not found' => [[], 404],
     'no result count' => [['page' => 1, 'total_pages' => 1, 'results' => []], 200],
 ]);
 

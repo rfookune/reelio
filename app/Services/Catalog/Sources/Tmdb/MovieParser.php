@@ -120,6 +120,38 @@ class MovieParser
     }
 
     /**
+     * The page's well-formed, non-adult TV Show entries of the TV discover list, each once.
+     *
+     * @param  array<mixed>  $results
+     * @return list<MovieListing>
+     */
+    public function tvListings(array $results): array
+    {
+        $listings = [];
+
+        foreach ($results as $result) {
+            $listing = is_array($result) ? $this->listing(self::asListingEntry($result), TitleKind::TvShow) : null;
+
+            if ($listing !== null && ! isset($listings[$listing->tmdbId])) {
+                $listings[$listing->tmdbId] = $listing;
+            }
+        }
+
+        return array_values($listings);
+    }
+
+    /**
+     * A TV Show entry with its Name and first-air date as the `title` and `release_date` a listing reads.
+     *
+     * @param  array<mixed>  $result
+     * @return array<mixed>
+     */
+    private static function asListingEntry(array $result): array
+    {
+        return [...$result, 'title' => $result['name'] ?? null, 'release_date' => $result['first_air_date'] ?? null];
+    }
+
+    /**
      * The page's well-formed, non-adult Movie and TV Show entries of a search across every kind, each once for its
      * kind, told apart by `media_type`; people and the rest are dropped.
      *
@@ -141,7 +173,7 @@ class MovieParser
                 continue;
             }
 
-            $listing = $this->listing($kind === TitleKind::TvShow ? [...$result, 'title' => $result['name'] ?? null, 'release_date' => $result['first_air_date'] ?? null] : $result, $kind);
+            $listing = $this->listing($kind === TitleKind::TvShow ? self::asListingEntry($result) : $result, $kind);
 
             if ($listing !== null && ! isset($listings[$kind->value.$listing->tmdbId])) {
                 $listings[$kind->value.$listing->tmdbId] = $listing;

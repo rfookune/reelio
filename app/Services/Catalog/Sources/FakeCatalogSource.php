@@ -2,6 +2,7 @@
 
 namespace App\Services\Catalog\Sources;
 
+use App\Enums\TitleKind;
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\SectionKind;
 use App\Services\Catalog\Sources\Details\MovieDetails;
@@ -28,7 +29,7 @@ class FakeCatalogSource implements CatalogSource
     /** @var list<array{query: string, page: int}> */
     public array $searchCalls = [];
 
-    /** @var list<array{page: int}> */
+    /** @var list<array{kind: string, page: int}> */
     public array $browseCalls = [];
 
     /** @var list<CatalogContext> */
@@ -50,7 +51,8 @@ class FakeCatalogSource implements CatalogSource
      * @param  list<SectionKind|string>  $failingSections  kinds, or `SectionQuery::key()`s
      * @param  array<string, list<list<MovieListing>>>  $searches  each query's result pages
      * @param  list<array{id: int, name: string}>  $genres
-     * @param  list<list<MovieListing>>  $browsePages  the pages of Browse
+     * @param  list<list<MovieListing>>  $browsePages  the pages of Browse for Movies
+     * @param  list<list<MovieListing>>  $tvBrowsePages  the pages of Browse for TV Shows
      * @param  array<int, string|null>  $imdbIds  each Movie's IMDb id by catalog id; a Movie not listed has none
      */
     public function __construct(
@@ -66,6 +68,7 @@ class FakeCatalogSource implements CatalogSource
         public array $failingSeasons = [],
         public array $tvImdbIds = [],
         public array $browsePages = [],
+        public array $tvBrowsePages = [],
     ) {}
 
     public function tvShow(int $tmdbId, CatalogContext $context): ?TvShowDetails
@@ -151,15 +154,15 @@ class FakeCatalogSource implements CatalogSource
     }
 
     /** Browse with no pages given has one empty page; a page past the last is a failure, as TMDB's 404 is. */
-    public function browse(int $page, CatalogContext $context): SearchResults
+    public function browse(TitleKind $kind, int $page, CatalogContext $context): SearchResults
     {
-        $this->browseCalls[] = ['page' => $page];
+        $this->browseCalls[] = ['kind' => $kind->value, 'page' => $page];
 
         if ($this->failing) {
             throw new SourceUnavailable('The Catalog source is unavailable.');
         }
 
-        $pages = $this->browsePages ?: [[]];
+        $pages = ($kind === TitleKind::TvShow ? $this->tvBrowsePages : $this->browsePages) ?: [[]];
 
         if (! isset($pages[$page - 1])) {
             throw new SourceUnavailable('The Catalog source has no such browse page.');

@@ -2,6 +2,7 @@
 
 namespace App\Services\Catalog\Sources\Tmdb;
 
+use App\Enums\TitleKind;
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
 use App\Services\Catalog\Enums\SectionKind;
@@ -105,16 +106,17 @@ class TmdbCatalogSource implements CatalogSource
     }
 
     /**
-     * One page of Browse from TMDB's Movie discover list, most popular first, with no text query. Adult listings,
-     * listings that aren't well formed and repeats within the page are dropped; an unsafe image path is cleared.
+     * One page of Browse from TMDB's Movie or TV discover list, most popular first, with no text query. Adult
+     * listings, listings that aren't well formed and repeats within the page are dropped; an unsafe image path is
+     * cleared.
      */
-    public function browse(int $page, CatalogContext $context): SearchResults
+    public function browse(TitleKind $kind, int $page, CatalogContext $context): SearchResults
     {
-        $response = $this->client->get('discover/movie', ['page' => $page, 'language' => $context->language, 'include_adult' => 'false', 'sort_by' => 'popularity.desc'], $context)
+        $response = $this->client->get($kind === TitleKind::TvShow ? 'discover/tv' : 'discover/movie', ['page' => $page, 'language' => $context->language, 'include_adult' => 'false', 'sort_by' => 'popularity.desc'], $context)
             ?? throw new SourceUnavailable('The Catalog source has no such browse page.');
         $data = $this->movies->listPage((array) $response->json());
 
-        return new SearchResults($this->movies->listings($data['results']), $data['total_pages'], $this->totalResults($response));
+        return new SearchResults($kind === TitleKind::TvShow ? $this->movies->tvListings($data['results']) : $this->movies->listings($data['results']), $data['total_pages'], $this->totalResults($response));
     }
 
     /** The response's result count; a missing or invalid one is a failure. */

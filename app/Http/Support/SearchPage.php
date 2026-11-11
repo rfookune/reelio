@@ -27,7 +27,8 @@ use Inertia\ScrollMetadata;
 /**
  * The Search page's props for one response, asking the Catalog for the search, or for Browse when there is none, at
  * most once. A query shorter than `search.minimum_query_length` isn't searched, and the page lists Browse's Popular
- * Movies instead, a page at a time, as it lists a search's results. Each Movie links to its canonical URL when it has a row, else to the entry route,
+ * Movies, or TV Shows when the request's `tab` is `tv` and they are switched on, a page at a time, as it lists a
+ * search's results; the tab is ignored in a search by Name. Each Movie links to its canonical URL when it has a row, else to the entry route,
  * both with the `search` referrer, and shows one External rating: IMDb when its IMDb id is known, from its row or
  * remembered, and rated, else TMDB. The ids not known are looked up afterwards, by `lookedUpRatings()`.
  * Results hold TV Shows beside Movies, each by its kind and catalog id (`key`: the catalog id, or `tv:` and it for a
@@ -63,6 +64,7 @@ class SearchPage
         private ?User $user,
         public readonly string $query,
         public readonly int $page,
+        public readonly TitleKind $browseKind = TitleKind::Movie,
         private bool $readsCacheOnly = false,
     ) {}
 
@@ -81,6 +83,7 @@ class SearchPage
             $request->user(),
             self::queryFrom($request),
             self::pageFrom($request),
+            self::tabFrom($request),
             self::reloadsUserMoviesOnly($request),
         );
     }
@@ -91,7 +94,7 @@ class SearchPage
      */
     public static function cachedFromRequest(Request $request, CatalogSearch $catalogSearch, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
-        return new self($catalogSearch, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), readsCacheOnly: true);
+        return new self($catalogSearch, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), readsCacheOnly: true);
     }
 
     /** The request's `q`, trimmed of Unicode whitespace and cut to `search.maximum_query_length` characters. */
@@ -100,6 +103,12 @@ class SearchPage
         $query = $request->query('q');
 
         return is_string($query) ? Str::trim(mb_substr(Str::trim($query), 0, config('catalog.search.maximum_query_length'))) : '';
+    }
+
+    /** The Browse tab the request's `tab` names, Movies unless it is `tv` and TV Shows are switched on. */
+    private static function tabFrom(Request $request): TitleKind
+    {
+        return $request->query('tab') === TitleKind::TvShow->value && config('catalog.tv_shows.enabled') ? TitleKind::TvShow : TitleKind::Movie;
     }
 
     /** The request's `page`, kept from 1 to the source's last page. */
@@ -247,12 +256,12 @@ class SearchPage
     private function pageResult(): CatalogResult
     {
         if ($this->readsCacheOnly) {
-            $cached = $this->isSearching() ? $this->catalogSearch->cachedSearch($this->query, $this->page) : $this->catalogSearch->cachedBrowse($this->page);
+            $cached = $this->isSearching() ? $this->catalogSearch->cachedSearch($this->query, $this->page) : $this->catalogSearch->cachedBrowse($this->browseKind, $this->page);
 
             return $this->result ??= $cached === null ? CatalogResult::unavailable() : CatalogResult::stale($cached);
         }
 
-        return $this->result ??= $this->isSearching() ? $this->catalogSearch->search($this->query, $this->page) : $this->catalogSearch->browse($this->page);
+        return $this->result ??= $this->isSearching() ? $this->catalogSearch->search($this->query, $this->page) : $this->catalogSearch->browse($this->browseKind, $this->page);
     }
 
     /** @return list<int> */

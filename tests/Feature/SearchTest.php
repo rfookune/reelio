@@ -23,10 +23,11 @@ use Inertia\Testing\AssertableInertia as Assert;
  *
  * @param  array<string, list<list<MovieListing>>>  $searches
  * @param  list<list<MovieListing>>  $browsePages
+ * @param  list<list<MovieListing>>  $tvBrowsePages
  */
-function fakeSearch(array $searches = [], bool $failing = false, array $browsePages = []): FakeCatalogSource
+function fakeSearch(array $searches = [], bool $failing = false, array $browsePages = [], array $tvBrowsePages = []): FakeCatalogSource
 {
-    $source = new FakeCatalogSource(failing: $failing, searches: $searches, browsePages: $browsePages);
+    $source = new FakeCatalogSource(failing: $failing, searches: $searches, browsePages: $browsePages, tvBrowsePages: $tvBrowsePages);
     app()->instance(CatalogSource::class, $source);
 
     return $source;
@@ -69,7 +70,7 @@ test('with no query the search page is a noindex page showing Popular Movies fro
             ->where('results.data.1.posterPath', null));
 
     expect(pageObject($response)['scrollProps']['results'])->toMatchArray(['previousPage' => null, 'nextPage' => 2, 'currentPage' => 1])
-        ->and($source->browseCalls)->toBe([['page' => 1]])
+        ->and($source->browseCalls)->toBe([['kind' => 'movie', 'page' => 1]])
         ->and($source->searchCalls)->toBe([]);
 });
 
@@ -93,7 +94,7 @@ test('a query under two characters is Browse, without searching', function () {
         ->where('status', 'fresh')
         ->has('results.data', 3));
 
-    expect($source->searchCalls)->toBe([])->and($source->browseCalls)->toBe([['page' => 1]]);
+    expect($source->searchCalls)->toBe([])->and($source->browseCalls)->toBe([['kind' => 'movie', 'page' => 1]]);
 });
 
 test('a query of the minimum length is a search by Name, and Browse is not read', function () {
@@ -466,4 +467,100 @@ test('another user\'s TV Show Watchlist never shows in a viewer\'s Search', func
     fakeSearch(['inter' => [[movieListing(5, kind: TitleKind::TvShow)]]]);
 
     $this->actingAs($viewer)->get(route('search', ['q' => 'inter']))->assertInertia(fn (Assert $page) => $page->where('userTvShows.5.watchlisted', false));
+});
+
+test('the TV Shows tab lists TV Shows from Browse, each with its kind, first-air year, one rating, Season count and the entry route', function () {
+    $tvShow = TvShow::factory()->create(['tmdb_id' => 2]);
+    $tvShow->details->update(['season_count' => 4]);
+    $source = fakeSearch(browsePages: [movieListings(901, 905)], tvBrowsePages: [
+        [movieListing(1, title: 'Chernobyl', releaseDate: '2019-05-06', kind: TitleKind::TvShow, voteAverage: 8.5, voteCount: 100), movieListing(2, kind: TitleKind::TvShow), ...array_map(fn (int $id): MovieListing => movieListing($id, kind: TitleKind::TvShow), range(3, 20))],
+        [movieListing(21, kind: TitleKind::TvShow)],
+    ]);
+
+    $response = $this->get(route('search', ['tab' => 'tv']))->assertInertia(fn (Assert $page) => $page
+        ->where('tab', 'tv')
+        ->where('status', 'fresh')
+        ->has('results.data', 20)
+        ->where('results.data.0', [
+            'kind' => 'tv',
+            'key' => 'tv:1',
+            'tmdbId' => 1,
+            'title' => 'Chernobyl',
+            'year' => 2019,
+            'posterPath' => '/poster1.jpg',
+            'ratings' => [['source' => 'tmdb', 'name' => 'TMDB', 'value' => 8.5, 'voteCount' => 100]],
+            'href' => route('tv-shows.entry', ['tmdbId' => 1, 'referrer' => 'search']),
+            'seasonCount' => null,
+            'page' => 1,
+        ])
+        ->where('results.data.1.href', $tvShow->canonicalUrl(Surface::Search))
+        ->where('results.data.1.seasonCount', 4));
+
+    expect(pageObject($response)['scrollProps']['results'])->toMatchArray(['nextPage' => 2, 'currentPage' => 1])
+        ->and($source->browseCalls)->toBe([['kind' => 'tv', 'page' => 1]]);
+});
+
+test('Browse is the Movies tab unless the tab asks for TV Shows', function (mixed $tab) {
+    $source = fakeSearch(browsePages: [movieListings(1, 2)], tvBrowsePages: [[movieListing(9, kind: TitleKind::TvShow)]]);
+
+    $this->get(route('search', ['tab' => $tab]))->assertInertia(fn (Assert $page) => $page
+        ->where('tab', 'movie')
+        ->where('results.data.0.kind', 'movie'));
+
+    expect($source->browseCalls)->toBe([['kind' => 'movie', 'page' => 1]]);
+})->with(['absent' => [null], 'movie' => ['movie'], 'unknown' => ['radio'], 'empty' => [''], 'a list' => [['tv']]]);
+
+test('with TV Shows off the TV Shows tab is not offered, and asking for it browses Movies', function () {
+    config(['catalog.tv_shows.enabled' => false]);
+    $source = fakeSearch(browsePages: [movieListings(1, 2)], tvBrowsePages: [[movieListing(9, kind: TitleKind::TvShow)]]);
+
+    $this->get(route('search', ['tab' => 'tv']))->assertInertia(fn (Assert $page) => $page
+        ->where('includesTvShows', false)
+        ->where('tab', 'movie')
+        ->where('results.data.0.kind', 'movie'));
+
+    expect($source->browseCalls)->toBe([['kind' => 'movie', 'page' => 1]]);
+});
+
+test('a search by Name ignores the tab and is unchanged', function () {
+    $source = fakeSearch(['inter' => [movieListings(1, 2)]], tvBrowsePages: [[movieListing(9, kind: TitleKind::TvShow)]]);
+
+    $this->get(route('search', ['q' => 'inter', 'tab' => 'tv']))->assertInertia(fn (Assert $page) => $page
+        ->has('results.data', 2)
+        ->where('results.data.0.kind', 'movie'));
+
+    expect($source->browseCalls)->toBe([])->and($source->searchCalls)->toBe([['query' => 'inter', 'page' => 1]]);
+});
+
+test('the Movies and TV Shows tabs are cached apart', function () {
+    $source = fakeSearch(browsePages: [movieListings(1, 2)], tvBrowsePages: [[movieListing(9, kind: TitleKind::TvShow)]]);
+
+    $this->get(route('search'))->assertInertia(fn (Assert $page) => $page->has('results.data', 2));
+    $this->get(route('search', ['tab' => 'tv']))->assertInertia(fn (Assert $page) => $page->has('results.data', 1)->where('results.data.0.key', 'tv:9'));
+    $this->get(route('search', ['tab' => 'tv']))->assertOk();
+
+    expect($source->browseCalls)->toBe([['kind' => 'movie', 'page' => 1], ['kind' => 'tv', 'page' => 1]]);
+});
+
+test('the TV Shows tab carries the viewer\'s Watchlist fact for every TV Show listed, including those with no row yet', function () {
+    $user = User::factory()->create();
+    $watchlisted = TvShow::factory()->create(['tmdb_id' => 1]);
+    UserTitle::query()->create(['user_id' => $user->id, 'title_id' => $watchlisted->id, 'watchlisted_at' => now()]);
+    fakeSearch(tvBrowsePages: [[movieListing(1, kind: TitleKind::TvShow), movieListing(2, kind: TitleKind::TvShow)]]);
+
+    $this->actingAs($user)->get(route('search', ['tab' => 'tv']))->assertInertia(fn (Assert $page) => $page
+        ->where('userTvShows.1', ['watchlisted' => true])
+        ->where('userTvShows.2', ['watchlisted' => false])
+        ->where('userMovies', []));
+});
+
+test('a TV Shows page the source can\'t answer is unavailable, and a stale one is served', function () {
+    $this->freezeTime();
+    fakeSearch(tvBrowsePages: [[movieListing(1, kind: TitleKind::TvShow)]]);
+    $this->get(route('search', ['tab' => 'tv']))->assertOk();
+    $this->travel(2)->hours();
+    fakeSearch(failing: true);
+
+    $this->get(route('search', ['tab' => 'tv']))->assertInertia(fn (Assert $page) => $page->where('status', 'stale')->has('results.data', 1));
+    $this->get(route('search', ['tab' => 'tv', 'page' => 2]))->assertInertia(fn (Assert $page) => $page->where('status', 'unavailable')->where('results.data', []));
 });

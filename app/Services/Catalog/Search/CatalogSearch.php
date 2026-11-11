@@ -2,6 +2,7 @@
 
 namespace App\Services\Catalog\Search;
 
+use App\Enums\TitleKind;
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\CatalogResult;
@@ -35,22 +36,22 @@ class CatalogSearch
     }
 
     /**
-     * One page of Browse, the Movies the source lists most popular first, read and cached as a page of a search is,
-     * under its own key and the same `search` freshness settings.
+     * One page of Browse for a kind, the Movies or TV Shows the source lists most popular first, read and cached as
+     * a page of a search is, under a key of its own for each kind and the same `search` freshness settings.
      *
      * @return CatalogResult<SearchResults>
      */
-    public function browse(int $page): CatalogResult
+    public function browse(TitleKind $kind, int $page): CatalogResult
     {
         $context = new CatalogContext(config('catalog.language'));
 
-        return $this->read($this->browseKey($page, $context), $context, fn (): SearchResults => $this->source->browse($page, $context));
+        return $this->read($this->browseKey($kind, $page, $context), $context, fn (): SearchResults => $this->source->browse($kind, $page, $context));
     }
 
     /** A Browse page from the cache alone, fresh or stale, without asking the source; null when there is none. */
-    public function cachedBrowse(int $page): ?SearchResults
+    public function cachedBrowse(TitleKind $kind, int $page): ?SearchResults
     {
-        return $this->cachedSearchEntry($this->browseKey($page, new CatalogContext(config('catalog.language'))))['results'] ?? null;
+        return $this->cachedSearchEntry($this->browseKey($kind, $page, new CatalogContext(config('catalog.language'))))['results'] ?? null;
     }
 
     /**
@@ -88,9 +89,9 @@ class CatalogSearch
         return $this->cachedSearchEntry($this->searchKey($query, $page, new CatalogContext(config('catalog.language'))))['results'] ?? null;
     }
 
-    private function browseKey(int $page, CatalogContext $context): string
+    private function browseKey(TitleKind $kind, int $page, CatalogContext $context): string
     {
-        return $this->keys->build('browse', ['page' => $page], $context);
+        return $this->keys->build('browse', ['kind' => $kind->value, 'page' => $page], $context);
     }
 
     private function searchKey(string $query, int $page, CatalogContext $context): string

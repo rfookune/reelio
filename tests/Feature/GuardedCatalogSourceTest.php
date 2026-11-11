@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TitleKind;
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
@@ -145,10 +146,10 @@ test('interactive Browse calls share the breaker', function () {
     $guarded = new GuardedCatalogSource($inner, new CacheKey);
 
     foreach (range(1, 5) as $ignored) {
-        expect(fn () => $guarded->browse(1, new CatalogContext))->toThrow(SourceUnavailable::class);
+        expect(fn () => $guarded->browse(TitleKind::Movie, 1, new CatalogContext))->toThrow(SourceUnavailable::class);
     }
 
-    expect(fn () => $guarded->browse(1, new CatalogContext))->toThrow(SourceUnavailable::class)
+    expect(fn () => $guarded->browse(TitleKind::Movie, 1, new CatalogContext))->toThrow(SourceUnavailable::class)
         ->and($inner->browseCalls)->toHaveCount(5);
 });
 

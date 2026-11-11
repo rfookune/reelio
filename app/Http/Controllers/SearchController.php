@@ -31,6 +31,7 @@ class SearchController extends Controller
             'maximumQueryLength' => config('catalog.search.maximum_query_length'),
             'looksUpImdbRatings' => RatingSourceName::Imdb->isEnabled(),
             'includesTvShows' => (bool) config('catalog.tv_shows.enabled'),
+            'tab' => $page->browseKind->value,
             'results' => Inertia::scroll(fn (): array => $page->results(), metadata: fn (): ScrollMetadata => $page->scrollMetadata())->matchOn('data.key'),
             'totalResults' => fn (): ?int => $page->totalResults(),
             'status' => fn (): string => $page->status(),

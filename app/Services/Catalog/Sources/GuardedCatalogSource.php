@@ -2,6 +2,7 @@
 
 namespace App\Services\Catalog\Sources;
 
+use App\Enums\TitleKind;
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\CatalogContext;
 use App\Services\Catalog\Enums\CatalogProfile;
@@ -44,9 +45,9 @@ class GuardedCatalogSource implements CatalogSource
         return $this->guard($context, fn (): SearchResults => $this->inner->search($query, $page, $context));
     }
 
-    public function browse(int $page, CatalogContext $context): SearchResults
+    public function browse(TitleKind $kind, int $page, CatalogContext $context): SearchResults
     {
-        return $this->guard($context, fn (): SearchResults => $this->inner->browse($page, $context));
+        return $this->guard($context, fn (): SearchResults => $this->inner->browse($kind, $page, $context));
     }
 
     public function imdbId(int $tmdbId, CatalogContext $context): ?string

@@ -14,12 +14,13 @@ use Illuminate\Support\Facades\RateLimiter;
  *
  * @param  array<string, list<list<MovieListing>>>  $searches
  * @param  list<list<MovieListing>>  $browsePages
+ * @param  list<list<MovieListing>>  $tvBrowsePages
  */
-function fakeBrowserSearch(array $searches, array $browsePages = []): FakeCatalogSource
+function fakeBrowserSearch(array $searches, array $browsePages = [], array $tvBrowsePages = []): FakeCatalogSource
 {
     config(['catalog.image_base_url' => '/test-images/']);
-    $movies = collect([...$searches, ...$browsePages])->flatten(2)->map(fn (MovieListing $listing): MovieDetails => new MovieDetails(tmdbId: $listing->tmdbId, title: $listing->title))->unique('tmdbId')->values()->all();
-    $source = new FakeCatalogSource($movies, searches: $searches, browsePages: $browsePages);
+    $movies = collect([...$searches, ...$browsePages, ...$tvBrowsePages])->flatten(2)->map(fn (MovieListing $listing): MovieDetails => new MovieDetails(tmdbId: $listing->tmdbId, title: $listing->title))->unique('tmdbId')->values()->all();
+    $source = new FakeCatalogSource($movies, searches: $searches, browsePages: $browsePages, tvBrowsePages: $tvBrowsePages);
     app()->instance(CatalogSource::class, $source);
 
     return $source;
@@ -86,6 +87,33 @@ it('lists Popular Movies while nothing is typed, and a search by Name replaces t
         ->assertSeeIn('[data-slot=search-results]', '1 result')
         ->assertDontSee('Popular movies')
         ->assertNoJavaScriptErrors();
+});
+
+it('browses TV Shows from the other tab, keeping the tab in the URL, and a search by Name leaves it', function () {
+    fakeBrowserSearch(['inter' => [[movieListing(7, title: 'Inter movie')]]], [movieListings(1, 3)], [[movieListing(51, title: 'Show 51', kind: TitleKind::TvShow), movieListing(52, title: 'Show 52', kind: TitleKind::TvShow)]]);
+
+    $page = visitWithCsp('/search');
+
+    $page->assertSeeIn('[data-slot=search-results]', 'Popular movies')
+        ->assertAttribute('[data-browse-tab=movie]', 'aria-pressed', 'true')
+        ->click('[data-browse-tab=tv]')
+        ->assertSeeIn('[data-slot=search-results]', 'Popular TV shows')
+        ->assertAttribute('[data-browse-tab=tv]', 'aria-pressed', 'true')
+        ->assertNoJavaScriptErrors();
+
+    expect($page->url())->toEndWith('/search?tab=tv')
+        ->and($page->script('document.querySelectorAll("[data-slot=search-results] [data-slot=poster-card]").length'))->toBe(2);
+
+    $page->typeSlowly('#search-query', 'inter', 60)
+        ->assertSeeIn('[data-slot=search-results]', '1 result')
+        ->assertMissing('[data-browse-tab]');
+    expect($page->url())->toEndWith('/search?q=inter');
+
+    $page->fill('#search-query', '')
+        ->assertSeeIn('[data-slot=search-results]', 'Popular TV shows')
+        ->assertAttribute('[data-browse-tab=tv]', 'aria-pressed', 'true')
+        ->assertNoJavaScriptErrors();
+    expect($page->url())->toEndWith('/search?tab=tv');
 });
 
 it('searches once the typing pauses, not on every keystroke', function () {
