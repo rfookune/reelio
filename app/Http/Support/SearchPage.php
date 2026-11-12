@@ -19,6 +19,7 @@ use App\Services\Catalog\Sources\Listings\BrowseFilters;
 use App\Services\Catalog\Sources\Listings\BrowseSort;
 use App\Services\Catalog\Sources\Listings\Era;
 use App\Services\Catalog\Sources\Listings\MovieListing;
+use App\Services\Catalog\Sources\Listings\OriginalLanguage;
 use App\Services\Catalog\Sources\Listings\RuntimeBand;
 use App\Services\Catalog\Sources\Listings\SearchResults;
 use App\Services\Ratings\Enums\RatingSourceName;
@@ -92,6 +93,7 @@ class SearchPage
         private bool $requestedHighlyRated = false,
         private ?Era $requestedEra = null,
         private ?RuntimeBand $requestedRuntimeBand = null,
+        private ?OriginalLanguage $requestedOriginalLanguage = null,
     ) {}
 
     /**
@@ -119,6 +121,7 @@ class SearchPage
             self::highlyRatedFrom($request),
             self::eraFrom($request),
             self::runtimeBandFrom($request),
+            self::originalLanguageFrom($request),
         );
     }
 
@@ -128,7 +131,7 @@ class SearchPage
      */
     public static function cachedFromRequest(Request $request, CatalogSearch $catalogSearch, BrowseOptions $browseOptions, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
-        return new self($catalogSearch, $browseOptions, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), self::genreFrom($request), BrowseSort::fromRequestValue($request->query('sort')), VisitorCountry::resolve($request)->code, self::streamingServicesFrom($request), readsCacheOnly: true, requestedHighlyRated: self::highlyRatedFrom($request), requestedEra: self::eraFrom($request), requestedRuntimeBand: self::runtimeBandFrom($request));
+        return new self($catalogSearch, $browseOptions, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), self::genreFrom($request), BrowseSort::fromRequestValue($request->query('sort')), VisitorCountry::resolve($request)->code, self::streamingServicesFrom($request), readsCacheOnly: true, requestedHighlyRated: self::highlyRatedFrom($request), requestedEra: self::eraFrom($request), requestedRuntimeBand: self::runtimeBandFrom($request), requestedOriginalLanguage: self::originalLanguageFrom($request));
     }
 
     /** The request's `q`, trimmed of Unicode whitespace and cut to `search.maximum_query_length` characters. */
@@ -216,6 +219,14 @@ class SearchPage
         $runtimeBand = $request->query('runtime');
 
         return is_string($runtimeBand) ? RuntimeBand::tryFrom($runtimeBand) : null;
+    }
+
+    /** The request's `language` when it is one of the curated original languages, else none. */
+    private static function originalLanguageFrom(Request $request): ?OriginalLanguage
+    {
+        $language = $request->query('language');
+
+        return is_string($language) ? OriginalLanguage::tryFrom($language) : null;
     }
 
     /** Whether the query is long enough to search by Name; if not, the page is Browse. */
@@ -361,6 +372,12 @@ class SearchPage
         return $this->filters()->runtimeBand;
     }
 
+    /** The original language Browse is narrowed to, or null for none. */
+    public function originalLanguage(): ?OriginalLanguage
+    {
+        return $this->filters()->originalLanguage;
+    }
+
     /** The order Browse is in: the request's `sort` when it is an offered one, else the default of the filters. */
     public function sort(): BrowseSort
     {
@@ -413,7 +430,7 @@ class SearchPage
      */
     private function filters(): BrowseFilters
     {
-        return $this->filters ??= $this->isSearching() ? new BrowseFilters : new BrowseFilters($this->requestedGenreOnTab(), $this->requestedSort, $this->requestedStreamingServicesOnTab(), $this->country, $this->requestedHighlyRated, $this->requestedEra, $this->browseKind === TitleKind::Movie ? $this->requestedRuntimeBand : null);
+        return $this->filters ??= $this->isSearching() ? new BrowseFilters : new BrowseFilters($this->requestedGenreOnTab(), $this->requestedSort, $this->requestedStreamingServicesOnTab(), $this->country, $this->requestedHighlyRated, $this->requestedEra, $this->browseKind === TitleKind::Movie ? $this->requestedRuntimeBand : null, $this->requestedOriginalLanguage);
     }
 
     /**

@@ -19,12 +19,13 @@ readonly class BrowseFilters
         public bool $highlyRated = false,
         public ?Era $era = null,
         public ?RuntimeBand $runtimeBand = null,
+        public ?OriginalLanguage $originalLanguage = null,
     ) {}
 
     /** Whether any filter narrows Browse; the sort doesn't. */
     public function isNarrowed(): bool
     {
-        return $this->genreId !== null || $this->streamingServiceIds !== [] || $this->highlyRated || $this->era !== null || $this->runtimeBand !== null;
+        return $this->genreId !== null || $this->streamingServiceIds !== [] || $this->highlyRated || $this->era !== null || $this->runtimeBand !== null || $this->originalLanguage !== null;
     }
 
     /** The order chosen, else the default of the filters. */
@@ -44,6 +45,7 @@ readonly class BrowseFilters
             'highly_rated' => $this->highlyRated,
             'era' => $this->era?->value,
             'runtime' => $this->runtimeBand?->value,
+            'original_language' => $this->originalLanguage?->value,
         ], JSON_THROW_ON_ERROR);
     }
 }

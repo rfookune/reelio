@@ -55,6 +55,10 @@ const props = defineProps<{
     era: string | null;
     /** The Movie runtime band Browse is narrowed to, or null. */
     runtimeBand: RuntimeBandValue | null;
+    /** The curated original languages, each by its native name; the same on both tabs. */
+    languages: { code: string; name: string }[];
+    /** The original language code Browse is narrowed to, or null. */
+    language: string | null;
     /** The Streaming services the tab offers in the visitor's country, most prominent first. */
     streamingServices: { id: number; name: string }[];
     /** The ids of the Streaming services Browse is narrowed to, any of them. */
@@ -93,6 +97,7 @@ const { withLookedUpRatings, isLookingUp } = useLookedUpRatings(
                   highly_rated: '',
                   era: '',
                   runtime: '',
+                  language: '',
               }
             : {
                   q: '',
@@ -103,6 +108,7 @@ const { withLookedUpRatings, isLookingUp } = useLookedUpRatings(
                   highly_rated: props.highlyRated ? '1' : '',
                   era: props.era ?? '',
                   runtime: props.runtimeBand ?? '',
+                  language: props.language ?? '',
               },
     () => props.results.data,
     () => props.looksUpImdbRatings,
@@ -170,6 +176,8 @@ const highlyRatedChoice = ref(props.highlyRated);
 const eraChoice = ref<string | null>(props.era);
 /** The Movie runtime band chosen; it follows the page's while Browse shows. */
 const runtimeBandChoice = ref<RuntimeBandValue | null>(props.runtimeBand);
+/** The original language chosen; it follows the page's while Browse shows. */
+const languageChoice = ref<string | null>(props.language);
 /** The Streaming services chosen, by id; they follow the page's while Browse shows. */
 const serviceChoices = ref<number[]>([...props.selectedStreamingServices]);
 const topServices = computed(() =>
@@ -210,6 +218,7 @@ const activeFilterCount = computed(
         (highlyRatedChoice.value ? 1 : 0) +
         (eraChoice.value === null ? 0 : 1) +
         (runtimeBandChoice.value === null ? 0 : 1) +
+        (languageChoice.value === null ? 0 : 1) +
         (serviceChoices.value.length === 0 ? 0 : 1),
 );
 const cantBrowse = computed(
@@ -329,6 +338,7 @@ function visit(query: string, force = false, replace = true): void {
         highlyRatedChoice.value = false;
         eraChoice.value = null;
         runtimeBandChoice.value = null;
+        languageChoice.value = null;
         serviceChoices.value = [];
     }
 
@@ -342,6 +352,7 @@ function visit(query: string, force = false, replace = true): void {
         highly_rated?: '1';
         era?: string;
         runtime?: RuntimeBandValue;
+        language?: string;
     } = {
         ...(query === '' ? {} : { q: query }),
         ...(browseTab.value === 'tv' ? { tab: browseTab.value } : {}),
@@ -363,6 +374,9 @@ function visit(query: string, force = false, replace = true): void {
         ...(query === '' && runtimeBandChoice.value !== null
             ? { runtime: runtimeBandChoice.value }
             : {}),
+        ...(query === '' && languageChoice.value !== null
+            ? { language: languageChoice.value }
+            : {}),
     };
 
     router.get(search.url(), params, {
@@ -377,6 +391,7 @@ function visit(query: string, force = false, replace = true): void {
             'highlyRated',
             'era',
             'runtimeBand',
+            'language',
             'streamingServices',
             'selectedStreamingServices',
             'maximumStreamingServices',
@@ -458,6 +473,13 @@ function onRuntimeBandChange(event: Event): void {
     clearFilterVisit();
 }
 
+/** The original language picked in the select, `Any language` being none. */
+function onLanguageChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    languageChoice.value = value === '' ? null : value;
+    clearFilterVisit();
+}
+
 /** The genre picked in the select, `Any genre` being none. */
 function onGenreChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
@@ -490,6 +512,7 @@ function clearFilters(): void {
     highlyRatedChoice.value = false;
     eraChoice.value = null;
     runtimeBandChoice.value = null;
+    languageChoice.value = null;
     serviceChoices.value = [];
     clearFilterVisit();
 }
@@ -505,11 +528,14 @@ function announceBrowsed(page: typeof props): void {
     const genre = page.genres.find((option) => option.id === page.genre);
     const order = SORT_OPTIONS.find((option) => option.value === page.sort);
     const services = page.selectedStreamingServices.length;
+    const language = page.languages.find(
+        (option) => option.code === page.language,
+    );
 
     announce(
         page.status === 'unavailable'
             ? failureMessage.value
-            : `Showing ${order?.noun ?? 'popular'} ${page.tab === 'tv' ? 'TV shows' : 'movies'}${genre === undefined ? '' : ` in ${genre.name}`}${services === 0 ? '' : ` on ${services} streaming ${services === 1 ? 'service' : 'services'}`}`,
+            : `Showing ${order?.noun ?? 'popular'} ${page.tab === 'tv' ? 'TV shows' : 'movies'}${genre === undefined ? '' : ` in ${genre.name}`}${language === undefined ? '' : ` originally in ${language.name}`}${services === 0 ? '' : ` on ${services} streaming ${services === 1 ? 'service' : 'services'}`}`,
     );
 }
 
@@ -582,6 +608,15 @@ watch(
     (era) => {
         if (!isSearching.value) {
             eraChoice.value = era;
+        }
+    },
+);
+
+watch(
+    () => props.language,
+    (language) => {
+        if (!isSearching.value) {
+            languageChoice.value = language;
         }
     },
 );
@@ -785,6 +820,28 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
             >
                 Movies only
             </p>
+            <div class="flex w-full flex-col gap-1.5 sm:w-52">
+                <label for="browse-language" class="text-sm text-muted"
+                    >Original language</label
+                >
+                <NativeSelect
+                    id="browse-language"
+                    touch
+                    :value="languageChoice ?? ''"
+                    @change="onLanguageChange"
+                >
+                    <option value="">Any language</option>
+                    <option
+                        v-for="option in languages"
+                        :key="option.code"
+                        :value="option.code"
+                        :lang="option.code"
+                        :selected="option.code === languageChoice"
+                    >
+                        {{ option.name }}
+                    </option>
+                </NativeSelect>
+            </div>
             <fieldset
                 v-if="streamingServices.length > 0"
                 data-slot="search-streaming-services"

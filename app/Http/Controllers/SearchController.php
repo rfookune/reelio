@@ -7,6 +7,7 @@ use App\Http\Support\SearchPage;
 use App\Services\Catalog\Search\BrowseOptions;
 use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Search\ImdbIdLookup;
+use App\Services\Catalog\Sources\Listings\OriginalLanguage;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\Ratings;
 use Illuminate\Http\Request;
@@ -46,6 +47,8 @@ class SearchController extends Controller
             'highlyRated' => fn (): bool => $page->highlyRated(),
             'era' => fn (): ?string => $page->era()?->value,
             'runtimeBand' => fn (): ?string => $page->runtimeBand()?->value,
+            'languages' => OriginalLanguage::options(),
+            'language' => fn (): ?string => $page->originalLanguage()?->value,
             'streamingServices' => fn (): array => $page->streamingServices(),
             'selectedStreamingServices' => fn (): array => $page->selectedStreamingServices(),
             'maximumStreamingServices' => config('catalog.search.maximum_streaming_services'),

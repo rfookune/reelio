@@ -11,6 +11,7 @@ use App\Services\Catalog\Sources\FakeCatalogSource;
 use App\Services\Catalog\Sources\Listings\BrowseFilters;
 use App\Services\Catalog\Sources\Listings\BrowseSort;
 use App\Services\Catalog\Sources\Listings\MovieListing;
+use App\Services\Catalog\Sources\Listings\OriginalLanguage;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
 use Illuminate\Support\Facades\Queue;
@@ -216,4 +217,14 @@ test('the ratings of a Browse page narrowed by Streaming services are those of t
 
     $this->getJson(route('search.ratings', ['services' => '8']))->assertOk()->assertJsonPath('ratings.1.0.value', 8.1);
     $this->getJson(route('search.ratings', ['services' => '9']))->assertOk()->assertExactJson(['ratings' => []]);
+});
+
+test('the ratings of a Browse page narrowed by an original language are those of that page', function () {
+    config(['ratings.sources.imdb.enabled' => true]);
+    app()->instance(CatalogSource::class, new FakeCatalogSource(browsePages: [[movieListing(1)]], imdbIds: [1 => 'tt0000001']));
+    app(CatalogSearch::class)->browse(TitleKind::Movie, 1, new BrowseFilters(originalLanguage: OriginalLanguage::Korean));
+    app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000001', 8.1, 5000);
+
+    $this->getJson(route('search.ratings', ['language' => 'ko']))->assertOk()->assertJsonPath('ratings.1.0.value', 8.1);
+    $this->getJson(route('search.ratings', ['language' => 'ja']))->assertOk()->assertExactJson(['ratings' => []]);
 });

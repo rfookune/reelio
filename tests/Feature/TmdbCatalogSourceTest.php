@@ -9,6 +9,7 @@ use App\Services\Catalog\Sources\Listings\BrowseFilters;
 use App\Services\Catalog\Sources\Listings\BrowseSort;
 use App\Services\Catalog\Sources\Listings\Era;
 use App\Services\Catalog\Sources\Listings\MovieListing;
+use App\Services\Catalog\Sources\Listings\OriginalLanguage;
 use App\Services\Catalog\Sources\Listings\RuntimeBand;
 use App\Services\Catalog\Sources\Listings\SectionQuery;
 use App\Services\Catalog\Sources\SourceMisconfigured;
@@ -905,3 +906,28 @@ test('a runtime Browse filter sends inclusive minute bounds to Movie Discover', 
     '90 to 120 minutes' => [RuntimeBand::NinetyToOneTwenty, 90, 120],
     'over 120 minutes' => [RuntimeBand::OverOneTwenty, 121, null],
 ]);
+
+test('a Browse page narrowed by an original language sends it as the original language to discover, for each kind', function (TitleKind $kind, string $path) {
+    Http::fake(["https://api.themoviedb.org/3/{$path}?*" => Http::response(['page' => 1, 'total_pages' => 1, 'total_results' => 0, 'results' => []])]);
+
+    app(TmdbCatalogSource::class)->browse($kind, 1, new CatalogContext('en-US'), new BrowseFilters(requestedSort: BrowseSort::Popular, originalLanguage: OriginalLanguage::Korean));
+
+    Http::assertSent(fn (Request $request) => queryOf($request) === [
+        'page' => '1',
+        'language' => 'en-US',
+        'include_adult' => 'false',
+        'sort_by' => 'popularity.desc',
+        'with_original_language' => 'ko',
+    ]);
+})->with([
+    'Movies' => [TitleKind::Movie, 'discover/movie'],
+    'TV Shows' => [TitleKind::TvShow, 'discover/tv'],
+]);
+
+test('a Browse page with no original language sends no language parameter', function () {
+    Http::fake(['https://api.themoviedb.org/3/discover/movie?*' => Http::response(['page' => 1, 'total_pages' => 1, 'total_results' => 0, 'results' => []])]);
+
+    app(TmdbCatalogSource::class)->browse(TitleKind::Movie, 1, new CatalogContext('en-US'), new BrowseFilters);
+
+    Http::assertSent(fn (Request $request) => ! array_key_exists('with_original_language', queryOf($request)));
+});

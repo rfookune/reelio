@@ -12,6 +12,7 @@ use App\Services\Catalog\Sources\Details\TvShowDetails;
 use App\Services\Catalog\Sources\Listings\BrowseFilters;
 use App\Services\Catalog\Sources\Listings\BrowseSort;
 use App\Services\Catalog\Sources\Listings\Era;
+use App\Services\Catalog\Sources\Listings\OriginalLanguage;
 use App\Services\Catalog\Sources\Listings\RuntimeBand;
 use App\Services\Catalog\Sources\Listings\SearchResults;
 use App\Services\Catalog\Sources\Listings\SectionPage;
@@ -122,12 +123,23 @@ class TmdbCatalogSource implements CatalogSource
             ...$this->highlyRatedParameters($filters),
             ...$this->eraParameters($filters->era, $kind),
             ...$this->runtimeParameters($filters->runtimeBand, $kind),
+            ...$this->languageParameters($filters->originalLanguage),
         ];
         $response = $this->client->get($kind === TitleKind::TvShow ? 'discover/tv' : 'discover/movie', ['page' => $page, 'language' => $context->language, 'include_adult' => 'false', ...$this->sortParameters($filters->sort()), ...$narrowedBy], $context)
             ?? throw new SourceUnavailable('The Catalog source has no such browse page.');
         $data = $this->movies->listPage((array) $response->json());
 
         return new SearchResults($kind === TitleKind::TvShow ? $this->movies->tvListings($data['results']) : $this->movies->listings($data['results']), $data['total_pages'], $this->totalResults($response));
+    }
+
+    /**
+     * The discover parameter of the original language, nothing for none.
+     *
+     * @return array<string, string>
+     */
+    private function languageParameters(?OriginalLanguage $originalLanguage): array
+    {
+        return $originalLanguage === null ? [] : ['with_original_language' => $originalLanguage->value];
     }
 
     /**
