@@ -15,3 +15,7 @@ Parent: [spec](../spec.md). Uses the glossary terms **Streaming service** and **
 - [x] The selection is kept in the URL and counted among the active filters
 - [x] The TMDB request-mapping test covers the any-of join, the watch region and the subscription-and-free restriction
 - [x] Feature tests cover the options per country and kind, the any-of filter reaching the source, and the ignored and capped values
+
+## Revised: the services search
+
+The "More" control with a search box was replaced after the same prototype (see ticket 03, "Revised UI"): the twelve recommended services show, with any chosen beyond them, and a compact field in the row, "Search all N services", ranks every service by how well its name matches and lists the best twenty. The ranking is `resources/js/lib/streamingServiceSearch.ts`.

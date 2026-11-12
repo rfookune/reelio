@@ -18,3 +18,14 @@ Parent: [spec](../spec.md). See [ADR 0003](../../../docs/adr/0003-browse-and-sea
 - [x] A no-match message appears when the filters match nothing, and a loading placeholder while a filtered list loads
 - [x] The bar fits a phone and every control is operable by keyboard and announced to a screen reader
 - [x] Feature tests cover the genre reaching the source for each kind, the tab-switch rule, and the ignored invalid values; a TMDB request-mapping test covers the genre parameter and the genre read for each kind
+
+## Revised UI: Search by name as the page, Advanced for the filters
+
+The filter bar above the results, with its tabs, was reworked after a UI prototype (the question: how do Search by name and the filters share one page, and make clear that a name can't be filtered?). The prototype is kept as the primary source on the branch `prototype/search-advanced-filters` (its last commit, `f116e48`, is the winning design; the earlier ones are the variants that lost). The rules that came out of it, which supersede the criteria above where they differ:
+
+- Search by name is the page: no visible title, a full-width field with an **Advanced** button inside it, a bold results label, and no All / Movies / TV Shows chips on a name search.
+- **Advanced** drops a typed Name, hides the search box and shows an "Advanced filters" panel with a description and **Back to search**. Back clears every filter, the sort and the kind. A URL that already holds filters opens straight into Advanced.
+- Movies / TV Shows is a dropdown, and the sort a dropdown reading "Sort: Popular", both at the right of the panel's title with no visible labels (each keeps an `aria-label`).
+- The other filters share one card: Genre, Era, Runtime and Original language in a row; Where to watch (its own title, and the services search); Highly rated and Show seen beneath it; and a footer inside the card with the "N filters active" count and Clear filters.
+- Focus stays on the control just changed, rather than moving to the page's start after each visit.
+- Searching a name keeps nothing of the filters, as before ([ADR 0003](../../../docs/adr/0003-browse-and-search-by-name-are-separate.md)); what changed is that this is now said in the interface.
