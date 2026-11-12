@@ -20,6 +20,7 @@ import { search } from '@/routes';
 import type { UserMovies } from '@/types';
 
 type SortValue = 'top_rated' | 'popular';
+type RuntimeBandValue = 'under_90' | '90_to_120' | 'over_120';
 
 /** How many Streaming services show before "More". */
 const SHOWN_STREAMING_SERVICES = 12;
@@ -52,6 +53,8 @@ const props = defineProps<{
     highlyRated: boolean;
     /** The era Browse is narrowed to, or null. */
     era: string | null;
+    /** The Movie runtime band Browse is narrowed to, or null. */
+    runtimeBand: RuntimeBandValue | null;
     /** The Streaming services the tab offers in the visitor's country, most prominent first. */
     streamingServices: { id: number; name: string }[];
     /** The ids of the Streaming services Browse is narrowed to, any of them. */
@@ -89,6 +92,7 @@ const { withLookedUpRatings, isLookingUp } = useLookedUpRatings(
                   sort: '',
                   highly_rated: '',
                   era: '',
+                  runtime: '',
               }
             : {
                   q: '',
@@ -98,6 +102,7 @@ const { withLookedUpRatings, isLookingUp } = useLookedUpRatings(
                   sort: props.explicitSort ?? '',
                   highly_rated: props.highlyRated ? '1' : '',
                   era: props.era ?? '',
+                  runtime: props.runtimeBand ?? '',
               },
     () => props.results.data,
     () => props.looksUpImdbRatings,
@@ -163,6 +168,8 @@ const genreChoice = ref<number | null>(props.genre);
 const highlyRatedChoice = ref(props.highlyRated);
 /** The era chosen; it follows the page's while Browse shows. */
 const eraChoice = ref<string | null>(props.era);
+/** The Movie runtime band chosen; it follows the page's while Browse shows. */
+const runtimeBandChoice = ref<RuntimeBandValue | null>(props.runtimeBand);
 /** The Streaming services chosen, by id; they follow the page's while Browse shows. */
 const serviceChoices = ref<number[]>([...props.selectedStreamingServices]);
 const topServices = computed(() =>
@@ -202,6 +209,7 @@ const activeFilterCount = computed(
         (genreChoice.value === null ? 0 : 1) +
         (highlyRatedChoice.value ? 1 : 0) +
         (eraChoice.value === null ? 0 : 1) +
+        (runtimeBandChoice.value === null ? 0 : 1) +
         (serviceChoices.value.length === 0 ? 0 : 1),
 );
 const cantBrowse = computed(
@@ -320,6 +328,7 @@ function visit(query: string, force = false, replace = true): void {
         genreChoice.value = null;
         highlyRatedChoice.value = false;
         eraChoice.value = null;
+        runtimeBandChoice.value = null;
         serviceChoices.value = [];
     }
 
@@ -332,6 +341,7 @@ function visit(query: string, force = false, replace = true): void {
         sort?: SortValue;
         highly_rated?: '1';
         era?: string;
+        runtime?: RuntimeBandValue;
     } = {
         ...(query === '' ? {} : { q: query }),
         ...(browseTab.value === 'tv' ? { tab: browseTab.value } : {}),
@@ -350,6 +360,9 @@ function visit(query: string, force = false, replace = true): void {
         ...(query === '' && eraChoice.value !== null
             ? { era: eraChoice.value }
             : {}),
+        ...(query === '' && runtimeBandChoice.value !== null
+            ? { runtime: runtimeBandChoice.value }
+            : {}),
     };
 
     router.get(search.url(), params, {
@@ -363,6 +376,7 @@ function visit(query: string, force = false, replace = true): void {
             'genre',
             'highlyRated',
             'era',
+            'runtimeBand',
             'streamingServices',
             'selectedStreamingServices',
             'maximumStreamingServices',
@@ -411,6 +425,9 @@ function chooseTab(tab: CardKind): void {
     }
 
     browseTab.value = tab;
+    if (tab === 'tv') {
+        runtimeBandChoice.value = null;
+    }
     replacingList.value = true;
     visit('', true, false);
 }
@@ -425,6 +442,19 @@ function chooseGenre(genre: number | null): void {
 function onEraChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     eraChoice.value = value === '' ? null : value;
+    clearFilterVisit();
+}
+
+/** Browses with the Movie runtime band chosen, switching to Movies when needed. */
+function onRuntimeBandChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    runtimeBandChoice.value = value === '' ? null : (value as RuntimeBandValue);
+
+    if (runtimeBandChoice.value !== null && browseTab.value === 'tv') {
+        browseTab.value = 'movie';
+        replacingList.value = true;
+    }
+
     clearFilterVisit();
 }
 
@@ -459,6 +489,7 @@ function clearFilters(): void {
     genreChoice.value = null;
     highlyRatedChoice.value = false;
     eraChoice.value = null;
+    runtimeBandChoice.value = null;
     serviceChoices.value = [];
     clearFilterVisit();
 }
@@ -551,6 +582,15 @@ watch(
     (era) => {
         if (!isSearching.value) {
             eraChoice.value = era;
+        }
+    },
+);
+
+watch(
+    () => props.runtimeBand,
+    (runtimeBand) => {
+        if (!isSearching.value) {
+            runtimeBandChoice.value = runtimeBand;
         }
     },
 );
@@ -721,6 +761,30 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
                     <option value="older">Older</option>
                 </NativeSelect>
             </div>
+            <div class="flex w-full flex-col gap-1.5 sm:w-52">
+                <label for="browse-runtime" class="text-sm text-muted"
+                    >Runtime</label
+                >
+                <NativeSelect
+                    id="browse-runtime"
+                    touch
+                    :value="runtimeBandChoice ?? ''"
+                    @change="onRuntimeBandChange"
+                >
+                    <option value="">Any runtime</option>
+                    <option value="under_90">Under 90 minutes</option>
+                    <option value="90_to_120">90–120 minutes</option>
+                    <option value="over_120">Over 120 minutes</option>
+                </NativeSelect>
+            </div>
+            <p
+                v-if="runtimeBandChoice !== null"
+                data-slot="search-movies-only"
+                role="status"
+                class="text-sm text-muted"
+            >
+                Movies only
+            </p>
             <fieldset
                 v-if="streamingServices.length > 0"
                 data-slot="search-streaming-services"

@@ -25,6 +25,14 @@ class SearchController extends Controller
     {
         $page = SearchPage::fromRequest($request, $catalogSearch, $browseOptions, $imdbIds, $ratings, $recordEvent);
 
+        if ($request->query('tab') === 'tv' && $page->runtimeBand() !== null) {
+            $query = $request->query();
+            unset($query['tab']);
+            unset($query['q']);
+
+            return redirect()->route('search', $query);
+        }
+
         $response = Inertia::render('Search', [
             'imageBaseUrl' => config('catalog.image_base_url'),
             'query' => $page->query,
@@ -37,6 +45,7 @@ class SearchController extends Controller
             'genre' => fn (): ?int => $page->genre(),
             'highlyRated' => fn (): bool => $page->highlyRated(),
             'era' => fn (): ?string => $page->era()?->value,
+            'runtimeBand' => fn (): ?string => $page->runtimeBand()?->value,
             'streamingServices' => fn (): array => $page->streamingServices(),
             'selectedStreamingServices' => fn (): array => $page->selectedStreamingServices(),
             'maximumStreamingServices' => config('catalog.search.maximum_streaming_services'),

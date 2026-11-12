@@ -23,6 +23,7 @@ export type LookupScope = {
     sort: string;
     highly_rated: string;
     era: string;
+    runtime: string;
 };
 
 function scopeKey(scope: LookupScope): string {
@@ -56,6 +57,7 @@ export function useLookedUpRatings(
         sort: '',
         highly_rated: '',
         era: '',
+        runtime: '',
         page: 1,
     });
     let queue: Promise<void> = Promise.resolve();
@@ -88,6 +90,7 @@ export function useLookedUpRatings(
                 http.sort = named.sort;
                 http.highly_rated = named.highly_rated;
                 http.era = named.era;
+                http.runtime = named.runtime;
                 http.page = page;
                 const response = await http.get(ratingsRoute.url());
 

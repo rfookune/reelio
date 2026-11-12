@@ -18,12 +18,13 @@ readonly class BrowseFilters
         public ?string $country = null,
         public bool $highlyRated = false,
         public ?Era $era = null,
+        public ?RuntimeBand $runtimeBand = null,
     ) {}
 
     /** Whether any filter narrows Browse; the sort doesn't. */
     public function isNarrowed(): bool
     {
-        return $this->genreId !== null || $this->streamingServiceIds !== [] || $this->highlyRated || $this->era !== null;
+        return $this->genreId !== null || $this->streamingServiceIds !== [] || $this->highlyRated || $this->era !== null || $this->runtimeBand !== null;
     }
 
     /** The order chosen, else the default of the filters. */
@@ -42,6 +43,7 @@ readonly class BrowseFilters
             'country' => $this->streamingServiceIds === [] ? null : $this->country,
             'highly_rated' => $this->highlyRated,
             'era' => $this->era?->value,
+            'runtime' => $this->runtimeBand?->value,
         ], JSON_THROW_ON_ERROR);
     }
 }

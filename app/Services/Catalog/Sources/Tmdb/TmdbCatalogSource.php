@@ -12,6 +12,7 @@ use App\Services\Catalog\Sources\Details\TvShowDetails;
 use App\Services\Catalog\Sources\Listings\BrowseFilters;
 use App\Services\Catalog\Sources\Listings\BrowseSort;
 use App\Services\Catalog\Sources\Listings\Era;
+use App\Services\Catalog\Sources\Listings\RuntimeBand;
 use App\Services\Catalog\Sources\Listings\SearchResults;
 use App\Services\Catalog\Sources\Listings\SectionPage;
 use App\Services\Catalog\Sources\Listings\SectionQuery;
@@ -120,12 +121,32 @@ class TmdbCatalogSource implements CatalogSource
             ...$this->streamingServiceParameters($filters),
             ...$this->highlyRatedParameters($filters),
             ...$this->eraParameters($filters->era, $kind),
+            ...$this->runtimeParameters($filters->runtimeBand, $kind),
         ];
         $response = $this->client->get($kind === TitleKind::TvShow ? 'discover/tv' : 'discover/movie', ['page' => $page, 'language' => $context->language, 'include_adult' => 'false', ...$this->sortParameters($filters->sort()), ...$narrowedBy], $context)
             ?? throw new SourceUnavailable('The Catalog source has no such browse page.');
         $data = $this->movies->listPage((array) $response->json());
 
         return new SearchResults($kind === TitleKind::TvShow ? $this->movies->tvListings($data['results']) : $this->movies->listings($data['results']), $data['total_pages'], $this->totalResults($response));
+    }
+
+    /**
+     * The inclusive Movie runtime bounds for the chosen band.
+     *
+     * @return array<string, int>
+     */
+    private function runtimeParameters(?RuntimeBand $runtimeBand, TitleKind $kind): array
+    {
+        if ($runtimeBand === null || $kind !== TitleKind::Movie) {
+            return [];
+        }
+
+        $bounds = $runtimeBand->minuteBounds();
+
+        return [
+            ...($bounds['minimum'] === null ? [] : ['with_runtime.gte' => $bounds['minimum']]),
+            ...($bounds['maximum'] === null ? [] : ['with_runtime.lte' => $bounds['maximum']]),
+        ];
     }
 
     /**

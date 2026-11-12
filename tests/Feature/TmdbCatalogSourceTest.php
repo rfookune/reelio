@@ -9,6 +9,7 @@ use App\Services\Catalog\Sources\Listings\BrowseFilters;
 use App\Services\Catalog\Sources\Listings\BrowseSort;
 use App\Services\Catalog\Sources\Listings\Era;
 use App\Services\Catalog\Sources\Listings\MovieListing;
+use App\Services\Catalog\Sources\Listings\RuntimeBand;
 use App\Services\Catalog\Sources\Listings\SectionQuery;
 use App\Services\Catalog\Sources\SourceMisconfigured;
 use App\Services\Catalog\Sources\SourceUnavailable;
@@ -876,4 +877,31 @@ test('an era Browse filter uses the kind-specific TMDB date range', function (Ti
     'TV Shows 2000s' => [TitleKind::TvShow, 'first_air_date', Era::TwoThousands, '2000-01-01', '2009-12-31'],
     'TV Shows 1990s' => [TitleKind::TvShow, 'first_air_date', Era::NineteenNineties, '1990-01-01', '1999-12-31'],
     'TV Shows Older' => [TitleKind::TvShow, 'first_air_date', Era::Older, null, '1989-12-31'],
+]);
+
+test('a runtime Browse filter sends inclusive minute bounds to Movie Discover', function (RuntimeBand $band, ?int $minimum, ?int $maximum) {
+    Http::fake(['https://api.themoviedb.org/3/discover/movie?*' => Http::response(['page' => 1, 'total_pages' => 1, 'total_results' => 0, 'results' => []])]);
+
+    app(TmdbCatalogSource::class)->browse(TitleKind::Movie, 1, new CatalogContext('en-US'), new BrowseFilters(requestedSort: BrowseSort::Popular, runtimeBand: $band));
+
+    $expected = [
+        'page' => '1',
+        'language' => 'en-US',
+        'include_adult' => 'false',
+        'sort_by' => 'popularity.desc',
+    ];
+
+    if ($minimum !== null) {
+        $expected['with_runtime.gte'] = (string) $minimum;
+    }
+
+    if ($maximum !== null) {
+        $expected['with_runtime.lte'] = (string) $maximum;
+    }
+
+    Http::assertSent(fn (Request $request) => queryOf($request) === $expected);
+})->with([
+    'under 90 minutes' => [RuntimeBand::UnderNinety, null, 89],
+    '90 to 120 minutes' => [RuntimeBand::NinetyToOneTwenty, 90, 120],
+    'over 120 minutes' => [RuntimeBand::OverOneTwenty, 121, null],
 ]);

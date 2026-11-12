@@ -19,6 +19,7 @@ use App\Services\Catalog\Sources\Listings\BrowseFilters;
 use App\Services\Catalog\Sources\Listings\BrowseSort;
 use App\Services\Catalog\Sources\Listings\Era;
 use App\Services\Catalog\Sources\Listings\MovieListing;
+use App\Services\Catalog\Sources\Listings\RuntimeBand;
 use App\Services\Catalog\Sources\Listings\SearchResults;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\ExternalRating;
@@ -90,6 +91,7 @@ class SearchPage
         private bool $readsCacheOnly = false,
         private bool $requestedHighlyRated = false,
         private ?Era $requestedEra = null,
+        private ?RuntimeBand $requestedRuntimeBand = null,
     ) {}
 
     /**
@@ -116,6 +118,7 @@ class SearchPage
             self::reloadsUserMoviesOnly($request),
             self::highlyRatedFrom($request),
             self::eraFrom($request),
+            self::runtimeBandFrom($request),
         );
     }
 
@@ -125,7 +128,7 @@ class SearchPage
      */
     public static function cachedFromRequest(Request $request, CatalogSearch $catalogSearch, BrowseOptions $browseOptions, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
-        return new self($catalogSearch, $browseOptions, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), self::genreFrom($request), BrowseSort::fromRequestValue($request->query('sort')), VisitorCountry::resolve($request)->code, self::streamingServicesFrom($request), readsCacheOnly: true, requestedHighlyRated: self::highlyRatedFrom($request), requestedEra: self::eraFrom($request));
+        return new self($catalogSearch, $browseOptions, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), self::genreFrom($request), BrowseSort::fromRequestValue($request->query('sort')), VisitorCountry::resolve($request)->code, self::streamingServicesFrom($request), readsCacheOnly: true, requestedHighlyRated: self::highlyRatedFrom($request), requestedEra: self::eraFrom($request), requestedRuntimeBand: self::runtimeBandFrom($request));
     }
 
     /** The request's `q`, trimmed of Unicode whitespace and cut to `search.maximum_query_length` characters. */
@@ -139,6 +142,10 @@ class SearchPage
     /** The Browse tab the request's `tab` names, Movies unless it is `tv` and TV Shows are switched on. */
     private static function tabFrom(Request $request): TitleKind
     {
+        if (mb_strlen(self::queryFrom($request)) < config('catalog.search.minimum_query_length') && self::runtimeBandFrom($request) !== null) {
+            return TitleKind::Movie;
+        }
+
         return $request->query('tab') === TitleKind::TvShow->value && config('catalog.tv_shows.enabled') ? TitleKind::TvShow : TitleKind::Movie;
     }
 
@@ -201,6 +208,14 @@ class SearchPage
         $era = $request->query('era');
 
         return is_string($era) ? Era::tryFrom($era) : null;
+    }
+
+    /** The request's known Movie runtime band, else none. */
+    private static function runtimeBandFrom(Request $request): ?RuntimeBand
+    {
+        $runtimeBand = $request->query('runtime');
+
+        return is_string($runtimeBand) ? RuntimeBand::tryFrom($runtimeBand) : null;
     }
 
     /** Whether the query is long enough to search by Name; if not, the page is Browse. */
@@ -340,6 +355,12 @@ class SearchPage
         return $this->filters()->era;
     }
 
+    /** The runtime band Browse is narrowed to, or null for none. */
+    public function runtimeBand(): ?RuntimeBand
+    {
+        return $this->filters()->runtimeBand;
+    }
+
     /** The order Browse is in: the request's `sort` when it is an offered one, else the default of the filters. */
     public function sort(): BrowseSort
     {
@@ -392,7 +413,7 @@ class SearchPage
      */
     private function filters(): BrowseFilters
     {
-        return $this->filters ??= $this->isSearching() ? new BrowseFilters : new BrowseFilters($this->requestedGenreOnTab(), $this->requestedSort, $this->requestedStreamingServicesOnTab(), $this->country, $this->requestedHighlyRated, $this->requestedEra);
+        return $this->filters ??= $this->isSearching() ? new BrowseFilters : new BrowseFilters($this->requestedGenreOnTab(), $this->requestedSort, $this->requestedStreamingServicesOnTab(), $this->country, $this->requestedHighlyRated, $this->requestedEra, $this->browseKind === TitleKind::Movie ? $this->requestedRuntimeBand : null);
     }
 
     /**
