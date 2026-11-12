@@ -44,7 +44,8 @@ use Inertia\ScrollMetadata;
  * Results hold TV Shows beside Movies, each by its kind and catalog id (`key`: the catalog id, or `tv:` and it for a
  * TV Show), linking through its own entry route; with TV Shows off they are dropped. A TV Show has no Movie
  * Watchlist toggle, so `userMovies` covers Movies only and `userTvShows` carries their Watchlist fact alone.
- * A search's results page records `title_searched`; a reload of `userMovies` alone records nothing and asks no source.
+ * A search's results page records `title_searched`, and Browse's first page `title_browsed` with its tab, result count
+ * and the names, never the values, of the filters used; a reload of `userMovies` alone records nothing and asks no source.
  *
  * @phpstan-type Card array{tmdbId: int, title: ?string, year: ?int, posterPath: ?string, ratings: list<array{source: string, name: string, value: float, voteCount: int}>, href: string}
  * @phpstan-type SearchCard array{kind: string, key: string, tmdbId: int, title: ?string, year: ?int, posterPath: ?string, ratings: list<array{source: string, name: string, value: float, voteCount: int}>, href: string, seasonCount?: ?int}
@@ -252,7 +253,8 @@ class SearchPage
 
     /**
      * The page's results, a search's or Browse's. A signed-in viewer's first page of a search records `title_searched` with the
-     * query's length and the result count, never its text.
+     * query's length and the result count, never its text; their first page of Browse records `title_browsed` with the
+     * tab, the result count and the names, never the values, of the filters used.
      *
      * @return array{data: list<array{kind: string, key: string, tmdbId: int, title: ?string, year: ?int, posterPath: ?string, ratings: list<array{source: string, name: string, value: float, voteCount: int}>, href: string, seasonCount?: ?int, page: int}>}
      */
@@ -262,6 +264,14 @@ class SearchPage
 
         if ($this->isSearching() && $results !== null && $this->page === 1) {
             $this->recordEvent->handle($this->user, AnalyticsEvent::TitleSearched, ['query_length' => mb_strlen($this->query), 'result_count' => count($this->listings())]);
+        }
+
+        if (! $this->isSearching() && $results !== null && $this->page === 1) {
+            $this->recordEvent->handle($this->user, AnalyticsEvent::TitleBrowsed, [
+                'tab' => $this->browseKind->value,
+                'filters' => implode(',', [...$this->filters()->usedNames(), ...($this->showSeen() ? ['show_seen'] : [])]),
+                'result_count' => count($this->listings()),
+            ]);
         }
 
         return ['data' => array_map(fn (MovieListing $listing): array => [...$this->card($listing->kind, $listing->tmdbId, $listing->title, $listing->releaseDate, $listing->posterPath), 'page' => $this->page], $this->listings())];

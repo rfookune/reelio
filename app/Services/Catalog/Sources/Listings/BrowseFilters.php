@@ -25,7 +25,25 @@ readonly class BrowseFilters
     /** Whether any filter narrows Browse; the sort doesn't. */
     public function isNarrowed(): bool
     {
-        return $this->genreId !== null || $this->streamingServiceIds !== [] || $this->highlyRated || $this->era !== null || $this->runtimeBand !== null || $this->originalLanguage !== null;
+        return $this->usedNames() !== [];
+    }
+
+    /**
+     * The names of the filters in use, in a fixed order, which says which filters are used and nothing of what they
+     * are set to.
+     *
+     * @return list<string>
+     */
+    public function usedNames(): array
+    {
+        return array_keys(array_filter([
+            'genre' => $this->genreId !== null,
+            'streaming_service' => $this->streamingServiceIds !== [],
+            'highly_rated' => $this->highlyRated,
+            'era' => $this->era !== null,
+            'runtime' => $this->runtimeBand !== null,
+            'original_language' => $this->originalLanguage !== null,
+        ]));
     }
 
     /** The order chosen, else the default of the filters. */

@@ -283,6 +283,12 @@ test('each signed-in page-1 search records its query length and result count, ne
     Queue::assertPushed(RecordAnalyticsEvent::class, 1);
 });
 
+/** How many `title_searched` events are queued; Browse's own event isn't one. */
+function searchEventsQueued(): int
+{
+    return Queue::pushed(RecordAnalyticsEvent::class, fn (RecordAnalyticsEvent $job): bool => $job->name === 'title_searched')->count();
+}
+
 test('no search is recorded without a search, when it fails, or when only userMovies is reloaded', function () {
     Queue::fake([RecordAnalyticsEvent::class]);
     $user = User::factory()->create();
@@ -291,11 +297,11 @@ test('no search is recorded without a search, when it fails, or when only userMo
     $this->actingAs($user)->get(route('search', ['q' => 'i']))->assertOk();
     $this->actingAs($user)->get(route('search', ['q' => 'inter']))->assertInertia(fn (Assert $page) => $page
         ->reloadOnly('userMovies', fn (Assert $reload) => $reload->has('userMovies.1')->missing('results')));
-    Queue::assertPushed(RecordAnalyticsEvent::class, 1);
+    expect(searchEventsQueued())->toBe(1);
 
     fakeSearch(failing: true);
     $this->actingAs($user)->get(route('search', ['q' => 'other']))->assertOk();
-    Queue::assertPushed(RecordAnalyticsEvent::class, 1);
+    expect(searchEventsQueued())->toBe(1);
 });
 
 test('reloading userMovies alone, as after a Watchlist action, reads the cache only and isn\'t limited', function () {

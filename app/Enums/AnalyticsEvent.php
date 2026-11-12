@@ -14,6 +14,7 @@ enum AnalyticsEvent: string
     case UserMovieActionUndone = 'user_movie_action_undone';
     case MoviePickerUsed = 'movie_picker_used';
     case TitleSearched = 'title_searched';
+    case TitleBrowsed = 'title_browsed';
     case AvailabilityLinkClicked = 'availability_link_clicked';
     case TvShowViewed = 'tv_show_viewed';
     case TvShowWatchlisted = 'tv_show_watchlisted';
