@@ -1,6 +1,6 @@
 # 09: Runtime filter
 
-Status: ready-for-human
+Status: resolved
 
 Parent: [spec](../spec.md).
 
@@ -13,3 +13,7 @@ Parent: [spec](../spec.md).
 - [x] The choice is kept in the URL and counted among the active filters; an unknown band is ignored
 - [x] The TMDB request-mapping test covers the runtime parameters for each band
 - [x] A feature test covers each band reaching the source and the tab switch
+
+## Comments
+
+Implemented in commit `b907a20`. TMDB supports the Movie Discover runtime bounds (`with_runtime.gte` and `with_runtime.lte`); request-mapping tests cover all three bands. The source applies the bounds before paging, so ADR 0003's paging constraint is preserved.
