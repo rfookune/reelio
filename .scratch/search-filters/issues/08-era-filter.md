@@ -1,6 +1,6 @@
 # 08: Era filter
 
-Status: ready-for-human
+Status: resolved
 
 Parent: [spec](../spec.md).
 
@@ -13,3 +13,7 @@ Parent: [spec](../spec.md).
 - [x] The choice is kept in the URL and counted among the active filters; an unknown value is ignored
 - [x] The TMDB request-mapping test covers the date range for each decade and each kind
 - [x] A feature test covers an era reaching the source on both tabs
+
+## Comments
+
+Implemented in commit `e86ca90` and verified with the feature and TMDB request-mapping tests.
