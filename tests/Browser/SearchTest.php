@@ -8,6 +8,7 @@ use App\Services\Catalog\Sources\Listings\MovieListing;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\RatingStore;
 use Illuminate\Support\Facades\RateLimiter;
+use Pest\Browser\Execution;
 
 /**
  * Binds a fake source that finds the given pages and knows every Movie on them.
@@ -91,31 +92,26 @@ it('lists Popular Movies while nothing is typed, and a search by Name replaces t
         ->assertNoJavaScriptErrors();
 });
 
-it('browses TV Shows from the other tab, keeping the tab in the URL, and a search by Name leaves it', function () {
-    fakeBrowserSearch(['inter' => [[movieListing(7, title: 'Inter movie')]]], [movieListings(1, 3)], [[movieListing(51, title: 'Show 51', kind: TitleKind::TvShow), movieListing(52, title: 'Show 52', kind: TitleKind::TvShow)]]);
+it('browses TV Shows from the kind dropdown in Advanced, keeping the tab in the URL, and going back to search resets it', function () {
+    fakeBrowserSearch([], [movieListings(1, 3)], [[movieListing(51, title: 'Show 51', kind: TitleKind::TvShow), movieListing(52, title: 'Show 52', kind: TitleKind::TvShow)]]);
 
     $page = visitWithCsp('/search');
 
-    $page->assertSeeIn('[data-slot=search-results]', 'Popular movies')
-        ->assertAttribute('[data-browse-tab=movie]', 'aria-pressed', 'true')
-        ->click('[data-browse-tab=tv]')
+    $page->assertSeeIn('[data-slot=search-results]', 'Popular movies')->assertMissing('#browse-kind');
+    $page->click('[data-slot=advanced-toggle]')
+        ->assertValue('#browse-kind', 'movie')
+        ->select('#browse-kind', 'tv')
         ->assertSeeIn('[data-slot=search-results]', 'Popular TV shows')
-        ->assertAttribute('[data-browse-tab=tv]', 'aria-pressed', 'true')
+        ->assertValue('#browse-kind', 'tv')
+        ->assertQueryStringHas('tab', 'tv')
         ->assertNoJavaScriptErrors();
+    expect($page->script('document.querySelectorAll("[data-slot=search-results] [data-slot=poster-card]").length'))->toBe(2);
 
-    expect($page->url())->toEndWith('/search?tab=tv')
-        ->and($page->script('document.querySelectorAll("[data-slot=search-results] [data-slot=poster-card]").length'))->toBe(2);
-
-    $page->typeSlowly('#search-query', 'inter', 60)
-        ->assertSeeIn('[data-slot=search-results]', '1 result')
-        ->assertMissing('[data-browse-tab]');
-    expect($page->url())->toEndWith('/search?q=inter&tab=tv');
-
-    $page->fill('#search-query', '')
-        ->assertSeeIn('[data-slot=search-results]', 'Popular TV shows')
-        ->assertAttribute('[data-browse-tab=tv]', 'aria-pressed', 'true')
+    $page->click('[data-slot=back-to-search]')
+        ->assertPresent('#search-query')
+        ->assertSeeIn('[data-slot=search-results]', 'Popular movies')
+        ->assertQueryStringMissing('tab')
         ->assertNoJavaScriptErrors();
-    expect($page->url())->toEndWith('/search?tab=tv');
 });
 
 it('narrows Browse by genre, counts and clears the filter, and Back restores the previous one', function () {
@@ -123,7 +119,7 @@ it('narrows Browse by genre, counts and clears the filter, and Back restores the
 
     $page = visitWithCsp('/search');
 
-    $page->assertPresent('#browse-genre')->assertMissing('[data-slot=search-filter-count]');
+    $page->click('[data-slot=advanced-toggle]')->assertPresent('#browse-genre')->assertMissing('[data-slot=search-filter-count]');
     $page->select('#browse-genre', '35')
         ->assertSeeIn('[data-slot=search-filter-count]', '1 filter active')
         ->assertSeeIn('[data-slot=search-results]', 'Top rated movies')
@@ -145,7 +141,7 @@ it('narrows Browse by genre, counts and clears the filter, and Back restores the
         ->assertNoJavaScriptErrors();
 });
 
-it('keeps a genre across tabs only when the other tab has one of that name, and a Name clears the filters', function () {
+it('keeps a genre across kinds only when the other kind has one of that name, and going back to search clears the filters', function () {
     fakeBrowserSearch(
         ['inter' => [[movieListing(7, title: 'Inter movie')]]],
         [movieListings(1, 3)],
@@ -156,42 +152,122 @@ it('keeps a genre across tabs only when the other tab has one of that name, and 
 
     $page = visitWithCsp('/search?genre=35');
 
-    $page->click('[data-browse-tab=tv]')->assertSeeIn('[data-slot=search-results]', 'Top rated TV shows');
+    $page->assertPresent('[data-slot=advanced-filters]')->select('#browse-kind', 'tv')->assertSeeIn('[data-slot=search-results]', 'Top rated TV shows');
     expect($page->script('document.querySelector("#browse-genre").value'))->toBe('9035')
         ->and($page->script('[...document.querySelectorAll("#browse-genre option")].map((option) => option.textContent.trim())'))->toBe(['Any genre', 'Comedy', 'Action & Adventure']);
 
     $page->select('#browse-genre', '10759')->assertSeeIn('[data-slot=search-filter-count]', '1 filter active');
-    $page->click('[data-browse-tab=movie]')->assertSeeIn('[data-slot=search-results]', 'Popular movies')
+    $page->select('#browse-kind', 'movie')->assertSeeIn('[data-slot=search-results]', 'Popular movies')
         ->assertMissing('[data-slot=search-filter-count]');
     expect($page->script('document.querySelector("#browse-genre").value'))->toBe('');
 
     $page->select('#browse-genre', '35')->assertSeeIn('[data-slot=search-filter-count]', '1 filter active');
-    $page->typeSlowly('#search-query', 'inter', 60)
-        ->assertSeeIn('[data-slot=search-results]', '1 result')
-        ->assertMissing('[data-slot=search-filter-count]');
-    expect($page->url())->toEndWith('/search?q=inter')
-        ->and($page->script('document.querySelector("#browse-genre").value'))->toBe('');
+    $page->click('[data-slot=back-to-search]')
+        ->assertPresent('#search-query')
+        ->assertMissing('[data-slot=advanced-filters]')
+        ->assertQueryStringMissing('genre');
 
-    $page->fill('#search-query', '')->assertSeeIn('[data-slot=search-results]', 'Popular movies')
-        ->assertMissing('[data-slot=search-filter-count]');
+    $page->typeSlowly('#search-query', 'inter', 60)
+        ->assertSeeIn('[data-slot=search-results]', '1 result');
+    expect($page->url())->toEndWith('/search?q=inter');
 });
 
-it('choosing a genre replaces a typed Name with Browse', function () {
+it('opening Advanced drops a typed Name, hides the search box and browses', function () {
     fakeBrowserSearch(['inter' => [[movieListing(7, title: 'Inter movie')]]], [movieListings(1, 3)], [], [['id' => 35, 'name' => 'Comedy']]);
 
     $page = visitWithCsp('/search?q=inter');
 
-    $page->assertSeeIn('[data-slot=search-results]', '1 result')->assertPresent('#browse-genre');
+    $page->assertSeeIn('[data-slot=search-results]', '1 result')->assertMissing('[data-slot=advanced-filters]');
+    $page->click('[data-slot=advanced-toggle]')
+        ->assertSeeIn('[data-slot=search-results]', 'Popular movies')
+        ->assertSee('Advanced filters')
+        ->assertMissing('#search-query')
+        ->assertQueryStringMissing('q')
+        ->assertNoJavaScriptErrors();
+    expect($page->script('document.activeElement === document.querySelector("[data-slot=back-to-search]")'))->toBeTrue();
+
     $page->select('#browse-genre', '35')
         ->assertSeeIn('[data-slot=search-filter-count]', '1 filter active')
         ->assertSeeIn('[data-slot=search-results]', 'Top rated movies');
-    expect($page->script('document.querySelector("#search-query").value'))->toBe('')
-        ->and($page->url())->toEndWith('/search?genre=35');
+    expect($page->url())->toEndWith('/search?genre=35');
+});
+
+/** Waits for focus to be on the element with the id, as the page moves it after a visit, then puts it back. */
+function expectFocusOn(object $page, string $id): void
+{
+    Execution::instance()->waitForExpectation(
+        fn () => expect($page->script('document.activeElement.id'))->toBe($id),
+    );
+}
+
+it('swaps the search box for Advanced and back, and going back clears every filter, the sort and the kind', function () {
+    fakeBrowserSearch([], [movieListings(1, 3)], [[movieListing(51, title: 'Show 51', kind: TitleKind::TvShow)]], [['id' => 35, 'name' => 'Comedy']], [['id' => 9035, 'name' => 'Comedy']]);
+
+    $page = visitWithCsp('/search');
+
+    $page->assertPresent('#search-query')->assertPresent('[data-slot=advanced-toggle]')->assertMissing('[data-slot=advanced-filters]');
+    $page->click('[data-slot=advanced-toggle]')
+        ->assertMissing('#search-query')
+        ->assertSee('Advanced filters')
+        ->assertPresent('[data-slot=back-to-search]')
+        ->select('#browse-kind', 'tv')
+        ->select('#browse-genre', '9035')
+        ->assertQueryStringHas('genre', '9035')
+        ->assertSeeIn('[data-slot=search-results]', 'Top rated TV shows');
+    // as a user does, focus the sort and change it
+    $page->script('document.querySelector("#browse-sort").focus()');
+    $page->select('#browse-sort', 'popular')
+        ->assertSeeIn('[data-slot=search-filter-count]', '1 filter active')
+        ->assertQueryStringHas('sort', 'popular');
+    // a change of filter leaves focus on the control that was changed, not at the start of the page
+    expectFocusOn($page, 'browse-sort');
+
+    $page->click('[data-slot=back-to-search]')
+        ->assertPresent('#search-query')
+        ->assertMissing('[data-slot=advanced-filters]')
+        ->assertSeeIn('[data-slot=search-results]', 'Popular movies')
+        ->assertQueryStringMissing('tab')
+        ->assertQueryStringMissing('genre')
+        ->assertQueryStringMissing('sort')
+        ->assertNoJavaScriptErrors();
+    expectFocusOn($page, 'search-query');
+
+    $page->click('[data-slot=advanced-toggle]')
+        ->assertValue('#browse-kind', 'movie')
+        ->assertValue('#browse-genre', '')
+        ->assertDontSee('1 filter active');
+});
+
+it('searches the streaming services from the field in the row, ranking the best matches', function () {
+    config(['catalog.image_base_url' => '/test-images/']);
+    $services = array_map(fn (string $name, int $id): array => ['id' => $id, 'name' => $name], ['Netflix', 'Hulu', 'Max', 'Disney Plus', 'Apple TV Plus', 'Prime Video', 'Peacock', 'Paramount Plus', 'Crunchyroll', 'Tubi', 'Pluto TV', 'Shudder', 'The Netflix Basic Plan', 'Channel 7'], range(1, 14));
+    app()->instance(CatalogSource::class, new FakeCatalogSource(browsePages: [movieListings(1, 3)], genres: [['id' => 35, 'name' => 'Comedy']], streamingServices: ['US' => $services]));
+    $listed = 'JSON.stringify([...document.querySelectorAll("[data-slot=search-streaming-services] ul li")].filter((item) => item.querySelector("input[type=checkbox]")).map((item) => item.textContent.trim()))';
+    $field = '[data-slot=search-streaming-services] input[role=searchbox]';
+
+    $page = visitWithCsp('/search');
+    $page->click('[data-slot=advanced-toggle]')->assertPresent($field);
+    expect($page->script("document.querySelector('{$field}').placeholder"))->toBe('Search all 14 services')
+        ->and(json_decode($page->script($listed), true))->toHaveCount(12);
+
+    $page->type($field, 'net')->wait(0.3);
+    expect(json_decode($page->script($listed), true))->toBe(['Netflix', 'The Netflix Basic Plan']);
+
+    $page->click('[data-slot=search-streaming-services] ul li:has(input[type=checkbox]) label >> nth=0')
+        ->assertQueryStringHas('services', '1')
+        ->assertSeeIn('[data-slot=search-filter-count]', '1 filter active');
+
+    $page->type($field, 'zzzz')->wait(0.3)->assertSee('No streaming service matches');
+    $page->fill($field, '')->wait(0.3);
+    expect(json_decode($page->script($listed), true))->toHaveCount(12)
+        ->and($page->script('document.querySelectorAll("[data-slot=search-streaming-services] input:checked").length'))->toBe(1);
+    $page->assertNoJavaScriptErrors();
 });
 
 it('shows a no-match message with a way out when the genre matches nothing', function () {
     fakeBrowserSearch([], [movieListings(1, 3)], [], [['id' => 35, 'name' => 'Comedy']]);
     $page = visitWithCsp('/search');
+    $page->click('[data-slot=advanced-toggle]');
     app()->instance(CatalogSource::class, new FakeCatalogSource(browsePages: [[]], genres: [['id' => 35, 'name' => 'Comedy']]));
 
     $page->select('#browse-genre', '35')
@@ -389,8 +465,9 @@ it('fills in the IMDb ratings of Browse cards after render, on the Movies tab, t
         ->assertSeeIn('[data-tmdb-id="1"] [data-slot="external-rating"]', '8.1')
         ->assertMissing('[data-slot="ratings-pending"]');
 
+    $page->click('[data-slot=advanced-toggle]');
     $page->script(delayRatingsRequests(1500));
-    $page->click('[data-browse-tab=tv]')
+    $page->select('#browse-kind', 'tv')
         ->assertPresent('[data-tmdb-id="2"] [data-slot="ratings-pending"]')
         ->wait(2)
         ->assertSeeIn('[data-tmdb-id="2"] [data-slot="external-rating"]', 'IMDb')
@@ -403,7 +480,7 @@ it('fills in the IMDb ratings of Browse cards after render, on the Movies tab, t
         ->assertNoJavaScriptErrors();
 });
 
-it('shows TV Shows beside Movies, filters them with the chips, and fills in a TV Show\'s IMDb rating after render', function () {
+it('shows TV Shows beside Movies in a search, with no chips to filter them, and fills in a TV Show\'s IMDb rating after render', function () {
     config(['ratings.sources.imdb.enabled' => true]);
     app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000099', 9.2, 700);
     $source = fakeBrowserSearch(['inter' => [[
@@ -416,20 +493,12 @@ it('shows TV Shows beside Movies, filters them with the chips, and fills in a TV
     $page = visitWithCsp('/search');
     $page->typeSlowly('#search-query', 'inter', 20)
         ->wait(2)
-        ->assertSeeIn('[data-kind-chip="all"]', '3')
-        ->assertSeeIn('[data-kind-chip="movie"]', '1')
-        ->assertSeeIn('[data-kind-chip="tv"]', '2')
+        ->assertSeeIn('[data-slot=search-results]', '3 results')
+        ->assertPresent('[data-tmdb-id="1"]')
         ->assertSeeIn('[data-tmdb-id="2"] [data-slot="tv-badge"]', 'TV')
         ->assertSeeIn('[data-tmdb-id="2"] [data-slot="external-rating"]', 'IMDb')
         ->assertSeeIn('[data-tmdb-id="2"] [data-slot="external-rating"]', '9.2')
         ->assertSeeIn('[data-tmdb-id="3"]', 'Not yet rated')
-        ->click('[data-kind-chip="movie"]')
-        ->assertPresent('[data-tmdb-id="1"]')
-        ->assertMissing('[data-tmdb-id="2"]')
-        ->click('[data-kind-chip="tv"]')
-        ->assertMissing('[data-tmdb-id="1"]')
-        ->assertPresent('[data-tmdb-id="2"]')
-        ->click('[data-kind-chip="all"]')
-        ->assertPresent('[data-tmdb-id="1"]')
+        ->assertMissing('[data-kind-chip]')
         ->assertNoJavaScriptErrors();
 });

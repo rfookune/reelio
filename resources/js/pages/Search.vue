@@ -1,21 +1,34 @@
 <script setup lang="ts">
 import { Head, InfiniteScroll, router } from '@inertiajs/vue3';
-import { LoaderCircle, RotateCw, Search as SearchIcon } from '@lucide/vue';
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import {
+    ArrowLeft,
+    LoaderCircle,
+    RotateCw,
+    Search as SearchIcon,
+    SlidersHorizontal,
+    X,
+} from '@lucide/vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import PosterCard from '@/components/shared/PosterCard.vue';
 import type { PosterCardTitle } from '@/components/shared/PosterCard.vue';
 import PosterCardSkeleton from '@/components/shared/PosterCardSkeleton.vue';
 import StreamingServiceCheckbox from '@/components/shared/StreamingServiceCheckbox.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {
+    InputGroup,
+    InputGroupAddon,
+    InputGroupButton,
+    InputGroupInput,
+} from '@/components/ui/input-group';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { announce } from '@/composables/useAnnouncer';
 import { useLookedUpRatings } from '@/composables/useLookedUpRatings';
 import { useTvShowWatchlistToggle } from '@/composables/useTvShowWatchlistToggle';
 import type { TvShowWatchlistFacts } from '@/composables/useTvShowWatchlistToggle';
-import { cardKey, filterByKind, kindCounts } from '@/lib/searchKinds';
-import type { CardKind, KindFilter } from '@/lib/searchKinds';
+import { cardKey } from '@/lib/searchKinds';
+import { rankServices } from '@/lib/streamingServiceSearch';
+import type { CardKind } from '@/lib/searchKinds';
 import { search } from '@/routes';
 import type { UserMovies } from '@/types';
 
@@ -124,11 +137,6 @@ const BROWSE_TABS: { value: CardKind; label: string }[] = [
     { value: 'movie', label: 'Movies' },
     { value: 'tv', label: 'TV Shows' },
 ];
-const KIND_CHIPS: { value: KindFilter; label: string }[] = [
-    { value: 'all', label: 'All' },
-    { value: 'movie', label: 'Movies' },
-    { value: 'tv', label: 'TV Shows' },
-];
 const DEBOUNCE_MILLISECONDS = 300;
 const EAGER_CARDS = 6;
 const SHIMMER_CARDS = 12;
@@ -140,7 +148,10 @@ const GRID =
 
 /** The input's text. It is filled from the query once, so a slow answer never overwrites what is being typed. */
 const text = ref(props.query);
-const input = ref<HTMLInputElement | null>(null);
+/** The way back from the advanced filters, which takes focus when they open. */
+const backButton = ref<{ $el: HTMLElement } | null>(null);
+/** The search field's component; its root element is the input. */
+const input = ref<{ $el: HTMLInputElement } | null>(null);
 /** The query last asked for: the one on the page, or the one in flight. */
 const requestedQuery = ref(props.query);
 /** Typed since the last search was asked for. */
@@ -188,25 +199,25 @@ const runtimeBandChoice = ref<RuntimeBandValue | null>(props.runtimeBand);
 const languageChoice = ref<string | null>(props.language);
 /** The Streaming services chosen, by id; they follow the page's while Browse shows. */
 const serviceChoices = ref<number[]>([...props.selectedStreamingServices]);
-const topServices = computed(() =>
-    props.streamingServices.slice(0, SHOWN_STREAMING_SERVICES),
-);
-const moreServices = computed(() =>
-    props.streamingServices.slice(SHOWN_STREAMING_SERVICES),
-);
-/** Whether "More" is open: it opens when a service behind it is chosen. */
-const moreServicesOpen = ref(
-    moreServices.value.some((service) =>
-        serviceChoices.value.includes(service.id),
-    ),
-);
 const serviceSearch = ref('');
-const foundMoreServices = computed(() => {
-    const wanted = serviceSearch.value.trim().toLowerCase();
 
-    return moreServices.value.filter((service) =>
-        service.name.toLowerCase().includes(wanted),
-    );
+/** The services listed: the recommended ones, with any chosen beyond them, or the best matches while searching. */
+const listedServices = computed(() => {
+    const query = serviceSearch.value.trim();
+
+    if (query === '') {
+        const recommended = props.streamingServices.slice(
+            0,
+            SHOWN_STREAMING_SERVICES,
+        );
+        const chosenBeyond = props.streamingServices
+            .slice(SHOWN_STREAMING_SERVICES)
+            .filter((service) => serviceChoices.value.includes(service.id));
+
+        return [...recommended, ...chosenBeyond];
+    }
+
+    return rankServices(props.streamingServices, query);
 });
 const atServiceLimit = computed(
     () => serviceChoices.value.length >= props.maximumStreamingServices,
@@ -232,15 +243,6 @@ const activeFilterCount = computed(
 );
 const cantBrowse = computed(
     () => `We can't load ${browseNoun.value} right now`,
-);
-/** The chip chosen; it filters the cards on the page, which the chips' counts are over. */
-const kindFilter = ref<KindFilter>('all');
-const counts = computed(() => kindCounts(props.results.data));
-const shownResults = computed(() =>
-    filterByKind(props.results.data, kindFilter.value),
-);
-const emptyKindLabel = computed(() =>
-    kindFilter.value === 'tv' ? 'TV shows' : 'movies',
 );
 const settling = computed(() => typing.value || pending.value);
 const hasResults = computed(() => props.results.data.length > 0);
@@ -275,6 +277,8 @@ const moreError = computed(
             ? CANT_LOAD_MORE
             : null),
 );
+/** Whether the advanced filters stand in for the search box; a page that lands with filters in force starts there. */
+const advancedOpen = ref(activeFilterCount.value > 0 && !isSearching.value);
 /** Browse answered with no Movies to list. */
 const browseEmpty = computed(
     () =>
@@ -338,6 +342,7 @@ function visit(query: string, force = false, replace = true): void {
     }
 
     const visitNumber = ++latestVisit;
+    const focusedBefore = document.activeElement;
     requestedQuery.value = query;
     failure.value = null;
     moreFailure.value = null;
@@ -443,8 +448,29 @@ function visit(query: string, force = false, replace = true): void {
                 pending.value = false;
                 replacingList.value = false;
             }
+
+            keepFocus(focusedBefore);
         },
     });
+}
+
+/**
+ * Puts focus back on the control that had it when a visit began, as the page moves focus to its start after each
+ * visit, which would take a keyboard user off a filter they have just changed. A control that left the page, like
+ * the button that swaps the search box for the filters, isn't restored: the page's start, marked `data-autofocus`, is
+ * where focus belongs then.
+ */
+function keepFocus(element: Element | null): void {
+    void nextTick(() => {
+        if (element instanceof HTMLElement && element.isConnected) {
+            element.focus({ preventScroll: true });
+        }
+    });
+}
+
+/** The kind picked in the dropdown; it browses that tab. */
+function onKindChange(event: Event): void {
+    chooseTab((event.target as HTMLSelectElement).value as CardKind);
 }
 
 /** Browses the other tab: its first page replaces the list, and the tab is kept in the URL. */
@@ -520,8 +546,37 @@ function onSortChange(event: Event): void {
     clearFilterVisit();
 }
 
-/** Drops every filter and browses again; the sort chosen stays. */
-function clearFilters(): void {
+/** Swaps the search box for the advanced filters; whatever name was typed is dropped, and with it its results. */
+function openAdvanced(): void {
+    text.value = '';
+    advancedOpen.value = true;
+
+    if (props.query !== '') {
+        clearFilterVisit();
+    }
+
+    // The button that was pressed leaves the page, so focus goes to the first thing of the panel.
+    nextTick(() => backButton.value?.$el.focus());
+}
+
+/** Goes back to the search box with every filter, the sort and the tab as they start, browsing again if any was set. */
+function backToSearch(): void {
+    const changed =
+        activeFilterCount.value > 0 ||
+        sortChoice.value !== null ||
+        browseTab.value !== 'movie';
+    advancedOpen.value = false;
+    resetFilters();
+    sortChoice.value = null;
+    browseTab.value = 'movie';
+
+    if (changed) {
+        clearFilterVisit();
+    }
+}
+
+/** Puts every filter back to none, leaving the sort and the tab as they are. */
+function resetFilters(): void {
     genreChoice.value = null;
     highlyRatedChoice.value = false;
     showSeenChoice.value = false;
@@ -529,6 +584,11 @@ function clearFilters(): void {
     runtimeBandChoice.value = null;
     languageChoice.value = null;
     serviceChoices.value = [];
+}
+
+/** Drops every filter and browses again; the sort chosen stays. */
+function clearFilters(): void {
+    resetFilters();
     clearFilterVisit();
 }
 
@@ -566,7 +626,7 @@ function failMore(message: string): void {
 
 /** Asks again, from the input, which keeps focus while the error it was in goes away. */
 function retry(): void {
-    input.value?.focus();
+    input.value?.$el.focus();
     visit(wantedQuery.value, true);
 }
 
@@ -659,14 +719,6 @@ watch(
     (services) => {
         if (!isSearching.value) {
             serviceChoices.value = [...services];
-
-            if (
-                moreServices.value.some((service) =>
-                    services.includes(service.id),
-                )
-            ) {
-                moreServicesOpen.value = true;
-            }
         }
     },
 );
@@ -711,243 +763,294 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
         <Head title="Search">
             <meta name="robots" content="noindex" />
         </Head>
-        <h1 class="text-3xl font-semibold tracking-tight">Search</h1>
+        <h1 class="sr-only">Search</h1>
 
-        <form role="search" @submit.prevent="visit(wantedQuery)">
-            <label for="search-query" class="sr-only">{{
-                includesTvShows
-                    ? 'Search movies and TV shows by title'
-                    : 'Search movies by title'
-            }}</label>
-            <div class="relative max-w-2xl">
-                <SearchIcon
-                    class="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted"
-                    aria-hidden="true"
-                />
-                <input
-                    id="search-query"
-                    ref="input"
-                    v-model="text"
-                    v-focus="query === ''"
-                    :data-autofocus="query === '' ? '' : undefined"
-                    type="search"
-                    name="q"
-                    autocomplete="off"
-                    enterkeyhint="search"
-                    :maxlength="maximumQueryLength"
-                    placeholder="Search by title"
-                    class="h-11 w-full rounded-xl border border-control bg-surface pr-4 pl-12 text-base outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/40 md:h-9"
-                />
-            </div>
-        </form>
-
-        <div
-            v-if="includesTvShows && !isSearching"
-            role="group"
-            aria-label="Browse"
-            class="flex flex-wrap gap-2"
-        >
-            <Button
-                v-for="tabChoice in BROWSE_TABS"
-                :key="tabChoice.value"
-                type="button"
-                size="sm"
-                :variant="browseTab === tabChoice.value ? 'default' : 'outline'"
-                :aria-pressed="browseTab === tabChoice.value"
-                :data-browse-tab="tabChoice.value"
-                @click="chooseTab(tabChoice.value)"
-            >
-                {{ tabChoice.label }}
-            </Button>
-        </div>
-
-        <div
-            role="group"
-            aria-label="Filters"
-            data-slot="search-filters"
-            class="flex flex-wrap items-end gap-x-4 gap-y-3"
-        >
-            <div
-                v-if="genres.length > 0"
-                class="flex w-full flex-col gap-1.5 sm:w-56"
-            >
-                <label for="browse-genre" class="text-sm text-muted"
-                    >Genre</label
+        <template v-if="!advancedOpen">
+            <form role="search" @submit.prevent="visit(wantedQuery)">
+                <label for="search-query" class="sr-only">{{
+                    includesTvShows
+                        ? 'Search movies and TV shows by title'
+                        : 'Search movies by title'
+                }}</label>
+                <InputGroup
+                    class="h-14 w-full border-control bg-surface [--input-group-inset:0.5rem] [--input-group-radius:var(--radius-2xl)]"
                 >
-                <NativeSelect
-                    id="browse-genre"
-                    touch
-                    :value="genreChoice ?? ''"
-                    @change="onGenreChange"
-                >
-                    <option value="">Any genre</option>
-                    <option
-                        v-for="option in genres"
-                        :key="option.id"
-                        :value="option.id"
-                        :selected="option.id === genreChoice"
-                    >
-                        {{ option.name }}
-                    </option>
-                </NativeSelect>
-            </div>
-            <label class="flex items-center gap-2 text-sm text-muted">
-                <Checkbox
-                    id="browse-highly-rated"
-                    :model-value="highlyRatedChoice"
-                    @update:model-value="
-                        (checked) => {
-                            highlyRatedChoice = checked === true;
-                            clearFilterVisit();
-                        }
-                    "
-                />
-                Highly rated (TMDB score 7+)
-            </label>
-            <label
-                v-if="canHideSeen"
-                class="flex items-center gap-2 text-sm text-muted"
-            >
-                <Checkbox
-                    id="browse-show-seen"
-                    :model-value="showSeenChoice"
-                    @update:model-value="
-                        (checked) => {
-                            showSeenChoice = checked === true;
-                            clearFilterVisit();
-                        }
-                    "
-                />
-                Show seen
-            </label>
-            <div class="flex w-full flex-col gap-1.5 sm:w-44">
-                <label for="browse-era" class="text-sm text-muted">Era</label>
-                <NativeSelect
-                    id="browse-era"
-                    touch
-                    :value="eraChoice ?? ''"
-                    @change="onEraChange"
-                >
-                    <option value="">Any era</option>
-                    <option value="2020s">2020s</option>
-                    <option value="2010s">2010s</option>
-                    <option value="2000s">2000s</option>
-                    <option value="1990s">1990s</option>
-                    <option value="older">Older</option>
-                </NativeSelect>
-            </div>
-            <div class="flex w-full flex-col gap-1.5 sm:w-52">
-                <label for="browse-runtime" class="text-sm text-muted"
-                    >Runtime</label
-                >
-                <NativeSelect
-                    id="browse-runtime"
-                    touch
-                    :value="runtimeBandChoice ?? ''"
-                    @change="onRuntimeBandChange"
-                >
-                    <option value="">Any runtime</option>
-                    <option value="under_90">Under 90 minutes</option>
-                    <option value="90_to_120">90–120 minutes</option>
-                    <option value="over_120">Over 120 minutes</option>
-                </NativeSelect>
-            </div>
-            <p
-                v-if="runtimeBandChoice !== null"
-                data-slot="search-movies-only"
-                role="status"
-                class="text-sm text-muted"
-            >
-                Movies only
-            </p>
-            <div class="flex w-full flex-col gap-1.5 sm:w-52">
-                <label for="browse-language" class="text-sm text-muted"
-                    >Original language</label
-                >
-                <NativeSelect
-                    id="browse-language"
-                    touch
-                    :value="languageChoice ?? ''"
-                    @change="onLanguageChange"
-                >
-                    <option value="">Any language</option>
-                    <option
-                        v-for="option in languages"
-                        :key="option.code"
-                        :value="option.code"
-                        :lang="option.code"
-                        :selected="option.code === languageChoice"
-                    >
-                        {{ option.name }}
-                    </option>
-                </NativeSelect>
-            </div>
-            <fieldset
-                v-if="streamingServices.length > 0"
-                data-slot="search-streaming-services"
-                class="flex w-full min-w-0 flex-col gap-2"
-            >
-                <legend class="text-sm text-muted">Streaming service</legend>
+                    <InputGroupAddon class="pl-5">
+                        <SearchIcon class="size-6" aria-hidden="true" />
+                    </InputGroupAddon>
+                    <InputGroupInput
+                        id="search-query"
+                        ref="input"
+                        v-model="text"
+                        v-focus="query === ''"
+                        :data-autofocus="query === '' ? '' : undefined"
+                        type="search"
+                        name="q"
+                        autocomplete="off"
+                        enterkeyhint="search"
+                        :maxlength="maximumQueryLength"
+                        placeholder="Search by title"
+                        class="h-full text-lg md:text-lg"
+                    />
+                    <InputGroupAddon align="inline-end" class="pr-4">
+                        <InputGroupButton
+                            type="button"
+                            data-slot="advanced-toggle"
+                            variant="outline"
+                            size="sm"
+                            class="h-10 px-4 text-base"
+                            @click="openAdvanced"
+                        >
+                            <SlidersHorizontal aria-hidden="true" />
+                            Advanced
+                        </InputGroupButton>
+                    </InputGroupAddon>
+                </InputGroup>
                 <p
-                    v-if="atServiceLimit"
-                    data-slot="search-service-limit"
+                    data-slot="search-scope-note"
+                    class="mt-2 text-sm text-muted"
+                >
+                    Searching by name covers movies and TV shows together. Use
+                    Advanced to pick one and narrow it with filters.
+                </p>
+            </form>
+        </template>
+
+        <section
+            v-else
+            data-slot="advanced-filters"
+            aria-labelledby="advanced-filters-title"
+            class="flex flex-col gap-6"
+        >
+            <div class="flex flex-col gap-4">
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    class="-ml-3 self-start"
+                    ref="backButton"
+                    data-autofocus
+                    data-slot="back-to-search"
+                    @click="backToSearch"
+                >
+                    <ArrowLeft aria-hidden="true" />
+                    Back to search
+                </Button>
+                <div
+                    class="flex flex-wrap items-start justify-between gap-x-8 gap-y-4"
+                >
+                    <div class="flex max-w-2xl flex-col gap-2">
+                        <h2
+                            id="advanced-filters-title"
+                            class="text-3xl font-semibold tracking-tight"
+                        >
+                            Advanced filters
+                        </h2>
+                        <p class="text-muted">
+                            Browse movies or TV shows one kind at a time and
+                            narrow them down. Searching by name is paused here,
+                            since a name can't be combined with filters. Go back
+                            to search to look up a title.
+                        </p>
+                    </div>
+                    <div
+                        data-slot="advanced-header-controls"
+                        class="flex flex-wrap items-end gap-4"
+                    >
+                        <div v-if="includesTvShows" class="w-40">
+                            <NativeSelect
+                                id="browse-kind"
+                                touch
+                                aria-label="Browse"
+                                :value="browseTab"
+                                @change="onKindChange"
+                            >
+                                <option
+                                    v-for="tabChoice in BROWSE_TABS"
+                                    :key="tabChoice.value"
+                                    :value="tabChoice.value"
+                                    :selected="tabChoice.value === browseTab"
+                                >
+                                    {{ tabChoice.label }}
+                                </option>
+                            </NativeSelect>
+                        </div>
+                        <div class="w-48">
+                            <NativeSelect
+                                id="browse-sort"
+                                touch
+                                aria-label="Sort by"
+                                :value="shownSort"
+                                @change="onSortChange"
+                            >
+                                <option
+                                    v-for="option in SORT_OPTIONS"
+                                    :key="option.value"
+                                    :value="option.value"
+                                    :selected="option.value === shownSort"
+                                >
+                                    Sort: {{ option.label }}
+                                </option>
+                            </NativeSelect>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                role="group"
+                aria-label="Filters"
+                data-slot="search-filters"
+                class="flex flex-col gap-6 rounded-xl border border-line bg-surface p-5"
+            >
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div
+                        v-if="genres.length > 0"
+                        class="flex w-full flex-col gap-1.5"
+                    >
+                        <label for="browse-genre" class="text-sm text-muted"
+                            >Genre</label
+                        >
+                        <NativeSelect
+                            id="browse-genre"
+                            touch
+                            :value="genreChoice ?? ''"
+                            @change="onGenreChange"
+                        >
+                            <option value="">Any genre</option>
+                            <option
+                                v-for="option in genres"
+                                :key="option.id"
+                                :value="option.id"
+                                :selected="option.id === genreChoice"
+                            >
+                                {{ option.name }}
+                            </option>
+                        </NativeSelect>
+                    </div>
+                    <div class="flex w-full flex-col gap-1.5">
+                        <label for="browse-era" class="text-sm text-muted"
+                            >Era</label
+                        >
+                        <NativeSelect
+                            id="browse-era"
+                            touch
+                            :value="eraChoice ?? ''"
+                            @change="onEraChange"
+                        >
+                            <option value="">Any era</option>
+                            <option value="2020s">2020s</option>
+                            <option value="2010s">2010s</option>
+                            <option value="2000s">2000s</option>
+                            <option value="1990s">1990s</option>
+                            <option value="older">Older</option>
+                        </NativeSelect>
+                    </div>
+                    <div class="flex w-full flex-col gap-1.5">
+                        <label for="browse-runtime" class="text-sm text-muted"
+                            >Runtime</label
+                        >
+                        <NativeSelect
+                            id="browse-runtime"
+                            touch
+                            :value="runtimeBandChoice ?? ''"
+                            @change="onRuntimeBandChange"
+                        >
+                            <option value="">Any runtime</option>
+                            <option value="under_90">Under 90 minutes</option>
+                            <option value="90_to_120">90–120 minutes</option>
+                            <option value="over_120">Over 120 minutes</option>
+                        </NativeSelect>
+                    </div>
+                    <div class="flex w-full flex-col gap-1.5">
+                        <label for="browse-language" class="text-sm text-muted"
+                            >Original language</label
+                        >
+                        <NativeSelect
+                            id="browse-language"
+                            touch
+                            :value="languageChoice ?? ''"
+                            @change="onLanguageChange"
+                        >
+                            <option value="">Any language</option>
+                            <option
+                                v-for="option in languages"
+                                :key="option.code"
+                                :value="option.code"
+                                :lang="option.code"
+                                :selected="option.code === languageChoice"
+                            >
+                                {{ option.name }}
+                            </option>
+                        </NativeSelect>
+                    </div>
+                </div>
+                <p
+                    v-if="runtimeBandChoice !== null"
+                    data-slot="search-movies-only"
+                    role="status"
                     class="text-sm text-muted"
                 >
-                    You can choose up to {{ maximumStreamingServices }}
-                    streaming services; clear one to choose another.
+                    Movies only
                 </p>
-                <ul class="flex flex-wrap gap-2">
-                    <li
-                        v-for="service in topServices"
-                        :key="service.id"
-                        class="contents"
+                <div
+                    v-if="streamingServices.length > 0"
+                    class="flex flex-col gap-3"
+                >
+                    <h3 class="text-base font-semibold">Where to watch</h3>
+
+                    <fieldset
+                        data-slot="search-streaming-services"
+                        class="flex w-full min-w-0 flex-col gap-3"
                     >
-                        <StreamingServiceCheckbox
-                            :name="service.name"
-                            :checked="serviceChoices.includes(service.id)"
-                            :disabled="
-                                atServiceLimit &&
-                                !serviceChoices.includes(service.id)
-                            "
-                            @change="
-                                (chosen) => toggleService(service.id, chosen)
-                            "
-                        />
-                    </li>
-                </ul>
-                <div v-if="moreServices.length > 0" class="flex flex-col gap-2">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        class="self-start"
-                        data-slot="search-more-services"
-                        :aria-expanded="moreServicesOpen"
-                        aria-controls="more-streaming-services"
-                        @click="moreServicesOpen = !moreServicesOpen"
-                    >
-                        {{ moreServicesOpen ? 'Fewer' : 'More' }}
-                    </Button>
-                    <div
-                        v-show="moreServicesOpen"
-                        id="more-streaming-services"
-                        class="flex flex-col gap-2"
-                    >
-                        <label
-                            for="browse-service-search"
+                        <legend class="sr-only">Streaming service</legend>
+                        <p
+                            v-if="atServiceLimit"
+                            data-slot="search-service-limit"
                             class="text-sm text-muted"
-                            >Find a streaming service</label
                         >
-                        <Input
-                            id="browse-service-search"
-                            v-model="serviceSearch"
-                            type="search"
-                            autocomplete="off"
-                            class="sm:w-64"
-                        />
+                            You can choose up to {{ maximumStreamingServices }}
+                            streaming services; clear one to choose another.
+                        </p>
                         <ul class="flex flex-wrap gap-2">
+                            <!-- The search of the services is a compact field in the row, always there. -->
+                            <li class="contents">
+                                <InputGroup class="h-[34px] w-64 max-w-full">
+                                    <InputGroupAddon>
+                                        <SearchIcon
+                                            class="size-4"
+                                            aria-hidden="true"
+                                        />
+                                    </InputGroupAddon>
+                                    <InputGroupInput
+                                        v-model="serviceSearch"
+                                        type="text"
+                                        role="searchbox"
+                                        autocomplete="off"
+                                        :placeholder="`Search all ${streamingServices.length} services`"
+                                        aria-label="Search streaming services"
+                                        @keydown.esc.prevent="
+                                            serviceSearch = ''
+                                        "
+                                    />
+                                    <InputGroupAddon
+                                        v-if="serviceSearch !== ''"
+                                        align="inline-end"
+                                    >
+                                        <InputGroupButton
+                                            type="button"
+                                            size="icon-xs"
+                                            aria-label="Clear search"
+                                            @click="serviceSearch = ''"
+                                        >
+                                            <X aria-hidden="true" />
+                                        </InputGroupButton>
+                                    </InputGroupAddon>
+                                </InputGroup>
+                            </li>
+
                             <li
-                                v-for="service in foundMoreServices"
+                                v-for="service in listedServices"
                                 :key="service.id"
                                 class="contents"
                             >
@@ -968,53 +1071,86 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
                             </li>
                         </ul>
                         <p
-                            v-if="foundMoreServices.length === 0"
-                            class="text-sm text-muted"
+                            v-if="serviceSearch.trim() !== ''"
+                            role="status"
+                            :class="
+                                listedServices.length === 0
+                                    ? 'text-sm text-muted'
+                                    : 'sr-only'
+                            "
                         >
-                            No streaming service matches
+                            {{
+                                listedServices.length === 0
+                                    ? 'No streaming service matches'
+                                    : `${listedServices.length} streaming services found`
+                            }}
                         </p>
-                    </div>
+                    </fieldset>
                 </div>
-            </fieldset>
-            <div class="flex w-full flex-col gap-1.5 sm:w-44">
-                <label for="browse-sort" class="text-sm text-muted"
-                    >Sort by</label
-                >
-                <NativeSelect
-                    id="browse-sort"
-                    touch
-                    :value="shownSort"
-                    @change="onSortChange"
-                >
-                    <option
-                        v-for="option in SORT_OPTIONS"
-                        :key="option.value"
-                        :value="option.value"
-                        :selected="option.value === shownSort"
+                <div class="flex flex-col gap-3">
+                    <label class="flex items-center gap-2 text-sm text-muted">
+                        <Checkbox
+                            id="browse-highly-rated"
+                            :model-value="highlyRatedChoice"
+                            @update:model-value="
+                                (checked) => {
+                                    highlyRatedChoice = checked === true;
+                                    clearFilterVisit();
+                                }
+                            "
+                        />
+                        Highly rated (TMDB score 7+)
+                    </label>
+                    <label
+                        v-if="canHideSeen"
+                        class="flex items-center gap-2 text-sm text-muted"
                     >
-                        {{ option.label }}
-                    </option>
-                </NativeSelect>
+                        <Checkbox
+                            id="browse-show-seen"
+                            :model-value="showSeenChoice"
+                            @update:model-value="
+                                (checked) => {
+                                    showSeenChoice = checked === true;
+                                    clearFilterVisit();
+                                }
+                            "
+                        />
+                        Show seen
+                    </label>
+                </div>
+                <div
+                    data-slot="search-filter-footer"
+                    class="flex min-h-8 flex-wrap items-center justify-between gap-3 border-t border-line pt-4"
+                >
+                    <p
+                        v-if="activeFilterCount > 0 && !replacingList"
+                        data-slot="search-filter-count"
+                        class="text-sm text-muted tabular-nums"
+                    >
+                        {{ activeFilterCount }}
+                        {{ activeFilterCount === 1 ? 'filter' : 'filters' }}
+                        active
+                    </p>
+                    <p
+                        v-else-if="activeFilterCount === 0"
+                        class="text-sm text-muted"
+                    >
+                        No filters active
+                    </p>
+                    <Button
+                        v-if="activeFilterCount > 0"
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        class="ml-auto"
+                        data-slot="search-clear-filters"
+                        @click="clearFilters"
+                    >
+                        Clear filters
+                    </Button>
+                </div>
             </div>
-            <p
-                v-if="activeFilterCount > 0 && !replacingList"
-                data-slot="search-filter-count"
-                class="text-sm text-muted tabular-nums"
-            >
-                {{ activeFilterCount }}
-                {{ activeFilterCount === 1 ? 'filter' : 'filters' }} active
-            </p>
-            <Button
-                v-if="activeFilterCount > 0"
-                type="button"
-                variant="ghost"
-                size="sm"
-                data-slot="search-clear-filters"
-                @click="clearFilters"
-            >
-                Clear filters
-            </Button>
-        </div>
+        </section>
 
         <section
             v-if="pageError !== null"
@@ -1088,7 +1224,7 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
         >
             <h2
                 id="search-results-heading"
-                class="text-sm text-muted tabular-nums"
+                class="text-2xl font-bold tracking-tight tabular-nums"
             >
                 {{
                     isSearching
@@ -1096,26 +1232,6 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
                         : `${shownSortLabel} ${browseNoun}`
                 }}
             </h2>
-            <div
-                v-if="includesTvShows && isSearching"
-                role="group"
-                aria-label="Filter results by kind"
-                class="flex flex-wrap gap-2"
-            >
-                <Button
-                    v-for="chip in KIND_CHIPS"
-                    :key="chip.value"
-                    type="button"
-                    size="sm"
-                    :variant="kindFilter === chip.value ? 'default' : 'outline'"
-                    :aria-pressed="kindFilter === chip.value"
-                    :data-kind-chip="chip.value"
-                    @click="kindFilter = chip.value"
-                >
-                    {{ chip.label }}
-                    <span class="tabular-nums">{{ counts[chip.value] }}</span>
-                </Button>
-            </div>
             <InfiniteScroll
                 data="results"
                 manual
@@ -1141,17 +1257,9 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
                     </div>
                 </template>
 
-                <p
-                    v-if="shownResults.length === 0"
-                    data-slot="search-kind-empty"
-                    class="text-sm text-muted"
-                >
-                    No {{ emptyKindLabel }} in these results. Show more results
-                    to look further.
-                </p>
                 <ul ref="resultsList" :class="GRID">
                     <li
-                        v-for="(movie, index) in shownResults"
+                        v-for="(movie, index) in results.data"
                         :key="cardKey(movie)"
                     >
                         <PosterCard

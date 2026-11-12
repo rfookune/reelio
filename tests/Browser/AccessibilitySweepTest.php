@@ -86,6 +86,7 @@ function accessibilitySweepUrl(string $scenario): string
                 browsePages: [movieListings(1, 8)],
                 genres: [['id' => 28, 'name' => 'Action'], ['id' => 35, 'name' => 'Comedy']],
                 tvGenres: [['id' => 9035, 'name' => 'Comedy']],
+                streamingServices: ['US' => array_map(fn (int $id): array => ['id' => $id, 'name' => "Service {$id}"], range(1, 14))],
             ));
 
             return '/search?genre=35';
