@@ -21,6 +21,7 @@ export type LookupScope = {
     /** The Streaming service ids, comma-separated. */
     services: string;
     sort: string;
+    highly_rated: string;
 };
 
 function scopeKey(scope: LookupScope): string {
@@ -46,7 +47,15 @@ export function useLookedUpRatings(
     const http = useHttp<
         LookupScope & { page: number },
         { ratings: Record<string, ExternalRating[]> }
-    >({ q: '', tab: '', genre: '', services: '', sort: '', page: 1 });
+    >({
+        q: '',
+        tab: '',
+        genre: '',
+        services: '',
+        sort: '',
+        highly_rated: '',
+        page: 1,
+    });
     let queue: Promise<void> = Promise.resolve();
 
     const needsLookup = (card: SearchCard): boolean =>
@@ -75,6 +84,7 @@ export function useLookedUpRatings(
                 http.genre = named.genre;
                 http.services = named.services;
                 http.sort = named.sort;
+                http.highly_rated = named.highly_rated;
                 http.page = page;
                 const response = await http.get(ratingsRoute.url());
 

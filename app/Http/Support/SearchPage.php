@@ -87,6 +87,7 @@ class SearchPage
         private string $country = '',
         private array $requestedStreamingServices = [],
         private bool $readsCacheOnly = false,
+        private bool $requestedHighlyRated = false,
     ) {}
 
     /**
@@ -111,6 +112,7 @@ class SearchPage
             VisitorCountry::resolve($request)->code,
             self::streamingServicesFrom($request),
             self::reloadsUserMoviesOnly($request),
+            self::highlyRatedFrom($request),
         );
     }
 
@@ -120,7 +122,7 @@ class SearchPage
      */
     public static function cachedFromRequest(Request $request, CatalogSearch $catalogSearch, BrowseOptions $browseOptions, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
-        return new self($catalogSearch, $browseOptions, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), self::genreFrom($request), BrowseSort::fromRequestValue($request->query('sort')), VisitorCountry::resolve($request)->code, self::streamingServicesFrom($request), readsCacheOnly: true);
+        return new self($catalogSearch, $browseOptions, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), self::genreFrom($request), BrowseSort::fromRequestValue($request->query('sort')), VisitorCountry::resolve($request)->code, self::streamingServicesFrom($request), readsCacheOnly: true, requestedHighlyRated: self::highlyRatedFrom($request));
     }
 
     /** The request's `q`, trimmed of Unicode whitespace and cut to `search.maximum_query_length` characters. */
@@ -182,6 +184,12 @@ class SearchPage
     public static function reloadsUserMoviesOnly(Request $request): bool
     {
         return $request->header('X-Inertia-Partial-Component') === 'Search' && $request->header('X-Inertia-Partial-Data') === 'userMovies';
+    }
+
+    /** Whether the request asks for the known Highly rated option. */
+    private static function highlyRatedFrom(Request $request): bool
+    {
+        return $request->query('highly_rated') === '1';
     }
 
     /** Whether the query is long enough to search by Name; if not, the page is Browse. */
@@ -309,6 +317,12 @@ class SearchPage
         return $this->filters()->genreId;
     }
 
+    /** Whether Browse is limited to Titles with a Highly rated TMDB score. */
+    public function highlyRated(): bool
+    {
+        return $this->filters()->highlyRated;
+    }
+
     /** The order Browse is in: the request's `sort` when it is an offered one, else the default of the filters. */
     public function sort(): BrowseSort
     {
@@ -361,7 +375,7 @@ class SearchPage
      */
     private function filters(): BrowseFilters
     {
-        return $this->filters ??= $this->isSearching() ? new BrowseFilters : new BrowseFilters($this->requestedGenreOnTab(), $this->requestedSort, $this->requestedStreamingServicesOnTab(), $this->country);
+        return $this->filters ??= $this->isSearching() ? new BrowseFilters : new BrowseFilters($this->requestedGenreOnTab(), $this->requestedSort, $this->requestedStreamingServicesOnTab(), $this->country, $this->requestedHighlyRated);
     }
 
     /**

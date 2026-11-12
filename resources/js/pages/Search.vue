@@ -9,6 +9,7 @@ import StreamingServiceCheckbox from '@/components/shared/StreamingServiceCheckb
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { announce } from '@/composables/useAnnouncer';
 import { useLookedUpRatings } from '@/composables/useLookedUpRatings';
 import { useTvShowWatchlistToggle } from '@/composables/useTvShowWatchlistToggle';
@@ -47,6 +48,8 @@ const props = defineProps<{
     genres: { id: number; name: string }[];
     /** The genre Browse is narrowed to, or null. */
     genre: number | null;
+    /** Whether Browse is limited to Titles with a Highly rated TMDB score. */
+    highlyRated: boolean;
     /** The Streaming services the tab offers in the visitor's country, most prominent first. */
     streamingServices: { id: number; name: string }[];
     /** The ids of the Streaming services Browse is narrowed to, any of them. */
@@ -76,13 +79,21 @@ function searchesByName(): boolean {
 const { withLookedUpRatings, isLookingUp } = useLookedUpRatings(
     () =>
         searchesByName()
-            ? { q: props.query, tab: '', genre: '', services: '', sort: '' }
+            ? {
+                  q: props.query,
+                  tab: '',
+                  genre: '',
+                  services: '',
+                  sort: '',
+                  highly_rated: '',
+              }
             : {
                   q: '',
                   tab: props.tab,
                   genre: props.genre === null ? '' : String(props.genre),
                   services: props.selectedStreamingServices.join(','),
                   sort: props.explicitSort ?? '',
+                  highly_rated: props.highlyRated ? '1' : '',
               },
     () => props.results.data,
     () => props.looksUpImdbRatings,
@@ -144,6 +155,8 @@ const browseNoun = computed(() =>
 );
 /** The genre chosen; it follows the page's while Browse shows, which Back and forward change. */
 const genreChoice = ref<number | null>(props.genre);
+/** The Highly rated toggle, kept with Browse while filters change. */
+const highlyRatedChoice = ref(props.highlyRated);
 /** The Streaming services chosen, by id; they follow the page's while Browse shows. */
 const serviceChoices = ref<number[]>([...props.selectedStreamingServices]);
 const topServices = computed(() =>
@@ -181,6 +194,7 @@ const shownSortLabel = computed(
 const activeFilterCount = computed(
     () =>
         (genreChoice.value === null ? 0 : 1) +
+        (highlyRatedChoice.value ? 1 : 0) +
         (serviceChoices.value.length === 0 ? 0 : 1),
 );
 const cantBrowse = computed(
@@ -297,6 +311,7 @@ function visit(query: string, force = false, replace = true): void {
 
     if (query !== '') {
         genreChoice.value = null;
+        highlyRatedChoice.value = false;
         serviceChoices.value = [];
     }
 
@@ -307,6 +322,7 @@ function visit(query: string, force = false, replace = true): void {
         genre?: number;
         services?: string;
         sort?: SortValue;
+        highly_rated?: '1';
     } = {
         ...(query === '' ? {} : { q: query }),
         ...(browseTab.value === 'tv' ? { tab: browseTab.value } : {}),
@@ -319,6 +335,9 @@ function visit(query: string, force = false, replace = true): void {
         ...(query === '' && sortChoice.value !== null
             ? { sort: sortChoice.value }
             : {}),
+        ...(query === '' && highlyRatedChoice.value
+            ? { highly_rated: '1' }
+            : {}),
     };
 
     router.get(search.url(), params, {
@@ -330,6 +349,7 @@ function visit(query: string, force = false, replace = true): void {
             'tab',
             'genres',
             'genre',
+            'highlyRated',
             'streamingServices',
             'selectedStreamingServices',
             'maximumStreamingServices',
@@ -417,6 +437,7 @@ function onSortChange(event: Event): void {
 /** Drops every filter and browses again; the sort chosen stays. */
 function clearFilters(): void {
     genreChoice.value = null;
+    highlyRatedChoice.value = false;
     serviceChoices.value = [];
     clearFilterVisit();
 }
@@ -491,6 +512,15 @@ watch(
     (genre) => {
         if (!isSearching.value) {
             genreChoice.value = genre;
+        }
+    },
+);
+
+watch(
+    () => props.highlyRated,
+    (highlyRated) => {
+        if (!isSearching.value) {
+            highlyRatedChoice.value = highlyRated;
         }
     },
 );
@@ -603,7 +633,6 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
         </div>
 
         <div
-            v-if="genres.length > 0 || streamingServices.length > 0"
             role="group"
             aria-label="Filters"
             data-slot="search-filters"
@@ -633,6 +662,19 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
                     </option>
                 </NativeSelect>
             </div>
+            <label class="flex items-center gap-2 text-sm text-muted">
+                <Checkbox
+                    id="browse-highly-rated"
+                    :model-value="highlyRatedChoice"
+                    @update:model-value="
+                        (checked) => {
+                            highlyRatedChoice = checked === true;
+                            clearFilterVisit();
+                        }
+                    "
+                />
+                Highly rated (TMDB score 7+)
+            </label>
             <fieldset
                 v-if="streamingServices.length > 0"
                 data-slot="search-streaming-services"

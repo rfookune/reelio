@@ -825,3 +825,22 @@ test('the Streaming service list fails explicitly on an empty, malformed or unsu
     'repeated id' => [['results' => [['provider_id' => 8, 'provider_name' => 'A'], ['provider_id' => 8, 'provider_name' => 'B']]], 200],
     'server error' => [['results' => []], 500],
 ]);
+
+test('a Highly rated Browse filter applies the TMDB score and vote-count floor for each kind', function (TitleKind $kind, string $path) {
+    config(['catalog.search.top_rated_minimum_votes' => 250]);
+    Http::fake(["https://api.themoviedb.org/3/{$path}?*" => Http::response(['page' => 1, 'total_pages' => 1, 'total_results' => 0, 'results' => []])]);
+
+    app(TmdbCatalogSource::class)->browse($kind, 1, new CatalogContext('en-US'), new BrowseFilters(requestedSort: BrowseSort::Popular, highlyRated: true));
+
+    Http::assertSent(fn (Request $request) => queryOf($request) === [
+        'page' => '1',
+        'language' => 'en-US',
+        'include_adult' => 'false',
+        'sort_by' => 'popularity.desc',
+        'vote_average.gte' => '7',
+        'vote_count.gte' => '250',
+    ]);
+})->with([
+    'Movies' => [TitleKind::Movie, 'discover/movie'],
+    'TV Shows' => [TitleKind::TvShow, 'discover/tv'],
+]);

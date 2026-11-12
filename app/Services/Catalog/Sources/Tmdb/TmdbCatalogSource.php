@@ -117,6 +117,7 @@ class TmdbCatalogSource implements CatalogSource
         $narrowedBy = [
             ...($filters->genreId === null ? [] : ['with_genres' => $filters->genreId]),
             ...$this->streamingServiceParameters($filters),
+            ...$this->highlyRatedParameters($filters),
         ];
         $response = $this->client->get($kind === TitleKind::TvShow ? 'discover/tv' : 'discover/movie', ['page' => $page, 'language' => $context->language, 'include_adult' => 'false', ...$this->sortParameters($filters->sort()), ...$narrowedBy], $context)
             ?? throw new SourceUnavailable('The Catalog source has no such browse page.');
@@ -137,6 +138,23 @@ class TmdbCatalogSource implements CatalogSource
             BrowseSort::Popular => ['sort_by' => 'popularity.desc'],
             BrowseSort::TopRated => ['sort_by' => 'vote_average.desc', 'vote_count.gte' => config('catalog.search.top_rated_minimum_votes')],
         };
+    }
+
+    /**
+     * The TMDB score and vote-count floor required by Highly rated.
+     *
+     * @return array<string, string|int>
+     */
+    private function highlyRatedParameters(BrowseFilters $filters): array
+    {
+        if (! $filters->highlyRated) {
+            return [];
+        }
+
+        return [
+            'vote_average.gte' => 7,
+            'vote_count.gte' => config('catalog.search.top_rated_minimum_votes'),
+        ];
     }
 
     /**
