@@ -63,6 +63,7 @@ class FakeCatalogSource implements CatalogSource
      * @param  list<array{id: int, name: string}>  $tvGenres
      * @param  array<string, list<array{id: int, name: string}>>  $streamingServices  the Streaming services for Movies, by country
      * @param  array<string, list<array{id: int, name: string}>>  $tvStreamingServices  the Streaming services for TV Shows, by country
+     * @param  list<int>  $failingBrowsePages  Browse pages that fail, for either kind
      * @param  array<int, string|null>  $imdbIds  each Movie's IMDb id by catalog id; a Movie not listed has none
      */
     public function __construct(
@@ -82,6 +83,7 @@ class FakeCatalogSource implements CatalogSource
         public array $tvGenres = [],
         public array $streamingServices = [],
         public array $tvStreamingServices = [],
+        public array $failingBrowsePages = [],
     ) {}
 
     public function tvShow(int $tmdbId, CatalogContext $context): ?TvShowDetails
@@ -172,7 +174,7 @@ class FakeCatalogSource implements CatalogSource
         $this->browseCalls[] = ['kind' => $kind->value, 'page' => $page];
         $this->browseFilters[] = $filters;
 
-        if ($this->failing) {
+        if ($this->failing || in_array($page, $this->failingBrowsePages, true)) {
             throw new SourceUnavailable('The Catalog source is unavailable.');
         }
 

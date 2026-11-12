@@ -120,6 +120,15 @@ return [
         'genres_seconds' => 86400,
 
         /*
+         * A signed-in user's Browse hides the Titles they have seen, so a page of the source can come back short.
+         * The next source pages are read until the page has this many Titles, but never more than the maximum
+         * source pages in one request, which bounds the source calls a heavy user can cost: four pages are at most
+         * four source calls, each cached like any Browse page, for a heavy user's one request.
+         */
+        'browse_fill_target' => 20,
+        'maximum_browse_source_pages' => 4,
+
+        /*
          * Browse's lists of Streaming services, one for each country and kind, are read from the cache for this
          * long, then from the source again.
          */

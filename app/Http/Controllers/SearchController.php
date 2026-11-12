@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
 use App\Http\Support\SearchPage;
+use App\Http\Support\UnseenBrowse;
 use App\Services\Catalog\Search\BrowseOptions;
 use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Search\ImdbIdLookup;
@@ -22,9 +23,9 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class SearchController extends Controller
 {
-    public function __invoke(Request $request, CatalogSearch $catalogSearch, BrowseOptions $browseOptions, ImdbIdLookup $imdbIds, Ratings $ratings, RecordEvent $recordEvent): Response
+    public function __invoke(Request $request, CatalogSearch $catalogSearch, BrowseOptions $browseOptions, UnseenBrowse $unseenBrowse, ImdbIdLookup $imdbIds, Ratings $ratings, RecordEvent $recordEvent): Response
     {
-        $page = SearchPage::fromRequest($request, $catalogSearch, $browseOptions, $imdbIds, $ratings, $recordEvent);
+        $page = SearchPage::fromRequest($request, $catalogSearch, $browseOptions, $unseenBrowse, $imdbIds, $ratings, $recordEvent);
 
         if ($request->query('tab') === 'tv' && $page->runtimeBand() !== null) {
             $query = $request->query();
@@ -47,6 +48,8 @@ class SearchController extends Controller
             'highlyRated' => fn (): bool => $page->highlyRated(),
             'era' => fn (): ?string => $page->era()?->value,
             'runtimeBand' => fn (): ?string => $page->runtimeBand()?->value,
+            'canHideSeen' => $page->canHideSeen(),
+            'showSeen' => fn (): bool => $page->showSeen(),
             'languages' => OriginalLanguage::options(),
             'language' => fn (): ?string => $page->originalLanguage()?->value,
             'streamingServices' => fn (): array => $page->streamingServices(),

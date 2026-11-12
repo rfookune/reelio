@@ -51,6 +51,10 @@ const props = defineProps<{
     genre: number | null;
     /** Whether Browse is limited to Titles with a Highly rated TMDB score. */
     highlyRated: boolean;
+    /** Whether the viewer is signed in, so Browse can leave out the Titles they have seen. */
+    canHideSeen: boolean;
+    /** Whether the viewer chose to show the Titles they have seen. */
+    showSeen: boolean;
     /** The era Browse is narrowed to, or null. */
     era: string | null;
     /** The Movie runtime band Browse is narrowed to, or null. */
@@ -98,6 +102,7 @@ const { withLookedUpRatings, isLookingUp } = useLookedUpRatings(
                   era: '',
                   runtime: '',
                   language: '',
+                  show_seen: '',
               }
             : {
                   q: '',
@@ -109,6 +114,7 @@ const { withLookedUpRatings, isLookingUp } = useLookedUpRatings(
                   era: props.era ?? '',
                   runtime: props.runtimeBand ?? '',
                   language: props.language ?? '',
+                  show_seen: props.showSeen ? '1' : '',
               },
     () => props.results.data,
     () => props.looksUpImdbRatings,
@@ -172,6 +178,8 @@ const browseNoun = computed(() =>
 const genreChoice = ref<number | null>(props.genre);
 /** The Highly rated toggle, kept with Browse while filters change. */
 const highlyRatedChoice = ref(props.highlyRated);
+/** Whether the Titles seen are shown; it follows the page's while Browse shows. */
+const showSeenChoice = ref(props.showSeen);
 /** The era chosen; it follows the page's while Browse shows. */
 const eraChoice = ref<string | null>(props.era);
 /** The Movie runtime band chosen; it follows the page's while Browse shows. */
@@ -216,6 +224,7 @@ const activeFilterCount = computed(
     () =>
         (genreChoice.value === null ? 0 : 1) +
         (highlyRatedChoice.value ? 1 : 0) +
+        (showSeenChoice.value ? 1 : 0) +
         (eraChoice.value === null ? 0 : 1) +
         (runtimeBandChoice.value === null ? 0 : 1) +
         (languageChoice.value === null ? 0 : 1) +
@@ -336,6 +345,7 @@ function visit(query: string, force = false, replace = true): void {
     if (query !== '') {
         genreChoice.value = null;
         highlyRatedChoice.value = false;
+        showSeenChoice.value = false;
         eraChoice.value = null;
         runtimeBandChoice.value = null;
         languageChoice.value = null;
@@ -350,6 +360,7 @@ function visit(query: string, force = false, replace = true): void {
         services?: string;
         sort?: SortValue;
         highly_rated?: '1';
+        show_seen?: '1';
         era?: string;
         runtime?: RuntimeBandValue;
         language?: string;
@@ -368,6 +379,7 @@ function visit(query: string, force = false, replace = true): void {
         ...(query === '' && highlyRatedChoice.value
             ? { highly_rated: '1' }
             : {}),
+        ...(query === '' && showSeenChoice.value ? { show_seen: '1' } : {}),
         ...(query === '' && eraChoice.value !== null
             ? { era: eraChoice.value }
             : {}),
@@ -389,6 +401,8 @@ function visit(query: string, force = false, replace = true): void {
             'genres',
             'genre',
             'highlyRated',
+            'canHideSeen',
+            'showSeen',
             'era',
             'runtimeBand',
             'language',
@@ -510,6 +524,7 @@ function onSortChange(event: Event): void {
 function clearFilters(): void {
     genreChoice.value = null;
     highlyRatedChoice.value = false;
+    showSeenChoice.value = false;
     eraChoice.value = null;
     runtimeBandChoice.value = null;
     languageChoice.value = null;
@@ -590,6 +605,15 @@ watch(
     (genre) => {
         if (!isSearching.value) {
             genreChoice.value = genre;
+        }
+    },
+);
+
+watch(
+    () => props.showSeen,
+    (showSeen) => {
+        if (!isSearching.value) {
+            showSeenChoice.value = showSeen;
         }
     },
 );
@@ -779,6 +803,22 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
                     "
                 />
                 Highly rated (TMDB score 7+)
+            </label>
+            <label
+                v-if="canHideSeen"
+                class="flex items-center gap-2 text-sm text-muted"
+            >
+                <Checkbox
+                    id="browse-show-seen"
+                    :model-value="showSeenChoice"
+                    @update:model-value="
+                        (checked) => {
+                            showSeenChoice = checked === true;
+                            clearFilterVisit();
+                        }
+                    "
+                />
+                Show seen
             </label>
             <div class="flex w-full flex-col gap-1.5 sm:w-44">
                 <label for="browse-era" class="text-sm text-muted">Era</label>

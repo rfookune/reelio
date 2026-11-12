@@ -4,6 +4,7 @@ use App\Enums\TitleKind;
 use App\Jobs\RecordAnalyticsEvent;
 use App\Models\Movie;
 use App\Models\User;
+use App\Models\UserMovie;
 use App\Services\Catalog\Search\BrowseOptions;
 use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Sources\CatalogSource;
@@ -227,4 +228,17 @@ test('the ratings of a Browse page narrowed by an original language are those of
 
     $this->getJson(route('search.ratings', ['language' => 'ko']))->assertOk()->assertJsonPath('ratings.1.0.value', 8.1);
     $this->getJson(route('search.ratings', ['language' => 'ja']))->assertOk()->assertExactJson(['ratings' => []]);
+});
+
+test('the ratings of a Browse page are those of the Titles the signed-in viewer has not seen, unless they show them', function () {
+    config(['ratings.sources.imdb.enabled' => true]);
+    app()->instance(CatalogSource::class, new FakeCatalogSource(browsePages: [[movieListing(1), movieListing(2)]], imdbIds: [1 => 'tt0000001', 2 => 'tt0000002']));
+    app(CatalogSearch::class)->browse(TitleKind::Movie, 1, new BrowseFilters);
+    app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000001', 8.1, 5000);
+    app(RatingStore::class)->record(RatingSourceName::Imdb, 'tt0000002', 7.2, 5000);
+    $viewer = User::factory()->create();
+    UserMovie::factory()->for($viewer)->for(Movie::factory()->state(['tmdb_id' => 1]))->watched()->create();
+
+    $this->actingAs($viewer)->getJson(route('search.ratings'))->assertOk()->assertJsonMissingPath('ratings.1')->assertJsonPath('ratings.2.0.value', 7.2);
+    $this->actingAs($viewer)->getJson(route('search.ratings', ['show_seen' => '1']))->assertOk()->assertJsonPath('ratings.1.0.value', 8.1)->assertJsonPath('ratings.2.0.value', 7.2);
 });

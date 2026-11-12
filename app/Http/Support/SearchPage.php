@@ -74,10 +74,14 @@ class SearchPage
     /** @var list<array{id: int, name: string}>|null */
     private ?array $tabStreamingServices = null;
 
+    /** @var array{result: CatalogResult<SearchResults>, nextPage: ?int}|null */
+    private ?array $unseenPage = null;
+
     /** @param  list<int>  $requestedStreamingServices */
     public function __construct(
         private CatalogSearch $catalogSearch,
         private BrowseOptions $browseOptions,
+        private UnseenBrowse $unseenBrowse,
         private ImdbIdLookup $imdbIds,
         private Ratings $ratingSources,
         private RecordEvent $recordEvent,
@@ -94,6 +98,8 @@ class SearchPage
         private ?Era $requestedEra = null,
         private ?RuntimeBand $requestedRuntimeBand = null,
         private ?OriginalLanguage $requestedOriginalLanguage = null,
+        private bool $requestedShowSeen = false,
+        private bool $coversSeenTitles = false,
     ) {}
 
     /**
@@ -101,11 +107,12 @@ class SearchPage
      * characters, and its `page`, kept from 1 to the source's last page. A reload of `userMovies` alone, as after
      * a Watchlist action, reads the search from the cache only.
      */
-    public static function fromRequest(Request $request, CatalogSearch $catalogSearch, BrowseOptions $browseOptions, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
+    public static function fromRequest(Request $request, CatalogSearch $catalogSearch, BrowseOptions $browseOptions, UnseenBrowse $unseenBrowse, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
         return new self(
             $catalogSearch,
             $browseOptions,
+            $unseenBrowse,
             $imdbIds,
             $ratingSources,
             $recordEvent,
@@ -122,6 +129,8 @@ class SearchPage
             self::eraFrom($request),
             self::runtimeBandFrom($request),
             self::originalLanguageFrom($request),
+            self::showSeenFrom($request),
+            self::reloadsUserMoviesOnly($request),
         );
     }
 
@@ -129,9 +138,9 @@ class SearchPage
      * The page asked for by the Search page's lookups of the IMDb ratings: the request's query and page, read as
      * `fromRequest()` reads them, from the cache alone. It searches nothing and records nothing.
      */
-    public static function cachedFromRequest(Request $request, CatalogSearch $catalogSearch, BrowseOptions $browseOptions, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
+    public static function cachedFromRequest(Request $request, CatalogSearch $catalogSearch, BrowseOptions $browseOptions, UnseenBrowse $unseenBrowse, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
-        return new self($catalogSearch, $browseOptions, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), self::genreFrom($request), BrowseSort::fromRequestValue($request->query('sort')), VisitorCountry::resolve($request)->code, self::streamingServicesFrom($request), readsCacheOnly: true, requestedHighlyRated: self::highlyRatedFrom($request), requestedEra: self::eraFrom($request), requestedRuntimeBand: self::runtimeBandFrom($request), requestedOriginalLanguage: self::originalLanguageFrom($request));
+        return new self($catalogSearch, $browseOptions, $unseenBrowse, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), self::genreFrom($request), BrowseSort::fromRequestValue($request->query('sort')), VisitorCountry::resolve($request)->code, self::streamingServicesFrom($request), readsCacheOnly: true, requestedHighlyRated: self::highlyRatedFrom($request), requestedEra: self::eraFrom($request), requestedRuntimeBand: self::runtimeBandFrom($request), requestedOriginalLanguage: self::originalLanguageFrom($request), requestedShowSeen: self::showSeenFrom($request));
     }
 
     /** The request's `q`, trimmed of Unicode whitespace and cut to `search.maximum_query_length` characters. */
@@ -203,6 +212,12 @@ class SearchPage
     private static function highlyRatedFrom(Request $request): bool
     {
         return $request->query('highly_rated') === '1';
+    }
+
+    /** Whether the request's `show_seen` is `1`; anything else leaves the hiding on. */
+    private static function showSeenFrom(Request $request): bool
+    {
+        return $request->query('show_seen') === '1';
     }
 
     /** The request's known era, else none. */
@@ -291,11 +306,16 @@ class SearchPage
 
     /**
      * The pages around this one: none past the search's last page or the source's. A later page the source can't
-     * answer points at itself, so "Show more" asks for it again.
+     * answer points at itself, so "Show more" asks for it again. Browse that hides what the viewer has seen is
+     * paged by source page: the next page is the one after the last source page read, and there is no previous one.
      */
     public function scrollMetadata(): ScrollMetadata
     {
         $result = $this->pageResult();
+
+        if ($this->hidesSeen() && ! $result->isUnavailable()) {
+            return new ScrollMetadata('page', null, $this->unseenPage()['nextPage'], $this->page);
+        }
 
         if ($result->isUnavailable() && $this->page > 1) {
             return new ScrollMetadata('page', $this->page, $this->page, $this->page);
@@ -370,6 +390,24 @@ class SearchPage
     public function runtimeBand(): ?RuntimeBand
     {
         return $this->filters()->runtimeBand;
+    }
+
+    /** Whether the viewer can hide the Titles they have seen: they are signed in. Guests have no such Titles and no toggle. */
+    public function canHideSeen(): bool
+    {
+        return $this->user !== null;
+    }
+
+    /** Whether the viewer chose to show the Titles they have seen; never for a guest, nor in a search by Name. */
+    public function showSeen(): bool
+    {
+        return $this->canHideSeen() && ! $this->isSearching() && $this->requestedShowSeen;
+    }
+
+    /** Whether Browse leaves out the Titles the viewer has seen: a signed-in viewer's Browse, unless they show them. */
+    private function hidesSeen(): bool
+    {
+        return $this->canHideSeen() && ! $this->isSearching() && ! $this->requestedShowSeen;
     }
 
     /** The original language Browse is narrowed to, or null for none. */
@@ -505,6 +543,10 @@ class SearchPage
      */
     private function pageResult(): CatalogResult
     {
+        if ($this->hidesSeen()) {
+            return $this->result ??= $this->unseenPage()['result'];
+        }
+
         if ($this->readsCacheOnly) {
             $cached = $this->isSearching() ? $this->catalogSearch->cachedSearch($this->query, $this->page) : $this->catalogSearch->cachedBrowse($this->browseKind, $this->page, $this->filters());
 
@@ -512,6 +554,18 @@ class SearchPage
         }
 
         return $this->result ??= $this->isSearching() ? $this->catalogSearch->search($this->query, $this->page) : $this->catalogSearch->browse($this->browseKind, $this->page, $this->filters());
+    }
+
+    /**
+     * Browse without the Titles the viewer has seen, read once: the page's source pages from its own, filled
+     * from the next ones as `UnseenBrowse` does, from the cache alone when only `userMovies` is reloaded, in which case
+     * the Titles seen are kept so that every Title on screen gets its facts.
+     *
+     * @return array{result: CatalogResult<SearchResults>, nextPage: ?int}
+     */
+    private function unseenPage(): array
+    {
+        return $this->unseenPage ??= $this->unseenBrowse->page($this->user, $this->browseKind, $this->page, $this->filters(), $this->readsCacheOnly, $this->coversSeenTitles);
     }
 
     /** @return list<int> */
