@@ -17,6 +17,7 @@ use App\Services\Catalog\Search\ImdbIdLookup;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\Listings\BrowseFilters;
 use App\Services\Catalog\Sources\Listings\BrowseSort;
+use App\Services\Catalog\Sources\Listings\Era;
 use App\Services\Catalog\Sources\Listings\MovieListing;
 use App\Services\Catalog\Sources\Listings\SearchResults;
 use App\Services\Ratings\Enums\RatingSourceName;
@@ -88,6 +89,7 @@ class SearchPage
         private array $requestedStreamingServices = [],
         private bool $readsCacheOnly = false,
         private bool $requestedHighlyRated = false,
+        private ?Era $requestedEra = null,
     ) {}
 
     /**
@@ -113,6 +115,7 @@ class SearchPage
             self::streamingServicesFrom($request),
             self::reloadsUserMoviesOnly($request),
             self::highlyRatedFrom($request),
+            self::eraFrom($request),
         );
     }
 
@@ -122,7 +125,7 @@ class SearchPage
      */
     public static function cachedFromRequest(Request $request, CatalogSearch $catalogSearch, BrowseOptions $browseOptions, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
-        return new self($catalogSearch, $browseOptions, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), self::genreFrom($request), BrowseSort::fromRequestValue($request->query('sort')), VisitorCountry::resolve($request)->code, self::streamingServicesFrom($request), readsCacheOnly: true, requestedHighlyRated: self::highlyRatedFrom($request));
+        return new self($catalogSearch, $browseOptions, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), self::genreFrom($request), BrowseSort::fromRequestValue($request->query('sort')), VisitorCountry::resolve($request)->code, self::streamingServicesFrom($request), readsCacheOnly: true, requestedHighlyRated: self::highlyRatedFrom($request), requestedEra: self::eraFrom($request));
     }
 
     /** The request's `q`, trimmed of Unicode whitespace and cut to `search.maximum_query_length` characters. */
@@ -190,6 +193,14 @@ class SearchPage
     private static function highlyRatedFrom(Request $request): bool
     {
         return $request->query('highly_rated') === '1';
+    }
+
+    /** The request's known era, else none. */
+    private static function eraFrom(Request $request): ?Era
+    {
+        $era = $request->query('era');
+
+        return is_string($era) ? Era::tryFrom($era) : null;
     }
 
     /** Whether the query is long enough to search by Name; if not, the page is Browse. */
@@ -323,6 +334,12 @@ class SearchPage
         return $this->filters()->highlyRated;
     }
 
+    /** The era Browse is narrowed to, or null for none. */
+    public function era(): ?Era
+    {
+        return $this->filters()->era;
+    }
+
     /** The order Browse is in: the request's `sort` when it is an offered one, else the default of the filters. */
     public function sort(): BrowseSort
     {
@@ -375,7 +392,7 @@ class SearchPage
      */
     private function filters(): BrowseFilters
     {
-        return $this->filters ??= $this->isSearching() ? new BrowseFilters : new BrowseFilters($this->requestedGenreOnTab(), $this->requestedSort, $this->requestedStreamingServicesOnTab(), $this->country, $this->requestedHighlyRated);
+        return $this->filters ??= $this->isSearching() ? new BrowseFilters : new BrowseFilters($this->requestedGenreOnTab(), $this->requestedSort, $this->requestedStreamingServicesOnTab(), $this->country, $this->requestedHighlyRated, $this->requestedEra);
     }
 
     /**

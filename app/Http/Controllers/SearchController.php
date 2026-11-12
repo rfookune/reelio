@@ -36,6 +36,7 @@ class SearchController extends Controller
             'genres' => fn (): array => $page->genres(),
             'genre' => fn (): ?int => $page->genre(),
             'highlyRated' => fn (): bool => $page->highlyRated(),
+            'era' => fn (): ?string => $page->era()?->value,
             'streamingServices' => fn (): array => $page->streamingServices(),
             'selectedStreamingServices' => fn (): array => $page->selectedStreamingServices(),
             'maximumStreamingServices' => config('catalog.search.maximum_streaming_services'),

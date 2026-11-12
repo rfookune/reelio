@@ -11,6 +11,7 @@ use App\Services\Catalog\Sources\Details\MovieDetails;
 use App\Services\Catalog\Sources\Details\TvShowDetails;
 use App\Services\Catalog\Sources\Listings\BrowseFilters;
 use App\Services\Catalog\Sources\Listings\BrowseSort;
+use App\Services\Catalog\Sources\Listings\Era;
 use App\Services\Catalog\Sources\Listings\SearchResults;
 use App\Services\Catalog\Sources\Listings\SectionPage;
 use App\Services\Catalog\Sources\Listings\SectionQuery;
@@ -118,12 +119,33 @@ class TmdbCatalogSource implements CatalogSource
             ...($filters->genreId === null ? [] : ['with_genres' => $filters->genreId]),
             ...$this->streamingServiceParameters($filters),
             ...$this->highlyRatedParameters($filters),
+            ...$this->eraParameters($filters->era, $kind),
         ];
         $response = $this->client->get($kind === TitleKind::TvShow ? 'discover/tv' : 'discover/movie', ['page' => $page, 'language' => $context->language, 'include_adult' => 'false', ...$this->sortParameters($filters->sort()), ...$narrowedBy], $context)
             ?? throw new SourceUnavailable('The Catalog source has no such browse page.');
         $data = $this->movies->listPage((array) $response->json());
 
         return new SearchResults($kind === TitleKind::TvShow ? $this->movies->tvListings($data['results']) : $this->movies->listings($data['results']), $data['total_pages'], $this->totalResults($response));
+    }
+
+    /**
+     * The date parameters of an era for the kind's primary date.
+     *
+     * @return array<string, string>
+     */
+    private function eraParameters(?Era $era, TitleKind $kind): array
+    {
+        if ($era === null) {
+            return [];
+        }
+
+        $range = $era->dateRange();
+        $prefix = $kind === TitleKind::TvShow ? 'first_air_date' : 'primary_release_date';
+
+        return [
+            ...($range['from'] === null ? [] : ["{$prefix}.gte" => $range['from']]),
+            "{$prefix}.lte" => $range['until'],
+        ];
     }
 
     /**

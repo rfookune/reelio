@@ -7,6 +7,7 @@ use App\Services\Catalog\Enums\CrewJob;
 use App\Services\Catalog\Enums\SectionKind;
 use App\Services\Catalog\Sources\Listings\BrowseFilters;
 use App\Services\Catalog\Sources\Listings\BrowseSort;
+use App\Services\Catalog\Sources\Listings\Era;
 use App\Services\Catalog\Sources\Listings\MovieListing;
 use App\Services\Catalog\Sources\Listings\SectionQuery;
 use App\Services\Catalog\Sources\SourceMisconfigured;
@@ -843,4 +844,36 @@ test('a Highly rated Browse filter applies the TMDB score and vote-count floor f
 })->with([
     'Movies' => [TitleKind::Movie, 'discover/movie'],
     'TV Shows' => [TitleKind::TvShow, 'discover/tv'],
+]);
+
+test('an era Browse filter uses the kind-specific TMDB date range', function (TitleKind $kind, string $dateField, Era $era, ?string $from, string $until) {
+    $path = $kind === TitleKind::TvShow ? 'discover/tv' : 'discover/movie';
+    Http::fake(["https://api.themoviedb.org/3/{$path}?*" => Http::response(['page' => 1, 'total_pages' => 1, 'total_results' => 0, 'results' => []])]);
+
+    app(TmdbCatalogSource::class)->browse($kind, 1, new CatalogContext('en-US'), new BrowseFilters(requestedSort: BrowseSort::Popular, era: $era));
+
+    $expected = [
+        'page' => '1',
+        'language' => 'en-US',
+        'include_adult' => 'false',
+        'sort_by' => 'popularity.desc',
+    ];
+
+    if ($from !== null) {
+        $expected["{$dateField}.gte"] = $from;
+    }
+
+    $expected["{$dateField}.lte"] = $until;
+    Http::assertSent(fn (Request $request) => queryOf($request) === $expected);
+})->with([
+    'Movies 2020s' => [TitleKind::Movie, 'primary_release_date', Era::TwentyTwenties, '2020-01-01', '2029-12-31'],
+    'Movies 2010s' => [TitleKind::Movie, 'primary_release_date', Era::TwentyTens, '2010-01-01', '2019-12-31'],
+    'Movies 2000s' => [TitleKind::Movie, 'primary_release_date', Era::TwoThousands, '2000-01-01', '2009-12-31'],
+    'Movies 1990s' => [TitleKind::Movie, 'primary_release_date', Era::NineteenNineties, '1990-01-01', '1999-12-31'],
+    'Movies Older' => [TitleKind::Movie, 'primary_release_date', Era::Older, null, '1989-12-31'],
+    'TV Shows 2020s' => [TitleKind::TvShow, 'first_air_date', Era::TwentyTwenties, '2020-01-01', '2029-12-31'],
+    'TV Shows 2010s' => [TitleKind::TvShow, 'first_air_date', Era::TwentyTens, '2010-01-01', '2019-12-31'],
+    'TV Shows 2000s' => [TitleKind::TvShow, 'first_air_date', Era::TwoThousands, '2000-01-01', '2009-12-31'],
+    'TV Shows 1990s' => [TitleKind::TvShow, 'first_air_date', Era::NineteenNineties, '1990-01-01', '1999-12-31'],
+    'TV Shows Older' => [TitleKind::TvShow, 'first_air_date', Era::Older, null, '1989-12-31'],
 ]);

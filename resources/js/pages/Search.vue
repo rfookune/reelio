@@ -50,6 +50,8 @@ const props = defineProps<{
     genre: number | null;
     /** Whether Browse is limited to Titles with a Highly rated TMDB score. */
     highlyRated: boolean;
+    /** The era Browse is narrowed to, or null. */
+    era: string | null;
     /** The Streaming services the tab offers in the visitor's country, most prominent first. */
     streamingServices: { id: number; name: string }[];
     /** The ids of the Streaming services Browse is narrowed to, any of them. */
@@ -86,6 +88,7 @@ const { withLookedUpRatings, isLookingUp } = useLookedUpRatings(
                   services: '',
                   sort: '',
                   highly_rated: '',
+                  era: '',
               }
             : {
                   q: '',
@@ -94,6 +97,7 @@ const { withLookedUpRatings, isLookingUp } = useLookedUpRatings(
                   services: props.selectedStreamingServices.join(','),
                   sort: props.explicitSort ?? '',
                   highly_rated: props.highlyRated ? '1' : '',
+                  era: props.era ?? '',
               },
     () => props.results.data,
     () => props.looksUpImdbRatings,
@@ -157,6 +161,8 @@ const browseNoun = computed(() =>
 const genreChoice = ref<number | null>(props.genre);
 /** The Highly rated toggle, kept with Browse while filters change. */
 const highlyRatedChoice = ref(props.highlyRated);
+/** The era chosen; it follows the page's while Browse shows. */
+const eraChoice = ref<string | null>(props.era);
 /** The Streaming services chosen, by id; they follow the page's while Browse shows. */
 const serviceChoices = ref<number[]>([...props.selectedStreamingServices]);
 const topServices = computed(() =>
@@ -195,6 +201,7 @@ const activeFilterCount = computed(
     () =>
         (genreChoice.value === null ? 0 : 1) +
         (highlyRatedChoice.value ? 1 : 0) +
+        (eraChoice.value === null ? 0 : 1) +
         (serviceChoices.value.length === 0 ? 0 : 1),
 );
 const cantBrowse = computed(
@@ -312,6 +319,7 @@ function visit(query: string, force = false, replace = true): void {
     if (query !== '') {
         genreChoice.value = null;
         highlyRatedChoice.value = false;
+        eraChoice.value = null;
         serviceChoices.value = [];
     }
 
@@ -323,6 +331,7 @@ function visit(query: string, force = false, replace = true): void {
         services?: string;
         sort?: SortValue;
         highly_rated?: '1';
+        era?: string;
     } = {
         ...(query === '' ? {} : { q: query }),
         ...(browseTab.value === 'tv' ? { tab: browseTab.value } : {}),
@@ -338,6 +347,9 @@ function visit(query: string, force = false, replace = true): void {
         ...(query === '' && highlyRatedChoice.value
             ? { highly_rated: '1' }
             : {}),
+        ...(query === '' && eraChoice.value !== null
+            ? { era: eraChoice.value }
+            : {}),
     };
 
     router.get(search.url(), params, {
@@ -350,6 +362,7 @@ function visit(query: string, force = false, replace = true): void {
             'genres',
             'genre',
             'highlyRated',
+            'era',
             'streamingServices',
             'selectedStreamingServices',
             'maximumStreamingServices',
@@ -408,6 +421,13 @@ function chooseGenre(genre: number | null): void {
     clearFilterVisit();
 }
 
+/** Browses with the era chosen, or none. */
+function onEraChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    eraChoice.value = value === '' ? null : value;
+    clearFilterVisit();
+}
+
 /** The genre picked in the select, `Any genre` being none. */
 function onGenreChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
@@ -438,6 +458,7 @@ function onSortChange(event: Event): void {
 function clearFilters(): void {
     genreChoice.value = null;
     highlyRatedChoice.value = false;
+    eraChoice.value = null;
     serviceChoices.value = [];
     clearFilterVisit();
 }
@@ -521,6 +542,15 @@ watch(
     (highlyRated) => {
         if (!isSearching.value) {
             highlyRatedChoice.value = highlyRated;
+        }
+    },
+);
+
+watch(
+    () => props.era,
+    (era) => {
+        if (!isSearching.value) {
+            eraChoice.value = era;
         }
     },
 );
@@ -675,6 +705,22 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
                 />
                 Highly rated (TMDB score 7+)
             </label>
+            <div class="flex w-full flex-col gap-1.5 sm:w-44">
+                <label for="browse-era" class="text-sm text-muted">Era</label>
+                <NativeSelect
+                    id="browse-era"
+                    touch
+                    :value="eraChoice ?? ''"
+                    @change="onEraChange"
+                >
+                    <option value="">Any era</option>
+                    <option value="2020s">2020s</option>
+                    <option value="2010s">2010s</option>
+                    <option value="2000s">2000s</option>
+                    <option value="1990s">1990s</option>
+                    <option value="older">Older</option>
+                </NativeSelect>
+            </div>
             <fieldset
                 v-if="streamingServices.length > 0"
                 data-slot="search-streaming-services"
