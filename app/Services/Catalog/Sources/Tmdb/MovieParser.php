@@ -9,6 +9,15 @@ use App\Services\Catalog\Sources\SourceUnavailable;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Turns raw TMDB response bodies into the Catalog's own typed values.
+ *
+ * Every payload is validated before use: a malformed movie, list, external-id, genre, or Streaming service response
+ * raises a SourceUnavailable, while a single malformed or adult list entry is silently dropped. Movie details are
+ * parsed into a MovieDetails (including the US premiere, certification, and digital release date derived from the
+ * appended release dates); list pages are reduced to de-duplicated MovieListing entries for Movie, TV Show, and
+ * mixed-kind searches. Credits, videos, and watch providers are delegated to the AppendedDataParser.
+ */
 class MovieParser
 {
     public const RELEASE_TYPE_THEATRICAL = 3;
