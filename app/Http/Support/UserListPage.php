@@ -10,7 +10,7 @@ use App\Enums\Surface;
 use App\Enums\TitleKind;
 use App\Enums\UserList;
 use App\Http\Support\Cards\RatingsByCatalogId;
-use App\Http\Support\Search\SearchPage;
+use App\Http\Support\Search\SearchCards;
 use App\Models\Movie;
 use App\Models\Title;
 use App\Models\TvShow;
@@ -38,8 +38,8 @@ use Inertia\ScrollMetadata;
  * left out while they are switched off, including Removed Titles. No Title is
  * refreshed while listing it.
  *
- * @phpstan-import-type Card from SearchPage
- * @phpstan-import-type SearchCard from SearchPage
+ * @phpstan-import-type Card from SearchCards
+ * @phpstan-import-type SearchCard from SearchCards
  *
  * @phpstan-type ListCard array{kind: string, key: string, tmdbId: int, title: ?string, year: ?int, posterPath: ?string, ratings: list<array{source: string, name: string, value: float, voteCount: int}>, href: string, userRating: ?int}
  * @phpstan-type TvShowFacts array{watchlisted: bool, watched: bool, watchedDate: ?string, state: string, watchedCount: int, total: int}

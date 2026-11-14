@@ -4,26 +4,17 @@ namespace App\Http\Support\Search;
 
 use App\Actions\RecordEvent;
 use App\Enums\AnalyticsEvent;
-use App\Enums\Surface;
-use App\Enums\TitleKind;
-use App\Http\Support\Cards\RatingsByCatalogId;
 use App\Http\Support\Cards\UserMovies;
 use App\Models\Movie;
-use App\Models\TvShow;
-use App\Models\UserTitle;
 use App\Services\Catalog\Search\BrowseOptions;
 use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Search\ImdbIdLookup;
 use App\Services\Catalog\Sources\Listings\BrowseSort;
 use App\Services\Catalog\Sources\Listings\Era;
-use App\Services\Catalog\Sources\Listings\MovieListing;
 use App\Services\Catalog\Sources\Listings\OriginalLanguage;
 use App\Services\Catalog\Sources\Listings\RuntimeBand;
-use App\Services\Ratings\Enums\RatingSourceName;
-use App\Services\Ratings\ExternalRating;
 use App\Services\Ratings\Ratings;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Inertia\ScrollMetadata;
 
 /**
@@ -42,29 +33,14 @@ use Inertia\ScrollMetadata;
  * Watchlist toggle, so `userMovies` covers Movies only and `userTvShows` carries their Watchlist fact alone.
  * A search's results page records `title_searched`, and Browse's first page `title_browsed` with its tab, result count
  * and the names, never the values, of the filters used; a reload of `userMovies` alone records nothing and asks no source.
- *
- * @phpstan-type Card array{tmdbId: int, title: ?string, year: ?int, posterPath: ?string, ratings: list<array{source: string, name: string, value: float, voteCount: int}>, href: string}
- * @phpstan-type SearchCard array{kind: string, key: string, tmdbId: int, title: ?string, year: ?int, posterPath: ?string, ratings: list<array{source: string, name: string, value: float, voteCount: int}>, href: string, seasonCount?: ?int}
  */
 class SearchPage
 {
-    /** @var Collection<int, Movie>|null keyed by catalog id */
-    private ?Collection $rows = null;
-
-    /** @var Collection<int, TvShow>|null keyed by catalog id */
-    private ?Collection $tvShowRows = null;
-
-    /** @var array<int, list<ExternalRating>>|null keyed by catalog id */
-    private ?array $ratings = null;
-
-    /** @var array<int, list<ExternalRating>>|null keyed by catalog id */
-    private ?array $tvShowRatings = null;
-
     public function __construct(
         private BrowseSelection $selection,
         private ResultsPage $resultsPage,
-        private ImdbIdLookup $imdbIds,
-        private Ratings $ratingSources,
+        private SearchCards $cards,
+        private RatingsLookup $ratingsLookup,
         private RecordEvent $recordEvent,
         public readonly SearchRequest $request,
     ) {}
@@ -72,11 +48,7 @@ class SearchPage
     /** The page for a request, which reads the Catalog live unless it is a reload of `userMovies` alone. */
     public static function fromRequest(Request $request, CatalogSearch $catalogSearch, BrowseOptions $browseOptions, UnseenBrowse $unseenBrowse, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
-        $searchRequest = SearchRequest::from($request);
-
-        $selection = new BrowseSelection($searchRequest, $browseOptions);
-
-        return new self($selection, new ResultsPage($searchRequest, $selection, $catalogSearch, $unseenBrowse), $imdbIds, $ratingSources, $recordEvent, $searchRequest);
+        return self::assemble(SearchRequest::from($request), $catalogSearch, $browseOptions, $unseenBrowse, $imdbIds, $ratingSources, $recordEvent);
     }
 
     /**
@@ -85,11 +57,16 @@ class SearchPage
      */
     public static function cachedFromRequest(Request $request, CatalogSearch $catalogSearch, BrowseOptions $browseOptions, UnseenBrowse $unseenBrowse, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
-        $searchRequest = SearchRequest::from($request, CacheMode::CachedPage);
+        return self::assemble(SearchRequest::from($request, CacheMode::CachedPage), $catalogSearch, $browseOptions, $unseenBrowse, $imdbIds, $ratingSources, $recordEvent);
+    }
 
-        $selection = new BrowseSelection($searchRequest, $browseOptions);
+    private static function assemble(SearchRequest $request, CatalogSearch $catalogSearch, BrowseOptions $browseOptions, UnseenBrowse $unseenBrowse, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
+    {
+        $selection = new BrowseSelection($request, $browseOptions);
+        $resultsPage = new ResultsPage($request, $selection, $catalogSearch, $unseenBrowse);
+        $titles = new ListedTitles($resultsPage);
 
-        return new self($selection, new ResultsPage($searchRequest, $selection, $catalogSearch, $unseenBrowse), $imdbIds, $ratingSources, $recordEvent, $searchRequest);
+        return new self($selection, $resultsPage, new SearchCards($request, $titles, $imdbIds, $ratingSources), new RatingsLookup($titles, $imdbIds, $ratingSources), $recordEvent, $request);
     }
 
     /**
@@ -115,44 +92,17 @@ class SearchPage
             ]);
         }
 
-        return ['data' => array_map(fn (MovieListing $listing): array => [...$this->card($listing->kind, $listing->tmdbId, $listing->title, $listing->releaseDate, $listing->posterPath), 'page' => $this->request->page], $this->resultsPage->listings())];
+        return $this->cards->results();
     }
 
     /**
-     * The ratings of the Movies and TV Shows on this page that have an IMDb rating once their IMDb id is known,
-     * from a lookup if need be, which the page's cards couldn't show without one. Keyed by catalog id for a Movie
-     * and `tv:` and the catalog id for a TV Show. A title whose row has its IMDb id isn't listed, since its card
-     * already shows it. Only the cached page's own ids are looked up, never ids a visitor supplies, and nothing is
-     * looked up while IMDb is switched off.
+     * The IMDb ratings the cards couldn't show, once the IMDb ids of the page's Titles are known.
      *
      * @return array<int|string, list<array{source: string, name: string, value: float, voteCount: int}>>
      */
     public function lookedUpRatings(): array
     {
-        if (! RatingSourceName::Imdb->isEnabled()) {
-            return [];
-        }
-
-        $found = [];
-
-        foreach ([TitleKind::Movie, TitleKind::TvShow] as $kind) {
-            $tmdbIds = array_map(fn (MovieListing $listing): int => $listing->tmdbId, array_filter($this->resultsPage->listings(), fn (MovieListing $listing): bool => $listing->kind === $kind));
-            $tmdbIdsWithoutImdbId = array_values(array_filter($tmdbIds, fn (int $tmdbId): bool => $this->rowsOf($kind)->get($tmdbId)?->imdb_id === null));
-
-            if ($tmdbIdsWithoutImdbId === []) {
-                continue;
-            }
-
-            $imdbIds = $this->imdbIds->lookUpImdbIds($tmdbIdsWithoutImdbId, $kind);
-
-            foreach (RatingsByCatalogId::for($this->ratingSources, $imdbIds, $kind) as $tmdbId => $ratings) {
-                if (array_filter($ratings, fn (ExternalRating $rating): bool => $rating->source === RatingSourceName::Imdb) !== []) {
-                    $found[$this->key($kind, $tmdbId)] = array_map(fn (ExternalRating $rating): array => $rating->toArray(), $ratings);
-                }
-            }
-        }
-
-        return $found;
+        return $this->ratingsLookup->lookedUp();
     }
 
     public function scrollMetadata(): ScrollMetadata
@@ -262,9 +212,7 @@ class SearchPage
      */
     public function userMovies(): array
     {
-        $none = ['watchlisted' => false, 'watched' => false, 'watchedDate' => null];
-
-        return array_replace(array_fill_keys($this->catalogIds(), $none), UserMovies::for($this->request->user, $this->rows()));
+        return $this->cards->userMovies();
     }
 
     /**
@@ -274,100 +222,6 @@ class SearchPage
      */
     public function userTvShows(): array
     {
-        $rows = $this->tvShowRows();
-        $watchlisted = $this->request->user === null || $rows->isEmpty() ? collect() : UserTitle::query()
-            ->whereBelongsTo($this->request->user)->whereIn('title_id', $rows->pluck('id'))->whereNotNull('watchlisted_at')
-            ->pluck('title_id')->flip();
-
-        return collect($this->tvShowCatalogIds())->mapWithKeys(fn (int $tmdbId): array => [
-            $tmdbId => ['watchlisted' => $rows->has($tmdbId) && $watchlisted->has($rows->get($tmdbId)->id)],
-        ])->all();
-    }
-
-    /** @return list<int> */
-    private function catalogIds(): array
-    {
-        return array_values(array_unique(array_map(fn (MovieListing $listing): int => $listing->tmdbId, array_filter($this->resultsPage->listings(), fn (MovieListing $listing): bool => $listing->kind === TitleKind::Movie))));
-    }
-
-    /** @return SearchCard */
-    private function card(TitleKind $kind, int $tmdbId, ?string $title, ?string $releaseDate, ?string $posterPath): array
-    {
-        $tvShow = $kind === TitleKind::TvShow ? $this->tvShowRows()->get($tmdbId) : null;
-        $ratings = $kind === TitleKind::TvShow ? $this->tvShowRatings() : $this->ratings();
-        $referrer = Surface::Search->value;
-
-        return [
-            'kind' => $kind->value,
-            'key' => $this->key($kind, $tmdbId),
-            'tmdbId' => $tmdbId,
-            'title' => $title,
-            'year' => $releaseDate === null ? null : (int) substr($releaseDate, 0, 4),
-            'posterPath' => $posterPath,
-            'ratings' => array_map(fn (ExternalRating $rating): array => $rating->toArray(), $ratings[$tmdbId] ?? []),
-            'href' => $kind === TitleKind::TvShow
-                ? $tvShow?->canonicalUrl(Surface::Search) ?? route('tv-shows.entry', ['tmdbId' => $tmdbId, 'referrer' => $referrer])
-                : $this->rows()->get($tmdbId)?->canonicalUrl(Surface::Search) ?? route('movies.entry', ['tmdbId' => $tmdbId, 'referrer' => $referrer]),
-            ...($kind === TitleKind::TvShow ? ['seasonCount' => $tvShow?->details?->season_count] : []),
-        ];
-    }
-
-    /** The catalog id for a Movie, and `tv:` and it for a TV Show. */
-    private function key(TitleKind $kind, int $tmdbId): string
-    {
-        return $kind === TitleKind::TvShow ? "tv:{$tmdbId}" : (string) $tmdbId;
-    }
-
-    /** @return Collection<int, Movie>|Collection<int, TvShow> keyed by catalog id */
-    private function rowsOf(TitleKind $kind): Collection
-    {
-        return $kind === TitleKind::TvShow ? $this->tvShowRows() : $this->rows();
-    }
-
-    /** @return Collection<int, Movie> keyed by catalog id */
-    private function rows(): Collection
-    {
-        return $this->rows ??= Movie::query()->whereIn('tmdb_id', $this->catalogIds())->get()->keyBy('tmdb_id');
-    }
-
-    /** @return Collection<int, TvShow> keyed by catalog id */
-    private function tvShowRows(): Collection
-    {
-        return $this->tvShowRows ??= TvShow::query()->with('details')->whereIn('tmdb_id', $this->tvShowCatalogIds())->get()->keyBy('tmdb_id');
-    }
-
-    /** @return list<int> */
-    private function tvShowCatalogIds(): array
-    {
-        return array_values(array_unique(array_map(fn (MovieListing $listing): int => $listing->tmdbId, array_filter($this->resultsPage->listings(), fn (MovieListing $listing): bool => $listing->kind === TitleKind::TvShow))));
-    }
-
-    /**
-     * The IMDb ids by catalog id, with those already remembered filling the gaps.
-     *
-     * @param  array<int, ?string>  $imdbIds
-     * @return array<int, ?string>
-     */
-    private function withRememberedImdbIds(array $imdbIds, TitleKind $kind = TitleKind::Movie): array
-    {
-        $missing = array_keys(array_filter($imdbIds, fn (?string $imdbId): bool => $imdbId === null));
-
-        return array_replace($imdbIds, $this->imdbIds->cachedImdbIds($missing, $kind));
-    }
-
-    /** @return array<int, list<ExternalRating>> keyed by catalog id */
-    private function ratings(): array
-    {
-        return $this->ratings ??= RatingsByCatalogId::for($this->ratingSources, $this->withRememberedImdbIds(collect($this->catalogIds())->mapWithKeys(fn (int $tmdbId): array => [
-            $tmdbId => $this->rows()->get($tmdbId)?->imdb_id,
-        ])->all()));
-    }
-
-    /** @return array<int, list<ExternalRating>> keyed by catalog id */
-    private function tvShowRatings(): array
-    {
-        return $this->tvShowRatings ??= RatingsByCatalogId::for($this->ratingSources, $this->withRememberedImdbIds(collect($this->tvShowCatalogIds())->mapWithKeys(fn (int $tmdbId): array => [
-            $tmdbId => $this->tvShowRows()->get($tmdbId)?->imdb_id,
-        ])->all(), TitleKind::TvShow), TitleKind::TvShow);
+        return $this->cards->userTvShows();
     }
 }
