@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
-use App\Http\Support\SearchPage;
-use App\Http\Support\UnseenBrowse;
+use App\Http\Support\Search\SearchPage;
+use App\Http\Support\Search\UnseenBrowse;
 use App\Services\Catalog\Search\BrowseOptions;
 use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Search\ImdbIdLookup;

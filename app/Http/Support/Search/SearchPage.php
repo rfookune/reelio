@@ -1,11 +1,14 @@
 <?php
 
-namespace App\Http\Support;
+namespace App\Http\Support\Search;
 
 use App\Actions\RecordEvent;
 use App\Enums\AnalyticsEvent;
 use App\Enums\Surface;
 use App\Enums\TitleKind;
+use App\Http\Support\RatingsByCatalogId;
+use App\Http\Support\UserMovies;
+use App\Http\Support\VisitorCountry;
 use App\Models\Movie;
 use App\Models\TvShow;
 use App\Models\User;

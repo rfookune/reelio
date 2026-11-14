@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Http\Support\RateLimitKey;
-use App\Http\Support\SearchPage;
+use App\Http\Support\Search\SearchPage;
 use App\Http\Support\SeoRoutes;
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\Sources\CatalogSource;

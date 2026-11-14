@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Support;
+namespace App\Http\Support\Search;
 
 use App\Enums\ProgressState;
 use App\Enums\TitleKind;
