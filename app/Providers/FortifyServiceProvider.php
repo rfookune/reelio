@@ -5,7 +5,7 @@ namespace App\Providers;
 use App\Actions\Fortify\ClearHistoryLogoutResponse;
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
-use App\Http\Support\RateLimitKey;
+use App\Http\Support\Visitor\RateLimitKey;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;

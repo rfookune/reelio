@@ -7,7 +7,7 @@ use App\Enums\AnalyticsEvent;
 use App\Enums\Surface;
 use App\Http\Requests\MoviePickerRequest;
 use App\Http\Support\MoviePicker;
-use App\Http\Support\VisitorCountry;
+use App\Http\Support\Visitor\VisitorCountry;
 use App\Http\Support\WhereToWatch;
 use App\Models\Genre;
 use App\Models\Movie;

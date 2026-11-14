@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Support;
+namespace App\Http\Support\Visitor;
 
 use App\Models\User;
 use Illuminate\Http\Request;

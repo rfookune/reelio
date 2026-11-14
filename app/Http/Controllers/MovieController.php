@@ -8,7 +8,7 @@ use App\Enums\Surface;
 use App\Http\Exceptions\TitleRemoved;
 use App\Http\Support\MoviePageDetails;
 use App\Http\Support\UserMovies;
-use App\Http\Support\VisitorCountry;
+use App\Http\Support\Visitor\VisitorCountry;
 use App\Http\Support\WhereToWatch;
 use App\Models\Movie;
 use App\Models\UserTitle;

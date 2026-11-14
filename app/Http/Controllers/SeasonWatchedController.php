@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Actions\ChangeSeasonWatched;
-use App\Http\Support\IntendedUrl;
-use App\Http\Support\PendingGuestAction;
+use App\Http\Support\Visitor\IntendedUrl;
+use App\Http\Support\Visitor\PendingGuestAction;
 use App\Models\Season;
 use App\Models\TvShow;
 use Illuminate\Http\JsonResponse;

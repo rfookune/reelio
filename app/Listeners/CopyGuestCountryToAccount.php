@@ -2,7 +2,7 @@
 
 namespace App\Listeners;
 
-use App\Http\Support\VisitorCountry;
+use App\Http\Support\Visitor\VisitorCountry;
 use App\Models\User;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Http\Request;

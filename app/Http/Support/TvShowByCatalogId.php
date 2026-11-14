@@ -3,6 +3,7 @@
 namespace App\Http\Support;
 
 use App\Http\Exceptions\DetailsUnavailable;
+use App\Http\Support\Visitor\RateLimitKey;
 use App\Models\TvShow;
 use App\Services\Catalog\Catalog;
 use App\Services\Catalog\Exceptions\CreationLimited;

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CountryUpdateRequest;
-use App\Http\Support\VisitorCountry;
+use App\Http\Support\Visitor\VisitorCountry;
 use Illuminate\Http\RedirectResponse;
 
 /**

@@ -2,9 +2,9 @@
 
 namespace App\Providers;
 
-use App\Http\Support\RateLimitKey;
 use App\Http\Support\Search\SearchPage;
 use App\Http\Support\SeoRoutes;
+use App\Http\Support\Visitor\RateLimitKey;
 use App\Services\Catalog\CacheKey;
 use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\GuardedCatalogSource;

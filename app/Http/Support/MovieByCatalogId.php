@@ -4,6 +4,7 @@ namespace App\Http\Support;
 
 use App\Http\Exceptions\DetailsUnavailable;
 use App\Http\Exceptions\TitleRemoved;
+use App\Http\Support\Visitor\RateLimitKey;
 use App\Models\Movie;
 use App\Services\Catalog\Catalog;
 use App\Services\Catalog\Exceptions\CreationLimited;

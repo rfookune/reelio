@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Support;
+namespace App\Http\Support\Visitor;
 
 use App\Enums\Surface;
 use App\Enums\UserTitleAction;

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
 use App\Enums\AnalyticsEvent;
-use App\Http\Support\VisitorCountry;
+use App\Http\Support\Visitor\VisitorCountry;
 use App\Models\Movie;
 use App\Services\Catalog\Catalog;
 use Illuminate\Http\RedirectResponse;

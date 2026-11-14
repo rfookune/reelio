@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Surface;
 use App\Http\Exceptions\DetailsUnavailable;
-use App\Http\Support\RateLimitKey;
+use App\Http\Support\Visitor\RateLimitKey;
 use App\Services\Catalog\Catalog;
 use App\Services\Catalog\Exceptions\CreationLimited;
 use Illuminate\Http\RedirectResponse;

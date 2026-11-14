@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Actions\ChangeTvShowWatched;
 use App\Enums\Surface;
-use App\Http\Support\IntendedUrl;
-use App\Http\Support\PendingGuestAction;
+use App\Http\Support\Visitor\IntendedUrl;
+use App\Http\Support\Visitor\PendingGuestAction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

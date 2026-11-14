@@ -8,7 +8,7 @@ use App\Enums\Surface;
 use App\Enums\TitleKind;
 use App\Http\Support\RatingsByCatalogId;
 use App\Http\Support\UserMovies;
-use App\Http\Support\VisitorCountry;
+use App\Http\Support\Visitor\VisitorCountry;
 use App\Models\Movie;
 use App\Models\TvShow;
 use App\Models\User;
