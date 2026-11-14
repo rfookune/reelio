@@ -21,6 +21,26 @@ use Tests\TestCase;
 
 /*
 |--------------------------------------------------------------------------
+| Redis Isolation For Parallel Workers
+|--------------------------------------------------------------------------
+|
+| The suite flushes Redis and counts rate-limit hits in it, so parallel workers sharing one
+| database index trample each other. Each ParaTest worker gets its own index (15 down to 1,
+| leaving 0 for local development). This must run before the application boots: the rate
+| limiter keeps the cache store it was built with. Redis ships with 16 databases by default,
+| which caps this at 15 workers.
+*/
+if (($token = (int) ($_SERVER['TEST_TOKEN'] ?? 0)) > 0) {
+    $database = (string) (15 - (($token - 1) % 15));
+
+    foreach (['REDIS_DB', 'REDIS_CACHE_DB'] as $key) {
+        $_ENV[$key] = $_SERVER[$key] = $database;
+        putenv("{$key}={$database}");
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
 | Test Case
 |--------------------------------------------------------------------------
 |

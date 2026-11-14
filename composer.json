@@ -77,9 +77,9 @@
             "@php artisan config:clear --ansi",
             "@lint:check",
             "@types:check",
-            "@php artisan test --testsuite=Unit,Feature"
+            "@php artisan test --testsuite=Unit,Feature --parallel --ansi"
         ],
-        "test:browser": "@php artisan test --testsuite=Browser",
+        "test:browser": "@php artisan test --testsuite=Browser --parallel --ansi",
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
