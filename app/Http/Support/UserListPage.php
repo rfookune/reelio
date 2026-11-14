@@ -9,6 +9,7 @@ use App\Enums\SortDirection;
 use App\Enums\Surface;
 use App\Enums\TitleKind;
 use App\Enums\UserList;
+use App\Http\Support\Cards\RatingsByCatalogId;
 use App\Http\Support\Search\SearchPage;
 use App\Models\Movie;
 use App\Models\Title;

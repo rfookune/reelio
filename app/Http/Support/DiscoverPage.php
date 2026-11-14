@@ -3,6 +3,8 @@
 namespace App\Http\Support;
 
 use App\Enums\Surface;
+use App\Http\Support\Cards\RatingsByCatalogId;
+use App\Http\Support\Cards\UserMovies;
 use App\Jobs\BuildDiscover;
 use App\Models\Movie;
 use App\Models\User;

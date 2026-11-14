@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Support;
+namespace App\Http\Support\Cards;
 
 use App\Models\Movie;
 use App\Models\User;

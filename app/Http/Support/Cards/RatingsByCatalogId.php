@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Support;
+namespace App\Http\Support\Cards;
 
 use App\Enums\TitleKind;
 use App\Models\Movie;

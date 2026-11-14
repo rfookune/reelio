@@ -2,7 +2,7 @@
 
 namespace App\Http\Exceptions;
 
-use App\Http\Support\UserMovies;
+use App\Http\Support\Cards\UserMovies;
 use App\Models\Movie;
 use App\Models\TvShow;
 use App\Models\User;
