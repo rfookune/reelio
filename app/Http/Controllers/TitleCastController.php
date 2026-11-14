@@ -21,13 +21,11 @@ class TitleCastController extends Controller
      * A Title's whole billed cast and crew, for a Movie or a TV Show, whose routes set the `kind`. For a TV Show it is
      * the series-wide cast. Like the Title's own page, a stale slug redirects, a Removed Title is a 410 and the
      * details are refreshed when due, but no view is recorded: the visitor came from that page. A Title without
-     * details is refreshed before its slug is checked, and is a 503 while that fails. A TV Show is a 404 with the
-     * TV flag off.
+     * details is refreshed before its slug is checked, and is a 503 while that fails.
      */
     public function __invoke(Request $request, string $slug, string $id, string $kind, Catalog $catalog): Response|RedirectResponse
     {
         $kind = TitleKind::from($kind);
-        abort_if($kind === TitleKind::TvShow && ! config('catalog.tv_shows.enabled'), 404);
         $title = $catalog->findTitle($id);
         abort_unless($kind === TitleKind::Movie ? $title instanceof Movie : $title instanceof TvShow, 404);
         throw_if($title->isRemoved(), TitleRemoved::class, $title, $request->user());

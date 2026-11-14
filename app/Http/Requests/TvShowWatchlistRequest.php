@@ -11,8 +11,6 @@ class TvShowWatchlistRequest extends FormRequest
     /** @return array<string, array<mixed>> */
     public function rules(): array
     {
-        abort_unless(config('catalog.tv_shows.enabled'), 404);
-
         return ['source' => ['required', 'string', Rule::enum(Surface::class)->only(Surface::tvShowActionSources())]];
     }
 

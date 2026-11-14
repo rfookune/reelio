@@ -319,7 +319,6 @@ const showMoreParams = {
             </div>
         </div>
         <div
-            v-if="includesTvShows"
             role="group"
             aria-label="Filter by kind"
             class="flex flex-wrap gap-2"

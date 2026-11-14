@@ -17,7 +17,6 @@ class TvShowAvailabilityLinkController extends Controller
 {
     public function __invoke(Request $request, string $tmdbId, Catalog $catalog, RecordEvent $recordEvent): RedirectResponse
     {
-        abort_unless(config('catalog.tv_shows.enabled'), 404);
         $country = $request->query('country');
         abort_unless(VisitorCountry::isSupported($country), 404);
 

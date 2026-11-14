@@ -15,7 +15,6 @@ class TvShowByCatalogId
 
     public function catalogId(string $tmdbId): int
     {
-        abort_unless(config('catalog.tv_shows.enabled'), 404);
         $id = filter_var($tmdbId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         abort_if($id === false, 404);
 

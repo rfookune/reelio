@@ -22,9 +22,6 @@ class TvShowCatalog
     /** @return CatalogResult<TvShow> */
     public function findOrCreateTvShow(int $tmdbId, string $actor): CatalogResult
     {
-        if (! config('catalog.tv_shows.enabled')) {
-            return CatalogResult::unavailable();
-        }
         $existing = TvShow::query()->where('tmdb_id', $tmdbId)->first();
         if ($existing !== null) {
             return CatalogResult::fresh($existing);
@@ -61,9 +58,6 @@ class TvShowCatalog
      */
     public function tvShowDetails(TvShow $tvShow): CatalogResult
     {
-        if (! config('catalog.tv_shows.enabled')) {
-            return CatalogResult::unavailable();
-        }
         if ($tvShow->isRemoved()) {
             return CatalogResult::removed();
         }
@@ -77,9 +71,6 @@ class TvShowCatalog
     /** @return CatalogResult<TvShow> */
     public function refresh(TvShow $tvShow, CatalogContext $context): CatalogResult
     {
-        if (! config('catalog.tv_shows.enabled')) {
-            return CatalogResult::unavailable();
-        }
         if ($tvShow->isRemoved()) {
             return CatalogResult::removed();
         }

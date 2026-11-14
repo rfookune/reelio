@@ -14,7 +14,6 @@ class TvShowEntryController extends Controller
 {
     public function __invoke(Request $request, string $tmdbId, Catalog $catalog): RedirectResponse
     {
-        abort_unless(config('catalog.tv_shows.enabled'), 404);
         $catalogId = filter_var($tmdbId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         abort_if($catalogId === false, 404);
         try {

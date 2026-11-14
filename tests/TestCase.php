@@ -19,8 +19,6 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        config(['catalog.tv_shows.enabled' => true]);
-
         Cache::flush();
         Http::preventStrayRequests();
     }

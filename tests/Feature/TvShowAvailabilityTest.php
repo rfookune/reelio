@@ -78,14 +78,13 @@ test('the TV watch redirect rejects invalid countries', function (string $query)
     $this->get("/tv-shows/tmdb/{$tvShow->tmdb_id}/watch{$query}")->assertNotFound();
 })->with(['', '?country=BR', '?country=us', '?country[]=US', '?country=https://evil.example']);
 
-test('the TV watch redirect rejects Movies unknown ids and the disabled feature', function () {
+test('the TV watch redirect rejects unknown TV ids and redirects existing TV Shows', function () {
     $movie = Movie::factory()->create();
     app()->instance(CatalogSource::class, new FakeCatalogSource);
     $this->get("/tv-shows/tmdb/{$movie->tmdb_id}/watch?country=US")->assertNotFound();
     $this->get('/tv-shows/tmdb/999999/watch?country=US')->assertNotFound();
     $tvShow = TvShow::factory()->create();
-    config(['catalog.tv_shows.enabled' => false]);
-    $this->get("/tv-shows/tmdb/{$tvShow->tmdb_id}/watch?country=US")->assertNotFound();
+    $this->get("/tv-shows/tmdb/{$tvShow->tmdb_id}/watch?country=US")->assertRedirect("https://www.themoviedb.org/tv/{$tvShow->tmdb_id}/watch?locale=US");
 });
 
 test('a country partial reload uses the saved preference without recording another TV Show view', function () {

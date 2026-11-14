@@ -35,11 +35,10 @@ test('reports a missing title with the usual not-found exception', function () {
     expect(fn () => app(Catalog::class)->findTitle(999999))->toThrow(ModelNotFoundException::class);
 });
 
-test('hides TV Shows while allowing Movies when the TV flag is disabled', function () {
+test('finds both Movies and TV Shows by default', function () {
     $movie = Movie::factory()->create();
     $tvShow = TvShow::factory()->create();
-    config(['catalog.tv_shows.enabled' => false]);
 
     expect(app(Catalog::class)->findTitle($movie->id))->toBeInstanceOf(Movie::class);
-    expect(fn () => app(Catalog::class)->findTitle($tvShow->id))->toThrow(ModelNotFoundException::class);
+    expect(app(Catalog::class)->findTitle($tvShow->id))->toBeInstanceOf(TvShow::class);
 });

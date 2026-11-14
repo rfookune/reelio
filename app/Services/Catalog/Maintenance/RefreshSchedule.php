@@ -25,9 +25,6 @@ class RefreshSchedule
     /** @return list<int> */
     public function dueTvShowsForRefresh(int $afterId, int $limit): array
     {
-        if (! config('catalog.tv_shows.enabled')) {
-            return [];
-        }
 
         return array_values(TvShow::query()->where('id', '>', $afterId)->whereNull('removed_at')
             ->where(fn (Builder $held): Builder => $held

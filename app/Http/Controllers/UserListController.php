@@ -25,7 +25,6 @@ class UserListController extends Controller
         $requestedFilter = $request->query('filter');
         $filter = $requestedFilter === null ? ListFilter::All : (is_string($requestedFilter) ? ListFilter::tryFrom($requestedFilter) : null);
         abort_unless($filter !== null, 422, 'Unknown '.$list->name.' filter.');
-        $filter = $filter === ListFilter::TvShows && ! config('catalog.tv_shows.enabled') ? ListFilter::All : $filter;
         $page = new UserListPage($request->user(), $list, $sort, $filter, $discover, $ratings, $progress);
 
         if ($request->has('restore')) {
@@ -39,7 +38,6 @@ class UserListController extends Controller
             'imageBaseUrl' => config('catalog.image_base_url'),
             'sort' => $sort->value,
             'filter' => $filter->value,
-            'includesTvShows' => (bool) config('catalog.tv_shows.enabled'),
             'unavailableTitles' => fn (): array => $page->unavailableTitles(),
             'unavailableMovies' => fn (): array => $page->unavailableMovies(),
             'titles' => Inertia::scroll(fn (): array => $page->titles(), metadata: fn (): ScrollMetadata => $page->scrollMetadata())->matchOn('data.key'),

@@ -41,7 +41,7 @@ class RefreshTvShow implements ShouldBeUnique, ShouldQueue
     {
         $tvShow = TvShow::query()->find($this->tvShowId);
 
-        if (config('catalog.tv_shows.enabled') && $tvShow !== null) {
+        if ($tvShow !== null) {
             $catalog->refreshTvShow($tvShow, new CatalogContext(config('catalog.language'), profile: CatalogProfile::Background));
         }
     }

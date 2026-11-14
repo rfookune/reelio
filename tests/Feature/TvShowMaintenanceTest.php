@@ -65,7 +65,7 @@ function maintenanceTvDetails(): TvShowDetails
     );
 }
 
-test('the cap guard clears all TV source columns with the flag off and a refresh restores the same inventory and facts', function () {
+test('the cap guard clears all TV source columns and a refresh restores the same inventory and facts', function () {
     $this->travelTo('2026-11-08 05:00:00');
     $source = new FakeCatalogSource(tvShows: [maintenanceTvDetails()]);
     app()->instance(CatalogSource::class, $source);
@@ -76,7 +76,6 @@ test('the cap guard clears all TV source columns with the flag off and a refresh
     $user = User::factory()->create();
     UserEpisode::query()->create(['user_id' => $user->id, 'episode_id' => $episode->id, 'watched_at' => '2026-01-01']);
     $show->update(['synced_at' => now()->subDays(170)->subMinute()]);
-    config(['catalog.tv_shows.enabled' => false]);
 
     CleanUpCatalog::dispatch();
 
@@ -90,7 +89,6 @@ test('the cap guard clears all TV source columns with the flag off and a refresh
     $this->assertDatabaseMissing('genre_title', ['title_id' => $show->id]);
     expect($catalog->tvShowPageData($show->fresh()))->toBeNull();
 
-    config(['catalog.tv_shows.enabled' => true]);
     RefreshTvShow::dispatch($show->id);
 
     $this->assertDatabaseHas('titles', ['id' => $show->id, 'title' => 'A TV Show', 'synced_at' => '2026-11-08 05:00:00']);
@@ -100,9 +98,8 @@ test('the cap guard clears all TV source columns with the flag off and a refresh
     expect($source->tvShowCalls[1]['context']->profile)->toBe(CatalogProfile::Background);
 });
 
-test('cleanup deletes old unheld TV inventory but keeps recent views and any user facts even with the flag off', function (bool $enabled) {
+test('cleanup deletes old unheld TV inventory but keeps recent views and any user facts', function () {
     $this->travelTo('2026-11-08 05:00:00');
-    config(['catalog.tv_shows.enabled' => $enabled]);
     $unheld = TvShow::factory()->create(['tmdb_id' => 900, 'last_viewed_at' => now()->subDays(30)->subMinute()]);
     $season = Season::factory()->create(['title_id' => $unheld->id]);
     $episode = Episode::factory()->create(['season_id' => $season->id]);
@@ -128,9 +125,9 @@ test('cleanup deletes old unheld TV inventory but keeps recent views and any use
     $this->assertDatabaseHas('user_episodes', ['user_id' => $user->id, 'episode_id' => $special->id]);
     $this->assertDatabaseMissing('ratings', ['source' => 'tmdb', 'source_id' => 'tv:900']);
     $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => 'movie:900']);
-})->with([true, false]);
+});
 
-test('catalog purge clears TV inventory and ratings of both kinds with the flag off while keeping rows and facts', function () {
+test('catalog purge clears TV inventory and ratings of both kinds while keeping rows and facts', function () {
     $this->freezeTime();
     app()->instance(CatalogSource::class, new FakeCatalogSource(tvShows: [maintenanceTvDetails()]));
     $show = app(Catalog::class)->findOrCreateTvShow(900, 'test')->value;
@@ -139,7 +136,7 @@ test('catalog purge clears TV inventory and ratings of both kinds with the flag 
     $user = User::factory()->create();
     UserEpisode::query()->create(['user_id' => $user->id, 'episode_id' => $episode->id, 'watched_at' => now()]);
     app(RatingStore::class)->record(RatingSourceName::Tmdb, 'movie:900', 7.0, 100);
-    config(['catalog.tv_shows.enabled' => false, 'catalog.cleanup.batch_size' => 1]);
+    config(['catalog.cleanup.batch_size' => 1]);
 
     $this->artisan('catalog:purge --force')->assertSuccessful();
 
@@ -150,7 +147,7 @@ test('catalog purge clears TV inventory and ratings of both kinds with the flag 
     $this->assertDatabaseMissing('ratings', ['source' => 'tmdb']);
 });
 
-test('scheduled refresh preserves a complete stored TV Show on failure and skips deleted removed or disabled TV Shows', function () {
+test('scheduled refresh preserves a complete stored TV Show on failure and skips deleted or removed TV Shows', function () {
     $this->freezeTime();
     $source = new FakeCatalogSource(tvShows: [maintenanceTvDetails()]);
     app()->instance(CatalogSource::class, $source);
@@ -168,8 +165,6 @@ test('scheduled refresh preserves a complete stored TV Show on failure and skips
     $removed = TvShow::factory()->removed()->create();
     RefreshTvShow::dispatch($removed->id);
     RefreshTvShow::dispatch(999999);
-    config(['catalog.tv_shows.enabled' => false]);
-    RefreshTvShow::dispatch($show->id);
     expect($source->tvShowCalls)->toHaveCount(2);
 });
 
@@ -207,7 +202,7 @@ test('a successful refresh hides vanished inventory without deleting Watched fac
     expect(app(WatchedProgress::class)->for($show, $user)['watched'])->toBe(1);
 })->with([true, false]);
 
-test('TV planner pagination resumes at its own cursor and the flag off skips all TV planning', function () {
+test('TV planner pagination resumes at its own cursor and continues planning TV Shows', function () {
     $this->freezeTime();
     config(['catalog.refresh.planner_page_size' => 1]);
     $user = User::factory()->create();
@@ -226,9 +221,9 @@ test('TV planner pagination resumes at its own cursor and the flag off skips all
     Queue::assertPushed(RefreshTvShow::class, 2);
 
     Queue::fake();
-    config(['catalog.tv_shows.enabled' => false]);
     app()->call([new PlanTitleRefreshes, 'handle']);
-    Queue::assertNothingPushed();
+    Queue::assertPushed(RefreshTvShow::class, 1);
+    Queue::assertPushed(PlanTitleRefreshes::class, 1);
 });
 
 test('marking a cap-cleared TV Show refreshes preserved Episode rows first and changes nothing on failure', function (bool $failure) {

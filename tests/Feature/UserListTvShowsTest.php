@@ -65,16 +65,15 @@ test('a Movie and a TV Show with one catalog id are two cards', function () {
     );
 });
 
-test('with TV Shows off, the Watchlist hides them and a bookmarked TV Shows filter shows everything else', function () {
+test('the Watchlist includes TV Shows by default and supports bookmarked TV Shows filters', function () {
     $user = User::factory()->create();
     UserMovie::factory()->for($user)->create();
-    listedTvShow($user, 5, 'Hidden', null, '2026-01-01');
-    config(['catalog.tv_shows.enabled' => false]);
+    listedTvShow($user, 5, 'Show', null, '2026-01-01');
 
     $this->actingAs($user)->get(route('watchlist'))->assertInertia(fn (Assert $page) => $page
-        ->has('titles.data', 1)->where('titles.data.0.kind', 'movie')->where('userTvShows', []));
+        ->has('titles.data', 2)->has('userTvShows.5'));
     $this->get(route('watchlist', ['filter' => 'tv-shows']))->assertOk()->assertInertia(fn (Assert $page) => $page
-        ->where('filter', 'all')->has('titles.data', 1)->where('titles.data.0.kind', 'movie'));
+        ->where('filter', 'tv-shows')->has('titles.data', 1)->where('titles.data.0.kind', 'tv'));
 });
 
 test('the filter keeps one kind, defaults to both, and unknown or non-text filters are rejected', function () {

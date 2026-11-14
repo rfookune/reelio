@@ -35,7 +35,6 @@ class ChangeSeasonWatched
 
     private function validate(TvShow $tvShow, Season $season, ?User $user): void
     {
-        abort_unless(config('catalog.tv_shows.enabled'), 404);
         throw_if($tvShow->isRemoved(), TitleRemoved::class, $tvShow, $user);
         abort_if($season->removed_at !== null || $season->title_id !== $tvShow->id, 404);
     }

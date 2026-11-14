@@ -96,15 +96,15 @@ test('with stored details but no cached cast and the source down, the panel is f
         ->assertInertia(fn (Assert $page) => $page->where('title.detailsUnavailable', true)->where('title.cast', [])->where('title.crew', []));
 });
 
-test('the full cast page is not found for a missing TV Show, a Movie, or with the TV flag off', function () {
+test('the full cast page is not found for a missing TV Show, a Movie, or available for an existing TV Show', function () {
     $movie = Movie::factory()->create();
     $tvShow = TvShow::factory()->create();
 
     $this->get('/tv-shows/missing-999999/casts')->assertNotFound();
     $this->get("/tv-shows/{$movie->slug}-{$movie->id}/casts")->assertNotFound();
 
-    config(['catalog.tv_shows.enabled' => false]);
-    $this->get(route('tv-shows.cast', ['slug' => $tvShow->slug, 'id' => $tvShow->id]))->assertNotFound();
+    app()->instance(CatalogSource::class, new FakeCatalogSource(failing: true));
+    $this->get(route('tv-shows.cast', ['slug' => $tvShow->slug, 'id' => $tvShow->id]))->assertOk();
 });
 
 test('the TV Show page shows the top twelve of the series-wide cast with the billed count and the full cast URL', function (int $billed) {

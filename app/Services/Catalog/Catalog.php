@@ -24,14 +24,11 @@ class Catalog
             throw (new ModelNotFoundException)->setModel(Title::class, [$id]);
         }
         $title = Title::query()->findOrFail($titleId);
-        if ($title->kind === TitleKind::TvShow && config('catalog.tv_shows.enabled')) {
+        if ($title->kind === TitleKind::TvShow) {
             return (new TvShow)->newFromBuilder($title->getAttributes(), $title->getConnectionName());
         }
-        if ($title->kind === TitleKind::Movie) {
-            return (new Movie)->newFromBuilder($title->getAttributes(), $title->getConnectionName())->load('details');
-        }
 
-        throw (new ModelNotFoundException)->setModel(Title::class, [$titleId]);
+        return (new Movie)->newFromBuilder($title->getAttributes(), $title->getConnectionName())->load('details');
     }
 
     /** @return CatalogResult<Movie> */

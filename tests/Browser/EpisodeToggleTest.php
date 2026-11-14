@@ -10,7 +10,6 @@ use App\Services\Catalog\Sources\Details\TvShowDetails;
 use App\Services\Catalog\Sources\FakeCatalogSource;
 
 it('optimistically marks an Episode and rolls back a failed save with a message', function () {
-    config(['catalog.tv_shows.enabled' => true]);
     $tvShow = TvShow::factory()->create(['tmdb_id' => 87108, 'slug' => 'chernobyl']);
     app()->instance(CatalogSource::class, new FakeCatalogSource(tvShows: [new TvShowDetails(
         87108, title: 'Chernobyl', seasons: [new SeasonDetails(100, 1, episodes: [new EpisodeDetails(200, 1, 1, name: '1:23:45', airDate: '2019-05-06')])],
@@ -47,7 +46,6 @@ it('optimistically marks an Episode and rolls back a failed save with a message'
 });
 
 it('replays a guest Episode tap after login and offers Undo on returning to the TV Show', function () {
-    config(['catalog.tv_shows.enabled' => true]);
     $tvShow = TvShow::factory()->create(['tmdb_id' => 87108, 'slug' => 'chernobyl']);
     app()->instance(CatalogSource::class, new FakeCatalogSource(tvShows: [new TvShowDetails(
         87108, title: 'Chernobyl', seasons: [new SeasonDetails(100, 1, episodes: [new EpisodeDetails(200, 1, 1, name: '1:23:45', airDate: '2019-05-06')])],
@@ -66,7 +64,6 @@ it('replays a guest Episode tap after login and offers Undo on returning to the 
 });
 
 it('marks a Season in bulk with an Undo toast', function () {
-    config(['catalog.tv_shows.enabled' => true]);
     $tvShow = TvShow::factory()->create(['tmdb_id' => 87108, 'slug' => 'chernobyl']);
     app()->instance(CatalogSource::class, new FakeCatalogSource(tvShows: [new TvShowDetails(
         87108, title: 'Chernobyl', seasons: [new SeasonDetails(100, 1, episodes: [
@@ -85,7 +82,6 @@ it('marks a Season in bulk with an Undo toast', function () {
 });
 
 it('confirms a whole-TV Show mark in a focus-trapped dialog that Escape and Cancel leave unchanged', function () {
-    config(['catalog.tv_shows.enabled' => true]);
     $tvShow = TvShow::factory()->create(['tmdb_id' => 87108, 'slug' => 'chernobyl']);
     app()->instance(CatalogSource::class, new FakeCatalogSource(tvShows: [new TvShowDetails(
         87108, title: 'Chernobyl', seasons: [new SeasonDetails(100, 1, episodes: [
@@ -113,7 +109,6 @@ it('confirms a whole-TV Show mark in a focus-trapped dialog that Escape and Canc
 });
 
 it('marks the next Episode from the Up next card and moves on to the one after', function () {
-    config(['catalog.tv_shows.enabled' => true]);
     $tvShow = TvShow::factory()->create(['tmdb_id' => 87108, 'slug' => 'chernobyl']);
     app()->instance(CatalogSource::class, new FakeCatalogSource(tvShows: [new TvShowDetails(
         87108, title: 'Chernobyl', seasons: [new SeasonDetails(100, 1, episodes: [
@@ -136,7 +131,6 @@ it('marks the next Episode from the Up next card and moves on to the one after',
 });
 
 it('opens and closes a Season with Episodes and gives an upcoming Season no toggle', function () {
-    config(['catalog.tv_shows.enabled' => true]);
     $tvShow = TvShow::factory()->create(['tmdb_id' => 87108, 'slug' => 'chernobyl']);
     app()->instance(CatalogSource::class, new FakeCatalogSource(tvShows: [new TvShowDetails(
         87108, title: 'Chernobyl', seasons: [

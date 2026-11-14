@@ -27,7 +27,6 @@ class TvShowController extends Controller
 {
     public function show(Request $request, string $slug, string $id, Catalog $catalog, Ratings $ratings, WatchedProgress $progress, RecordEvent $recordEvent): Response|RedirectResponse
     {
-        abort_unless(config('catalog.tv_shows.enabled'), 404);
         $title = $catalog->findTitle($id);
         if ($title instanceof Movie) {
             return redirect($title->canonicalUrl(), 301);

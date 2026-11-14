@@ -13,8 +13,6 @@ export type UserListPageProps = {
     imageBaseUrl: string;
     sort: string;
     filter: ListFilter;
-    /** Whether TV Shows are on the lists, so the page offers the kind filter. */
-    includesTvShows: boolean;
     titles: { data: PosterCardTitle[] };
     unavailableTitles: UnavailableTitle[];
     trending: PosterCardTitle[];

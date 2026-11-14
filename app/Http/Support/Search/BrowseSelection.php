@@ -96,10 +96,6 @@ class BrowseSelection
             return $id;
         }
 
-        if (! config('catalog.tv_shows.enabled')) {
-            return null;
-        }
-
         $otherGenres = $this->genresOf($this->request->kind === TitleKind::Movie ? TitleKind::TvShow : TitleKind::Movie);
         $name = array_find($otherGenres, fn (array $genre): bool => $genre['id'] === $id)['name'] ?? null;
 

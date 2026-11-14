@@ -34,9 +34,7 @@ use Inertia\ScrollMetadata;
 /**
  * Stored Watchlist or Watched cards and a stable cursor, Movies and TV Shows in one keyset-paged query. The
  * Watchlist holds the Titles with a Watchlist fact. Watched holds the Movies with a Watched date and the TV Shows
- * with at least one Episode watched, dated by the latest, a TV Show having no Watched fact of its own. TV Shows are
- * left out while they are switched off, including Removed Titles. No Title is
- * refreshed while listing it.
+ * with at least one Episode watched, dated by the latest, a TV Show having no Watched fact of its own. No Title is refreshed while listing it.
  *
  * @phpstan-import-type Card from SearchCards
  * @phpstan-import-type SearchCard from SearchCards
@@ -198,9 +196,6 @@ class UserListPage
      */
     public function userTvShows(): array
     {
-        if (! config('catalog.tv_shows.enabled')) {
-            return [];
-        }
 
         $watchlisted = DB::table('user_titles')->where('user_id', $this->user->id)->whereNotNull('watchlisted_at')->pluck('watchlisted_at', 'title_id');
         $marked = DB::table('user_episodes')->join('episodes', 'episodes.id', '=', 'user_episodes.episode_id')->where('user_episodes.user_id', $this->user->id)->distinct()->pluck('episodes.title_id');
@@ -253,15 +248,13 @@ class UserListPage
     }
 
     /**
-     * The kinds a filter shows: its own, or both for `All`; TV Shows only while they are switched on.
+     * The kinds a filter shows: its own, or both for `All`.
      *
      * @return list<TitleKind>
      */
     private function shownKinds(ListFilter $filter): array
     {
-        $kinds = $filter->kind() === null ? [TitleKind::Movie, TitleKind::TvShow] : [$filter->kind()];
-
-        return array_values(array_filter($kinds, fn (TitleKind $kind): bool => $kind === TitleKind::Movie || config('catalog.tv_shows.enabled')));
+        return $filter->kind() === null ? [TitleKind::Movie, TitleKind::TvShow] : [$filter->kind()];
     }
 
     /**

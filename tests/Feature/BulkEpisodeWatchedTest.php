@@ -30,7 +30,6 @@ function undoUrl(TvShow $tvShow): string
 /** @return array{TvShow, Season, Season} */
 function showWithTwoSeasons(): array
 {
-    config(['catalog.tv_shows.enabled' => true]);
     $tvShow = TvShow::factory()->create();
     $one = Season::factory()->for($tvShow, 'title')->create(['season_number' => 1]);
     $two = Season::factory()->for($tvShow, 'title')->create(['season_number' => 2]);
@@ -74,19 +73,18 @@ test('a Season clear removes only that Season\'s marks for this user', function 
     expect(UserEpisode::query()->where('user_id', $other->id)->count())->toBe(4);
 });
 
-test('Season actions reject a Season of another TV Show, a Removed Season and a disabled feature', function (string $case, int $status) {
+test('Season actions reject a Season of another TV Show, a Removed Season and a Removed TV Show', function (string $case, int $status) {
     [$tvShow, $one] = showWithTwoSeasons();
     $url = seasonWatchedUrl($one);
     match ($case) {
         'foreign' => $url = str_replace("/tv-shows/{$tvShow->id}/", '/tv-shows/'.TvShow::factory()->create()->id.'/', $url),
         'removed season' => $one->update(['removed_at' => now()]),
         'removed show' => $tvShow->update(['removed_at' => now()]),
-        'flag off' => config(['catalog.tv_shows.enabled' => false]),
     };
 
     $this->actingAs(User::factory()->create())->putJson($url)->assertStatus($status);
     $this->assertDatabaseCount('user_episodes', 0);
-})->with([['foreign', 404], ['removed season', 404], ['removed show', 410], ['flag off', 404]]);
+})->with([['foreign', 404], ['removed season', 404], ['removed show', 410]]);
 
 test('a whole-TV Show mark marks aired numbered-Season Episodes, completes it and leaves the Watchlist', function () {
     [$tvShow, $one] = showWithTwoSeasons();
@@ -163,7 +161,6 @@ test('Undo of a bulk clear restores the cleared dates and refuses when state has
 });
 
 test('a whole-TV Show mark with no Episodes stored refreshes first', function () {
-    config(['catalog.tv_shows.enabled' => true]);
     $tvShow = TvShow::factory()->create(['tmdb_id' => 87108, 'synced_at' => null]);
     app()->instance(CatalogSource::class, new FakeCatalogSource(tvShows: [new TvShowDetails(
         87108, title: 'Chernobyl', seasons: [new SeasonDetails(100, 1, episodes: [new EpisodeDetails(200, 1, 1, airDate: '2019-05-06')])],
@@ -174,7 +171,6 @@ test('a whole-TV Show mark with no Episodes stored refreshes first', function ()
 });
 
 test('a whole-TV Show mark whose refresh fails changes nothing', function () {
-    config(['catalog.tv_shows.enabled' => true]);
     $tvShow = TvShow::factory()->create(['tmdb_id' => 87108, 'synced_at' => null]);
     app()->instance(CatalogSource::class, new FakeCatalogSource(failing: true));
     $user = User::factory()->create();

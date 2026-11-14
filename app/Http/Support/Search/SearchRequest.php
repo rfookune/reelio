@@ -115,7 +115,7 @@ readonly class SearchRequest
     }
 
     /**
-     * The Browse tab the request's `tab` names, Movies unless it is `tv` and TV Shows are switched on. A runtime
+     * The Browse tab the request's `tab` names, Movies unless it is `tv`. A runtime
      * band is for Movies, so it keeps Browse on the Movies tab.
      */
     private static function kindFrom(Request $request): TitleKind
@@ -124,7 +124,7 @@ readonly class SearchRequest
             return TitleKind::Movie;
         }
 
-        return $request->query('tab') === TitleKind::TvShow->value && config('catalog.tv_shows.enabled') ? TitleKind::TvShow : TitleKind::Movie;
+        return $request->query('tab') === TitleKind::TvShow->value ? TitleKind::TvShow : TitleKind::Movie;
     }
 
     /** The request's `genre` when it is a plain id of nine digits at most, else null; whether it is offered is checked later. */

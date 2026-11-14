@@ -164,11 +164,10 @@ test('the genre options of the tab are still offered while searching by Name, so
     'TV Shows' => ['tv', TV_GENRES],
 ]);
 
-test('with TV Shows off a genre of the other kind is not carried over', function () {
-    config(['catalog.tv_shows.enabled' => false]);
+test('a genre of the other kind carries over by its matching name', function () {
     $source = fakeFilteredBrowse();
 
-    $this->get(route('search', ['genre' => 9035]))->assertInertia(fn (Assert $page) => $page->where('genre', null));
+    $this->get(route('search', ['genre' => 9035]))->assertInertia(fn (Assert $page) => $page->where('genre', 35));
 
-    expect(askedGenres($source))->toBe([null]);
+    expect(askedGenres($source))->toBe([35]);
 });

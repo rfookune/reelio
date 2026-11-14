@@ -402,13 +402,12 @@ test('a Movie and a TV Show with one catalog id keep their own rows and ratings'
         ->where('results.data.0.href', $movie->canonicalUrl(Surface::Search)));
 });
 
-test('with TV Shows off, no TV Show appears, even one cached or listed by the source', function () {
-    config(['catalog.tv_shows.enabled' => false]);
+test('search includes both Movies and TV Shows by default', function () {
     fakeSearch(['inter' => [[movieListing(1), movieListing(2, kind: TitleKind::TvShow)]]]);
 
     $this->get(route('search', ['q' => 'inter']))->assertInertia(fn (Assert $page) => $page
-        ->has('results.data', 1)
-        ->where('results.data.0.kind', 'movie'));
+        ->has('results.data', 2)
+        ->where('results.data.0.kind', 'movie')->where('results.data.1.kind', 'tv'));
 });
 
 test('userMovies covers Movies only, since a TV Show card has no Movie Watchlist toggle', function () {
@@ -419,23 +418,21 @@ test('userMovies covers Movies only, since a TV Show card has no Movie Watchlist
         ->missing('userMovies.2'));
 });
 
-test('the page says whether TV Shows are searched, so it can offer the kind chips', function (bool $enabled) {
-    config(['catalog.tv_shows.enabled' => $enabled]);
+test('the page supports browsing TV Shows by default', function () {
     fakeSearch();
 
-    $this->get(route('search'))->assertInertia(fn (Assert $page) => $page->where('includesTvShows', $enabled));
-})->with([true, false]);
+    $this->get(route('search', ['tab' => 'tv']))->assertInertia(fn (Assert $page) => $page->where('tab', 'tv'));
+});
 
-test('title search counts both kinds shown on page one and excludes disabled TV Shows', function (bool $enabled, int $count) {
-    config(['catalog.tv_shows.enabled' => $enabled]);
+test('title search counts both kinds shown on page one', function () {
     Queue::fake([RecordAnalyticsEvent::class]);
     fakeSearch(['inter' => [[movieListing(1), movieListing(2, kind: TitleKind::TvShow)], [movieListing(3)]]]);
 
     $this->actingAs(User::factory()->create())->get(route('search', ['q' => 'inter']))->assertOk();
 
-    Queue::assertPushed(RecordAnalyticsEvent::class, fn ($job) => $job->name === 'title_searched' && $job->properties === ['query_length' => 5, 'result_count' => $count]);
+    Queue::assertPushed(RecordAnalyticsEvent::class, fn ($job) => $job->name === 'title_searched' && $job->properties === ['query_length' => 5, 'result_count' => 2]);
     Queue::assertPushed(RecordAnalyticsEvent::class, 1);
-})->with([[true, 2], [false, 1]]);
+});
 
 test('Search results carry no User rating, even for a Movie the viewer rated', function () {
     $user = User::factory()->create();
@@ -516,16 +513,14 @@ test('Browse is the Movies tab unless the tab asks for TV Shows', function (mixe
     expect($source->browseCalls)->toBe([['kind' => 'movie', 'page' => 1]]);
 })->with(['absent' => [null], 'movie' => ['movie'], 'unknown' => ['radio'], 'empty' => [''], 'a list' => [['tv']]]);
 
-test('with TV Shows off the TV Shows tab is not offered, and asking for it browses Movies', function () {
-    config(['catalog.tv_shows.enabled' => false]);
+test('asking for the TV Shows tab browses TV Shows', function () {
     $source = fakeSearch(browsePages: [movieListings(1, 2)], tvBrowsePages: [[movieListing(9, kind: TitleKind::TvShow)]]);
 
     $this->get(route('search', ['tab' => 'tv']))->assertInertia(fn (Assert $page) => $page
-        ->where('includesTvShows', false)
-        ->where('tab', 'movie')
-        ->where('results.data.0.kind', 'movie'));
+        ->where('tab', 'tv')
+        ->where('results.data.0.kind', 'tv'));
 
-    expect($source->browseCalls)->toBe([['kind' => 'movie', 'page' => 1]]);
+    expect($source->browseCalls)->toBe([['kind' => 'tv', 'page' => 1]]);
 });
 
 test('a search by Name ignores the tab and is unchanged', function () {

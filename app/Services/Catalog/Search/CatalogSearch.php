@@ -97,7 +97,7 @@ class CatalogSearch
 
     private function searchKey(string $query, int $page, CatalogContext $context): string
     {
-        return $this->keys->build('search', ['query' => $query, 'page' => $page, ...(config('catalog.tv_shows.enabled') ? ['kinds' => 'all'] : [])], $context);
+        return $this->keys->build('search', ['query' => $query, 'page' => $page, 'kinds' => 'all'], $context);
     }
 
     /**

@@ -38,7 +38,6 @@ class SearchPage
             'minimumQueryLength' => config('catalog.search.minimum_query_length'),
             'maximumQueryLength' => config('catalog.search.maximum_query_length'),
             'looksUpImdbRatings' => RatingSourceName::Imdb->isEnabled(),
-            'includesTvShows' => (bool) config('catalog.tv_shows.enabled'),
             'tab' => $this->request->kind->value,
             'genres' => fn (): array => $this->selection->genres(),
             'genre' => fn (): ?int => $this->selection->filters()->genreId,

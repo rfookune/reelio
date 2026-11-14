@@ -85,7 +85,7 @@ test('a signed-in TV view records a safe referrer once and partial reloads recor
     ]);
 })->with([['search', 'search'], ['picker', 'direct'], [['search'], 'direct'], [null, 'direct']]);
 
-test('TV views record no event for guests, Removed Titles, cap failures or the disabled flag', function (string $case, int $status) {
+test('TV views record no event for guests, Removed Titles, cap failures', function (string $case, int $status) {
     Queue::fake([RecordAnalyticsEvent::class]);
     $tvShow = match ($case) {
         'removed' => TvShow::factory()->removed()->create(),
@@ -95,13 +95,10 @@ test('TV views record no event for guests, Removed Titles, cap failures or the d
     if ($case !== 'guest') {
         $this->actingAs(User::factory()->create());
     }
-    if ($case === 'disabled') {
-        config(['catalog.tv_shows.enabled' => false]);
-    }
     app()->instance(CatalogSource::class, new FakeCatalogSource(failing: true));
     $this->get(route('tv-shows.show', ['slug' => $tvShow->slug ?? 'tv-show', 'id' => $tvShow->id]))->assertStatus($status);
     Queue::assertNotPushed(RecordAnalyticsEvent::class);
-})->with([['guest', 200], ['removed', 410], ['cap', 503], ['disabled', 404]]);
+})->with([['guest', 200], ['removed', 410], ['cap', 503]]);
 
 test('a guest action emits nothing until replay and replay records once', function (string $scope) {
     Queue::fake([RecordAnalyticsEvent::class]);
@@ -132,21 +129,20 @@ test('the TV entry redirect preserves a safe referrer for the view event', funct
     Queue::assertPushed(RecordAnalyticsEvent::class, fn ($job) => $job->name === 'tv_show_viewed' && $job->properties === ['tv_show_id' => $tvShow->id, 'referrer' => 'search']);
 });
 
-test('disabling TV Shows suppresses every TV action event', function () {
+test('invalid TV identifiers emit no action events', function () {
     Queue::fake([RecordAnalyticsEvent::class]);
     $episode = Episode::factory()->create();
     $tvShow = TvShow::query()->findOrFail($episode->title_id);
     $this->actingAs(User::factory()->create());
     $token = $this->putJson("/tv-shows/tmdb/{$tvShow->tmdb_id}/watchlist", ['source' => 'search'])->assertOk()->json('undoToken');
     Queue::fake([RecordAnalyticsEvent::class]);
-    config(['catalog.tv_shows.enabled' => false]);
 
-    foreach (["/tv-shows/tmdb/{$tvShow->tmdb_id}/watchlist", "/tv-shows/tmdb/{$tvShow->tmdb_id}/watched", "/tv-shows/{$tvShow->id}/seasons/{$episode->season_id}/watched", "/tv-shows/{$tvShow->id}/seasons/{$episode->season_id}/episodes/{$episode->id}/watched"] as $url) {
+    foreach (['/tv-shows/tmdb/invalid/watchlist', '/tv-shows/tmdb/invalid/watched', "/tv-shows/999999/seasons/{$episode->season_id}/watched", "/tv-shows/999999/seasons/{$episode->season_id}/episodes/{$episode->id}/watched"] as $url) {
         $this->putJson($url, ['source' => 'search'])->assertNotFound();
         $this->deleteJson($url, ['source' => 'search'])->assertNotFound();
     }
-    $this->postJson("/tv-shows/tmdb/{$tvShow->tmdb_id}/undo", ['token' => $token])->assertNotFound();
-    $this->get(route('tv-shows.watch', ['tmdbId' => $tvShow->tmdb_id, 'country' => 'US']))->assertNotFound();
+    $this->postJson('/tv-shows/tmdb/invalid/undo', ['token' => $token])->assertNotFound();
+    $this->get(route('tv-shows.watch', ['tmdbId' => 'invalid', 'country' => 'US']))->assertNotFound();
     Queue::assertNotPushed(RecordAnalyticsEvent::class);
 });
 

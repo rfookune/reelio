@@ -177,7 +177,6 @@ test('the cap clears Catalog data but preserves unviewed Titles held only by a U
     ]);
     $user = User::factory()->create();
     UserTitle::query()->create(['user_id' => $user->id, 'title_id' => $title->id, 'rating' => 6]);
-    config(['catalog.tv_shows.enabled' => false]);
 
     CleanUpCatalog::dispatch();
 

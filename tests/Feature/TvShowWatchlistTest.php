@@ -156,9 +156,8 @@ test('a Watchlist action requires a known TV source', function (array $data, str
     'unknown' => [['source' => 'homepage'], 'The selected source is invalid.'],
 ]);
 
-test('the disabled flag makes Watchlist actions inert', function (string $method) {
-    config(['catalog.tv_shows.enabled' => false]);
-    $this->{$method}('/tv-shows/tmdb/87108/watchlist', ['source' => 'tv-show'])->assertNotFound()->assertSessionMissing('user_movie_actions.pending');
+test('guest Watchlist actions queue without fetching or writing facts', function (string $method) {
+    $this->{$method}('/tv-shows/tmdb/87108/watchlist', ['source' => 'tv-show'])->assertOk()->assertSessionHas('user_movie_actions.pending');
     $this->assertDatabaseCount('titles', 0);
 })->with(['putJson', 'deleteJson']);
 
@@ -190,7 +189,6 @@ test('failed or expired TV Watchlist guest replay leaves no facts and still sign
     match ($failure) {
         'expired' => $this->travel(31)->minutes(),
         'outage' => $source->failing = true,
-        'disabled' => config(['catalog.tv_shows.enabled' => false]),
         'removed' => TvShow::factory()->removed()->create(['tmdb_id' => 87108]),
     };
 
@@ -198,7 +196,7 @@ test('failed or expired TV Watchlist guest replay leaves no facts and still sign
 
     $this->assertAuthenticatedAs($user);
     $this->assertDatabaseCount('user_titles', 0);
-})->with(['expired', 'outage', 'disabled', 'removed']);
+})->with(['expired', 'outage', 'removed']);
 
 test('TV Show Watchlist Undo preserves the current User rating', function (string $method, ?string $watchlistedAt, ?int $rating) {
     $this->travelTo('2026-11-09 12:00:00');

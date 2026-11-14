@@ -141,15 +141,15 @@ test('the IMDb ratings of TV Shows are looked up through the TV external ids and
     expect(array_column($source->tvImdbIdCalls, 'tmdbId'))->toBe([1])->and(array_column($source->imdbIdCalls, 'tmdbId'))->toBe([1]);
 });
 
-test('with TV Shows off, TV Shows are not looked up', function () {
-    config(['ratings.sources.imdb.enabled' => true, 'catalog.tv_shows.enabled' => false]);
+test('TV Shows are looked up by default', function () {
+    config(['ratings.sources.imdb.enabled' => true]);
     $source = new FakeCatalogSource(searches: ['inter' => [[movieListing(1, kind: TitleKind::TvShow)]]], tvImdbIds: [1 => 'tt0000099']);
     app()->instance(CatalogSource::class, $source);
     app(CatalogSearch::class)->search('inter', 1);
 
-    $this->getJson(route('search.ratings', ['q' => 'inter']))->assertExactJson(['ratings' => []]);
+    $this->getJson(route('search.ratings', ['q' => 'inter']))->assertOk();
 
-    expect($source->tvImdbIdCalls)->toBe([]);
+    expect(array_column($source->tvImdbIdCalls, 'tmdbId'))->toBe([1]);
 });
 
 test('the IMDb ratings of a Browse page are looked up for the tab it was browsed on', function (string $tab, array $parameters, string $key, float $value) {

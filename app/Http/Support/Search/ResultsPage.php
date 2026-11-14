@@ -2,7 +2,6 @@
 
 namespace App\Http\Support\Search;
 
-use App\Enums\TitleKind;
 use App\Services\Catalog\CatalogResult;
 use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Sources\CatalogSource;
@@ -33,15 +32,13 @@ class ResultsPage
     ) {}
 
     /**
-     * The listings in the source's order, TV Shows dropped while they are switched off.
+     * The Movie and TV Show listings in the source's order.
      *
      * @return list<MovieListing>
      */
     public function listings(): array
     {
-        $listings = $this->result()->value->listings ?? [];
-
-        return config('catalog.tv_shows.enabled') ? $listings : array_values(array_filter($listings, fn (MovieListing $listing): bool => $listing->kind === TitleKind::Movie));
+        return $this->result()->value->listings ?? [];
     }
 
     /** Whether the Catalog gave the page, as opposed to being unable to. */

@@ -94,20 +94,19 @@ class TmdbCatalogSource implements CatalogSource
     }
 
     /**
-     * One page of a title search, in TMDB's order, Movies without a poster included. With TV Shows on it searches
-     * every kind and keeps the Movies and TV Shows, told apart by `media_type`; with them off, Movies alone. Adult
+     * One page of a title search, in TMDB's order, Movies without a poster included. It searches every kind and
+     * keeps the Movies and TV Shows, told apart by `media_type`. Adult
      * listings, listings that aren't well formed and repeats within the page are dropped; an unsafe image path is
      * cleared.
      */
     public function search(string $query, int $page, CatalogContext $context): SearchResults
     {
-        $includesTvShows = (bool) config('catalog.tv_shows.enabled');
-        $response = $this->client->get($includesTvShows ? 'search/multi' : 'search/movie', ['query' => $query, 'page' => $page, 'language' => $context->language, 'include_adult' => 'false'], $context)
+        $response = $this->client->get('search/multi', ['query' => $query, 'page' => $page, 'language' => $context->language, 'include_adult' => 'false'], $context)
             ?? throw new SourceUnavailable('The Catalog source has no such search page.');
         $data = $this->movies->listPage((array) $response->json());
         $totalResults = $this->totalResults($response);
 
-        return new SearchResults($includesTvShows ? $this->movies->mixedListings($data['results']) : $this->movies->listings($data['results']), $data['total_pages'], $totalResults);
+        return new SearchResults($this->movies->mixedListings($data['results']), $data['total_pages'], $totalResults);
     }
 
     /**

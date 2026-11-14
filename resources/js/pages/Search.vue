@@ -54,9 +54,7 @@ const props = defineProps<{
     maximumQueryLength: number;
     /** Whether the IMDb ratings of results are looked up; they aren't while IMDb is switched off. */
     looksUpImdbRatings: boolean;
-    /** Whether TV Shows are searched beside Movies, so the results can be filtered by kind. */
-    includesTvShows: boolean;
-    /** The Browse tab shown while there is no query: Movies, or TV Shows when they are switched on. */
+    /** The Browse tab shown while there is no query: Movies or TV Shows. */
     tab: CardKind;
     /** The genres the tab offers; none while searching by Name or while the Catalog can't list them. */
     genres: { id: number; name: string }[];
@@ -297,7 +295,7 @@ const noResults = computed(
         (props.status === 'fresh' || props.status === 'stale') &&
         (props.totalResults === 0 ||
             // A search of every kind counts people too, which the page drops.
-            (props.includesTvShows && !hasResults.value)),
+            !hasResults.value),
 );
 function resultCount(total: number): string {
     return `${new Intl.NumberFormat('en-US').format(total)} ${total === 1 ? 'result' : 'results'}`;
@@ -767,11 +765,9 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
 
         <template v-if="!advancedOpen">
             <form role="search" @submit.prevent="visit(wantedQuery)">
-                <label for="search-query" class="sr-only">{{
-                    includesTvShows
-                        ? 'Search movies and TV shows by title'
-                        : 'Search movies by title'
-                }}</label>
+                <label for="search-query" class="sr-only"
+                    >Search movies and TV shows by title</label
+                >
                 <InputGroup
                     class="h-14 w-full border-control bg-surface [--input-group-inset:0.5rem] [--input-group-radius:var(--radius-2xl)]"
                 >
@@ -857,7 +853,7 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
                         data-slot="advanced-header-controls"
                         class="flex flex-wrap items-end gap-4"
                     >
-                        <div v-if="includesTvShows" class="w-40">
+                        <div class="w-40">
                             <NativeSelect
                                 id="browse-kind"
                                 touch
@@ -1176,8 +1172,7 @@ onBeforeUnmount(() => clearTimeout(debounceTimer));
             class="flex flex-col gap-2"
         >
             <h2 class="text-lg font-semibold">
-                No {{ includesTvShows ? 'movies or TV shows' : 'movies' }} match
-                "{{ query }}"
+                No movies or TV shows match "{{ query }}"
             </h2>
             <p class="text-sm text-muted">
                 Check the spelling, or try fewer or different words

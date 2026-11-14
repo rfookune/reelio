@@ -74,7 +74,6 @@ test('catalog purge keeps Titles and User ratings when a rating is the only fact
     $title = $kind::factory()->create();
     $user = User::factory()->create();
     UserTitle::query()->create(['user_id' => $user->id, 'title_id' => $title->id, 'rating' => 9]);
-    config(['catalog.tv_shows.enabled' => false]);
 
     $this->artisan('catalog:purge --force')->assertSuccessful();
 

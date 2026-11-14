@@ -20,7 +20,6 @@ function episodeWatchedUrl(Episode $episode): string
 }
 
 test('marking an Episode records the current Watched date and marking again records a rewatch', function () {
-    config(['catalog.tv_shows.enabled' => true]);
     $episode = Episode::factory()->create();
     $user = User::factory()->create();
     $this->travelTo('2026-11-08 12:00:00');
@@ -33,7 +32,6 @@ test('marking an Episode records the current Watched date and marking again reco
 });
 
 test('Episode actions reject mismatched parents, removed inventory, and unaired Episodes', function (string $case, int $status) {
-    config(['catalog.tv_shows.enabled' => true]);
     $episode = Episode::factory()->create();
     $url = episodeWatchedUrl($episode);
     match ($case) {
@@ -44,7 +42,6 @@ test('Episode actions reject mismatched parents, removed inventory, and unaired 
         'removed tv show' => $episode->title->update(['removed_at' => now()]),
         'unaired' => $episode->update(['air_date' => today()->addDay()]),
         'undated' => $episode->update(['air_date' => null]),
-        'flag off' => config(['catalog.tv_shows.enabled' => false]),
     };
     $response = $this->actingAs(User::factory()->create())->putJson($url)->assertStatus($status);
     if ($status === 422) {
@@ -52,10 +49,9 @@ test('Episode actions reject mismatched parents, removed inventory, and unaired 
     }
     $this->assertDatabaseCount('user_episodes', 0);
 })->with(['season' => ['season', 404], 'tv show' => ['tv show', 404], 'removed episode' => ['removed episode', 404],
-    'removed season' => ['removed season', 404], 'removed tv show' => ['removed tv show', 410], 'unaired' => ['unaired', 422], 'undated' => ['undated', 422], 'flag off' => ['flag off', 404]]);
+    'removed season' => ['removed season', 404], 'removed tv show' => ['removed tv show', 410], 'unaired' => ['unaired', 422], 'undated' => ['undated', 422]]);
 
 test('unmarking only clears the signed-in user and Undo restores the precise earlier date', function () {
-    config(['catalog.tv_shows.enabled' => true]);
     $episode = Episode::factory()->create();
     $user = User::factory()->create();
     $other = User::factory()->create();
@@ -71,7 +67,6 @@ test('unmarking only clears the signed-in user and Undo restores the precise ear
 });
 
 test('Undo refuses an older action and changed facts without overwriting them', function () {
-    config(['catalog.tv_shows.enabled' => true]);
     $episode = Episode::factory()->create();
     $this->actingAs(User::factory()->create());
     $first = $this->putJson(episodeWatchedUrl($episode))->assertOk()->json('undoToken');
@@ -87,7 +82,6 @@ test('Undo refuses an older action and changed facts without overwriting them', 
 });
 
 test('completion ignores ineligible inventory, removes the Watchlist fact, and Undo restores it', function () {
-    config(['catalog.tv_shows.enabled' => true]);
     $episode = Episode::factory()->create();
     $tvShow = TvShow::query()->findOrFail($episode->title_id);
     Episode::factory()->for($episode->season)->create(['air_date' => null]);
@@ -105,7 +99,6 @@ test('completion ignores ineligible inventory, removes the Watchlist fact, and U
 });
 
 test('a guest Episode action saves nothing and replays once after sign-in', function () {
-    config(['catalog.tv_shows.enabled' => true]);
     $episode = Episode::factory()->create();
     $user = User::factory()->create();
     $this->get('/about')->assertOk();
@@ -116,7 +109,6 @@ test('a guest Episode action saves nothing and replays once after sign-in', func
 });
 
 test('a guest cannot queue an unaired Episode', function () {
-    config(['catalog.tv_shows.enabled' => true]);
     $episode = Episode::factory()->create(['air_date' => today()->addDay()]);
 
     $this->putJson(episodeWatchedUrl($episode))->assertUnprocessable()
@@ -126,7 +118,6 @@ test('a guest cannot queue an unaired Episode', function () {
 });
 
 test('a Completed TV Show queued for a rewatch stays on the Watchlist when marking an Episode again', function () {
-    config(['catalog.tv_shows.enabled' => true]);
     $episode = Episode::factory()->create();
     $user = User::factory()->create();
     $this->actingAs($user)->putJson(episodeWatchedUrl($episode))->assertOk();
@@ -136,7 +127,6 @@ test('a Completed TV Show queued for a rewatch stays on the Watchlist when marki
 });
 
 test('the page derives progress and opens the next Season, with Specials last and excluded', function () {
-    config(['catalog.tv_shows.enabled' => true]);
     $source = new FakeCatalogSource(tvShows: [new TvShowDetails(
         87108, title: 'Chernobyl', seasons: [
             new SeasonDetails(100, 0, episodes: [new EpisodeDetails(200, 0, 1, airDate: '2019-01-01')]),
@@ -165,19 +155,17 @@ test('the page derives progress and opens the next Season, with Specials last an
 });
 
 test('a guest action expires or refuses removed inventory and never blocks sign-in', function (string $change) {
-    config(['catalog.tv_shows.enabled' => true]);
     $episode = Episode::factory()->create();
     $user = User::factory()->create();
     $this->put(episodeWatchedUrl($episode))->assertRedirect(route('login'));
     match ($change) {
         'expired' => $this->travel(31)->minutes(),
         'removed' => $episode->update(['removed_at' => now()]),
-        'disabled' => config(['catalog.tv_shows.enabled' => false]),
     };
     $this->post('/login', ['email' => $user->email, 'password' => 'password'])->assertRedirect()->assertSessionMissing('user_movie_actions.pending');
     $this->assertAuthenticatedAs($user);
     $this->assertDatabaseCount('user_episodes', 0);
-})->with(['expired', 'removed', 'disabled']);
+})->with(['expired', 'removed']);
 
 test('Undo refuses another user, a wrong token and an expired action', function () {
     $episode = Episode::factory()->create();

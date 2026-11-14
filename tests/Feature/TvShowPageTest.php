@@ -146,20 +146,15 @@ test('redirects a TV URL for a Movie to its canonical Movie URL', function () {
         ->assertStatus(301)->assertRedirect($movie->canonicalUrl());
 });
 
-test('the disabled TV flag makes both routes and cross-kind redirects return 404 without fetching', function () {
-    config(['catalog.tv_shows.enabled' => false]);
-    $tvShow = TvShow::factory()->create();
+test('TV routes and cross-kind redirects are available by default', function () {
+    $tvShow = TvShow::factory()->create(['tmdb_id' => 87108, 'title' => 'Chernobyl', 'slug' => 'chernobyl']);
     $movie = Movie::factory()->create();
-    $source = tvPageSource();
+    tvPageSource();
 
-    $this->get('/tv-shows/tmdb/87108')->assertNotFound();
-    $this->get(route('tv-shows.show', ['slug' => $tvShow->slug, 'id' => $tvShow->id]))->assertNotFound();
-    $this->get(route('movies.show', ['slug' => $tvShow->slug, 'id' => $tvShow->id]))->assertNotFound();
-    $this->get(route('tv-shows.show', ['slug' => $movie->slug, 'id' => $movie->id]))->assertNotFound();
-
-    expect($source->tvShowCalls)->toBeEmpty();
-    $this->assertDatabaseCount('titles', 2);
-    $this->assertDatabaseCount('seasons', 0);
+    $this->get('/tv-shows/tmdb/87108')->assertStatus(301)->assertRedirect($tvShow->canonicalUrl());
+    $this->get($tvShow->canonicalUrl())->assertOk();
+    $this->get(route('movies.show', ['slug' => $tvShow->slug, 'id' => $tvShow->id]))->assertStatus(301)->assertRedirect($tvShow->canonicalUrl());
+    $this->get(route('tv-shows.show', ['slug' => $movie->slug, 'id' => $movie->id]))->assertStatus(301)->assertRedirect($movie->canonicalUrl());
 });
 
 test('TV and Movie entry routes share one creation budget', function () {

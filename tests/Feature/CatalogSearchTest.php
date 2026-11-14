@@ -96,7 +96,7 @@ test('a TV Show result\'s TMDB score is recorded under its own kind, apart from 
     $this->assertDatabaseHas('ratings', ['source' => 'tmdb', 'source_id' => 'tv:1', 'value' => 6.1]);
 });
 
-test('a cached search keeps each result\'s kind, and is not shared between TV Shows on and off', function () {
+test('a cached search keeps each result\'s kind, on repeated reads', function () {
     $source = fakeSearchSource([[movieListing(1), movieListing(1, kind: TitleKind::TvShow)]]);
     $search = app(CatalogSearch::class);
 
@@ -105,9 +105,7 @@ test('a cached search keeps each result\'s kind, and is not shared between TV Sh
 
     expect($cached[1]->kind)->toBe(TitleKind::TvShow)->and($source->searchCalls)->toHaveCount(1);
 
-    config(['catalog.tv_shows.enabled' => false]);
-
-    expect($search->cachedSearch('inter', 1))->toBeNull();
+    expect($search->cachedSearch('inter', 1)->listings[1]->kind)->toBe(TitleKind::TvShow);
     $search->search('inter', 1);
-    expect($source->searchCalls)->toHaveCount(2);
+    expect($source->searchCalls)->toHaveCount(1);
 });

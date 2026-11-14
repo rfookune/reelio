@@ -484,9 +484,11 @@ test('a genre collection reads TMDB\'s discover list for the genre by popularity
     ]);
 });
 
-test('with TV Shows off, a search page is translated from the recorded Movie fixture, in TMDB\'s order with poster-less Movies kept', function () {
-    config(['catalog.tmdb.token' => 'test-read-token', 'catalog.tv_shows.enabled' => false]);
-    Http::fake(['https://api.themoviedb.org/3/search/movie?*' => Http::response(json_decode(file_get_contents(base_path('tests/Fixtures/tmdb/search_inter.json')), true, flags: JSON_THROW_ON_ERROR))]);
+test('a multi-search page translates Movie results, in TMDB\'s order with poster-less Movies kept', function () {
+    config(['catalog.tmdb.token' => 'test-read-token']);
+    $fixture = json_decode(file_get_contents(base_path('tests/Fixtures/tmdb/search_inter.json')), true, flags: JSON_THROW_ON_ERROR);
+    $fixture['results'] = array_map(fn (array $movie): array => [...$movie, 'media_type' => 'movie'], $fixture['results']);
+    Http::fake(['https://api.themoviedb.org/3/search/multi?*' => Http::response($fixture)]);
 
     $results = app(TmdbCatalogSource::class)->search('inter', 1, new CatalogContext('en-US'));
 
@@ -505,8 +507,7 @@ test('with TV Shows off, a search page is translated from the recorded Movie fix
 });
 
 test('a search fails explicitly on unsuccessful or malformed responses', function (array $body, int $status) {
-    config(['catalog.tv_shows.enabled' => false]);
-    Http::fake(['https://api.themoviedb.org/3/search/movie?*' => Http::response($body, $status)]);
+    Http::fake(['https://api.themoviedb.org/3/search/multi?*' => Http::response($body, $status)]);
 
     expect(fn () => app(TmdbCatalogSource::class)->search('inter', 1, new CatalogContext))->toThrow(SourceUnavailable::class);
 })->with([
@@ -723,8 +724,8 @@ test('a rejected token on the external ids is a configuration error', function (
     expect(fn () => app(TmdbCatalogSource::class)->imdbId(9, new CatalogContext))->toThrow(SourceMisconfigured::class);
 });
 
-test('with TV Shows on, a search reads every kind, telling Movies from TV Shows by media type and dropping people', function () {
-    config(['catalog.tmdb.token' => 'test-read-token', 'catalog.tv_shows.enabled' => true]);
+test('a search reads every kind, telling Movies from TV Shows by media type and dropping people', function () {
+    config(['catalog.tmdb.token' => 'test-read-token']);
     Http::fake(['https://api.themoviedb.org/3/search/multi?*' => Http::response(['page' => 1, 'total_pages' => 2, 'total_results' => 5, 'results' => [
         ['media_type' => 'movie', 'id' => 1, 'title' => 'Chernobyl 1', 'release_date' => '2001-02-03', 'poster_path' => '/m.jpg', 'vote_average' => 6.5, 'vote_count' => 10],
         ['media_type' => 'tv', 'id' => 1, 'name' => 'Chernobyl', 'first_air_date' => '2019-05-06', 'poster_path' => '/t.jpg', 'vote_average' => 8.5, 'vote_count' => 100],
