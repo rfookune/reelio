@@ -3,17 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Actions\RecordEvent;
-use App\Http\Support\Search\SearchPage;
-use App\Http\Support\Search\UnseenBrowse;
-use App\Services\Catalog\Search\BrowseOptions;
-use App\Services\Catalog\Search\CatalogSearch;
-use App\Services\Catalog\Search\ImdbIdLookup;
-use App\Services\Catalog\Sources\Listings\OriginalLanguage;
-use App\Services\Ratings\Enums\RatingSourceName;
-use App\Services\Ratings\Ratings;
+use App\Http\Support\Search\SearchPages;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\ScrollMetadata;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -23,9 +15,9 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class SearchController extends Controller
 {
-    public function __invoke(Request $request, CatalogSearch $catalogSearch, BrowseOptions $browseOptions, UnseenBrowse $unseenBrowse, ImdbIdLookup $imdbIds, Ratings $ratings, RecordEvent $recordEvent): Response
+    public function __invoke(Request $request, SearchPages $searchPages, RecordEvent $recordEvent): Response
     {
-        $page = SearchPage::fromRequest($request, $catalogSearch, $browseOptions, $unseenBrowse, $imdbIds, $ratings, $recordEvent);
+        $page = $searchPages->forRequest($request);
 
         if ($request->query('tab') === 'tv' && $page->runtimeBand() !== null) {
             $query = $request->query();
@@ -35,35 +27,14 @@ class SearchController extends Controller
             return redirect()->route('search', $query);
         }
 
-        $response = Inertia::render('Search', [
-            'imageBaseUrl' => config('catalog.image_base_url'),
-            'query' => $page->request->query,
-            'minimumQueryLength' => config('catalog.search.minimum_query_length'),
-            'maximumQueryLength' => config('catalog.search.maximum_query_length'),
-            'looksUpImdbRatings' => RatingSourceName::Imdb->isEnabled(),
-            'includesTvShows' => (bool) config('catalog.tv_shows.enabled'),
-            'tab' => $page->request->kind->value,
-            'genres' => fn (): array => $page->genres(),
-            'genre' => fn (): ?int => $page->genre(),
-            'highlyRated' => fn (): bool => $page->highlyRated(),
-            'era' => fn (): ?string => $page->era()?->value,
-            'runtimeBand' => fn (): ?string => $page->runtimeBand()?->value,
-            'canHideSeen' => $page->canHideSeen(),
-            'showSeen' => fn (): bool => $page->showSeen(),
-            'languages' => OriginalLanguage::options(),
-            'language' => fn (): ?string => $page->originalLanguage()?->value,
-            'streamingServices' => fn (): array => $page->streamingServices(),
-            'selectedStreamingServices' => fn (): array => $page->selectedStreamingServices(),
-            'maximumStreamingServices' => config('catalog.search.maximum_streaming_services'),
-            'sort' => fn (): string => $page->sort()->value,
-            'explicitSort' => fn (): ?string => $page->explicitSort()?->value,
-            'results' => Inertia::scroll(fn (): array => $page->results(), metadata: fn (): ScrollMetadata => $page->scrollMetadata())->matchOn('data.key'),
-            'totalResults' => fn (): ?int => $page->totalResults(),
-            'status' => fn (): string => $page->status(),
-            'userMovies' => Inertia::merge(fn (): array => $page->userMovies()),
-            'userTvShows' => Inertia::merge(fn (): array => $page->userTvShows()),
-        ])->toResponse($request);
+        $response = Inertia::render('Search', $page->props())->toResponse($request);
         $response->headers->set('X-Robots-Tag', 'noindex');
+
+        $event = $page->analytics();
+
+        if ($event !== null) {
+            $recordEvent->handle($page->request->user, $event['event'], $event['properties']);
+        }
 
         return $response;
     }

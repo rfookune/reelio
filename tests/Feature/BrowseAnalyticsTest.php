@@ -135,3 +135,18 @@ test('later pages with Show seen on, and the lookup of IMDb ratings, record noth
 
     expect(queuedEvents())->toBe([]);
 });
+
+test('a partial reload of the first page that leaves the results out records nothing, and one that asks for them records it', function () {
+    Queue::fake([RecordAnalyticsEvent::class]);
+    fakeAnalyticsBrowse();
+    $this->actingAs(User::factory()->create())->freezeTime();
+    $version = (string) $this->get(route('search'))->viewData('page')['version'];
+    $headers = fn (string $only): array => ['X-Inertia' => 'true', 'X-Inertia-Version' => $version, 'X-Inertia-Partial-Component' => 'Search', 'X-Inertia-Partial-Data' => $only];
+    expect(queuedEvents())->toHaveCount(1);
+
+    $this->get(route('search'), $headers('status'))->assertOk();
+    expect(queuedEvents())->toHaveCount(1);
+
+    $this->get(route('search'), $headers('results,status'))->assertOk();
+    expect(queuedEvents())->toHaveCount(2);
+});

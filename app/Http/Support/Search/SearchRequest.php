@@ -39,6 +39,7 @@ readonly class SearchRequest
         public ?OriginalLanguage $requestedOriginalLanguage,
         public bool $requestedShowSeen,
         public CacheMode $cacheMode,
+        public bool $rendersResults,
     ) {}
 
     /**
@@ -63,6 +64,7 @@ readonly class SearchRequest
             requestedOriginalLanguage: self::enumFrom($request, 'language', OriginalLanguage::class),
             requestedShowSeen: $request->query('show_seen') === '1',
             cacheMode: $cacheMode ?? (self::reloadsUserMoviesOnly($request) ? CacheMode::CachedFacts : CacheMode::Live),
+            rendersResults: self::rendersResults($request),
         );
     }
 
@@ -171,5 +173,21 @@ readonly class SearchRequest
         $value = $request->query($parameter);
 
         return is_string($value) ? $enum::tryFrom($value) : null;
+    }
+
+    /**
+     * Whether the response carries the `results` prop: every visit does, and so does a partial reload that asks for
+     * it, but one that leaves it out, or only reloads other props, doesn't read the results at all.
+     */
+    private static function rendersResults(Request $request): bool
+    {
+        if ($request->header('X-Inertia-Partial-Component') !== 'Search') {
+            return true;
+        }
+
+        $only = array_filter(explode(',', (string) $request->header('X-Inertia-Partial-Data')));
+        $except = array_filter(explode(',', (string) $request->header('X-Inertia-Partial-Except')));
+
+        return ($only === [] || in_array('results', $only, true)) && ! in_array('results', $except, true);
     }
 }
