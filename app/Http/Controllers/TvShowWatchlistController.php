@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\ChangeTvShowWatchlist;
 use App\Http\Requests\TvShowWatchlistRequest;
-use App\Http\Support\TvShowByCatalogId;
+use App\Http\Support\TitleActions\TvShowByCatalogId;
 use App\Http\Support\Visitor\IntendedUrl;
 use App\Http\Support\Visitor\PendingGuestAction;
 use Illuminate\Http\JsonResponse;

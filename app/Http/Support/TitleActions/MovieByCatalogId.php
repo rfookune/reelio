@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Support;
+namespace App\Http\Support\TitleActions;
 
 use App\Http\Exceptions\DetailsUnavailable;
 use App\Http\Exceptions\TitleRemoved;

@@ -6,7 +6,7 @@ use App\Actions\ChangeEpisodeWatched;
 use App\Actions\ChangeSeasonWatched;
 use App\Actions\ChangeTvShowWatched;
 use App\Actions\ChangeTvShowWatchlist;
-use App\Http\Support\UserMovieActionByCatalogId;
+use App\Http\Support\TitleActions\UserMovieActionByCatalogId;
 use App\Http\Support\Visitor\PendingGuestAction;
 use App\Models\Episode;
 use App\Models\Season;

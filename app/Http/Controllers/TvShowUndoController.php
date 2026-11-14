@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Support\LatestTvShowAction;
-use App\Http\Support\TvShowByCatalogId;
+use App\Http\Support\TitleActions\LatestTvShowAction;
+use App\Http\Support\TitleActions\TvShowByCatalogId;
 use App\Services\TvShows\WatchedProgress;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

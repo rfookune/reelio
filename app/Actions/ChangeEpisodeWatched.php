@@ -6,7 +6,7 @@ use App\Enums\AnalyticsEvent;
 use App\Enums\ProgressState;
 use App\Enums\UserTitleAction;
 use App\Http\Exceptions\TitleRemoved;
-use App\Http\Support\LatestTvShowAction;
+use App\Http\Support\TitleActions\LatestTvShowAction;
 use App\Models\Episode;
 use App\Models\TvShow;
 use App\Models\User;

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\UserTitleAction;
 use App\Http\Requests\UserMovieActionRequest;
-use App\Http\Support\UserMovieActionByCatalogId;
+use App\Http\Support\TitleActions\UserMovieActionByCatalogId;
 use Illuminate\Http\RedirectResponse;
 
 /**

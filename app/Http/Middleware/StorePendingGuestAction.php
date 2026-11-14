@@ -5,7 +5,7 @@ namespace App\Http\Middleware;
 use App\Enums\Surface;
 use App\Enums\UserTitleAction;
 use App\Http\Requests\UserMovieActionRequest;
-use App\Http\Support\MovieByCatalogId;
+use App\Http\Support\TitleActions\MovieByCatalogId;
 use App\Http\Support\Visitor\IntendedUrl;
 use App\Http\Support\Visitor\PendingGuestAction;
 use Closure;

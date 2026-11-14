@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Support;
+namespace App\Http\Support\TitleActions;
 
 use App\Enums\UserTitleAction;
 use App\Models\User;

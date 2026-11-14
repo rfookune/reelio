@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Actions\UndoUserMovieAction;
 use App\Http\Requests\UndoUserMovieActionRequest;
-use App\Http\Support\LatestUserMovieAction;
-use App\Http\Support\MovieByCatalogId;
+use App\Http\Support\TitleActions\LatestUserMovieAction;
+use App\Http\Support\TitleActions\MovieByCatalogId;
 use App\Models\UserMovie;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException;

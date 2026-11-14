@@ -3,7 +3,7 @@
 namespace App\Actions;
 
 use App\Http\Exceptions\TitleRemoved;
-use App\Http\Support\BulkWatchedChange;
+use App\Http\Support\TitleActions\BulkWatchedChange;
 use App\Models\Season;
 use App\Models\TvShow;
 use App\Models\User;

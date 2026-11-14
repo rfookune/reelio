@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Surface;
-use App\Http\Support\MovieByCatalogId;
+use App\Http\Support\TitleActions\MovieByCatalogId;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 

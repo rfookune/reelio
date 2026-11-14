@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Support;
+namespace App\Http\Support\TitleActions;
 
 use App\Actions\RecordEvent;
 use App\Enums\AnalyticsEvent;
