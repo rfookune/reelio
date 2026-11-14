@@ -11,17 +11,14 @@ use App\Http\Support\Cards\UserMovies;
 use App\Models\Movie;
 use App\Models\TvShow;
 use App\Models\UserTitle;
-use App\Services\Catalog\CatalogResult;
 use App\Services\Catalog\Search\BrowseOptions;
 use App\Services\Catalog\Search\CatalogSearch;
 use App\Services\Catalog\Search\ImdbIdLookup;
-use App\Services\Catalog\Sources\CatalogSource;
 use App\Services\Catalog\Sources\Listings\BrowseSort;
 use App\Services\Catalog\Sources\Listings\Era;
 use App\Services\Catalog\Sources\Listings\MovieListing;
 use App\Services\Catalog\Sources\Listings\OriginalLanguage;
 use App\Services\Catalog\Sources\Listings\RuntimeBand;
-use App\Services\Catalog\Sources\Listings\SearchResults;
 use App\Services\Ratings\Enums\RatingSourceName;
 use App\Services\Ratings\ExternalRating;
 use App\Services\Ratings\Ratings;
@@ -51,9 +48,6 @@ use Inertia\ScrollMetadata;
  */
 class SearchPage
 {
-    /** @var CatalogResult<SearchResults>|null */
-    private ?CatalogResult $result = null;
-
     /** @var Collection<int, Movie>|null keyed by catalog id */
     private ?Collection $rows = null;
 
@@ -66,13 +60,9 @@ class SearchPage
     /** @var array<int, list<ExternalRating>>|null keyed by catalog id */
     private ?array $tvShowRatings = null;
 
-    /** @var array{result: CatalogResult<SearchResults>, nextPage: ?int}|null */
-    private ?array $unseenPage = null;
-
     public function __construct(
-        private CatalogSearch $catalogSearch,
         private BrowseSelection $selection,
-        private UnseenBrowse $unseenBrowse,
+        private ResultsPage $resultsPage,
         private ImdbIdLookup $imdbIds,
         private Ratings $ratingSources,
         private RecordEvent $recordEvent,
@@ -84,7 +74,9 @@ class SearchPage
     {
         $searchRequest = SearchRequest::from($request);
 
-        return new self($catalogSearch, new BrowseSelection($searchRequest, $browseOptions), $unseenBrowse, $imdbIds, $ratingSources, $recordEvent, $searchRequest);
+        $selection = new BrowseSelection($searchRequest, $browseOptions);
+
+        return new self($selection, new ResultsPage($searchRequest, $selection, $catalogSearch, $unseenBrowse), $imdbIds, $ratingSources, $recordEvent, $searchRequest);
     }
 
     /**
@@ -95,7 +87,9 @@ class SearchPage
     {
         $searchRequest = SearchRequest::from($request, CacheMode::CachedPage);
 
-        return new self($catalogSearch, new BrowseSelection($searchRequest, $browseOptions), $unseenBrowse, $imdbIds, $ratingSources, $recordEvent, $searchRequest);
+        $selection = new BrowseSelection($searchRequest, $browseOptions);
+
+        return new self($selection, new ResultsPage($searchRequest, $selection, $catalogSearch, $unseenBrowse), $imdbIds, $ratingSources, $recordEvent, $searchRequest);
     }
 
     /**
@@ -107,21 +101,21 @@ class SearchPage
      */
     public function results(): array
     {
-        $results = $this->pageResult()->value;
+        $results = $this->resultsPage->isAvailable();
 
-        if ($this->request->isSearching() && $results !== null && $this->request->page === 1) {
-            $this->recordEvent->handle($this->request->user, AnalyticsEvent::TitleSearched, ['query_length' => mb_strlen($this->request->query), 'result_count' => count($this->listings())]);
+        if ($this->request->isSearching() && $results && $this->request->page === 1) {
+            $this->recordEvent->handle($this->request->user, AnalyticsEvent::TitleSearched, ['query_length' => mb_strlen($this->request->query), 'result_count' => count($this->resultsPage->listings())]);
         }
 
-        if (! $this->request->isSearching() && $results !== null && $this->request->page === 1) {
+        if (! $this->request->isSearching() && $results && $this->request->page === 1) {
             $this->recordEvent->handle($this->request->user, AnalyticsEvent::TitleBrowsed, [
                 'tab' => $this->request->kind->value,
                 'filters' => implode(',', [...$this->selection->filters()->usedNames(), ...($this->showSeen() ? ['show_seen'] : [])]),
-                'result_count' => count($this->listings()),
+                'result_count' => count($this->resultsPage->listings()),
             ]);
         }
 
-        return ['data' => array_map(fn (MovieListing $listing): array => [...$this->card($listing->kind, $listing->tmdbId, $listing->title, $listing->releaseDate, $listing->posterPath), 'page' => $this->request->page], $this->listings())];
+        return ['data' => array_map(fn (MovieListing $listing): array => [...$this->card($listing->kind, $listing->tmdbId, $listing->title, $listing->releaseDate, $listing->posterPath), 'page' => $this->request->page], $this->resultsPage->listings())];
     }
 
     /**
@@ -142,7 +136,7 @@ class SearchPage
         $found = [];
 
         foreach ([TitleKind::Movie, TitleKind::TvShow] as $kind) {
-            $tmdbIds = array_map(fn (MovieListing $listing): int => $listing->tmdbId, array_filter($this->listings(), fn (MovieListing $listing): bool => $listing->kind === $kind));
+            $tmdbIds = array_map(fn (MovieListing $listing): int => $listing->tmdbId, array_filter($this->resultsPage->listings(), fn (MovieListing $listing): bool => $listing->kind === $kind));
             $tmdbIdsWithoutImdbId = array_values(array_filter($tmdbIds, fn (int $tmdbId): bool => $this->rowsOf($kind)->get($tmdbId)?->imdb_id === null));
 
             if ($tmdbIdsWithoutImdbId === []) {
@@ -161,36 +155,14 @@ class SearchPage
         return $found;
     }
 
-    /**
-     * The pages around this one: none past the search's last page or the source's. A later page the source can't
-     * answer points at itself, so "Show more" asks for it again. Browse that hides what the viewer has seen is
-     * paged by source page: the next page is the one after the last source page read, and there is no previous one.
-     */
     public function scrollMetadata(): ScrollMetadata
     {
-        $result = $this->pageResult();
-
-        if ($this->request->hidesSeen() && ! $result->isUnavailable()) {
-            return new ScrollMetadata('page', null, $this->unseenPage()['nextPage'], $this->request->page);
-        }
-
-        if ($result->isUnavailable() && $this->request->page > 1) {
-            return new ScrollMetadata('page', $this->request->page, $this->request->page, $this->request->page);
-        }
-
-        $lastPage = min($result->value->totalPages ?? 0, CatalogSource::LAST_SOURCE_PAGE);
-
-        return new ScrollMetadata(
-            'page',
-            $this->request->page > 1 ? $this->request->page - 1 : null,
-            $this->request->page < $lastPage ? $this->request->page + 1 : null,
-            $this->request->page,
-        );
+        return $this->resultsPage->scrollMetadata();
     }
 
     public function totalResults(): ?int
     {
-        return $this->pageResult()->value?->totalResults;
+        return $this->resultsPage->totalResults();
     }
 
     /**
@@ -280,7 +252,7 @@ class SearchPage
     /** `fresh`, `stale` or `unavailable`. */
     public function status(): string
     {
-        return $this->pageResult()->status->value;
+        return $this->resultsPage->status();
     }
 
     /**
@@ -312,43 +284,10 @@ class SearchPage
         ])->all();
     }
 
-    /**
-     * The search, or Browse when there is no query, asked for once; from the cache alone when only `userMovies` is
-     * reloaded, and unavailable when the cache has nothing.
-     *
-     * @return CatalogResult<SearchResults>
-     */
-    private function pageResult(): CatalogResult
-    {
-        if ($this->request->hidesSeen()) {
-            return $this->result ??= $this->unseenPage()['result'];
-        }
-
-        if ($this->request->cacheMode->readsCacheOnly()) {
-            $cached = $this->request->isSearching() ? $this->catalogSearch->cachedSearch($this->request->query, $this->request->page) : $this->catalogSearch->cachedBrowse($this->request->kind, $this->request->page, $this->selection->filters());
-
-            return $this->result ??= $cached === null ? CatalogResult::unavailable() : CatalogResult::stale($cached);
-        }
-
-        return $this->result ??= $this->request->isSearching() ? $this->catalogSearch->search($this->request->query, $this->request->page) : $this->catalogSearch->browse($this->request->kind, $this->request->page, $this->selection->filters());
-    }
-
-    /**
-     * Browse without the Titles the viewer has seen, read once: the page's source pages from its own, filled
-     * from the next ones as `UnseenBrowse` does, from the cache alone when only `userMovies` is reloaded, in which case
-     * the Titles seen are kept so that every Title on screen gets its facts.
-     *
-     * @return array{result: CatalogResult<SearchResults>, nextPage: ?int}
-     */
-    private function unseenPage(): array
-    {
-        return $this->unseenPage ??= $this->unseenBrowse->page($this->request->user, $this->request->kind, $this->request->page, $this->selection->filters(), $this->request->cacheMode->readsCacheOnly(), $this->request->cacheMode->keepsSeenTitles());
-    }
-
     /** @return list<int> */
     private function catalogIds(): array
     {
-        return array_values(array_unique(array_map(fn (MovieListing $listing): int => $listing->tmdbId, array_filter($this->listings(), fn (MovieListing $listing): bool => $listing->kind === TitleKind::Movie))));
+        return array_values(array_unique(array_map(fn (MovieListing $listing): int => $listing->tmdbId, array_filter($this->resultsPage->listings(), fn (MovieListing $listing): bool => $listing->kind === TitleKind::Movie))));
     }
 
     /** @return SearchCard */
@@ -379,18 +318,6 @@ class SearchPage
         return $kind === TitleKind::TvShow ? "tv:{$tmdbId}" : (string) $tmdbId;
     }
 
-    /**
-     * The search's listings in the source's order, TV Shows dropped while they are switched off.
-     *
-     * @return list<MovieListing>
-     */
-    private function listings(): array
-    {
-        $listings = $this->pageResult()->value->listings ?? [];
-
-        return config('catalog.tv_shows.enabled') ? $listings : array_values(array_filter($listings, fn (MovieListing $listing): bool => $listing->kind === TitleKind::Movie));
-    }
-
     /** @return Collection<int, Movie>|Collection<int, TvShow> keyed by catalog id */
     private function rowsOf(TitleKind $kind): Collection
     {
@@ -412,7 +339,7 @@ class SearchPage
     /** @return list<int> */
     private function tvShowCatalogIds(): array
     {
-        return array_values(array_unique(array_map(fn (MovieListing $listing): int => $listing->tmdbId, array_filter($this->listings(), fn (MovieListing $listing): bool => $listing->kind === TitleKind::TvShow))));
+        return array_values(array_unique(array_map(fn (MovieListing $listing): int => $listing->tmdbId, array_filter($this->resultsPage->listings(), fn (MovieListing $listing): bool => $listing->kind === TitleKind::TvShow))));
     }
 
     /**
