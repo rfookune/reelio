@@ -86,7 +86,7 @@ _Avoid_: Saved date, watchlisted at
 
 **Watched**:
 A user's record of having seen a Movie or an Episode; set by marking it as watched, independently of the Watchlist.
-_Avoid_: Viewing history, history, seen, viewing record
+_Avoid_: Viewing history, history, viewing record
 
 **Watched date**:
 The most recent time a user saw a Movie or an Episode; one per Movie or Episode.
@@ -113,6 +113,10 @@ _Avoid_: Finished, watched
 **User rating**:
 A user's own score for a Movie or a TV Show, a whole number from 1 to 10, given at any time and independently of the Watchlist and Watched. Only that user sees it; it is not an External rating.
 _Avoid_: Local rating, my score, review, community rating
+
+**Seen**:
+A Title a user is treated as having already got past: a Movie with a Watched record, a Completed TV Show, or any Movie or TV Show with a User rating. Being on the Watchlist does not make a Title Seen, and neither does a TV Show being In progress or Not started. Browse hides Seen Titles from a signed-in user unless they choose to show them.
+_Avoid_: Watched (a rated Movie is Seen without being Watched)
 
 **Movie picker**:
 Chooses one Movie at random from a user's Watchlist, optionally narrowed by genre.
