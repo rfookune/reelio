@@ -8,10 +8,8 @@ use App\Enums\Surface;
 use App\Enums\TitleKind;
 use App\Http\Support\Cards\RatingsByCatalogId;
 use App\Http\Support\Cards\UserMovies;
-use App\Http\Support\Visitor\VisitorCountry;
 use App\Models\Movie;
 use App\Models\TvShow;
-use App\Models\User;
 use App\Models\UserTitle;
 use App\Services\Catalog\CatalogResult;
 use App\Services\Catalog\Search\BrowseOptions;
@@ -30,7 +28,6 @@ use App\Services\Ratings\ExternalRating;
 use App\Services\Ratings\Ratings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 use Inertia\ScrollMetadata;
 
 /**
@@ -81,7 +78,6 @@ class SearchPage
     /** @var array{result: CatalogResult<SearchResults>, nextPage: ?int}|null */
     private ?array $unseenPage = null;
 
-    /** @param  list<int>  $requestedStreamingServices */
     public function __construct(
         private CatalogSearch $catalogSearch,
         private BrowseOptions $browseOptions,
@@ -89,53 +85,13 @@ class SearchPage
         private ImdbIdLookup $imdbIds,
         private Ratings $ratingSources,
         private RecordEvent $recordEvent,
-        private ?User $user,
-        public readonly string $query,
-        public readonly int $page,
-        public readonly TitleKind $browseKind = TitleKind::Movie,
-        private ?int $requestedGenre = null,
-        private ?BrowseSort $requestedSort = null,
-        private string $country = '',
-        private array $requestedStreamingServices = [],
-        private bool $readsCacheOnly = false,
-        private bool $requestedHighlyRated = false,
-        private ?Era $requestedEra = null,
-        private ?RuntimeBand $requestedRuntimeBand = null,
-        private ?OriginalLanguage $requestedOriginalLanguage = null,
-        private bool $requestedShowSeen = false,
-        private bool $coversSeenTitles = false,
+        public readonly SearchRequest $request,
     ) {}
 
-    /**
-     * The page for the request's `q`, trimmed of Unicode whitespace and cut to `search.maximum_query_length`
-     * characters, and its `page`, kept from 1 to the source's last page. A reload of `userMovies` alone, as after
-     * a Watchlist action, reads the search from the cache only.
-     */
+    /** The page for a request, which reads the Catalog live unless it is a reload of `userMovies` alone. */
     public static function fromRequest(Request $request, CatalogSearch $catalogSearch, BrowseOptions $browseOptions, UnseenBrowse $unseenBrowse, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
-        return new self(
-            $catalogSearch,
-            $browseOptions,
-            $unseenBrowse,
-            $imdbIds,
-            $ratingSources,
-            $recordEvent,
-            $request->user(),
-            self::queryFrom($request),
-            self::pageFrom($request),
-            self::tabFrom($request),
-            self::genreFrom($request),
-            BrowseSort::fromRequestValue($request->query('sort')),
-            VisitorCountry::resolve($request)->code,
-            self::streamingServicesFrom($request),
-            self::reloadsUserMoviesOnly($request),
-            self::highlyRatedFrom($request),
-            self::eraFrom($request),
-            self::runtimeBandFrom($request),
-            self::originalLanguageFrom($request),
-            self::showSeenFrom($request),
-            self::reloadsUserMoviesOnly($request),
-        );
+        return new self($catalogSearch, $browseOptions, $unseenBrowse, $imdbIds, $ratingSources, $recordEvent, SearchRequest::from($request));
     }
 
     /**
@@ -144,114 +100,7 @@ class SearchPage
      */
     public static function cachedFromRequest(Request $request, CatalogSearch $catalogSearch, BrowseOptions $browseOptions, UnseenBrowse $unseenBrowse, ImdbIdLookup $imdbIds, Ratings $ratingSources, RecordEvent $recordEvent): self
     {
-        return new self($catalogSearch, $browseOptions, $unseenBrowse, $imdbIds, $ratingSources, $recordEvent, $request->user(), self::queryFrom($request), self::pageFrom($request), self::tabFrom($request), self::genreFrom($request), BrowseSort::fromRequestValue($request->query('sort')), VisitorCountry::resolve($request)->code, self::streamingServicesFrom($request), readsCacheOnly: true, requestedHighlyRated: self::highlyRatedFrom($request), requestedEra: self::eraFrom($request), requestedRuntimeBand: self::runtimeBandFrom($request), requestedOriginalLanguage: self::originalLanguageFrom($request), requestedShowSeen: self::showSeenFrom($request));
-    }
-
-    /** The request's `q`, trimmed of Unicode whitespace and cut to `search.maximum_query_length` characters. */
-    private static function queryFrom(Request $request): string
-    {
-        $query = $request->query('q');
-
-        return is_string($query) ? Str::trim(mb_substr(Str::trim($query), 0, config('catalog.search.maximum_query_length'))) : '';
-    }
-
-    /** The Browse tab the request's `tab` names, Movies unless it is `tv` and TV Shows are switched on. */
-    private static function tabFrom(Request $request): TitleKind
-    {
-        if (mb_strlen(self::queryFrom($request)) < config('catalog.search.minimum_query_length') && self::runtimeBandFrom($request) !== null) {
-            return TitleKind::Movie;
-        }
-
-        return $request->query('tab') === TitleKind::TvShow->value && config('catalog.tv_shows.enabled') ? TitleKind::TvShow : TitleKind::Movie;
-    }
-
-    /** The request's `genre` when it is a plain id of nine digits at most, else null; whether it is offered is checked later. */
-    private static function genreFrom(Request $request): ?int
-    {
-        $genre = $request->query('genre');
-
-        return is_string($genre) && ctype_digit($genre) && strlen($genre) <= 9 ? (int) $genre : null;
-    }
-
-    /**
-     * The ids in the request's `services`, a comma-separated list: the plain ids of nine digits at most, each once,
-     * and no more than a few times the number allowed. Whether they are offered is checked later.
-     *
-     * @return list<int>
-     */
-    private static function streamingServicesFrom(Request $request): array
-    {
-        $services = $request->query('services');
-
-        if (! is_string($services)) {
-            return [];
-        }
-
-        $ids = [];
-
-        foreach (array_slice(explode(',', $services), 0, 50) as $id) {
-            if (ctype_digit($id) && strlen($id) <= 9 && (int) $id > 0) {
-                $ids[] = (int) $id;
-            }
-        }
-
-        return array_values(array_unique($ids));
-    }
-
-    /** The request's `page`, kept from 1 to the source's last page. */
-    private static function pageFrom(Request $request): int
-    {
-        $page = $request->query('page');
-
-        return max(1, min(CatalogSource::LAST_SOURCE_PAGE, is_string($page) && ctype_digit($page) ? (int) $page : 1));
-    }
-
-    /** Whether the request is Search's partial reload of `userMovies` alone, which searches nothing new. */
-    public static function reloadsUserMoviesOnly(Request $request): bool
-    {
-        return $request->header('X-Inertia-Partial-Component') === 'Search' && $request->header('X-Inertia-Partial-Data') === 'userMovies';
-    }
-
-    /** Whether the request asks for the known Highly rated option. */
-    private static function highlyRatedFrom(Request $request): bool
-    {
-        return $request->query('highly_rated') === '1';
-    }
-
-    /** Whether the request's `show_seen` is `1`; anything else leaves the hiding on. */
-    private static function showSeenFrom(Request $request): bool
-    {
-        return $request->query('show_seen') === '1';
-    }
-
-    /** The request's known era, else none. */
-    private static function eraFrom(Request $request): ?Era
-    {
-        $era = $request->query('era');
-
-        return is_string($era) ? Era::tryFrom($era) : null;
-    }
-
-    /** The request's known Movie runtime band, else none. */
-    private static function runtimeBandFrom(Request $request): ?RuntimeBand
-    {
-        $runtimeBand = $request->query('runtime');
-
-        return is_string($runtimeBand) ? RuntimeBand::tryFrom($runtimeBand) : null;
-    }
-
-    /** The request's `language` when it is one of the curated original languages, else none. */
-    private static function originalLanguageFrom(Request $request): ?OriginalLanguage
-    {
-        $language = $request->query('language');
-
-        return is_string($language) ? OriginalLanguage::tryFrom($language) : null;
-    }
-
-    /** Whether the query is long enough to search by Name; if not, the page is Browse. */
-    public function isSearching(): bool
-    {
-        return mb_strlen($this->query) >= config('catalog.search.minimum_query_length');
+        return new self($catalogSearch, $browseOptions, $unseenBrowse, $imdbIds, $ratingSources, $recordEvent, SearchRequest::from($request, CacheMode::CachedPage));
     }
 
     /**
@@ -265,19 +114,19 @@ class SearchPage
     {
         $results = $this->pageResult()->value;
 
-        if ($this->isSearching() && $results !== null && $this->page === 1) {
-            $this->recordEvent->handle($this->user, AnalyticsEvent::TitleSearched, ['query_length' => mb_strlen($this->query), 'result_count' => count($this->listings())]);
+        if ($this->request->isSearching() && $results !== null && $this->request->page === 1) {
+            $this->recordEvent->handle($this->request->user, AnalyticsEvent::TitleSearched, ['query_length' => mb_strlen($this->request->query), 'result_count' => count($this->listings())]);
         }
 
-        if (! $this->isSearching() && $results !== null && $this->page === 1) {
-            $this->recordEvent->handle($this->user, AnalyticsEvent::TitleBrowsed, [
-                'tab' => $this->browseKind->value,
+        if (! $this->request->isSearching() && $results !== null && $this->request->page === 1) {
+            $this->recordEvent->handle($this->request->user, AnalyticsEvent::TitleBrowsed, [
+                'tab' => $this->request->kind->value,
                 'filters' => implode(',', [...$this->filters()->usedNames(), ...($this->showSeen() ? ['show_seen'] : [])]),
                 'result_count' => count($this->listings()),
             ]);
         }
 
-        return ['data' => array_map(fn (MovieListing $listing): array => [...$this->card($listing->kind, $listing->tmdbId, $listing->title, $listing->releaseDate, $listing->posterPath), 'page' => $this->page], $this->listings())];
+        return ['data' => array_map(fn (MovieListing $listing): array => [...$this->card($listing->kind, $listing->tmdbId, $listing->title, $listing->releaseDate, $listing->posterPath), 'page' => $this->request->page], $this->listings())];
     }
 
     /**
@@ -326,21 +175,21 @@ class SearchPage
     {
         $result = $this->pageResult();
 
-        if ($this->hidesSeen() && ! $result->isUnavailable()) {
-            return new ScrollMetadata('page', null, $this->unseenPage()['nextPage'], $this->page);
+        if ($this->request->hidesSeen() && ! $result->isUnavailable()) {
+            return new ScrollMetadata('page', null, $this->unseenPage()['nextPage'], $this->request->page);
         }
 
-        if ($result->isUnavailable() && $this->page > 1) {
-            return new ScrollMetadata('page', $this->page, $this->page, $this->page);
+        if ($result->isUnavailable() && $this->request->page > 1) {
+            return new ScrollMetadata('page', $this->request->page, $this->request->page, $this->request->page);
         }
 
         $lastPage = min($result->value->totalPages ?? 0, CatalogSource::LAST_SOURCE_PAGE);
 
         return new ScrollMetadata(
             'page',
-            $this->page > 1 ? $this->page - 1 : null,
-            $this->page < $lastPage ? $this->page + 1 : null,
-            $this->page,
+            $this->request->page > 1 ? $this->request->page - 1 : null,
+            $this->request->page < $lastPage ? $this->request->page + 1 : null,
+            $this->request->page,
         );
     }
 
@@ -357,7 +206,7 @@ class SearchPage
      */
     public function genres(): array
     {
-        return $this->tabGenres ??= $this->genresOf($this->browseKind);
+        return $this->tabGenres ??= $this->genresOf($this->request->kind);
     }
 
     /**
@@ -368,7 +217,7 @@ class SearchPage
      */
     public function streamingServices(): array
     {
-        return $this->tabStreamingServices ??= $this->streamingServicesOf($this->browseKind);
+        return $this->tabStreamingServices ??= $this->streamingServicesOf($this->request->kind);
     }
 
     /**
@@ -405,22 +254,14 @@ class SearchPage
         return $this->filters()->runtimeBand;
     }
 
-    /** Whether the viewer can hide the Titles they have seen: they are signed in. Guests have no such Titles and no toggle. */
     public function canHideSeen(): bool
     {
-        return $this->user !== null;
+        return $this->request->canHideSeen();
     }
 
-    /** Whether the viewer chose to show the Titles they have seen; never for a guest, nor in a search by Name. */
     public function showSeen(): bool
     {
-        return $this->canHideSeen() && ! $this->isSearching() && $this->requestedShowSeen;
-    }
-
-    /** Whether Browse leaves out the Titles the viewer has seen: a signed-in viewer's Browse, unless they show them. */
-    private function hidesSeen(): bool
-    {
-        return $this->canHideSeen() && ! $this->isSearching() && ! $this->requestedShowSeen;
+        return $this->request->showsSeen();
     }
 
     /** The original language Browse is narrowed to, or null for none. */
@@ -456,7 +297,7 @@ class SearchPage
     {
         $none = ['watchlisted' => false, 'watched' => false, 'watchedDate' => null];
 
-        return array_replace(array_fill_keys($this->catalogIds(), $none), UserMovies::for($this->user, $this->rows()));
+        return array_replace(array_fill_keys($this->catalogIds(), $none), UserMovies::for($this->request->user, $this->rows()));
     }
 
     /**
@@ -467,8 +308,8 @@ class SearchPage
     public function userTvShows(): array
     {
         $rows = $this->tvShowRows();
-        $watchlisted = $this->user === null || $rows->isEmpty() ? collect() : UserTitle::query()
-            ->whereBelongsTo($this->user)->whereIn('title_id', $rows->pluck('id'))->whereNotNull('watchlisted_at')
+        $watchlisted = $this->request->user === null || $rows->isEmpty() ? collect() : UserTitle::query()
+            ->whereBelongsTo($this->request->user)->whereIn('title_id', $rows->pluck('id'))->whereNotNull('watchlisted_at')
             ->pluck('title_id')->flip();
 
         return collect($this->tvShowCatalogIds())->mapWithKeys(fn (int $tmdbId): array => [
@@ -481,7 +322,7 @@ class SearchPage
      */
     private function filters(): BrowseFilters
     {
-        return $this->filters ??= $this->isSearching() ? new BrowseFilters : new BrowseFilters($this->requestedGenreOnTab(), $this->requestedSort, $this->requestedStreamingServicesOnTab(), $this->country, $this->requestedHighlyRated, $this->requestedEra, $this->browseKind === TitleKind::Movie ? $this->requestedRuntimeBand : null, $this->requestedOriginalLanguage);
+        return $this->filters ??= $this->request->isSearching() ? new BrowseFilters : new BrowseFilters($this->requestedGenreOnTab(), $this->request->requestedSort, $this->requestedStreamingServicesOnTab(), $this->request->country, $this->request->requestedHighlyRated, $this->request->requestedEra, $this->request->kind === TitleKind::Movie ? $this->request->requestedRuntimeBand : null, $this->request->requestedOriginalLanguage);
     }
 
     /**
@@ -494,7 +335,7 @@ class SearchPage
     private function requestedStreamingServicesOnTab(): array
     {
         $offered = array_column($this->streamingServices(), 'id');
-        $selected = array_slice(array_values(array_filter($this->requestedStreamingServices, fn (int $id): bool => in_array($id, $offered, true))), 0, config('catalog.search.maximum_streaming_services'));
+        $selected = array_slice(array_values(array_filter($this->request->requestedStreamingServices, fn (int $id): bool => in_array($id, $offered, true))), 0, config('catalog.search.maximum_streaming_services'));
         sort($selected);
 
         return $selected;
@@ -507,7 +348,7 @@ class SearchPage
      */
     private function streamingServicesOf(TitleKind $kind): array
     {
-        return $this->readsCacheOnly ? $this->browseOptions->cachedStreamingServices($kind, $this->country) : $this->browseOptions->streamingServices($kind, $this->country);
+        return $this->request->cacheMode->readsCacheOnly() ? $this->browseOptions->cachedStreamingServices($kind, $this->request->country) : $this->browseOptions->streamingServices($kind, $this->request->country);
     }
 
     /**
@@ -517,7 +358,7 @@ class SearchPage
      */
     private function requestedGenreOnTab(): ?int
     {
-        $id = $this->requestedGenre;
+        $id = $this->request->requestedGenre;
         $genres = $this->genres();
 
         if ($id === null || $genres === []) {
@@ -532,7 +373,7 @@ class SearchPage
             return null;
         }
 
-        $otherGenres = $this->genresOf($this->browseKind === TitleKind::Movie ? TitleKind::TvShow : TitleKind::Movie);
+        $otherGenres = $this->genresOf($this->request->kind === TitleKind::Movie ? TitleKind::TvShow : TitleKind::Movie);
         $name = array_find($otherGenres, fn (array $genre): bool => $genre['id'] === $id)['name'] ?? null;
 
         return array_find($genres, fn (array $genre): bool => $genre['name'] === $name)['id'] ?? null;
@@ -545,7 +386,7 @@ class SearchPage
      */
     private function genresOf(TitleKind $kind): array
     {
-        return $this->readsCacheOnly ? $this->browseOptions->cachedGenres($kind) : $this->browseOptions->genres($kind);
+        return $this->request->cacheMode->readsCacheOnly() ? $this->browseOptions->cachedGenres($kind) : $this->browseOptions->genres($kind);
     }
 
     /**
@@ -556,17 +397,17 @@ class SearchPage
      */
     private function pageResult(): CatalogResult
     {
-        if ($this->hidesSeen()) {
+        if ($this->request->hidesSeen()) {
             return $this->result ??= $this->unseenPage()['result'];
         }
 
-        if ($this->readsCacheOnly) {
-            $cached = $this->isSearching() ? $this->catalogSearch->cachedSearch($this->query, $this->page) : $this->catalogSearch->cachedBrowse($this->browseKind, $this->page, $this->filters());
+        if ($this->request->cacheMode->readsCacheOnly()) {
+            $cached = $this->request->isSearching() ? $this->catalogSearch->cachedSearch($this->request->query, $this->request->page) : $this->catalogSearch->cachedBrowse($this->request->kind, $this->request->page, $this->filters());
 
             return $this->result ??= $cached === null ? CatalogResult::unavailable() : CatalogResult::stale($cached);
         }
 
-        return $this->result ??= $this->isSearching() ? $this->catalogSearch->search($this->query, $this->page) : $this->catalogSearch->browse($this->browseKind, $this->page, $this->filters());
+        return $this->result ??= $this->request->isSearching() ? $this->catalogSearch->search($this->request->query, $this->request->page) : $this->catalogSearch->browse($this->request->kind, $this->request->page, $this->filters());
     }
 
     /**
@@ -578,7 +419,7 @@ class SearchPage
      */
     private function unseenPage(): array
     {
-        return $this->unseenPage ??= $this->unseenBrowse->page($this->user, $this->browseKind, $this->page, $this->filters(), $this->readsCacheOnly, $this->coversSeenTitles);
+        return $this->unseenPage ??= $this->unseenBrowse->page($this->request->user, $this->request->kind, $this->request->page, $this->filters(), $this->request->cacheMode->readsCacheOnly(), $this->request->cacheMode->keepsSeenTitles());
     }
 
     /** @return list<int> */

@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Http\Support\Search\SearchPage;
+use App\Http\Support\Search\SearchRequest;
 use App\Http\Support\SeoRoutes;
 use App\Http\Support\Visitor\RateLimitKey;
 use App\Services\Catalog\CacheKey;
@@ -66,7 +66,7 @@ class AppServiceProvider extends ServiceProvider
          * Reloading Search's `userMovies` after a Watchlist action reads only the cache, and the action has its own
          * budget, so it doesn't count against search's.
          */
-        RateLimiter::for('search', fn (Request $request): Limit => SearchPage::reloadsUserMoviesOnly($request)
+        RateLimiter::for('search', fn (Request $request): Limit => SearchRequest::reloadsUserMoviesOnly($request)
             ? Limit::none()
             : Limit::perMinute(60)->by(RateLimitKey::for($request)));
 

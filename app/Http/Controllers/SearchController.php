@@ -37,12 +37,12 @@ class SearchController extends Controller
 
         $response = Inertia::render('Search', [
             'imageBaseUrl' => config('catalog.image_base_url'),
-            'query' => $page->query,
+            'query' => $page->request->query,
             'minimumQueryLength' => config('catalog.search.minimum_query_length'),
             'maximumQueryLength' => config('catalog.search.maximum_query_length'),
             'looksUpImdbRatings' => RatingSourceName::Imdb->isEnabled(),
             'includesTvShows' => (bool) config('catalog.tv_shows.enabled'),
-            'tab' => $page->browseKind->value,
+            'tab' => $page->request->kind->value,
             'genres' => fn (): array => $page->genres(),
             'genre' => fn (): ?int => $page->genre(),
             'highlyRated' => fn (): bool => $page->highlyRated(),
